@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
 import { db } from "@/lib/db"
-import { requireRole, withErrorHandler } from "@/lib/session"
+import { requireAdmin, requireRole, withErrorHandler } from "@/lib/session"
 import { logAction } from "@/lib/audit"
 
 // GET /api/admin/instructors — list all instructors with their profiles + workload
 export const GET = withErrorHandler(async () => {
-  const currentUser = await requireRole(["ADMIN", "INSTRUCTOR"])
+  const currentUser = await requireRole(["INSTRUCTOR", "ADMIN", "SUPER_ADMIN"])
   if (currentUser instanceof NextResponse) return currentUser
 
   const instructors = await db.user.findMany({
@@ -56,7 +56,7 @@ export const GET = withErrorHandler(async () => {
 
 // POST /api/admin/instructors — create a new instructor (User + InstructorProfile)
 export const POST = withErrorHandler(async (req: NextRequest) => {
-  const currentUser = await requireRole(["ADMIN"])
+  const currentUser = await requireAdmin()
   if (currentUser instanceof NextResponse) return currentUser
 
   const body = await req.json().catch(() => null)

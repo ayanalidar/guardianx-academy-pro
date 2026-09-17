@@ -1,18 +1,15 @@
 import { NextRequest, NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
 import { db } from "@/lib/db"
-import { getCurrentUser, withErrorHandler } from "@/lib/session"
+import { requireAdmin, withErrorHandler } from "@/lib/session"
 import { logAction } from "@/lib/audit"
 
 // GET /api/admin/users/[id] — user details with enrollments, certificates, lab progress
 export const GET = withErrorHandler(
   async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const { id } = await params
-    const currentUser = await getCurrentUser()
-    if (!currentUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    if (currentUser.role !== "ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-    }
+    const currentUser = await requireAdmin()
+    if (currentUser instanceof NextResponse) return currentUser
 
     const user = await db.user.findUnique({
       where: { id },
@@ -63,11 +60,8 @@ export const GET = withErrorHandler(
 export const PATCH = withErrorHandler(
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const { id } = await params
-    const currentUser = await getCurrentUser()
-    if (!currentUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    if (currentUser.role !== "ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-    }
+    const currentUser = await requireAdmin()
+    if (currentUser instanceof NextResponse) return currentUser
 
     const existing = await db.user.findUnique({ where: { id } })
     if (!existing) return NextResponse.json({ error: "User not found" }, { status: 404 })
@@ -132,11 +126,8 @@ export const PATCH = withErrorHandler(
 export const DELETE = withErrorHandler(
   async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const { id } = await params
-    const currentUser = await getCurrentUser()
-    if (!currentUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    if (currentUser.role !== "ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-    }
+    const currentUser = await requireAdmin()
+    if (currentUser instanceof NextResponse) return currentUser
 
     if (currentUser.id === id) {
       return NextResponse.json({ error: "You cannot delete your own admin account" }, { status: 400 })

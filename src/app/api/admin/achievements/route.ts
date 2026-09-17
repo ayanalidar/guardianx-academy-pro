@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { getCurrentUser, withErrorHandler } from "@/lib/session"
+import { requireAdmin, withErrorHandler } from "@/lib/session"
 
 export const runtime = "nodejs"
 
@@ -13,11 +13,8 @@ const VALID_COLORS = new Set([
  * Returns the full catalog of achievements (static defs + admin-created rows).
  */
 export const GET = withErrorHandler(async () => {
-  const currentUser = await getCurrentUser()
-  if (!currentUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (currentUser.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
+  const currentUser = await requireAdmin()
+  if (currentUser instanceof NextResponse) return currentUser
 
   // Include the static ACHIEVEMENT_DEFS plus any admin-created DB rows.
   const { ACHIEVEMENT_DEFS } = await import("@/lib/gamification")
@@ -45,7 +42,7 @@ export const GET = withErrorHandler(async () => {
   const staticItems = ACHIEVEMENT_DEFS.map((d) => {
     const row = staticRowByCode.get(d.code)
     return {
-      id: row?.id ?? null,
+      id: (row as any)?.id ?? null,
       code: d.code,
       title: d.title,
       description: d.description,
@@ -94,11 +91,8 @@ export const GET = withErrorHandler(async () => {
  * award it manually via the admin UI / direct DB write).
  */
 export const POST = withErrorHandler(async (req: NextRequest) => {
-  const currentUser = await getCurrentUser()
-  if (!currentUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (currentUser.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
+  const currentUser = await requireAdmin()
+  if (currentUser instanceof NextResponse) return currentUser
 
   const body = await req.json().catch(() => null)
   if (!body) return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })

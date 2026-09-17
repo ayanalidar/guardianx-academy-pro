@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { getCurrentUser, withErrorHandler } from "@/lib/session"
+import { requireAdmin, withErrorHandler } from "@/lib/session"
 
 export const runtime = "nodejs"
 
@@ -19,11 +19,8 @@ export const runtime = "nodejs"
  * Returns: { page, seeded: number }
  */
 export const POST = withErrorHandler(async (req: NextRequest) => {
-  const user = await getCurrentUser()
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
+  const user = await requireAdmin()
+  if (user instanceof NextResponse) return user
 
   let body: any = {}
   try {

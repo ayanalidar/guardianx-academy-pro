@@ -10,6 +10,7 @@ async function loadXterm() {
   if (XTerm) return
   const xterm = await import("xterm")
   const fit = await import("xterm-addon-fit")
+  // @ts-ignore
   await import("xterm/css/xterm.css")
   XTerm = xterm.Terminal
   FitAddon = fit.FitAddon
@@ -141,7 +142,7 @@ export function InBrowserTerminal({ labSlug, sessionData, onExit }: InBrowserTer
     }
 
     // Handle terminal input → send to WebSocket
-    term.onData((data) => {
+    term.onData((data: string) => {
       if (ws.readyState === WebSocket.OPEN) {
         ws.send(JSON.stringify({ type: "input", data }))
       }

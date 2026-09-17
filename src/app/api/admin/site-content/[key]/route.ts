@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { getCurrentUser, withErrorHandler } from "@/lib/session"
+import { requireAdmin, withErrorHandler } from "@/lib/session"
 
 export const runtime = "nodejs"
 
@@ -26,11 +26,8 @@ export const PATCH = withErrorHandler(
   async (req: NextRequest, { params }: { params: Promise<{ key: string }> }) => {
     const { key: rawKey } = await params
 
-    const user = await getCurrentUser()
-    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    if (user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-    }
+    const user = await requireAdmin()
+    if (user instanceof NextResponse) return user
 
     let body: any = {}
     try {
@@ -92,11 +89,8 @@ export const GET = withErrorHandler(
   async (_req: NextRequest, { params }: { params: Promise<{ key: string }> }) => {
     const { key: rawKey } = await params
 
-    const user = await getCurrentUser()
-    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    if (user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-    }
+    const user = await requireAdmin()
+    if (user instanceof NextResponse) return user
 
     // Default page = "home" when only section.key is supplied. Use
     // body-free GET so we have to guess; "home" matches the homepage CMS
@@ -137,11 +131,8 @@ export const DELETE = withErrorHandler(
   async (req: NextRequest, { params }: { params: Promise<{ key: string }> }) => {
     const { key: rawKey } = await params
 
-    const user = await getCurrentUser()
-    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    if (user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-    }
+    const user = await requireAdmin()
+    if (user instanceof NextResponse) return user
 
     let body: any = {}
     try {

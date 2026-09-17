@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { withErrorHandler } from "@/lib/session"
-import { createHash, createHmac, timingSafeEqual } from "crypto"
+import { createHash, createHmac, timingSafeEqual, randomBytes } from "crypto"
 import { getSetting } from "@/lib/settings"
 
 export const runtime = "nodejs"
@@ -93,7 +93,7 @@ export const POST = withErrorHandler(async (req) => {
 
   // Tamper-evident verification hash
   const verificationHash = createHash("sha256")
-    .update(`${credentialId}|${attempt.id}|${order.id}|${attempt.email || order.user.email}|${attempt.percentage}`)
+    .update(`${credentialId}|${attempt.id}|${order.id}|${attempt.guestEmail || order.user.email}|${attempt.percentage}`)
     .digest("hex")
 
   const verificationUrl = `https://academy.guardianx.cloud/verify?id=${credentialId}`

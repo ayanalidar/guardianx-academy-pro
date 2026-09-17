@@ -1,4 +1,5 @@
 import crypto from "crypto"
+import { requireSecret } from "@/lib/secrets"
 
 /**
  * Parent/Guardian Portal — token-based auth helper.
@@ -9,17 +10,15 @@ import crypto from "crypto"
  * and verify it on every authenticated parent request.
  *
  * Token format: `<base64url-payload>.<hex-hmac-sha256-signature>`
+ *
+ * NOTE: SECRET is resolved lazily via getSecret() so the module can be
+ * imported at build time without throwing — the actual secret is only
+ * required when signParentToken / verifyParentToken is invoked at runtime.
  */
 
-const SECRET =
-  process.env.NEXTAUTH_SECRET || (() => {
-    if (process.env.NODE_ENV === "production" && !process.env.NEXTAUTH_SECRET) {
-      console.error("FATAL: NEXTAUTH_SECRET not set for parent auth. Parent portal will not work.")
-      return "missing-secret-parent-auth-will-fail-" + Date.now()
-    }
-    console.warn("WARNING: NEXTAUTH_SECRET not set — using insecure dev fallback for parent auth.")
-    return "dev-only-insecure-parent-secret-" + Date.now()
-  })()
+function getSecret(): string {
+  return requireSecret("NEXTAUTH_SECRET")
+}
 
 const TOKEN_TTL_MS = 1000 * 60 * 60 * 24 * 7 // 7 days
 
@@ -48,7 +47,7 @@ export function signParentToken(parent: {
   const payloadB64 = Buffer.from(JSON.stringify(payload), "utf8").toString(
     "base64url"
   )
-  const sig = crypto.createHmac("sha256", SECRET).update(payloadB64).digest("hex")
+  const sig = crypto.createHmac("sha256", getSecret()).update(payloadB64).digest("hex")
   return `${payloadB64}.${sig}`
 }
 
@@ -61,7 +60,7 @@ export function verifyParentToken(token?: string | null): ParentTokenPayload | n
   if (!payloadB64 || !sig) return null
 
   const expected = crypto
-    .createHmac("sha256", SECRET)
+    .createHmac("sha256", getSecret())
     .update(payloadB64)
     .digest("hex")
   // Timing-safe comparison

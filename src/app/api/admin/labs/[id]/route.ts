@@ -1,16 +1,13 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { getCurrentUser, withErrorHandler } from "@/lib/session"
+import { requireAdmin, withErrorHandler } from "@/lib/session"
 
 // PATCH /api/admin/labs/[id] — update any lab field
 export const PATCH = withErrorHandler(
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const { id } = await params
-    const user = await getCurrentUser()
-    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    if (user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-    }
+    const user = await requireAdmin()
+    if (user instanceof NextResponse) return user
 
     const existing = await db.lab.findUnique({ where: { id } })
     if (!existing) return NextResponse.json({ error: "Lab not found" }, { status: 404 })
@@ -67,11 +64,8 @@ export const PATCH = withErrorHandler(
 export const DELETE = withErrorHandler(
   async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const { id } = await params
-    const user = await getCurrentUser()
-    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    if (user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-    }
+    const user = await requireAdmin()
+    if (user instanceof NextResponse) return user
 
     const existing = await db.lab.findUnique({ where: { id } })
     if (!existing) return NextResponse.json({ error: "Lab not found" }, { status: 404 })

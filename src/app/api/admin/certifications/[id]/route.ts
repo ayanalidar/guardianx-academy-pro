@@ -1,15 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { getCurrentUser } from "@/lib/session"
+import { requireAdmin } from "@/lib/session"
 
 // PATCH /api/admin/certifications/[id] — update a certification
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const user = await getCurrentUser()
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
+  const user = await requireAdmin()
+  if (user instanceof NextResponse) return user
 
   const existing = await db.certification.findUnique({ where: { id } })
   if (!existing) return NextResponse.json({ error: "Certification not found" }, { status: 404 })
@@ -40,11 +37,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 // DELETE /api/admin/certifications/[id] — delete a certification
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const user = await getCurrentUser()
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
+  const user = await requireAdmin()
+  if (user instanceof NextResponse) return user
 
   const existing = await db.certification.findUnique({ where: { id } })
   if (!existing) return NextResponse.json({ error: "Certification not found" }, { status: 404 })

@@ -87,9 +87,9 @@ export async function GET() {
     total: result.length,
     dueSoon: result.filter((r) => r.dueSoon).length,
     overdue: result.filter((r) => r.overdue).length,
-    missing: result.filter((r) => r.status === "missing").length,
-    submitted: result.filter((r) => r.status === "submitted" || r.status === "resubmitted").length,
-    graded: result.filter((r) => r.status === "graded").length,
+    missing: result.filter((r) => (r.status as string) === "missing").length,
+    submitted: result.filter((r) => (r.status as string) === "submitted" || (r.status as string) === "resubmitted").length,
+    graded: result.filter((r) => (r.status as string) === "graded").length,
   }
 
   // Sort: overdue first, then due-soon, then by dueDate asc

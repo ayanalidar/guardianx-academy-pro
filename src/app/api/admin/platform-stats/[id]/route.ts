@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { getCurrentUser, withErrorHandler } from "@/lib/session"
+import { requireAdmin, withErrorHandler } from "@/lib/session"
 
 export const runtime = "nodejs"
 
@@ -8,9 +8,8 @@ export const runtime = "nodejs"
  * ADMIN-only. Update a stat's value, label, visibility, etc.
  */
 export const PATCH = withErrorHandler(async (req, { params }: { params: Promise<{ id: string }> }) => {
-  const currentUser = await getCurrentUser()
-  if (!currentUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (currentUser.role !== "ADMIN") return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  const currentUser = await requireAdmin()
+  if (currentUser instanceof NextResponse) return currentUser
 
   const { id } = await params
   const body = await req.json().catch(() => null)
@@ -38,9 +37,8 @@ export const PATCH = withErrorHandler(async (req, { params }: { params: Promise<
  * ADMIN-only. Hard-delete a stat.
  */
 export const DELETE = withErrorHandler(async (_req, { params }: { params: Promise<{ id: string }> }) => {
-  const currentUser = await getCurrentUser()
-  if (!currentUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (currentUser.role !== "ADMIN") return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  const currentUser = await requireAdmin()
+  if (currentUser instanceof NextResponse) return currentUser
 
   const { id } = await params
   await db.platformStat.delete({ where: { id } })

@@ -57,7 +57,7 @@ export async function POST(req: NextRequest) {
     // Verify the batch exists
     const batch = await db.trainingBatch.findUnique({
       where: { id: lead.batchId },
-      select: { id: true, name: true, certification: true },
+      select: { id: true, name: true, certification: true, schedule: true, startDate: true, mode: true },
     })
     if (!batch) {
       return NextResponse.json({ error: "Batch not found for batchId: " + lead.batchId }, { status: 404 })

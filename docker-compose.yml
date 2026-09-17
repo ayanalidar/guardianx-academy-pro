@@ -1,5 +1,5 @@
 # GuardianX Lab Platform — Docker Compose
-# 
+#
 # This file defines all services for the GuardianX lab platform.
 # In production, the web app (Next.js) and mini-services run on the main server,
 # while lab containers are spun up dynamically by the orchestrator.
@@ -8,8 +8,13 @@
 #   docker-compose up -d          # Start all services
 #   docker-compose logs -f        # View logs
 #   docker-compose down           # Stop all services
-
-version: "3.8"
+#
+# SECURITY NOTES:
+#   - All secrets must be supplied via .env (see .env.example). No defaults.
+#   - The Docker socket is mounted only into lab-orchestrator + terminal-gateway
+#     (both intentionally sandboxed). The web app talks to them via HTTP, not
+#     via the socket. Consider replacing this with a Docker socket proxy
+#     (tecnativa/docker-socket-proxy) in production.
 
 services:
   # === Web Application (Next.js) ===
@@ -20,20 +25,37 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - DATABASE_URL=file:/data/db/custom.db
-      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:-guardianx-dev-secret}
-      - NEXTAUTH_URL=http://localhost:3000
-      - DOCKER_AVAILABLE=1
-      - DOCKER_HOST=unix:///var/run/docker.sock
-    volumes:
-      - db-data:/data/db
-      - /var/run/docker.sock:/var/run/docker.sock  # Docker socket for orchestrator
+      - DATABASE_URL=${DATABASE_URL:?DATABASE_URL must be set in .env}
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET:?NEXTAUTH_SECRET must be set in .env}
+      - NEXTAUTH_URL=${NEXTAUTH_URL:-http://localhost:3000}
+      - SENTRY_DSN=${SENTRY_DSN:-}
+      - SMTP_HOST=${SMTP_HOST:-}
+      - SMTP_PORT=${SMTP_PORT:-465}
+      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_PASSWORD=${SMTP_PASSWORD:-}
+      - EMAIL_FROM=${EMAIL_FROM:-}
+      - RAZORPAY_KEY_ID=${RAZORPAY_KEY_ID:-}
+      - RAZORPAY_KEY_SECRET=${RAZORPAY_KEY_SECRET:-}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}
+      - PAYMENT_MOCK_MODE=${PAYMENT_MOCK_MODE:-false}
     depends_on:
-      - lab-orchestrator
-      - terminal-gateway
+      lab-orchestrator:
+        condition: service_healthy
+      terminal-gateway:
+        condition: service_healthy
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/api/sentinel/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
 
   # === Lab Orchestrator (port 3004) ===
+  # NOTE: The Docker socket is required here because this service manages
+  # container lifecycles. In production, prefer a Docker socket proxy with
+  # only `containers` + `networks` scopes enabled.
   lab-orchestrator:
     build:
       context: ./mini-services/lab-orchestrator
@@ -44,10 +66,18 @@ services:
       - DOCKER_AVAILABLE=1
       - DOCKER_HOST=unix:///var/run/docker.sock
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock  # Access to Docker Engine
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3004/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
 
   # === Terminal Gateway (port 3005) ===
+  # NOTE: Needs Docker socket for `docker exec` to attach to lab containers.
+  # Consider a gVisor runtime profile or rootless Docker in production.
   terminal-gateway:
     build:
       context: ./mini-services/terminal-gateway
@@ -58,8 +88,14 @@ services:
       - DOCKER_AVAILABLE=1
       - DOCKER_HOST=unix:///var/run/docker.sock
     volumes:
-      - /var/run/docker.sock:/var/run/docker.sock  # For Docker exec
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3005/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
 
   # === WebRTC Signaling (port 3003) ===
   live-signaling:
@@ -69,6 +105,9 @@ services:
     ports:
       - "3003:3003"
     restart: unless-stopped
-
-volumes:
-  db-data:
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3003/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s

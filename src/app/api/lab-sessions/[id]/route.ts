@@ -24,7 +24,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (correct) {
     await db.labSession.update({ where: { id }, data: { status: "stopped", endedAt: new Date() } })
     await db.user.update({ where: { id: user.id }, data: { xp: { increment: session.lab.xpReward } } })
-    await db.labProgress.upsert({ where: { userId_labId: { userId: user.id, labId: session.labId } }, update: { status: "completed", completedAt: new Date(), flag }, create: { userId: user.id, labId: session.labId, status: "completed", flag, completedAt: new Date() } })
+    await db.labProgress.upsert({ where: { userId_labId: { userId: user.id, labId: session.labId } }, update: { status: "completed", flagFound: true, completedAt: new Date() }, create: { userId: user.id, labId: session.labId, status: "completed", flagFound: true, completedAt: new Date() } })
     return NextResponse.json({ correct: true, xp: session.lab.xpReward, message: "Flag correct! Lab completed." })
   }
   return NextResponse.json({ correct: false, message: "Incorrect flag. Try again." })

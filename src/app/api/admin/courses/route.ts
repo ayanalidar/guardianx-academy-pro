@@ -1,15 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { getCurrentUser, withErrorHandler } from "@/lib/session"
+import { requireAdmin, withErrorHandler } from "@/lib/session"
 import { logAction } from "@/lib/audit"
 
 // GET /api/admin/courses — list all courses with enrollment counts, module counts, lesson counts
 export const GET = withErrorHandler(async (req: NextRequest) => {
-  const user = await getCurrentUser()
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
+  const user = await requireAdmin()
+  if (user instanceof NextResponse) return user
 
   const url = new URL(req.url)
   const q = url.searchParams.get("q")?.trim() || undefined
@@ -69,11 +66,8 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
 
 // POST /api/admin/courses — create a new course (ADMIN only)
 export const POST = withErrorHandler(async (req: NextRequest) => {
-  const user = await getCurrentUser()
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
+  const user = await requireAdmin()
+  if (user instanceof NextResponse) return user
 
   const body = await req.json().catch(() => null)
   if (!body) return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })

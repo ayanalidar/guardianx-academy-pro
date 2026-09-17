@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { getCurrentUser } from "@/lib/session"
+import { requireRole } from "@/lib/session"
 import { sendEmail } from "@/lib/email"
 import { createNotification } from "@/lib/notifications"
 
@@ -9,11 +9,8 @@ import { createNotification } from "@/lib/notifications"
 // Sets gradedAt, gradedBy, status "graded". Sends email + notification to student.
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params // submission id
-  const user = await getCurrentUser()
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (user.role !== "INSTRUCTOR" && user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
+  const user = await requireRole(["INSTRUCTOR", "ADMIN", "SUPER_ADMIN"])
+  if (user instanceof NextResponse) return user
 
   const submission = await db.assignmentSubmission.findUnique({
     where: { id },

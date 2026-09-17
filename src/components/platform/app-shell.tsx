@@ -161,7 +161,7 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
 
   function renderItem(item: NavItem, activeColor: string = "emerald") {
     const active = view.name === item.view.name
-    const colorMap: Record<string, string> = {
+    const colorMap: Record<string, { bg: string; text: string; border: string; bar: string }> = {
       emerald: { bg: "bg-emerald-500/10", text: "text-emerald-400", border: "border-emerald-500/20", bar: "bg-emerald-400" },
       amber: { bg: "bg-amber-500/10", text: "text-amber-400", border: "border-amber-500/20", bar: "bg-amber-400" },
       cyan: { bg: "bg-cyan-500/10", text: "text-cyan-400", border: "border-cyan-500/20", bar: "bg-cyan-400" },
@@ -203,7 +203,7 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
 }
 
 function SidebarFooter() {
-  const { user, stats } = useUser()
+  const { user, stats, gamification } = useUser()
   const { navigate } = useAppStore()
 
   if (!user) return null
@@ -240,14 +240,14 @@ function SidebarFooter() {
         </div>
       ) : (
         /* Non-admin: XP / Level bar (existing behavior) */
-        stats && (
+        gamification && (
           <div className="px-2">
             <div className="flex items-center justify-between text-[10px] text-muted-foreground mb-1">
-              <span>Level {stats.level}</span>
-              <span>{stats.xp} XP</span>
+              <span>Level {gamification.level}</span>
+              <span>{gamification.xp} XP</span>
             </div>
             <div className="h-1.5 bg-muted rounded-full overflow-hidden">
-              <div className="h-full bg-gradient-to-r from-violet-500 to-cyan-500 rounded-full" style={{ width: `${Math.min(100, (stats.xp % 1000) / 10)}%` }} />
+              <div className="h-full bg-gradient-to-r from-violet-500 to-cyan-500 rounded-full" style={{ width: `${Math.min(100, (gamification.xp % 1000) / 10)}%` }} />
             </div>
           </div>
         )

@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
   if (!instructorId) return NextResponse.json({ error: "Instructor ID required" }, { status: 400 })
 
   // Fetch certification from DB
-  const cert = await db.certification.findUnique({ where: { slug: certificationSlug } })
+  const cert = await db.guardianCertification.findUnique({ where: { slug: certificationSlug } })
   if (!cert) return NextResponse.json({ error: "Certification not found" }, { status: 404 })
 
   const domains = JSON.parse(cert.domains || "[]")
@@ -53,11 +53,11 @@ export async function POST(req: NextRequest) {
     // AGENT 1: Curriculum Designer
     // Designs the course structure: modules, lessons, learning outcomes
     // ============================================================
-    const curriculumPrompt = `You are an expert cybersecurity curriculum designer. Design a complete course for the ${cert.name} certification (${cert.issuer}).
+    const curriculumPrompt = `You are an expert cybersecurity curriculum designer. Design a complete course for the ${cert.name} certification (${"GuardianX"}).
 
 CERTIFICATION DETAILS:
 - Name: ${cert.name}
-- Issuer: ${cert.issuer}
+- Issuer: ${"GuardianX"}
 - Level: ${level || cert.level}
 - Duration: ${durationHours || 40} hours
 - Target Audience: ${audience || "General learners"}
@@ -169,26 +169,27 @@ Return as JSON: {"covers_all": true/false, "assessment": "...", "missing_domains
         studentsCount: 0,
         color: "violet",
         tags: skills.slice(0, 8).join(","),
-        certBody: cert.issuer,
+        certBody: "GuardianX",
         published: false, // Draft - admin must review and publish
         instructorId,
       },
     })
 
     // Create modules, lessons, and quizzes
-    for (const mod of (courseData.modules || [])) {
+    for (const modData of (courseData.modules || [])) {
       const mod = await db.module.create({
         data: {
           courseId: course.id,
-          title: mod.title,
-          description: mod.description || "",
-          order: mod.order || 0,
+          title: modData.title,
+          description: modData.description || "",
+          order: modData.order || 0,
         },
       })
 
       // Create lessons
-      for (const lesson of (mod.lessons || [])) {
-        await db.lesson.create({
+      let lastLessonId: string | null = null
+      for (const lesson of (modData.lessons || [])) {
+        const created = await db.lesson.create({
           data: {
             moduleId: mod.id,
             title: lesson.title,
@@ -198,18 +199,19 @@ Return as JSON: {"covers_all": true/false, "assessment": "...", "missing_domains
             order: 0,
           },
         })
+        lastLessonId = created.id
       }
 
       // Create quiz if exists
-      if (mod.quiz?.questions?.length > 0) {
+      if (modData.quiz?.questions?.length > 0 && lastLessonId) {
         const quiz = await db.quiz.create({
           data: {
-            moduleId: mod.id,
-            title: `${mod.title} - Quiz`,
+            lessonId: lastLessonId,
+            title: `${modData.title} - Quiz`,
           },
         })
 
-        for (const q of mod.quiz.questions) {
+        for (const q of modData.quiz.questions) {
           await db.question.create({
             data: {
               quizId: quiz.id,

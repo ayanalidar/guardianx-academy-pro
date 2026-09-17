@@ -119,6 +119,8 @@ function normalizeBatch(raw: {
   levelBorder: string
   borderColor: string
   btnClass: string
+  googleFormUrl?: string | null
+  slug?: string | null
 }): Batch {
   const almostFull =
     raw.almostFull ?? ((raw.seats - (raw.enrolled ?? 0)) <= 2 || raw.status === "Almost Full")

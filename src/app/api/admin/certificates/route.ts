@@ -1,14 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { getCurrentUser } from "@/lib/session"
+import { requireAdmin } from "@/lib/session"
 
 // GET /api/admin/certificates — list all certificates platform-wide
 export async function GET(req: NextRequest) {
-  const user = await getCurrentUser()
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
+  const user = await requireAdmin()
+  if (user instanceof NextResponse) return user
 
   const url = new URL(req.url)
   const page = Math.max(1, parseInt(url.searchParams.get("page") || "1", 10))

@@ -74,15 +74,9 @@ export async function isEmailConfigured(): Promise<boolean> {
 }
 
 export async function sendEmail({
-  to,
-  subject,
-  html,
-  text,
+  to, subject, html, text, body, type: _t, userId: _u,
 }: {
-  to: string
-  subject: string
-  html: string
-  text?: string
+  to: string; subject: string; html?: string; text?: string; body?: string; type?: string; userId?: string
 }): Promise<boolean> {
   const [t, settings] = await Promise.all([getTransporter(), getEmailSettings()])
   if (!t || !settings) {
@@ -94,8 +88,8 @@ export async function sendEmail({
       from: settings.from,
       to,
       subject,
-      html,
-      text: text || html.replace(/<[^>]*>/g, ""),
+      html: html || (body ? `<pre style="white-space: pre-wrap;">${body}</pre>` : ""),
+      text: text || body || (html ? html.replace(/<[^>]*>/g, "") : ""),
     })
     return true
   } catch (err) {

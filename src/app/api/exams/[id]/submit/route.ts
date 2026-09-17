@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/session"
+import { requireSecret } from "@/lib/secrets"
 
 export const runtime = "nodejs"
 
@@ -525,7 +526,7 @@ function generateVerificationHash(
   certificationId: string,
   issueDate: Date
 ): string {
-  const raw = `${credentialId}|${userId}|${certificationId}|${issueDate.getTime()}|${process.env.NEXTAUTH_SECRET || "dev-cert-secret"}`
+  const raw = `${credentialId}|${userId}|${certificationId}|${issueDate.getTime()}|${requireSecret("NEXTAUTH_SECRET")}`
   let h1 = 0xdeadbeef ^ raw.length
   let h2 = 0x41c6ce57 ^ raw.length
   for (let i = 0; i < raw.length; i++) {

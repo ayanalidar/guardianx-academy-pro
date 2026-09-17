@@ -1,15 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { getCurrentUser } from "@/lib/session"
+import { requireAdmin } from "@/lib/session"
 
 // Update a lesson (admin only)
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params // lesson id
-  const user = await getCurrentUser()
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
+  const user = await requireAdmin()
+  if (user instanceof NextResponse) return user
 
   const lesson = await db.lesson.findUnique({ where: { id } })
   if (!lesson) return NextResponse.json({ error: "Lesson not found" }, { status: 404 })
@@ -36,11 +33,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 // Delete a lesson (admin only)
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const user = await getCurrentUser()
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
+  const user = await requireAdmin()
+  if (user instanceof NextResponse) return user
 
   const lesson = await db.lesson.findUnique({ where: { id } })
   if (!lesson) return NextResponse.json({ error: "Lesson not found" }, { status: 404 })

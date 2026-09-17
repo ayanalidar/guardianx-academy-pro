@@ -77,7 +77,17 @@ export function hashToView(hash: string): View {
 
   // Strip leading slash for parsing
   const path = raw.startsWith("/") ? raw.slice(1) : raw
-  const parts = path.split("/").map(decodeURIComponent)
+  // Wrap decodeURIComponent in try/catch — a malformed % sequence (e.g.
+  // "#/course/%ZZ") would otherwise throw an uncaught URIError and break
+  // the SPA. Fall back to the raw segment if decoding fails.
+  const safeDecode = (s: string): string => {
+    try {
+      return decodeURIComponent(s)
+    } catch {
+      return s
+    }
+  }
+  const parts = path.split("/").map(safeDecode)
 
   // /course/<id>
   if (parts[0] === "course" && parts[1]) {

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { getCurrentUser, withErrorHandler } from "@/lib/session"
+import { requireAdmin, withErrorHandler } from "@/lib/session"
 
 export const runtime = "nodejs"
 
@@ -8,11 +8,8 @@ export const runtime = "nodejs"
  * Returns all affiliate records with the linked user's name/email + stats.
  * Sorted by createdAt desc (newest affiliates first). */
 export const GET = withErrorHandler(async () => {
-  const currentUser = await getCurrentUser()
-  if (!currentUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (currentUser.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
+  const currentUser = await requireAdmin()
+  if (currentUser instanceof NextResponse) return currentUser
 
   const affiliates = await db.affiliate.findMany({
     orderBy: { createdAt: "desc" },

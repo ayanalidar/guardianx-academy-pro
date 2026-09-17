@@ -13,9 +13,12 @@ rm -f /tmp/admin-cookies.txt /tmp/student-cookies.txt /tmp/curl-out*.html /tmp/s
 pkill -f "next dev" 2>/dev/null || true
 sleep 1
 
-# Start dev server in background
-DATABASE_URL="postgresql://neondb_owner:npg_HaLfn1qG3JPR@ep-raspy-firefly-azeivku9-pooler.c-3.ap-southeast-1.aws.neon.tech/neondb?sslmode=require" \
-NEXTAUTH_SECRET="guardianx-dev-secret-key-change-in-prod-9f7b" \
+# Start dev server in background (reads from .env — copy .env.example first)
+set -a
+. /home/z/my-project/.env
+set +a
+: "${DATABASE_URL:?DATABASE_URL must be set in .env}"
+: "${NEXTAUTH_SECRET:?NEXTAUTH_SECRET must be set in .env}"
 NEXTAUTH_URL="http://localhost:3000" \
   ./node_modules/.bin/next dev -p 3000 > /home/z/my-project/dev.log 2>&1 &
 DEV_PID=$!

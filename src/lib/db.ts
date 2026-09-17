@@ -1,58 +1,26 @@
 import { PrismaClient } from '@prisma/client'
 
-/**
- * Resolve the DATABASE_URL.
- *
- * The sandbox shell exports `DATABASE_URL=file:...` (SQLite) for the local
- * dev environment, but the production schema (`prisma/schema.prisma`) and the
- * real database are PostgreSQL on Neon. Next.js does not override env vars
- * that are already set in the shell, so we read `.env` directly and prefer
- * the value found there when the shell-provided URL is the SQLite fallback.
- *
- * Implementation note: the `fs`/`path` imports are deferred behind a runtime
- * `require` call so this module stays safe to bundle for the browser (only
- * the server-side PrismaClient path actually invokes it).
- */
-function resolveDatabaseUrl(): string | undefined {
+function resolveDatabaseUrl(): string {
   const shellUrl = process.env.DATABASE_URL
-  if (shellUrl && !shellUrl.startsWith('file:')) {
-    return shellUrl
+  if (shellUrl && !shellUrl.startsWith('file:')) return shellUrl
+  const isBuild = process.env.NEXT_PHASE === 'phase-production-build' || process.env.NEXT_PHASE === 'phase-development-server'
+  if (process.env.NODE_ENV === 'production' && !isBuild) {
+    throw new Error('DATABASE_URL missing or SQLite in production.')
   }
-  // Skip on the browser — this code only runs server-side anyway.
-  if (typeof window !== 'undefined') return shellUrl
+  if (typeof window !== 'undefined') { return shellUrl || '' }
   try {
-    // Lazy require so the bundler doesn't try to ship `fs` to the browser.
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const g = globalThis as any
-    const _require: NodeRequire = g.require
-    const fs = _require('fs') as typeof import('fs')
-    const path = _require('path') as typeof import('path')
-    const envPath = path.join(process.cwd(), '.env')
-    if (fs.existsSync(envPath)) {
-      const content = fs.readFileSync(envPath, 'utf-8')
-      const match = content.match(/^DATABASE_URL\s*=\s*"?([^"\r\n]+)"?/m)
-      if (match && match[1] && !match[1].startsWith('file:')) {
-        return match[1]
-      }
+    const g = globalThis as any; const r = g.require
+    const fs = r('fs'), path = r('path')
+    const ep = path.join(process.cwd(), '.env')
+    if (fs.existsSync(ep)) {
+      const m = fs.readFileSync(ep, 'utf-8').match(/^(?:export\s+)?DATABASE_URL\s*=\s*"?([^"\r\n]+)"?/m)
+      if (m && m[1] && !m[1].startsWith('file:')) return m[1]
     }
-  } catch {
-    // ignore — fall through to whatever the shell provided
-  }
+  } catch {}
+  if (!shellUrl) throw new Error('DATABASE_URL not set')
   return shellUrl
 }
 
-const datasourceUrl = resolveDatabaseUrl()
-
-const globalForPrisma = globalThis as unknown as {
-  prisma: PrismaClient | undefined
-}
-
-export const db =
-  globalForPrisma.prisma ??
-  new PrismaClient({
-    // Only log queries in development — never in production (perf + info leak)
-    log: process.env.NODE_ENV === "production" ? ["error", "warn"] : ["query", "error", "warn"],
-    ...(datasourceUrl ? { datasourceUrl } : {}),
-  })
-
-if (process.env.NODE_ENV !== 'production') globalForPrisma.prisma = db
+const g = globalThis as any
+export const db = g.prisma ?? new PrismaClient({ datasourceUrl: resolveDatabaseUrl(), log: process.env.NODE_ENV === 'production' ? ['error','warn'] : ['error','warn'] })
+if (process.env.NODE_ENV !== 'production') g.prisma = db

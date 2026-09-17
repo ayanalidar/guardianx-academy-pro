@@ -1,17 +1,14 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { getCurrentUser, withErrorHandler } from "@/lib/session"
+import { requireAdmin, withErrorHandler } from "@/lib/session"
 
 const LEAD_STATUSES = ["New", "Contacted", "Qualified", "Proposal", "Negotiation", "Converted", "Lost"]
 
 // PATCH /api/admin/leads/[id] — update lead status, followUpDate, assignedTo
 export const PATCH = withErrorHandler(
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
-    const currentUser = await getCurrentUser()
-    if (!currentUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    if (currentUser.role !== "ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-    }
+    const currentUser = await requireAdmin()
+    if (currentUser instanceof NextResponse) return currentUser
 
     const { id } = await params
     const body = await req.json().catch(() => null)
@@ -64,11 +61,8 @@ export const PATCH = withErrorHandler(
 // DELETE /api/admin/leads/[id]
 export const DELETE = withErrorHandler(
   async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
-    const currentUser = await getCurrentUser()
-    if (!currentUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    if (currentUser.role !== "ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-    }
+    const currentUser = await requireAdmin()
+    if (currentUser instanceof NextResponse) return currentUser
 
     const { id } = await params
     await db.lead.delete({ where: { id } }).catch(() => null)

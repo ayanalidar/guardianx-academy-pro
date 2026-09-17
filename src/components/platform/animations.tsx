@@ -12,16 +12,18 @@ export function ScrollReveal({
   y = 24,
   className,
   as = "div",
+  id,
 }: {
   children: React.ReactNode
   delay?: number
   y?: number
   className?: string
   as?: any
+  id?: string
 }) {
   const ref = React.useRef(null)
   const isInView = useInView(ref, { once: true, margin: "-80px" })
-  const MotionTag = motion[as] || motion.div
+  const MotionTag: any = (motion as any)[as] || motion.div
 
   return (
     <MotionTag

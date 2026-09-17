@@ -83,7 +83,6 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
           attackIp: orchData.attackIp,
           networkName: orchData.networkName,
           dynamicFlag: orchData.dynamicFlag,
-          flagFilePath: `/root/flag-${orchData.sessionId?.slice(0, 8) || "default"}.txt`,
           terminalToken: orchData.terminalToken,
           expiresAt: new Date(orchData.expiresAt),
         },
@@ -115,7 +114,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
       // Mark session as error
       await db.labSession.update({
         where: { id: session.id },
-        data: { status: "error", error: err.message },
+        data: { status: "error" },
       })
       return NextResponse.json({ error: `Failed to start lab: ${err.message}` }, { status: 500 })
     }
@@ -143,7 +142,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
 
     await db.labSession.update({
       where: { id: session.id },
-      data: { status: "stopped", stoppedAt: new Date() },
+      data: { status: "stopped", endedAt: new Date() },
     })
 
     return NextResponse.json({ ok: true, status: "stopped" })
@@ -161,7 +160,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
 
     await db.labSession.update({
       where: { id: session.id },
-      data: { expiresAt: newExpiry, lastActivityAt: new Date() },
+      data: { expiresAt: newExpiry },
     })
 
     return NextResponse.json({ ok: true, newExpiry: newExpiry.toISOString() })
@@ -182,14 +181,13 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
           sessionId: session.id,
           targetContainerId: session.targetContainerId,
           dynamicFlag: session.dynamicFlag,
-          flagFilePath: session.flagFilePath,
         }),
       })
       const resetData = await resetRes.json()
 
       await db.labSession.update({
         where: { id: session.id },
-        data: { dynamicFlag: resetData.newFlag, lastActivityAt: new Date() },
+        data: { dynamicFlag: resetData.newFlag },
       })
 
       return NextResponse.json({ ok: true, newFlag: resetData.newFlag })
@@ -202,11 +200,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
   if (action === "status") {
     const session = await db.labSession.findFirst({
       where: { userId: user.id, labId: lab.id, status: "running" },
-      orderBy: { startedAt: "desc" },
+      orderBy: { createdAt: "desc" },
     })
     if (!session) return NextResponse.json({ session: null })
 
-    const timeLeft = Math.max(0, new Date(session.expiresAt).getTime() - Date.now())
+    const timeLeft = session.expiresAt ? Math.max(0, new Date(session.expiresAt).getTime() - Date.now()) : 0
 
     return NextResponse.json({
       session: {
@@ -237,11 +235,11 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ slug
   // Check for active session
   const session = await db.labSession.findFirst({
     where: { userId: user.id, labId: (await db.lab.findUnique({ where: { slug } }))?.id, status: "running" },
-    orderBy: { startedAt: "desc" },
+    orderBy: { createdAt: "desc" },
   })
 
   if (session) {
-    const timeLeft = Math.max(0, new Date(session.expiresAt).getTime() - Date.now())
+    const timeLeft = session.expiresAt ? Math.max(0, new Date(session.expiresAt).getTime() - Date.now()) : 0
     return NextResponse.json({
       hasActiveSession: true,
       session: {

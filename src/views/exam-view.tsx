@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useQuery, useMutation } from "@tanstack/react-query"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { api } from "@/lib/api"
 import { useAppStore } from "@/store/app-store"
 import { Card } from "@/components/ui/card"
@@ -261,6 +261,8 @@ function ExamRunner({ data, attemptId, onComplete }: { data: ExamData; attemptId
       onComplete()
     },
   })
+
+  const handleSubmit = () => submitMutation.mutate()
 
   // Timer — uses a ref to call submit without dependency issues
   const submitRef = React.useRef<() => void>(() => {})

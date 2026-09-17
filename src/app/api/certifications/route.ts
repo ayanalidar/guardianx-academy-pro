@@ -3,7 +3,7 @@ import { db } from "@/lib/db"
 export const runtime = "nodejs"
 export async function GET() {
   try {
-    const certs = await db.certification.findMany({ where: { published: true }, orderBy: { order: "asc" } })
+    const certs = await db.guardianCertification.findMany({ where: { published: true }, orderBy: { createdAt: "asc" } })
     return NextResponse.json({ certifications: certs.map(c => ({ ...c, domains: JSON.parse(c.domains || "[]"), skills: JSON.parse(c.skills || "[]") })) })
   } catch { return NextResponse.json({ certifications: [] }) }
 }

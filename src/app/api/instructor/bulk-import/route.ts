@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
 import { db } from "@/lib/db"
-import { getCurrentUser } from "@/lib/session"
+import { requireRole } from "@/lib/session"
 import { sendEmail } from "@/lib/email"
 import { parseCsvObjects, isValidEmail, generateTempPassword } from "@/lib/csv"
 
@@ -15,11 +15,8 @@ const MAX_STUDENTS = 200
 
 export async function POST(req: NextRequest) {
   try {
-    const user = await getCurrentUser()
-    if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    if (user.role !== "INSTRUCTOR" && user.role !== "ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-    }
+    const user = await requireRole(["INSTRUCTOR", "ADMIN", "SUPER_ADMIN"])
+    if (user instanceof NextResponse) return user
 
     const body = await req.json()
     const courseId: string | undefined = body.courseId

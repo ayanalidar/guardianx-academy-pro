@@ -30,12 +30,14 @@ yarn-debug.log*
 yarn-error.log*
 .pnpm-debug.log*
 
-# env files (can opt-in for committing if needed)
-.env*
+# env files (committed example is allowed; real .env never)
+.env
+.env.local
+.env.*.local
+!.env.example
 
 # vercel
 .vercel
-
 
 # typescript
 *.tsbuildinfo
@@ -46,13 +48,21 @@ local-*
 *.log
 dev.log
 dev.out.log
+server.log
+
+# === Vendored AI-assistant junk — these belong to the dev tool, NOT to the project. ===
+/skills/
+/agent-ctx/
+/tool-results/
+/download/
+.zscripts/
+
+# === User uploads — must go to object storage (S3 / Vercel Blob), not git. ===
+/upload/
+
+# === Agent-browser test screenshots ===
+test-*.png
+
+# === Local-only build artifacts ===
 test
 prompt
-
-server.log
-# Skills directory
-/skills/tool-results/
-
-# Agent-browser test screenshots
-test-*.png
-upload/

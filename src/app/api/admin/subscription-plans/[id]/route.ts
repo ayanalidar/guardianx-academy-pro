@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { getCurrentUser, withErrorHandler } from "@/lib/session"
+import { requireAdmin, withErrorHandler } from "@/lib/session"
 import { logAction } from "@/lib/audit"
 
 export const runtime = "nodejs"
@@ -10,11 +10,8 @@ export const runtime = "nodejs"
  */
 export const PATCH = withErrorHandler(
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
-    const currentUser = await getCurrentUser()
-    if (!currentUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    if (currentUser.role !== "ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-    }
+    const currentUser = await requireAdmin()
+    if (currentUser instanceof NextResponse) return currentUser
 
     const { id } = await params
     const existing = await db.subscriptionPlan.findUnique({ where: { id } })
@@ -93,11 +90,8 @@ export const PATCH = withErrorHandler(
 /* DELETE /api/admin/subscription-plans/[id] — ADMIN only. Delete a plan. */
 export const DELETE = withErrorHandler(
   async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
-    const currentUser = await getCurrentUser()
-    if (!currentUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    if (currentUser.role !== "ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-    }
+    const currentUser = await requireAdmin()
+    if (currentUser instanceof NextResponse) return currentUser
 
     const { id } = await params
     const existing = await db.subscriptionPlan.findUnique({ where: { id } })

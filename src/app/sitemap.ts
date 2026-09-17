@@ -38,6 +38,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       entries.push({ url: `${BASE_URL}/courses/${encodeURIComponent(c.slug)}`, lastModified: c.updatedAt, changeFrequency: "weekly" as const, priority: 0.9 })
     }
     for (const b of batches) {
+      if (!b.slug) continue
       entries.push({ url: `${BASE_URL}/batches/${encodeURIComponent(b.slug)}`, lastModified: b.updatedAt, changeFrequency: "weekly" as const, priority: 0.8 })
     }
     for (const b of blogPosts) {

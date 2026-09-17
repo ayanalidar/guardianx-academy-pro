@@ -1,14 +1,11 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { getCurrentUser } from "@/lib/session"
+import { requireAdmin } from "@/lib/session"
 
 // GET /api/admin/certifications — list all certifications (admin only)
 export async function GET() {
-  const user = await getCurrentUser()
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
+  const user = await requireAdmin()
+  if (user instanceof NextResponse) return user
 
   const certs = await db.certification.findMany({
     orderBy: [{ order: "asc" }, { createdAt: "asc" }],
@@ -19,11 +16,8 @@ export async function GET() {
 
 // POST /api/admin/certifications — create a new certification
 export async function POST(req: NextRequest) {
-  const user = await getCurrentUser()
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
+  const user = await requireAdmin()
+  if (user instanceof NextResponse) return user
 
   const body = await req.json()
   const { short, full, body: certBody, level, category, color, duration, desc, popular, order } = body

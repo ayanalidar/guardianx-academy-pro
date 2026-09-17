@@ -17,7 +17,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 
   const a = await db.skillAssessment.findUnique({
     where: { id },
-    include: { questions: { orderBy: { createdAt: "asc" } } },
+    include: { questions: { orderBy: { id: "asc" } } },
   })
   if (!a) return NextResponse.json({ error: "Assessment not found" }, { status: 404 })
 

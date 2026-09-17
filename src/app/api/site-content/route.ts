@@ -8,7 +8,7 @@ export async function GET() {
   const items = await db.siteContent.findMany()
   const map: Record<string, string> = {}
   for (const item of items) {
-    map[item.key] = item.value
+    map[item.key] = typeof item.value === "string" ? item.value : JSON.stringify(item.value)
   }
   return NextResponse.json({ content: map, items })
 }

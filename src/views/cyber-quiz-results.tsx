@@ -153,6 +153,7 @@ export function CyberQuizResultsView() {
 // ============================================================
 function PassedResultsView({ attempt, attemptId }: { attempt: Attempt; attemptId: string }) {
   const { navigate } = useAppStore()
+  const { formatPrice } = useCurrencyHook()
   const meta = DIFFICULTY_META[attempt.difficulty]
   const DiffIcon = meta.icon
 

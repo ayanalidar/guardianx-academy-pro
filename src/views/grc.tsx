@@ -18,7 +18,7 @@ export function GrcView() {
     queryFn: async () => { try { const r = await fetch("/api/grc"); return r.ok ? r.json() : null } catch { return null } },
   })
   const content = data?.content ?? []
-  const categories = [...new Set(content.map((c: any) => c.category))]
+  const categories = Array.from(new Set(content.map((c: any) => c.category as string)))
 
   return (
     <div className="relative min-h-screen">
@@ -36,7 +36,7 @@ export function GrcView() {
             <Card className="p-8 text-center text-muted-foreground text-sm">Loading GRC content...</Card>
           ) : (
             <div className="space-y-8">
-              {categories.map((cat: string) => (
+              {(categories as string[]).map((cat) => (
                 <div key={cat}>
                   <h2 className="text-sm font-semibold mb-3 text-blue-300">{cat}</h2>
                   <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">

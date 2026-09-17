@@ -3,8 +3,22 @@ import CredentialsProvider from "next-auth/providers/credentials"
 import GoogleProvider from "next-auth/providers/google"
 import EmailProvider from "next-auth/providers/email"
 import bcrypt from "bcryptjs"
+import { randomBytes } from "crypto"
 import { db } from "@/lib/db"
 import { sendEmail, magicLinkEmailTemplate } from "@/lib/email"
+import { requireSecret } from "@/lib/secrets"
+
+// Generate a sentinel password hash for OAuth/magic-link accounts.
+// These accounts cannot log in via the credentials provider — the hash is
+// just a placeholder so the NOT NULL constraint is satisfied.
+function oauthPlaceholderHash(): string {
+  // 32 random bytes hex-encoded, then hashed with bcrypt. The plaintext is
+  // never stored or used, so it's safe — but it's also not a constant
+  // (unlike "!oauth-only") so attackers can't identify OAuth accounts by
+  // hash prefix.
+  const random = randomBytes(32).toString("hex")
+  return bcrypt.hashSync(random, 12)
+}
 
 // Rate limiting for login attempts (in-memory, per IP)
 const LOGIN_RATE_LIMIT_WINDOW = 60 * 1000 // 1 minute
@@ -108,10 +122,14 @@ export const authOptions: NextAuthOptions = {
     }),
 
     // Google OAuth provider — "Sign in with Google" button
+    // allowDangerousEmailAccountLinking is FALSE: prevents account-takeover
+    // via the password-then-OAuth merge path. Users who try to OAuth with an
+    // email already registered via password will be asked to sign in with
+    // the original method first.
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
-      allowDangerousEmailAccountLinking: true,
+      allowDangerousEmailAccountLinking: false,
     }),
 
     // Email (magic link) provider — passwordless login
@@ -145,16 +163,10 @@ export const authOptions: NextAuthOptions = {
     })] : []),
   ],
   session: { strategy: "jwt" },
-  secret: process.env.NEXTAUTH_SECRET || (() => {
-    // In production, NEXTAUTH_SECRET MUST be set. But we don't want to crash
-    // the build — only fail at runtime when auth is actually used.
-    if (process.env.NODE_ENV === "production" && !process.env.NEXTAUTH_SECRET) {
-      console.error("FATAL: NEXTAUTH_SECRET environment variable is not set. Auth will not work properly.")
-      return "missing-secret-auth-will-fail-" + Date.now()
-    }
-    console.warn("WARNING: NEXTAUTH_SECRET not set — using insecure dev fallback.")
-    return "dev-only-insecure-secret-" + Date.now()
-  })(),
+  // requireSecret throws in production if NEXTAUTH_SECRET is missing.
+  // In dev, a random ephemeral secret is used (with a loud warning) so the
+  // server still boots — but JWTs won't survive a restart.
+  secret: requireSecret("NEXTAUTH_SECRET"),
   pages: { signIn: "/" },
   callbacks: {
     async signIn({ user, account }) {
@@ -162,12 +174,14 @@ export const authOptions: NextAuthOptions = {
       if (account?.provider === "google" && user.email) {
         const existing = await db.user.findUnique({ where: { email: user.email } })
         if (!existing) {
-          // Auto-create a new STUDENT account for Google sign-ins
+          // Auto-create a new STUDENT account for Google sign-ins.
+          // passwordHash is a non-guessable sentinel — credentials login
+          // for OAuth-only accounts is impossible.
           await db.user.create({
             data: {
               email: user.email,
               name: user.name || "Google User",
-              passwordHash: bcrypt.hashSync(Math.random().toString(36).slice(-12), 12),
+              passwordHash: oauthPlaceholderHash(),
               role: "STUDENT",
               title: "Student",
               avatar: user.image || null,
@@ -183,7 +197,7 @@ export const authOptions: NextAuthOptions = {
             data: {
               email: user.email.toLowerCase(),
               name: user.name || user.email.split("@")[0],
-              passwordHash: bcrypt.hashSync(Math.random().toString(36).slice(-12), 12),
+              passwordHash: oauthPlaceholderHash(),
               role: "STUDENT",
               title: "Student",
             },

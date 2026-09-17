@@ -75,7 +75,6 @@ export async function POST(req: NextRequest) {
           leadId: existing.id,
           fromStatus: existing.status,
           toStatus: existing.status,
-          note: "Lead resubmitted Google Form — updated info",
         },
       }).catch(() => {})
 
@@ -102,7 +101,7 @@ export async function POST(req: NextRequest) {
       await db.leadNote.create({
         data: {
           leadId: newLead.id,
-          note: requirementText,
+          content: requirementText,
           authorId: null,
         },
       }).catch(() => {})
@@ -113,7 +112,6 @@ export async function POST(req: NextRequest) {
         leadId: newLead.id,
         fromStatus: null,
         toStatus: "New",
-        note: "Lead received from Google Form webhook",
       },
     }).catch(() => {})
 

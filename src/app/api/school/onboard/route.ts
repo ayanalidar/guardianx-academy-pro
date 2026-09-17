@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { getCurrentUser } from "@/lib/session"
+import { requireRole } from "@/lib/session"
 import { randomBytes } from "crypto"
 
 // Generate a unique school code (e.g. "GXA-7K3M9P")
@@ -13,11 +13,8 @@ function generateSchoolCode(): string {
 // POST /api/school/onboard
 // Creates a School record (with unique schoolCode) and links it to the current user.
 export async function POST(req: NextRequest) {
-  const user = await getCurrentUser()
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (user.role !== "INSTRUCTOR" && user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
+  const user = await requireRole(["INSTRUCTOR", "ADMIN", "SUPER_ADMIN"])
+  if (user instanceof NextResponse) return user
 
   // If the user already has a school, they cannot onboard again
   const existing = await db.user.findUnique({
@@ -59,9 +56,11 @@ export async function POST(req: NextRequest) {
         schoolCode,
         address: address?.trim() || null,
         city: city?.trim() || null,
-        contactPerson: contactPerson?.trim() || null,
-        contactEmail: contactEmail.trim(),
-        contactPhone: contactPhone?.trim() || null,
+        adminName: user.name || contactPerson?.trim() || "School Admin",
+        adminEmail: contactEmail.trim() || user.email,
+        passwordHash: "$2a$12$placeholder.hash.updated.on.first.login.xxxxxxxx",
+        email: contactEmail.trim() || user.email,
+        phone: contactPhone?.trim() || null,
       },
     })
     await tx.user.update({

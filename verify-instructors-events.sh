@@ -13,8 +13,16 @@ pkill -f "next dev" 2>/dev/null || true
 sleep 2
 
 echo "==> 3. Starting dev server on port 3000"
-export DATABASE_URL='postgresql://neondb_owner:npg_HaLfn1qG3JPR@ep-raspy-firefly-azeivku9-pooler.c-3.ap-southeast-1.aws.neon.tech/neondb?sslmode=require'
-export NEXTAUTH_SECRET='guardianx-dev-secret-key-change-in-prod-9f7b'
+# Load env from .env (copy .env.example -> .env first)
+if [[ ! -f .env ]]; then
+  echo "ERROR: .env not found. Copy .env.example -> .env and fill in values." >&2
+  exit 1
+fi
+set -a
+. ./.env
+set +a
+: "${DATABASE_URL:?DATABASE_URL must be set in .env}"
+: "${NEXTAUTH_SECRET:?NEXTAUTH_SECRET must be set in .env}"
 export NEXTAUTH_URL='http://localhost:3000'
 ( ./node_modules/.bin/next dev -p 3000 > /home/z/my-project/dev.log 2>&1 ) &
 DEV_PID=$!

@@ -1,17 +1,12 @@
+# GuardianX Academy — Caddy reverse proxy
+#
+# SECURITY: The previous `XTransformPort` handler allowed any client to make
+# Caddy proxy to an arbitrary localhost port (SSRF). It has been removed.
+# If you need per-service routing, add explicit `:PORT` blocks below or use
+# Caddy's named routes via the admin API.
+
 :81 {
-	@transform_port_query {
-		query XTransformPort=*
-	}
-
-	handle @transform_port_query {
-		reverse_proxy localhost:{query.XTransformPort} {
-			header_up Host {host}
-			header_up X-Forwarded-For {remote_host}
-			header_up X-Forwarded-Proto {scheme}
-			header_up X-Real-IP {remote_host}
-		}
-	}
-
+	# Web app (default)
 	handle {
 		reverse_proxy localhost:3000 {
 			header_up Host {host}
@@ -21,3 +16,18 @@
 		}
 	}
 }
+
+# === Explicit per-service routes (add as needed) ===
+# Example: expose the WebRTC signaling server on its own path.
+# :81/live {
+#   reverse_proxy localhost:3003
+# }
+#
+# Example: lab orchestrator (should be internal-only — do NOT expose publicly).
+# :81/lab {
+#   @internal client_ip 10.0.0.0/8 192.168.0.0/16
+#   handle @internal {
+#     reverse_proxy localhost:3004
+#   }
+#   respond 403
+# }

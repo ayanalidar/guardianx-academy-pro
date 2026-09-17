@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { getCurrentUser, withErrorHandler } from "@/lib/session"
+import { requireAdmin, withErrorHandler } from "@/lib/session"
 
 export const runtime = "nodejs"
 
@@ -10,9 +10,8 @@ export const runtime = "nodejs"
  * visible ones.
  */
 export const GET = withErrorHandler(async () => {
-  const currentUser = await getCurrentUser()
-  if (!currentUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (currentUser.role !== "ADMIN") return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  const currentUser = await requireAdmin()
+  if (currentUser instanceof NextResponse) return currentUser
 
   const stats = await db.platformStat.findMany({
     orderBy: [{ key: "asc" }],
@@ -27,9 +26,8 @@ export const GET = withErrorHandler(async () => {
  * Body: { key, label, value, source?, displayStatus?, suffix?, icon?, color? }
  */
 export const POST = withErrorHandler(async (req) => {
-  const currentUser = await getCurrentUser()
-  if (!currentUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (currentUser.role !== "ADMIN") return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  const currentUser = await requireAdmin()
+  if (currentUser instanceof NextResponse) return currentUser
 
   const body = await req.json().catch(() => null)
   if (!body) return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })

@@ -37,7 +37,7 @@ export async function GET() {
   })
 
   const staticAchievements = ACHIEVEMENT_DEFS.map((d) => {
-    const e = earned.find((x) => x.achievement.code === d.code)
+    const e = earned.find((x: any) => x.achievement.code === d.code)
     return {
       code: d.code,
       title: d.title,
@@ -51,8 +51,8 @@ export async function GET() {
       progress: progressMap[d.code] ?? null,
     }
   })
-  const dynamicAchievements = dynamicRows.map((a) => {
-    const e = earned.find((x) => x.achievementId === a.id)
+  const dynamicAchievements = dynamicRows.map((a: any) => {
+    const e = earned.find((x: any) => x.achievementId === a.id)
     return {
       code: a.code,
       title: a.title,
@@ -75,11 +75,11 @@ export async function GET() {
     const d = new Date(today)
     d.setDate(d.getDate() - i)
     const ds = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
-    const dayActs = activities.filter((a) => a.date === ds)
+    const dayActs = activities.filter((a: any) => a.date === ds)
     heatmap.push({
       date: ds,
       count: dayActs.length,
-      xp: dayActs.reduce((a, b) => a + b.xp, 0),
+      xp: dayActs.reduce((a: number, b: any) => a + b.xp, 0),
     })
   }
 

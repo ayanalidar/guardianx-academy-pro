@@ -42,6 +42,8 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
 
   // --- Signature verification ---
   const keySecret = await getSetting("RAZORPAY_KEY_SECRET")
+  const isMockMode = process.env.PAYMENT_MOCK_MODE === "true"
+
   if (keySecret) {
     // Real verification: HMAC SHA-256 of `razorpayOrderId|razorpayPaymentId`
     const expected = createHmac("sha256", keySecret)
@@ -52,8 +54,30 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
     if (expectedBuf.length !== providedBuf.length || !timingSafeEqual(expectedBuf, providedBuf)) {
       return NextResponse.json({ error: "Payment signature verification failed" }, { status: 400 })
     }
+  } else if (isMockMode) {
+    // Explicit mock mode for local dev / staging. The order is marked paid
+    // without a real signature check. NEVER enable in production.
+    if (process.env.NODE_ENV === "production") {
+      console.error("[payment/verify] FATAL: PAYMENT_MOCK_MODE=true in production. Refusing to verify.")
+      return NextResponse.json(
+        { error: "Mock payment mode is not allowed in production" },
+        { status: 500 }
+      )
+    }
+    console.warn("[payment/verify] PAYMENT_MOCK_MODE=true — accepting unverified payment (dev only)")
+  } else {
+    // No secret + no explicit mock flag → refuse to verify. This prevents
+    // a misconfigured production deploy from silently accepting forged
+    // payments.
+    return NextResponse.json(
+      {
+        error:
+          "Payment verification is not configured. Set RAZORPAY_KEY_SECRET " +
+          "(or PAYMENT_MOCK_MODE=true for local dev).",
+      },
+      { status: 500 }
+    )
   }
-  // If keySecret is not set, we're in mock mode — accept any non-empty values
 
   // Mark order as paid + store payment details
   await db.order.update({

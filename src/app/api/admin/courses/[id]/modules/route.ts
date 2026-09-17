@@ -1,13 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { getCurrentUser } from "@/lib/session"
+import { requireAdmin } from "@/lib/session"
 
 // GET — list all modules + their lessons for a course (admin only)
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const user = await getCurrentUser()
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (user.role !== "ADMIN") return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  const user = await requireAdmin()
+  if (user instanceof NextResponse) return user
 
   const course = await db.course.findUnique({ where: { id }, select: { id: true } })
   if (!course) return NextResponse.json({ error: "Course not found" }, { status: 404 })
@@ -33,11 +32,8 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 // Create a new module in a course (admin only)
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params // course id
-  const user = await getCurrentUser()
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
+  const user = await requireAdmin()
+  if (user instanceof NextResponse) return user
 
   const course = await db.course.findUnique({ where: { id } })
   if (!course) return NextResponse.json({ error: "Course not found" }, { status: 404 })

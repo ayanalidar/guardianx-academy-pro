@@ -1,15 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { getCurrentUser } from "@/lib/session"
+import { requireRole } from "@/lib/session"
 
 // Update a module (instructor only)
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params // module id
-  const user = await getCurrentUser()
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (user.role !== "INSTRUCTOR" && user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
+  const user = await requireRole(["INSTRUCTOR", "ADMIN", "SUPER_ADMIN"])
+  if (user instanceof NextResponse) return user
 
   const moduleData = await db.module.findUnique({
     where: { id },
@@ -35,11 +32,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 // Delete a module (and all its lessons via cascade)
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const user = await getCurrentUser()
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (user.role !== "INSTRUCTOR" && user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
+  const user = await requireRole(["INSTRUCTOR", "ADMIN", "SUPER_ADMIN"])
+  if (user instanceof NextResponse) return user
 
   const moduleData = await db.module.findUnique({
     where: { id },

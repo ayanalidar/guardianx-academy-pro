@@ -437,8 +437,8 @@ function LiveRoom({ session, onLeave, userName, userId, isHost }: {
     }
     session_.onChat = (msg) => setChat((c) => [...c, msg])
     session_.onPresenterChange = (_socketId, name) => {
-      setActivePresenterName(name)
-      toast.info(`${name} is now presenting`)
+      setActivePresenterName(name ?? null)
+      toast.info(`${name ?? "Someone"} is now presenting`)
     }
     session_.onPresentRequest = (req) => {
       setPresentRequests((r) => [...r, req])

@@ -8,7 +8,7 @@ export async function getCurrentUser() {
   if (!session?.user) return null
   const user = await db.user.findUnique({
     where: { id: (session.user as any).id },
-    select: { id: true, email: true, name: true, role: true, avatar: true, title: true, bio: true, schoolId: true },
+    select: { id: true, email: true, name: true, role: true, avatar: true, title: true, bio: true, schoolId: true, xp: true, level: true, streak: true, lastActiveDate: true },
   })
   return user
 }
@@ -23,6 +23,10 @@ export type AuthUser = NonNullable<SafeUser>
  *   const user = await requireRole(["ADMIN"])
  *   if (user instanceof NextResponse) return user  // auth/forbidden failed
  *   // ... user is guaranteed to be in one of the allowed roles
+ *
+ * Best practice: always include "SUPER_ADMIN" alongside "ADMIN" for admin
+ * endpoints, otherwise super-admins will be 403'd. Example:
+ *   await requireRole(["ADMIN", "SUPER_ADMIN"])
  */
 export async function requireRole(
   roles: string[]
@@ -38,6 +42,14 @@ export async function requireRole(
 }
 
 /**
+ * Convenience: require an ADMIN or SUPER_ADMIN user. Use this instead of
+ * `requireRole(["ADMIN"])` to avoid the common bug of forgetting SUPER_ADMIN.
+ */
+export async function requireAdmin(): Promise<AuthUser | NextResponse> {
+  return requireRole(["ADMIN", "SUPER_ADMIN"])
+}
+
+/**
  * withErrorHandler() — higher-order function that wraps an API route handler
  * with try/catch to prevent Prisma/DB stack traces from leaking to clients.
  *
@@ -48,12 +60,7 @@ export async function requireRole(
  *     // ... your handler code
  *   })
  *
- *   export const POST = withErrorHandler(async (req) => {
- *     // ... your handler code
- *   })
- *
- * For dynamic route params:
- *   export const PATCH = withErrorHandler(async (req, { params }) => {
+ *   export const POST = withErrorHandler(async (req, { params }) => {
  *     const { id } = await params
  *     // ...
  *   })
@@ -74,4 +81,115 @@ export function withErrorHandler<T extends any[]>(
       )
     }
   }
+}
+
+/**
+ * readJsonBody() — parse a request body as JSON with size + shape validation.
+ *
+ * Returns `{ data, error }`:
+ *   - on success, `data` is the parsed object and `error` is null.
+ *   - on failure, `data` is null and `error` is a NextResponse (400) ready
+ *     to return from the handler.
+ *
+ * Default max body size is 1 MB. For routes that accept larger uploads
+ * (e.g. file attachments), pass a higher limit explicitly.
+ *
+ * Why: without a body-size cap, a malicious client can POST a 100 MB body
+ * and OOM the Node.js process. Next.js does not enforce a default limit.
+ */
+export async function readJsonBody<T = unknown>(
+  req: NextRequest,
+  opts: { maxBytes?: number } = {}
+): Promise<{ data: T | null; error: NextResponse | null }> {
+  const maxBytes = opts.maxBytes ?? 1 * 1024 * 1024 // 1 MB default
+  // Use text() so we can length-check BEFORE parsing. req.json() would
+  // stream the entire body into memory unconditionally.
+  let text: string
+  try {
+    text = await req.text()
+  } catch {
+    return {
+      data: null,
+      error: NextResponse.json({ error: "Invalid request body" }, { status: 400 }),
+    }
+  }
+  if (text.length > maxBytes) {
+    return {
+      data: null,
+      error: NextResponse.json(
+        { error: `Body too large (max ${maxBytes} bytes)` },
+        { status: 413 }
+      ),
+    }
+  }
+  if (!text) {
+    return {
+      data: null,
+      error: NextResponse.json({ error: "Empty request body" }, { status: 400 }),
+    }
+  }
+  try {
+    return { data: JSON.parse(text) as T, error: null }
+  } catch {
+    return {
+      data: null,
+      error: NextResponse.json({ error: "Invalid JSON body" }, { status: 400 }),
+    }
+  }
+}
+
+/**
+ * In-memory rate limiter — single-instance only.
+ *
+ * For serverless / multi-instance deployments, replace with a Redis-backed
+ * limiter (Upstash Ratelimit). The function signature is intentionally
+ * minimal so the swap is a one-line change inside this file.
+ *
+ * Usage:
+ *   const ok = rateLimit(`login:${ip}`, { max: 10, windowMs: 60_000 })
+ *   if (!ok) return NextResponse.json({ error: "Too many requests" }, { status: 429 })
+ *
+ * Identity keys: use a stable prefix + IP + (optional) user ID. Don't use
+ * the bare IP — Cloudflare/Vercel can mask it. Prefer `x-forwarded-for`'s
+ * first hop + a route-specific prefix.
+ */
+type RateLimitEntry = { count: number; resetAt: number }
+const rateLimitMap = new Map<string, RateLimitEntry>()
+
+// Periodic cleanup so the map doesn't grow unbounded. (Entries naturally
+// expire on read, but abandoned keys would otherwise linger.)
+if (typeof setInterval !== "undefined") {
+  setInterval(() => {
+    const now = Date.now()
+    for (const [k, v] of rateLimitMap) {
+      if (v.resetAt < now) rateLimitMap.delete(k)
+    }
+  }, 5 * 60 * 1000).unref?.()
+}
+
+export function rateLimit(
+  key: string,
+  opts: { max: number; windowMs: number }
+): boolean {
+  const now = Date.now()
+  const entry = rateLimitMap.get(key)
+  if (!entry || now > entry.resetAt) {
+    rateLimitMap.set(key, { count: 1, resetAt: now + opts.windowMs })
+    return true
+  }
+  if (entry.count >= opts.max) return false
+  entry.count++
+  return true
+}
+
+/**
+ * Extract a client IP from a NextRequest. Handles x-forwarded-for chains
+ * (takes the first hop) and falls back to "unknown".
+ */
+export function getClientIp(req: NextRequest): string {
+  const xff = req.headers.get("x-forwarded-for")
+  if (xff) {
+    return xff.split(",")[0].trim()
+  }
+  return req.headers.get("x-real-ip") || "unknown"
 }

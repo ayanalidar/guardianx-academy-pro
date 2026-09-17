@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { getCurrentUser, withErrorHandler } from "@/lib/session"
+import { requireAdmin, withErrorHandler } from "@/lib/session"
 
 export const runtime = "nodejs"
 
@@ -20,11 +20,8 @@ export const runtime = "nodejs"
  * }
  */
 export const GET = withErrorHandler(async (req) => {
-  const currentUser = await getCurrentUser()
-  if (!currentUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (currentUser.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
+  const currentUser = await requireAdmin()
+  if (currentUser instanceof NextResponse) return currentUser
 
   const url = new URL(req.url)
   const status = url.searchParams.get("status") || undefined

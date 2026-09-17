@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { getCurrentUser, withErrorHandler } from "@/lib/session"
+import { requireAdmin, withErrorHandler } from "@/lib/session"
 import { logAction } from "@/lib/audit"
 
 export const runtime = "nodejs"
@@ -19,11 +19,8 @@ function slugify(s: string): string {
 export const PATCH = withErrorHandler(
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const { id } = await params
-    const currentUser = await getCurrentUser()
-    if (!currentUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    if (currentUser.role !== "ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-    }
+    const currentUser = await requireAdmin()
+    if (currentUser instanceof NextResponse) return currentUser
 
     const existing = await db.blogPost.findUnique({ where: { id } })
     if (!existing) return NextResponse.json({ error: "Post not found" }, { status: 404 })
@@ -91,11 +88,8 @@ export const PATCH = withErrorHandler(
 export const DELETE = withErrorHandler(
   async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const { id } = await params
-    const currentUser = await getCurrentUser()
-    if (!currentUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    if (currentUser.role !== "ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-    }
+    const currentUser = await requireAdmin()
+    if (currentUser instanceof NextResponse) return currentUser
 
     const existing = await db.blogPost.findUnique({ where: { id } })
     if (!existing) return NextResponse.json({ error: "Post not found" }, { status: 404 })

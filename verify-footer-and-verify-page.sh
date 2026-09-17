@@ -12,24 +12,17 @@ cd /home/z/my-project
 find tool-results -name ".*" -type f -delete 2>/dev/null
 echo "✓ tool-results cleaned"
 
-# 0b) Restore the Neon PostgreSQL DATABASE_URL into .env (the shell exports
-#     a SQLite fallback `file:...` which Next.js does NOT override from .env,
-#     breaking every Prisma query. The .env should have the real Neon URL —
-#     restored from git commit 349e7ed.) Also export it explicitly so the
-#     dev server's process.env.DATABASE_URL is set to Neon, not the SQLite
-#     fallback the shell provides.
-NEON_URL="postgresql://neondb_owner:npg_HaLfn1qG3JPR@ep-raspy-firefly-azeivku9-pooler.c-3.ap-southeast-1.aws.neon.tech/neondb?sslmode=require"
-if ! grep -q "^DATABASE_URL=postgresql://" .env; then
-  cat > .env <<EOF
-# Neon PostgreSQL database (cloud — shared between sandbox + local clones)
-DATABASE_URL=$NEON_URL
-NEXTAUTH_SECRET=guardianx-dev-secret-key-change-in-prod-9f7b
-NEXTAUTH_URL=http://localhost:3000
-EOF
-  echo "✓ .env restored to Neon URL"
+# 0b) Load env vars from .env (must be created by the developer — see .env.example)
+if [[ ! -f .env ]]; then
+  echo "ERROR: .env not found. Copy .env.example -> .env and fill in values." >&2
+  exit 1
 fi
-export DATABASE_URL="$NEON_URL"
-echo "✓ DATABASE_URL exported for dev server"
+set -a
+. ./.env
+set +a
+: "${DATABASE_URL:?DATABASE_URL must be set in .env}"
+: "${NEXTAUTH_SECRET:?NEXTAUTH_SECRET must be set in .env}"
+echo "✓ DATABASE_URL loaded from .env"
 
 # 1) Start dev server (background)
 ( ./node_modules/.bin/next dev -p 3000 > /home/z/my-project/dev.log 2>&1 ) &

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { getCurrentUser } from "@/lib/session"
+import { requireRole } from "@/lib/session"
 
 // Helper: load rubric and verify ownership
 async function loadOwnedRubric(id: string, user: { id: string; role: string }) {
@@ -18,11 +18,8 @@ async function loadOwnedRubric(id: string, user: { id: string; role: string }) {
 // GET — get rubric with criteria
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const user = await getCurrentUser()
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (user.role !== "INSTRUCTOR" && user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
+  const user = await requireRole(["INSTRUCTOR", "ADMIN", "SUPER_ADMIN"])
+  if (user instanceof NextResponse) return user
 
   const owned = await loadOwnedRubric(id, user)
   if (!owned) return NextResponse.json({ error: "Rubric not found" }, { status: 404 })
@@ -44,11 +41,8 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 // PATCH — update rubric (title, description) AND replace criteria (delete old, insert new)
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const user = await getCurrentUser()
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (user.role !== "INSTRUCTOR" && user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
+  const user = await requireRole(["INSTRUCTOR", "ADMIN", "SUPER_ADMIN"])
+  if (user instanceof NextResponse) return user
 
   const owned = await loadOwnedRubric(id, user)
   if (!owned) return NextResponse.json({ error: "Rubric not found" }, { status: 404 })
@@ -122,11 +116,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 // DELETE — delete rubric
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const user = await getCurrentUser()
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (user.role !== "INSTRUCTOR" && user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
+  const user = await requireRole(["INSTRUCTOR", "ADMIN", "SUPER_ADMIN"])
+  if (user instanceof NextResponse) return user
 
   const owned = await loadOwnedRubric(id, user)
   if (!owned) return NextResponse.json({ error: "Rubric not found" }, { status: 404 })

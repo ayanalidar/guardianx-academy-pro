@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { getCurrentUser, withErrorHandler } from "@/lib/session"
+import { requireAdmin, requireRole, withErrorHandler } from "@/lib/session"
 
 export const runtime = "nodejs"
 
@@ -8,11 +8,8 @@ export const runtime = "nodejs"
 // Requires ADMIN or INSTRUCTOR.
 export const GET = withErrorHandler(
   async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
-    const currentUser = await getCurrentUser()
-    if (!currentUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    if (currentUser.role !== "ADMIN" && currentUser.role !== "INSTRUCTOR") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-    }
+    const currentUser = await requireRole(["INSTRUCTOR", "ADMIN", "SUPER_ADMIN"])
+    if (currentUser instanceof NextResponse) return currentUser
 
     const { id } = await params
     const batch = await db.trainingBatch.findUnique({ where: { id } })
@@ -51,11 +48,8 @@ const UPDATABLE_BOOL_FIELDS = ["featured", "published"] as const
 
 export const PATCH = withErrorHandler(
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
-    const currentUser = await getCurrentUser()
-    if (!currentUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    if (currentUser.role !== "ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-    }
+    const currentUser = await requireAdmin()
+    if (currentUser instanceof NextResponse) return currentUser
 
     const { id } = await params
     const body = await req.json().catch(() => null)
@@ -95,11 +89,8 @@ export const PATCH = withErrorHandler(
 // Requires ADMIN.
 export const DELETE = withErrorHandler(
   async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
-    const currentUser = await getCurrentUser()
-    if (!currentUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    if (currentUser.role !== "ADMIN") {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-    }
+    const currentUser = await requireAdmin()
+    if (currentUser instanceof NextResponse) return currentUser
 
     const { id } = await params
     const existing = await db.trainingBatch.findUnique({ where: { id } })

@@ -24,5 +24,5 @@ export default async function Page({ params }: Props) {
   const post = await db.blogPost.findUnique({ where: { slug, published: true }, include: { author: { select: { name: true, avatar: true, bio: true } } } })
   if (!post) notFound()
   db.blogPost.update({ where: { id: post.id }, data: { views: { increment: 1 } } }).catch(() => {})
-  return <PublicPageShell><BlogPostView /></PublicPageShell>
+  return <PublicPageShell><BlogPostView slug={slug} /></PublicPageShell>
 }

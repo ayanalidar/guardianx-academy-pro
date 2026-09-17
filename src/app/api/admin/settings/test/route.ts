@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { getCurrentUser, withErrorHandler } from "@/lib/session"
+import { requireAdmin, withErrorHandler } from "@/lib/session"
 import { getSettings } from "@/lib/settings"
 import { sendEmail } from "@/lib/email"
 
@@ -10,9 +10,8 @@ export const runtime = "nodejs"
  * Body: { type: "payment" | "email" | "crm" }
  */
 export const POST = withErrorHandler(async (req) => {
-  const currentUser = await getCurrentUser()
-  if (!currentUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (currentUser.role !== "ADMIN") return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  const currentUser = await requireAdmin()
+  if (currentUser instanceof NextResponse) return currentUser
 
   const body = await req.json().catch(() => null)
   if (!body?.type) return NextResponse.json({ error: "type is required" }, { status: 400 })

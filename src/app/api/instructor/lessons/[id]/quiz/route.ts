@@ -1,15 +1,12 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { getCurrentUser } from "@/lib/session"
+import { requireRole } from "@/lib/session"
 
 // Create (or fetch) a quiz for a lesson — instructor only
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params // lesson id
-  const user = await getCurrentUser()
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (user.role !== "INSTRUCTOR" && user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
+  const user = await requireRole(["INSTRUCTOR", "ADMIN", "SUPER_ADMIN"])
+  if (user instanceof NextResponse) return user
 
   const lesson = await db.lesson.findUnique({
     where: { id },
@@ -38,11 +35,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 // Get quiz for a lesson (instructor view — includes answer indices)
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const user = await getCurrentUser()
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (user.role !== "INSTRUCTOR" && user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
+  const user = await requireRole(["INSTRUCTOR", "ADMIN", "SUPER_ADMIN"])
+  if (user instanceof NextResponse) return user
 
   const lesson = await db.lesson.findUnique({
     where: { id },
@@ -55,7 +49,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 
   const quiz = await db.quiz.findUnique({
     where: { lessonId: id },
-    include: { questions: { orderBy: { createdAt: "asc" } } },
+    include: { questions: { orderBy: { id: "asc" } } },
   })
 
   if (!quiz) return NextResponse.json({ quiz: null })

@@ -884,6 +884,7 @@ export function CourseDetailView() {
         isEnrolling={enrollMutation.isPending}
         visible={showFloatingCta && !isEnrolled}
         progressPct={progressPct}
+        formatPrice={formatPrice}
       />
 
       {/* ====================================================
@@ -2384,7 +2385,7 @@ function CertExamBlueprint({ course }: { course: any }) {
     }
   })
   // Normalize to 100%
-  const sum = domains.reduce((acc, d) => acc + d.pct, 0)
+  const sum = domains.reduce((acc: number, d: { pct: number }) => acc + d.pct, 0)
   if (sum !== 100 && domains.length > 0) {
     domains[0].pct += 100 - sum
   }
@@ -2463,7 +2464,7 @@ function CertExamBlueprint({ course }: { course: any }) {
             <div className="rounded-2xl border border-border/60 bg-card/40 backdrop-blur p-6">
               <p className="text-[10px] font-mono text-amber-300 tracking-[0.2em] mb-4">DOMAIN WEIGHTINGS</p>
               <div className="space-y-4">
-                {domains.map((d, i) => (
+                {domains.map((d: { name: string; pct: number; color: string; bar: string }, i: number) => (
                   <div key={i}>
                     <div className="flex items-center justify-between mb-1.5">
                       <span className="text-sm font-medium truncate pr-3">{d.name}</span>
@@ -2993,6 +2994,7 @@ function FloatingEnrollCTA({
   isEnrolling,
   visible,
   progressPct,
+  formatPrice,
 }: {
   course: any
   isEnrolled: boolean
@@ -3001,6 +3003,7 @@ function FloatingEnrollCTA({
   isEnrolling: boolean
   visible: boolean
   progressPct: number
+  formatPrice: (n: number) => string
 }) {
   return (
     <AnimatePresence>

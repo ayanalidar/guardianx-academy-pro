@@ -97,6 +97,7 @@ export async function GET(req: NextRequest) {
           color: true,
           thumbnail: true,
           instructor: { select: { id: true, name: true, title: true, avatar: true } },
+          modules: { select: { id: true, lessons: { select: { id: true } } } },
           _count: { select: { modules: true } },
         },
       },

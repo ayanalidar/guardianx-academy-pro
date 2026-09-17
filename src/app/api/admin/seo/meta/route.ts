@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { requireRole, withErrorHandler } from "@/lib/session";
+import { requireAdmin, withErrorHandler } from "@/lib/session";
 import { logAction } from "@/lib/audit";
 
 export const runtime = "nodejs";
@@ -52,7 +52,7 @@ function readStr(v: unknown): string {
 
 /** GET — ADMIN only. Returns all SEO meta rows. */
 export const GET = withErrorHandler(async () => {
-  const user = await requireRole(["ADMIN"]);
+  const user = await requireAdmin();
   if (user instanceof NextResponse) return user;
 
   const items = await db.siteContent.findMany({
@@ -82,7 +82,7 @@ export const GET = withErrorHandler(async () => {
 
 /** POST — ADMIN only. Body shapes documented at the top of the file. */
 export const POST = withErrorHandler(async (req: NextRequest) => {
-  const user = await requireRole(["ADMIN"]);
+  const user = await requireAdmin();
   if (user instanceof NextResponse) return user;
 
   let body: any;

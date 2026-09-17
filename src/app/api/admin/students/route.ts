@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { requireRole, withErrorHandler } from "@/lib/session"
+import { requireAdmin, withErrorHandler } from "@/lib/session"
 
 export const runtime = "nodejs"
 
@@ -9,7 +9,7 @@ export const runtime = "nodejs"
 // Returns each student with computed stats: enrollmentCount, completedCount,
 // labCount, certCount, and avgProgress (across all their enrollments).
 export const GET = withErrorHandler(async (req: NextRequest) => {
-  const currentUser = await requireRole(["ADMIN"])
+  const currentUser = await requireAdmin()
   if (currentUser instanceof NextResponse) return currentUser
 
   const url = new URL(req.url)

@@ -714,7 +714,7 @@ function TemplateFormDialog({
             <div className="space-y-2">
               <Label className="text-xs uppercase tracking-wider text-muted-foreground">Live Preview</Label>
               <div className="rounded-lg overflow-hidden border border-border">
-                <CertificatePreview template={form} />
+                <CertificatePreview template={{ ...form, fontFamily: form.fontFamily as any, borderStyle: form.borderStyle as any, sealStyle: form.sealStyle as any, backgroundPattern: form.backgroundPattern as any }} />
               </div>
               <p className="text-xs text-muted-foreground">
                 This is a sample rendering. Final certificates will use the student&apos;s name and course details.

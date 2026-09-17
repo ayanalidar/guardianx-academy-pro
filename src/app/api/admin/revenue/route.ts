@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { getCurrentUser, withErrorHandler } from "@/lib/session"
+import { requireAdmin, withErrorHandler } from "@/lib/session"
 
 export const runtime = "nodejs"
 
@@ -17,11 +17,8 @@ export const runtime = "nodejs"
  *   - couponStats         per-coupon usage summary (uses, discount given, revenue impact)
  */
 export const GET = withErrorHandler(async () => {
-  const currentUser = await getCurrentUser()
-  if (!currentUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (currentUser.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
+  const currentUser = await requireAdmin()
+  if (currentUser instanceof NextResponse) return currentUser
 
   // Pull all paid orders in one query and aggregate in JS — orders table
   // is small enough (per the PAYMENT-COUPON-SEARCH worklog) that this is

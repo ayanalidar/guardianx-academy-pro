@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { getCurrentUser } from "@/lib/session"
+import { requireRole } from "@/lib/session"
 
 // Helper: load an assignment and verify instructor ownership (or admin)
 async function loadOwnedAssignment(id: string, user: { id: string; role: string }) {
@@ -18,11 +18,8 @@ async function loadOwnedAssignment(id: string, user: { id: string; role: string 
 // GET — get one assignment with submissions count
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const user = await getCurrentUser()
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (user.role !== "INSTRUCTOR" && user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
+  const user = await requireRole(["INSTRUCTOR", "ADMIN", "SUPER_ADMIN"])
+  if (user instanceof NextResponse) return user
 
   const assignment = await loadOwnedAssignment(id, user)
   if (!assignment) return NextResponse.json({ error: "Assignment not found" }, { status: 404 })
@@ -49,11 +46,8 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 // PATCH — update assignment
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const user = await getCurrentUser()
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (user.role !== "INSTRUCTOR" && user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
+  const user = await requireRole(["INSTRUCTOR", "ADMIN", "SUPER_ADMIN"])
+  if (user instanceof NextResponse) return user
 
   const assignment = await loadOwnedAssignment(id, user)
   if (!assignment) return NextResponse.json({ error: "Assignment not found" }, { status: 404 })
@@ -117,11 +111,8 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 // DELETE — delete assignment
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const user = await getCurrentUser()
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (user.role !== "INSTRUCTOR" && user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
+  const user = await requireRole(["INSTRUCTOR", "ADMIN", "SUPER_ADMIN"])
+  if (user instanceof NextResponse) return user
 
   const assignment = await loadOwnedAssignment(id, user)
   if (!assignment) return NextResponse.json({ error: "Assignment not found" }, { status: 404 })

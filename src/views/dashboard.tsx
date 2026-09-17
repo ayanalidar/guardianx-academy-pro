@@ -234,6 +234,7 @@ function pseudoIp(seed: string): string {
 
 export function DashboardView() {
   const { user, stats, gamification, isLoading: userLoading } = useUser()
+  const { navigate } = useAppStore()
 
   const { data: meData, isLoading: meLoading } = useQuery<MeData>({
     queryKey: ["me"],

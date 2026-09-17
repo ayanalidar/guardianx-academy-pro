@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { requireRole, withErrorHandler } from "@/lib/session";
+import { requireAdmin, withErrorHandler } from "@/lib/session";
 
 export const runtime = "nodejs";
 
@@ -418,7 +418,7 @@ function readStr(v: unknown): string {
 
 /* -------- route -------- */
 export const GET = withErrorHandler(async () => {
-  const user = await requireRole(["ADMIN"]);
+  const user = await requireAdmin();
   if (user instanceof NextResponse) return user;
 
   // ---- 1. Pull all SEO overrides at once (page="seo") ----

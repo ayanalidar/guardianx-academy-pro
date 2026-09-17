@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { getCurrentUser } from "@/lib/session"
+import { getCurrentUser, requireRole } from "@/lib/session"
 
 // GET — list assignments for a course.
 // Instructors (owner) and enrolled students can view.
@@ -43,11 +43,8 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 // POST — create a new assignment (INSTRUCTOR/ADMIN only, must be course owner)
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params // course id
-  const user = await getCurrentUser()
-  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (user.role !== "INSTRUCTOR" && user.role !== "ADMIN") {
-    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
-  }
+  const user = await requireRole(["INSTRUCTOR", "ADMIN", "SUPER_ADMIN"])
+  if (user instanceof NextResponse) return user
 
   const course = await db.course.findUnique({ where: { id }, select: { instructorId: true } })
   if (!course) return NextResponse.json({ error: "Course not found" }, { status: 404 })

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { getCurrentUser, withErrorHandler } from "@/lib/session"
+import { requireAdmin, withErrorHandler } from "@/lib/session"
 import { SETTING_DEFINITIONS, clearSettingsCache } from "@/lib/settings"
 import { clearEmailCache } from "@/lib/email"
 
@@ -10,9 +10,8 @@ export const runtime = "nodejs"
  * ADMIN-only. Returns all settings (with masked secrets).
  */
 export const GET = withErrorHandler(async () => {
-  const currentUser = await getCurrentUser()
-  if (!currentUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (currentUser.role !== "ADMIN") return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  const currentUser = await requireAdmin()
+  if (currentUser instanceof NextResponse) return currentUser
 
   const rows = await db.platformSetting.findMany()
   const dbMap = new Map(rows.map((r) => [r.key, r]))
@@ -46,9 +45,8 @@ export const GET = withErrorHandler(async () => {
  * Empty string or null deletes the DB row (falls back to env var).
  */
 export const PUT = withErrorHandler(async (req) => {
-  const currentUser = await getCurrentUser()
-  if (!currentUser) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (currentUser.role !== "ADMIN") return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  const currentUser = await requireAdmin()
+  if (currentUser instanceof NextResponse) return currentUser
 
   const body = await req.json().catch(() => null)
   if (!body?.settings || typeof body.settings !== "object") {

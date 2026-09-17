@@ -154,10 +154,12 @@ export class WebRTCSession {
     if (initiator) {
       // Add local tracks if we have them
       if (this.isPresenting && this.screenStream) {
-        this.screenStream.getTracks().forEach((t) => pc.addTrack(t, this.screenStream))
+        const s1 = this.screenStream
+        s1.getTracks().forEach((t) => pc.addTrack(t, s1))
       }
       if (this.micOn && this.micStream) {
-        this.micStream.getAudioTracks().forEach((t) => pc.addTrack(t, this.micStream))
+        const s2 = this.micStream
+        s2.getAudioTracks().forEach((t) => pc.addTrack(t, s2))
       }
       pc.onnegotiationneeded = async () => {
         try {
