@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { QRCodeSVG } from "qrcode.react"
+import type { InvoicePdfData } from "@/lib/invoice-pdf"
 import { motion, AnimatePresence } from "framer-motion"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useAppStore } from "@/store/app-store"
@@ -223,56 +224,96 @@ export function InvoiceGeneratorView() {
     return `${cur.symbol}${amount.toLocaleString(cur.locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
   }
 
-  async function handlePrint() {
-    const preview = document.getElementById("invoice-preview")
-    if (!preview) {
-      toast.error("Invoice preview not found")
-      return
+  // ---------------------------------------------------------------------------
+  // PDF export — native vector A4 (src/lib/invoice-pdf.ts). Replaces the old
+  // html2canvas screenshot pipeline that produced a blurry dark-theme card
+  // floating in the middle of a landscape page. The new document is full-A4
+  // portrait, print-grade (vector text), light theme, with the same brand.
+  // ---------------------------------------------------------------------------
+  function collectPdfData(): InvoicePdfData {
+    return {
+      number: invoiceNumber,
+      status,
+      issueDate,
+      dueDate,
+      currency,
+      clientName,
+      clientOrg,
+      clientEmail,
+      clientPhone,
+      clientAddress,
+      items: items.map((i) => ({ description: i.description, quantity: i.quantity, unitPrice: i.unitPrice, icon: i.icon })),
+      discountRate,
+      taxRate,
+      roundingAdjustment,
+      gstSplit,
+      notes,
+      terms,
+      bankName,
+      accountName,
+      accountNumber,
+      ifscCode,
+      upiId,
     }
+  }
+
+  /** Rasterize the on-screen UPI QR (same payload as the preview) to a crisp 512px PNG. */
+  async function buildQrPng(): Promise<string | null> {
     try {
-      // Dynamically import the heavy PDF libraries (only when the user clicks Generate PDF)
-      // html2canvas-pro: maintained fork that understands modern CSS color
-      // functions (oklch / color-mix). Plain html2canvas@1.4.1 THROWS on
-      // Tailwind v4's oklch() colors, so "Generate PDF" always failed here.
-      const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
-        import("html2canvas-pro"),
-        import("jspdf"),
-      ])
+      if (!(total > 0) || !upiId) return null
+      let svg = document.querySelector("#upi-qr-holder svg")?.outerHTML
+      if (!svg) return null
+      // React omits xmlns when hydrating JSX-created SVGs; standalone image
+      // decoding REQUIRES it — inject before wrapping into a data URL.
+      if (!svg.includes("xmlns=")) svg = svg.replace("<svg", '<svg xmlns="http://www.w3.org/2000/svg"')
+      const svgUrl = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svg)))}`
+      const img = new Image()
+      img.src = svgUrl
+      await img.decode()
+      const canvas = document.createElement("canvas")
+      canvas.width = 512
+      canvas.height = 512
+      const ctx = canvas.getContext("2d")
+      if (!ctx) return null
+      ctx.fillStyle = "#FFFFFF"
+      ctx.fillRect(0, 0, 512, 512)
+      ctx.drawImage(img, 0, 0, 512, 512)
+      return canvas.toDataURL("image/png")
+    } catch (e) {
+      console.warn("[invoice-pdf] QR rasterization failed — continuing without QR", e)
+      return null
+    }
+  }
 
-      toast.info("Generating PDF...")
+  async function generateInvoicePdf() {
+    const { buildInvoicePdf } = await import("@/lib/invoice-pdf")
+    const qrPngDataUrl = await buildQrPng()
+    return buildInvoicePdf(collectPdfData(), { qrPngDataUrl })
+  }
 
-      // Capture the exact on-screen rendering of the invoice preview element.
-      // `useCORS: true` allows the QR code + any images to be captured.
-      // `backgroundColor: null` preserves the dark card background so the PDF
-      // looks identical to what the admin sees in the platform.
-      const canvas = await html2canvas(preview, {
-        scale: 2,              // 2x resolution for crisp text + QR
-        useCORS: true,
-        backgroundColor: "#0a0a0f",  // match the dark card background
-        logging: false,
-        windowWidth: preview.scrollWidth,
-        windowHeight: preview.scrollHeight,
-      })
-
-      // A4 landscape: 297mm x 210mm
-      const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" })
-      const pdfWidth = 297
-      const pdfHeight = 210
-      const imgWidth = canvas.width
-      const imgHeight = canvas.height
-      const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight)
-      const scaledWidth = imgWidth * ratio
-      const scaledHeight = imgHeight * ratio
-      const x = (pdfWidth - scaledWidth) / 2
-      const y = (pdfHeight - scaledHeight) / 2
-
-      const imgData = canvas.toDataURL("image/jpeg", 0.95)
-      pdf.addImage(imgData, "JPEG", x, y, scaledWidth, scaledHeight)
+  async function handleGeneratePdf() {
+    try {
+      toast.info("Generating A4 PDF…")
+      const pdf = await generateInvoicePdf()
       pdf.save(`${invoiceNumber || "invoice"}.pdf`)
-      toast.success("PDF downloaded — matches the on-screen preview")
+      toast.success("A4 PDF downloaded — vector quality, print-ready")
     } catch (err: any) {
       console.error("[invoice-pdf]", err)
-      toast.error(err?.message || "Failed to generate PDF. Try the Print button as fallback.")
+      toast.error(err?.message || "Failed to generate PDF")
+    }
+  }
+
+  async function handlePrintPdf() {
+    try {
+      toast.info("Preparing print-ready A4 document…")
+      const pdf = await generateInvoicePdf()
+      pdf.autoPrint()
+      const url = pdf.output("bloburl")
+      const win = window.open(url as unknown as string, "_blank")
+      if (!win) toast.error("Popup blocked — allow popups to use Print, or use Generate PDF")
+    } catch (err: any) {
+      console.error("[invoice-pdf-print]", err)
+      toast.error(err?.message || "Failed to open print view")
     }
   }
 
@@ -426,8 +467,11 @@ export function InvoiceGeneratorView() {
               )}
               {editingInvoiceId ? "Update" : "Save"}
             </Button>
-            <Button size="sm" onClick={handlePrint} className="bg-violet-600 hover:bg-violet-500 btn-premium">
+            <Button size="sm" onClick={handleGeneratePdf} className="bg-violet-600 hover:bg-violet-500 btn-premium">
               <Printer className="h-3.5 w-3.5 mr-1.5" /> Generate PDF
+            </Button>
+            <Button size="sm" variant="outline" onClick={handlePrintPdf} className="border-violet-500/40 hover:bg-violet-500/10">
+              <FileText className="h-3.5 w-3.5 mr-1.5" /> Print
             </Button>
           </div>
         </div>
@@ -928,7 +972,7 @@ export function InvoiceGeneratorView() {
                   <div className="order-2 sm:order-1">
                     <div className="rounded-xl border border-border/60 bg-card/40 p-4">
                       <div className="flex items-start gap-3">
-                        <div className="size-20 sm:size-24 rounded-lg bg-white p-2 flex items-center justify-center shrink-0">
+                        <div id="upi-qr-holder" className="size-20 sm:size-24 rounded-lg bg-white p-2 flex items-center justify-center shrink-0">
                           {total > 0 && upiId ? (
                             <QRCodeSVG
                               value={`upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(accountName || "GuardianX")}&am=${total.toFixed(2)}&cu=${currency === "INR" ? "INR" : "USD"}&tn=${encodeURIComponent(invoiceNumber)}`}
@@ -1062,11 +1106,12 @@ export function InvoiceGeneratorView() {
         </div>
       </div>
 
-      {/* Print styles - landscape A4 */}
+      {/* Ctrl+P fallback styles — the dedicated Print button produces the real
+          vector A4 PDF; these only style a raw browser print of the app page. */}
       <style jsx global>{`
         @media print {
           @page {
-            size: A4 landscape;
+            size: A4 portrait;
             margin: 10mm;
           }
           body {
