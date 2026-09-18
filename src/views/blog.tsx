@@ -5,9 +5,11 @@ import { motion } from "framer-motion"
 import { useQuery } from "@tanstack/react-query"
 import { useAppStore } from "@/store/app-store"
 import { Badge } from "@/components/ui/badge"
+import { Skeleton } from "@/components/ui/skeleton"
+import { EmptyState } from "@/components/platform/empty-state"
 import { cn } from "@/lib/utils"
 import {
-  ArrowRight, Sparkles, PenSquare, Eye, Clock, Loader2,
+  ArrowRight, Sparkles, PenSquare, Eye, Clock,
 } from "lucide-react"
 
 /* ============================================================
@@ -168,15 +170,19 @@ export function BlogView() {
       <section className="relative pb-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           {isLoading ? (
-            <div className="py-20 flex flex-col items-center justify-center text-muted-foreground">
-              <Loader2 className="h-6 w-6 animate-spin mb-3" />
-              <p className="text-sm">Loading posts…</p>
+            <div className="space-y-8">
+              <Skeleton className="h-80 rounded-2xl" />
+              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-64 rounded-2xl" />)}
+              </div>
             </div>
           ) : posts.length === 0 ? (
-            <div className="py-20 text-center text-muted-foreground">
-              <Sparkles className="h-10 w-10 mx-auto mb-3 opacity-50" />
-              <p className="text-sm">No posts in this category yet. Check back soon!</p>
-            </div>
+            <EmptyState
+              icon={Sparkles}
+              title="No posts in this category yet"
+              description="New guides and writeups are published every week — check back soon or subscribe to the newsletter."
+              className="py-16"
+            />
           ) : (
             <div className="space-y-10">
               {/* Featured post (large) */}

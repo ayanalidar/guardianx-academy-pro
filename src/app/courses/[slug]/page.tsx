@@ -9,7 +9,12 @@ export async function generateMetadata({ params }: Props) {
   const { slug } = await params
   const course = await db.course.findUnique({ where: { slug } })
   if (!course) return { title: "Course Not Found" }
-  return { title: `${course.title} (${course.shortName}) | GuardianX Academy`, description: course.description, keywords: course.tags?.split(",").map(t => t.trim()).filter(Boolean) || [] }
+  const ogParams = new URLSearchParams({ title: `${course.title} (${course.shortName})`, kicker: "Course", badge: course.certBody || course.category || "", accent: "violet" })
+  return {
+    title: `${course.title} (${course.shortName}) | GuardianX Academy`, description: course.description, keywords: course.tags?.split(",").map(t => t.trim()).filter(Boolean) || [],
+    openGraph: { title: `${course.title} (${course.shortName})`, description: course.description ?? undefined, images: [`/api/og?${ogParams.toString()}`] },
+    twitter: { card: "summary_large_image", title: `${course.title} (${course.shortName})`, description: course.description ?? undefined, images: [`/api/og?${ogParams.toString()}`] },
+  }
 }
 
 export default async function Page({ params }: Props) {

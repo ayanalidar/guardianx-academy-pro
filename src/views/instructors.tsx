@@ -7,6 +7,7 @@ import { useAppStore } from "@/store/app-store"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
+import { EmptyState } from "@/components/platform/empty-state"
 import {
   Users, GraduationCap, Award, ArrowRight, Briefcase,
   Sparkles, BookOpen, Calendar, ExternalLink, ShieldCheck,
@@ -277,16 +278,13 @@ export function InstructorsView() {
               <p className="text-sm text-rose-300">Failed to load instructors. Please try again later.</p>
             </div>
           ) : instructors.length === 0 ? (
-            <div className="text-center py-16 rounded-xl border border-border/60 bg-card">
-              <ShieldCheck className="h-12 w-12 text-muted-foreground/40 mx-auto mb-4" />
-              <p className="text-base font-semibold mb-2">No instructors published yet.</p>
-              <p className="text-sm text-muted-foreground mb-5">
-                Our team is being assembled. Check back soon, or reach out to ask about a specific course.
-              </p>
-              <Button size="sm" onClick={() => navigate({ name: "contact" })} className="bg-violet-600 hover:bg-violet-500">
-                Contact us <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
-              </Button>
-            </div>
+            <EmptyState
+              icon={ShieldCheck}
+              title="No instructors published yet."
+              description="Our team is being assembled. Check back soon, or reach out to ask about a specific course."
+              actionLabel="Contact us"
+              onAction={() => navigate({ name: "contact" })}
+            />
           ) : (
             <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {instructors.map((instr, i) => {

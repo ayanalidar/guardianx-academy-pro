@@ -8,6 +8,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     const res = await fetch(`${process.env.NEXTAUTH_URL || "https://academy.guardianx.cloud"}/api/training-batches/${slug}`, { next: { revalidate: 3600 } })
     if (!res.ok) return { title: "Batch Not Found | GuardianX Academy" }
     const { batch } = await res.json()
+    const ogParams = new URLSearchParams({ title: batch.name, kicker: "Live Training Batch", badge: batch.certification || "", accent: "cyan" })
     return {
       title: `${batch.name} (${batch.certification}) | GuardianX Academy`,
       description: `${batch.name} — ${batch.mode} batch starting ${batch.startDate}. Instructor: ${batch.instructor}. ${batch.seats - batch.enrolled} seats left. Enroll now!`,
@@ -15,7 +16,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
         title: `${batch.name} | GuardianX Academy`,
         description: `${batch.certification} batch starting ${batch.startDate}. ${batch.schedule}. ${batch.seats - batch.enrolled} seats left.`,
         type: "website",
+        images: [`/api/og?${ogParams.toString()}`],
       },
+      twitter: { card: "summary_large_image", title: `${batch.name} | GuardianX Academy`, images: [`/api/og?${ogParams.toString()}`] },
       alternates: { canonical: `/batches/${slug}` },
     }
   } catch {

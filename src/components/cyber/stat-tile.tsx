@@ -3,6 +3,7 @@
 import * as React from "react"
 import { motion } from "framer-motion"
 import { ArrowDownRight, ArrowUpRight, type LucideIcon } from "lucide-react"
+import { CountUp } from "@/components/platform/count-up"
 import { cn } from "@/lib/utils"
 
 /**
@@ -39,9 +40,6 @@ export function StatTile({
     if (typeof window === "undefined") return false
     return window.matchMedia("(prefers-reduced-motion: reduce)").matches
   }, [])
-
-  const formattedValue =
-    typeof value === "number" ? value.toLocaleString() : value
 
   return (
     <motion.div
@@ -91,7 +89,11 @@ export function StatTile({
             "font-mono text-2xl font-bold tabular-nums leading-none text-foreground"
           )}
         >
-          {formattedValue}
+          {typeof value === "number" ? (
+            <CountUp value={value} />
+          ) : (
+            value
+          )}
           {suffix && (
             <span className="ml-1 text-sm font-normal text-muted-foreground">
               {suffix}

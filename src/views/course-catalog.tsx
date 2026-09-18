@@ -12,11 +12,13 @@ import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { EmptyState } from "@/components/platform/empty-state"
 import {
   Search, Star, Clock, BookOpen, Users, Shield, Bookmark, BookmarkCheck,
   ArrowRight, Layers, Sparkles, FlaskConical, GraduationCap, Tag,
   Gauge, PlayCircle, CheckCircle2, Award,
-  Swords, ShieldCheck, Cloud, Scale,
+  Swords, ShieldCheck, Cloud, Scale, LayoutGrid, List, X,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import {
@@ -108,6 +110,9 @@ export function CourseCatalogView() {
   const [category, setCategory] = React.useState("All")
   const [level, setLevel] = React.useState("All")
   const [status, setStatus] = React.useState("all")
+  const [viewMode, setViewMode] = React.useState<"grid" | "list">("grid")
+  const [compareIds, setCompareIds] = React.useState<string[]>([])
+  const [compareOpen, setCompareOpen] = React.useState(false)
 
   // CMS-driven hero copy - falls back to defaults.
   const cms = usePageContent("catalog")
@@ -131,6 +136,16 @@ export function CourseCatalogView() {
   const courses = data?.courses ?? []
   const featured = courses[0]
   const rest = courses.slice(1)
+
+  /* ---- compare (up to 3) ---- */
+  const toggleCompare = React.useCallback((id: string) => {
+    setCompareIds((prev) =>
+      prev.includes(id) ? prev.filter((x) => x !== id) : prev.length >= 3 ? prev : [...prev, id],
+    )
+  }, [])
+  const comparedCourses = compareIds
+    .map((id) => courses.find((c) => c.id === id))
+    .filter((c): c is CourseItem => !!c)
 
   // Fetch platform stats (editable from admin → Platform Stats view).
   // These power the 4-card stats strip below the hero so the admin can
@@ -345,13 +360,14 @@ export function CourseCatalogView() {
             </div>
           </div>
         ) : courses.length === 0 ? (
-          <div className="text-center py-32">
-            <div className="inline-flex p-4 rounded-2xl bg-card border border-border/60 shadow-lg mb-5">
-              <BookOpen className="h-8 w-8 text-muted-foreground/60" />
-            </div>
-            <p className="text-muted-foreground mb-2">No courses found.</p>
-            <p className="text-xs text-muted-foreground/60">Try adjusting your filters or clearing them.</p>
-          </div>
+          <EmptyState
+            icon={BookOpen}
+            title="No courses found"
+            description="Try adjusting your search or clearing a filter — the catalog covers offensive, defensive, cloud and GRC tracks."
+            actionLabel="Clear all filters"
+            onAction={() => { setQ(""); setCategory("All"); setLevel("All"); setStatus("all") }}
+            className="py-16"
+          />
         ) : (
           <>
             {/* Featured course - large immersive card */}
@@ -359,21 +375,76 @@ export function CourseCatalogView() {
               <FeaturedCourse course={featured} />
             )}
 
-            {/* Rest - sophisticated grid */}
+            {/* Rest — grid or list view */}
             {rest.length > 0 && (
               <div className="mt-8 lg:mt-10">
-                <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center justify-between mb-6 gap-3">
                   <div>
                     <p className="text-[10px] font-mono text-violet-400 tracking-[0.25em] mb-2">ALL COURSES</p>
                     <h2 className="text-2xl lg:text-3xl font-bold tracking-tight">Explore the catalog</h2>
                   </div>
-                  <span className="text-xs text-muted-foreground font-mono">{rest.length} TRACKS</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs text-muted-foreground font-mono hidden sm:inline">{rest.length} TRACKS</span>
+                    {/* view toggle */}
+                    <div
+                      role="group"
+                      aria-label="Layout"
+                      className="flex items-center rounded-lg border border-border/60 bg-card/60 p-0.5"
+                    >
+                      <button
+                        type="button"
+                        onClick={() => setViewMode("grid")}
+                        aria-pressed={viewMode === "grid"}
+                        aria-label="Grid view"
+                        className={cn(
+                          "h-7 w-7 rounded-md flex items-center justify-center transition-colors outline-none focus-visible:ring-2 focus-visible:ring-violet-400/50",
+                          viewMode === "grid" ? "bg-violet-500/20 text-violet-200" : "text-muted-foreground hover:text-foreground",
+                        )}
+                      >
+                        <LayoutGrid className="size-4" aria-hidden />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setViewMode("list")}
+                        aria-pressed={viewMode === "list"}
+                        aria-label="List view"
+                        className={cn(
+                          "h-7 w-7 rounded-md flex items-center justify-center transition-colors outline-none focus-visible:ring-2 focus-visible:ring-violet-400/50",
+                          viewMode === "list" ? "bg-violet-500/20 text-violet-200" : "text-muted-foreground hover:text-foreground",
+                        )}
+                      >
+                        <List className="size-4" aria-hidden />
+                      </button>
+                    </div>
+                  </div>
                 </div>
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {rest.map((course, i) => (
-                    <CourseCard key={course.id} course={course} index={i + 1} />
-                  ))}
-                </div>
+
+                {viewMode === "grid" ? (
+                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {rest.map((course, i) => (
+                      <CourseCard
+                        key={course.id}
+                        course={course}
+                        index={i + 1}
+                        compareActive={compareIds.includes(course.id)}
+                        compareDisabled={!compareIds.includes(course.id) && compareIds.length >= 3}
+                        onToggleCompare={() => toggleCompare(course.id)}
+                      />
+                    ))}
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {rest.map((course) => (
+                      <CourseListRow
+                        key={course.id}
+                        course={course}
+                        compareActive={compareIds.includes(course.id)}
+                        compareDisabled={!compareIds.includes(course.id) && compareIds.length >= 3}
+                        onToggleCompare={() => toggleCompare(course.id)}
+                      />
+                    ))}
+                  </div>
+                )}
               </div>
             )}
 
@@ -404,6 +475,96 @@ export function CourseCatalogView() {
             </ScrollReveal>
           </>
         )}
+
+        {/* ====================================================
+            COMPARE BAR + DIALOG (up to 3 courses)
+            ==================================================== */}
+        {compareIds.length > 0 && (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="fixed bottom-5 left-1/2 -translate-x-1/2 z-40"
+          >
+            <div className="flex items-center gap-2 rounded-full border border-violet-500/40 bg-card/95 backdrop-blur-xl shadow-[0_12px_40px_-12px_rgba(139,92,246,0.5)] pl-4 pr-1.5 py-1.5">
+              <Scale className="size-4 text-violet-300 shrink-0" aria-hidden />
+              <span className="text-xs font-medium tabular-nums">{compareIds.length} selected</span>
+              <button
+                type="button"
+                onClick={() => setCompareIds([])}
+                aria-label="Clear comparison"
+                className="h-6 w-6 rounded-full flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-colors"
+              >
+                <X className="size-3.5" aria-hidden />
+              </button>
+              <Button
+                size="sm"
+                disabled={compareIds.length < 2}
+                onClick={() => setCompareOpen(true)}
+                className="h-7 rounded-full bg-violet-600 hover:bg-violet-500 text-xs px-3"
+              >
+                Compare
+              </Button>
+            </div>
+          </motion.div>
+        )}
+
+        <Dialog open={compareOpen} onOpenChange={setCompareOpen}>
+          <DialogContent className="max-w-3xl max-h-[85vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Scale className="size-4 text-violet-300" aria-hidden /> Compare courses
+              </DialogTitle>
+            </DialogHeader>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm border-collapse">
+                <thead>
+                  <tr>
+                    <th className="text-left text-[10px] font-mono uppercase tracking-wider text-muted-foreground p-2 border-b border-border/60">Attribute</th>
+                    {comparedCourses.map((c) => (
+                      <th key={c.id} className="text-left p-2 border-b border-border/60 min-w-[140px]">
+                        <span className="text-xs font-mono font-bold text-violet-200">{c.shortName}</span>
+                        <span className="block text-[11px] font-medium text-foreground/80 leading-snug mt-0.5 line-clamp-2">{c.title}</span>
+                      </th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody>
+                  {([
+                    ["Category", (c: CourseItem) => c.category],
+                    ["Level", (c: CourseItem) => c.level],
+                    ["Duration", (c: CourseItem) => `${c.durationHours} hours`],
+                    ["Modules", (c: CourseItem) => String(c.moduleCount)],
+                    ["Lessons", (c: CourseItem) => String(c.lessonCount)],
+                    ["Rating", (c: CourseItem) => `★ ${c.rating} / 5`],
+                    ["Students", (c: CourseItem) => c.studentsCount.toLocaleString()],
+                    ["Certification", (c: CourseItem) => c.certBody || "Self-paced"],
+                    ["Price", (c: CourseItem) => (c.price > 0 ? `$${c.price}` : "FREE")],
+                    ["Instructor", (c: CourseItem) => c.instructor.name],
+                  ] as Array<[string, (c: CourseItem) => string]>).map(([label, get]) => (
+                    <tr key={label} className="odd:bg-muted/20">
+                      <td className="p-2 text-[10px] font-mono uppercase tracking-wider text-muted-foreground border-b border-border/30">{label}</td>
+                      {comparedCourses.map((c) => (
+                        <td key={c.id} className="p-2 border-b border-border/30">{get(c)}</td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <div className="flex flex-wrap gap-2 pt-1">
+              {comparedCourses.map((c) => (
+                <Button
+                  key={c.id}
+                  size="sm"
+                  variant="outline"
+                  onClick={() => { setCompareOpen(false); navigate({ name: "course", courseId: c.id }) }}
+                >
+                  Open {c.shortName} <ArrowRight className="size-3.5 ml-1" aria-hidden />
+                </Button>
+              ))}
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   )
@@ -606,7 +767,15 @@ function FeaturedMeta({
 /* ============================================================
    CourseCard - sophisticated, interactive, full-data card
    ============================================================ */
-function CourseCard({ course, index }: { course: CourseItem; index: number }) {
+function CourseCard({
+  course, index, compareActive, compareDisabled, onToggleCompare,
+}: {
+  course: CourseItem
+  index: number
+  compareActive?: boolean
+  compareDisabled?: boolean
+  onToggleCompare?: () => void
+}) {
   const { navigate } = useAppStore()
   const { isBookmarked, toggle: toggleBookmark, isAuthenticated } = useBookmarks()
   const image = getCourseImage(course)
@@ -731,6 +900,25 @@ function CourseCard({ course, index }: { course: CourseItem; index: number }) {
                 {isBookmarked(course.id) ? <BookmarkCheck className="h-4 w-4 text-violet-300" /> : <Bookmark className="h-4 w-4" />}
               </button>
             )}
+            {onToggleCompare && (
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onToggleCompare() }}
+                disabled={compareDisabled && !compareActive}
+                aria-pressed={compareActive}
+                aria-label={compareActive ? `Remove ${course.shortName} from comparison` : `Add ${course.shortName} to comparison`}
+                title={compareDisabled && !compareActive ? "You can compare up to 3 courses" : "Compare"}
+                className={cn(
+                  "p-1 -m-1 rounded transition-colors outline-none focus-visible:ring-2 focus-visible:ring-violet-400/50",
+                  compareActive
+                    ? "text-violet-300 bg-violet-500/15"
+                    : "text-muted-foreground hover:text-violet-300",
+                  compareDisabled && !compareActive && "opacity-40 cursor-not-allowed hover:text-muted-foreground",
+                )}
+              >
+                <Scale className="h-4 w-4" aria-hidden />
+              </button>
+            )}
           </div>
 
           {/* CTA + Progress */}
@@ -769,5 +957,87 @@ function MiniStat({ icon: Icon, label, value }: { icon: typeof BookOpen; label: 
       <div className="text-xs font-semibold tabular-nums">{value}</div>
       <div className="text-[8px] text-muted-foreground/70 uppercase tracking-wider">{label}</div>
     </div>
+  )
+}
+
+/* ============================================================
+   CourseListRow - compact horizontal row for "list" view mode
+   ============================================================ */
+function CourseListRow({
+  course, compareActive, compareDisabled, onToggleCompare,
+}: {
+  course: CourseItem
+  compareActive?: boolean
+  compareDisabled?: boolean
+  onToggleCompare?: () => void
+}) {
+  const { navigate } = useAppStore()
+  const image = getCourseImage(course)
+  const levelStyle = LEVEL_STYLES[course.level] || LEVEL_STYLES.Intermediate
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.35 }}
+      className="group flex items-center gap-4 rounded-xl border border-border/60 bg-card/70 p-3 cursor-pointer transition-all duration-300 hover:border-violet-500/40 hover:bg-card"
+      onClick={() => navigate({ name: "course", courseId: course.id })}
+    >
+      {/* thumbnail */}
+      <div className="relative size-16 sm:size-20 rounded-lg overflow-hidden shrink-0">
+        <img src={image} alt="" className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+      </div>
+
+      {/* main */}
+      <div className="flex-1 min-w-0">
+        <div className="flex items-center gap-2 flex-wrap mb-0.5">
+          <span className="text-xs font-mono font-bold text-violet-200">{course.shortName}</span>
+          <span className={cn("text-[9px] font-mono px-1.5 py-0.5 rounded border", levelStyle.badge)}>{course.level.toUpperCase()}</span>
+          <span className="text-[10px] font-mono text-muted-foreground hidden sm:inline">{course.category}</span>
+        </div>
+        <h3 className="text-sm font-semibold truncate group-hover:text-violet-200 transition-colors">{course.title}</h3>
+        <div className="flex items-center gap-3 mt-1 text-[10px] font-mono text-muted-foreground flex-wrap">
+          <span className="flex items-center gap-1"><Clock className="size-3" aria-hidden />{course.durationHours}h</span>
+          <span className="flex items-center gap-1"><BookOpen className="size-3" aria-hidden />{course.lessonCount} lessons</span>
+          <span className="flex items-center gap-1"><Star className="size-3 text-amber-400" aria-hidden />{course.rating}</span>
+          <span className="hidden md:inline">{course.instructor.name}</span>
+        </div>
+      </div>
+
+      {/* right: price + CTA + compare */}
+      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+        <span className={cn(
+          "hidden sm:inline-flex items-center px-2 py-0.5 rounded border text-xs font-mono font-semibold",
+          course.price > 0 ? "bg-amber-500/15 border-amber-500/40 text-amber-200" : "bg-emerald-500/15 border-emerald-500/40 text-emerald-200",
+        )}>
+          {course.price > 0 ? `$${course.price}` : "FREE"}
+        </span>
+        {onToggleCompare && (
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); onToggleCompare() }}
+            disabled={compareDisabled && !compareActive}
+            aria-pressed={compareActive}
+            aria-label={compareActive ? `Remove ${course.shortName} from comparison` : `Add ${course.shortName} to comparison`}
+            className={cn(
+              "h-8 w-8 rounded-lg border flex items-center justify-center transition-colors outline-none focus-visible:ring-2 focus-visible:ring-violet-400/50",
+              compareActive ? "border-violet-500/50 bg-violet-500/15 text-violet-300" : "border-border/60 text-muted-foreground hover:text-violet-300",
+              compareDisabled && !compareActive && "opacity-40 cursor-not-allowed",
+            )}
+          >
+            <Scale className="size-4" aria-hidden />
+          </button>
+        )}
+        <Button
+          size="sm"
+          className="bg-violet-600 hover:bg-violet-500 btn-premium"
+          onClick={(e) => { e.stopPropagation(); navigate({ name: "course", courseId: course.id }) }}
+        >
+          {course.enrollment ? "Continue" : "Enroll"}
+          <ArrowRight className="size-3.5 ml-1" aria-hidden />
+        </Button>
+      </div>
+    </motion.div>
   )
 }

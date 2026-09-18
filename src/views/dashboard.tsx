@@ -30,6 +30,7 @@ import {
 import { useAppStore } from "@/store/app-store"
 import { useUser } from "@/hooks/use-user"
 import { api } from "@/lib/api"
+import { OnboardingChecklist } from "@/components/platform/onboarding-checklist"
 import { levelFromXp, rankTitle } from "@/lib/gamification"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
@@ -348,6 +349,11 @@ export function DashboardView() {
           loading={userLoading}
           labCount={labs.length}
         />
+
+        {/* ====================================================
+            1b. ONBOARDING - first-login checklist (auto-hides when done)
+            ==================================================== */}
+        {user?.role === "STUDENT" && <OnboardingChecklist />}
 
         {/* ====================================================
             2. STATS ROW - 4 StatTiles

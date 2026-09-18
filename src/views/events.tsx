@@ -7,6 +7,7 @@ import { useAppStore } from "@/store/app-store"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
+import { EmptyState } from "@/components/platform/empty-state"
 import {
   Calendar, ArrowRight, Video, MapPin, Users, Clock, Trophy,
   Mic, FlaskConical, School, Sparkles, Filter, ShieldCheck,
@@ -190,18 +191,13 @@ export function EventsView() {
               <p className="text-sm text-rose-300">Failed to load events. Please try again later.</p>
             </div>
           ) : filteredEvents.length === 0 ? (
-            <div className="text-center py-16 rounded-xl border border-border/60 bg-card">
-              <Calendar className="h-12 w-12 text-muted-foreground/40 mx-auto mb-4" />
-              <p className="text-base font-semibold mb-2">
-                {filter === "all" ? "No events scheduled yet." : `No ${filter}s scheduled.`}
-              </p>
-              <p className="text-sm text-muted-foreground mb-5">
-                New events are added weekly. Check back soon or subscribe to our newsletter.
-              </p>
-              <Button size="sm" onClick={() => navigate({ name: "contact" })} className="bg-violet-600 hover:bg-violet-500">
-                Get notified <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
-              </Button>
-            </div>
+            <EmptyState
+              icon={Calendar}
+              title={filter === "all" ? "No events scheduled yet." : `No ${filter}s scheduled.`}
+              description="New events are added weekly. Check back soon or subscribe to our newsletter."
+              actionLabel="Get notified"
+              onAction={() => navigate({ name: "contact" })}
+            />
           ) : (
             <>
               {featured.length > 0 && regular.length > 0 && (

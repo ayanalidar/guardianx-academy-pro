@@ -4,21 +4,12 @@ import * as React from "react"
 import Link from "next/link"
 import { signOut } from "next-auth/react"
 import {
-  Shield, LayoutDashboard, BookOpen, GraduationCap, StickyNote,
-  Radio, FlaskConical, Award, Users, User, LogOut, Menu, X,
-  Search, Sun, Moon, Bell, Terminal, ChevronRight, Settings,
-  Trophy, Zap, Flame, Crown, CheckCheck, Sparkles, Presentation,
-  Brain,
-  ClipboardList, MessageSquare, UsersRound, CalendarClock, Building2,
-  Briefcase, FileText, Mic, Target, Network, Server, Bug, Camera,
-  Code2, ShieldAlert, BarChart3, PenLine, Heart, FileEdit,
-  FileBadge, ShieldCheck,
-  Calendar, TrendingUp, DollarSign, UserCog, Activity, Mail,
-  Ticket,
-  Gift,
+  Shield, User, LogOut, Menu, X,
+  ChevronRight, Settings,
 } from "lucide-react"
-import { useAppStore, type View } from "@/store/app-store"
+import { useAppStore } from "@/store/app-store"
 import { viewToPath } from "@/lib/url-router"
+import { STUDENT_NAV, INSTRUCTOR_NAV, ADMIN_NAV, type NavItem } from "@/lib/nav-data"
 import { useUser } from "@/hooks/use-user"
 import { useBatchLeadNotifications } from "@/hooks/use-batch-lead-notifications"
 import { Button } from "@/components/ui/button"
@@ -26,101 +17,18 @@ import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { NotificationBell } from "@/components/platform/notification-bell"
+import { RouteProgress } from "@/components/platform/route-progress"
+import { ViewEnter } from "@/components/platform/view-enter"
+import { MobileTabBar } from "@/components/platform/mobile-tab-bar"
+import { GlobalSearch } from "@/components/platform/global-search"
 import { cn } from "@/lib/utils"
 
-interface NavItem {
-  label: string
-  icon: React.ComponentType<{ className?: string }>
-  view: View
-  roles?: string[] // if specified, only show for these roles. If not specified, show for ALL roles.
-}
-
-// ============================================================
-// STUDENT nav items - shown to STUDENT role (and ADMIN for testing)
-// ============================================================
-const STUDENT_NAV: NavItem[] = [
-  { label: "Dashboard", icon: LayoutDashboard, view: { name: "dashboard" } },
-  { label: "My Learning", icon: GraduationCap, view: { name: "learning" } },
-  { label: "Course Catalog", icon: BookOpen, view: { name: "catalog" } },
-  { label: "Assignments", icon: ClipboardList, view: { name: "assignments" } },
-  { label: "Notes", icon: StickyNote, view: { name: "notes" } },
-  { label: "Live Sessions", icon: Radio, view: { name: "live" } },
-  { label: "Cyber Labs", icon: FlaskConical, view: { name: "labs" } },
-  { label: "Cyber Range", icon: Server, view: { name: "cyber-range" } },
-  { label: "Proctored Exams", icon: ShieldCheck, view: { name: "exams" } },
-  { label: "My Credentials", icon: FileBadge, view: { name: "credentials" } },
-  { label: "Certificates", icon: Award, view: { name: "certificates" } },
-  { label: "Achievements", icon: Award, view: { name: "achievements" } },
-  { label: "Leaderboards", icon: Crown, view: { name: "leaderboard" } },
-  { label: "AI Assistant", icon: Sparkles, view: { name: "ai-assistant" } },
-  { label: "Threat Feed", icon: ShieldAlert, view: { name: "threat-feed" } },
-  { label: "Code Review", icon: Code2, view: { name: "code-review" } },
-  { label: "CTF Platform", icon: Trophy, view: { name: "ctf-platform" } },
-  { label: "Weekly Challenge", icon: Zap, view: { name: "weekly-challenges" } },
-  { label: "Team Missions", icon: UsersRound, view: { name: "team-missions" } },
-  { label: "Bug Bounty", icon: Bug, view: { name: "bug-bounty" } },
-  { label: "Analytics", icon: BarChart3, view: { name: "learning-analytics" } },
-  { label: "Skill Tests", icon: Target, view: { name: "skill-assessments" } },
-  { label: "Career Planner", icon: Briefcase, view: { name: "career-planner" } },
-  { label: "Job Board", icon: Search, view: { name: "job-board" } },
-  { label: "Mock Interview", icon: Mic, view: { name: "mock-interview" } },
-  { label: "Resume Builder", icon: FileText, view: { name: "resume-builder" } },
-  { label: "Study Groups", icon: UsersRound, view: { name: "study-groups" } },
-  { label: "Book a Session", icon: CalendarClock, view: { name: "book-session" } },
-  { label: "Messages", icon: MessageSquare, view: { name: "messaging" } },
-  { label: "Community", icon: Users, view: { name: "community" } },
-  { label: "Parent Portal", icon: Heart, view: { name: "parent-portal" } },
-  { label: "Affiliate", icon: Gift, view: { name: "affiliate" } },
-]
-
-// ============================================================
-// INSTRUCTOR nav items - shown to INSTRUCTOR role
-// ============================================================
-const INSTRUCTOR_NAV: NavItem[] = [
-  { label: "Instructor Dashboard", icon: Presentation, view: { name: "instructor" } },
-  { label: "Batch Calendar", icon: Calendar, view: { name: "admin-batch-calendar" } },
-  { label: "Course Studio", icon: PenLine, view: { name: "course-studio" } },
-  { label: "Assignments", icon: ClipboardList, view: { name: "assignments" } },
-  { label: "Messages", icon: MessageSquare, view: { name: "messaging" } },
-  { label: "Study Groups", icon: UsersRound, view: { name: "study-groups" } },
-  { label: "Office Hours", icon: CalendarClock, view: { name: "office-hours" } },
-  { label: "Live Sessions", icon: Radio, view: { name: "live" } },
-  { label: "Cyber Labs", icon: FlaskConical, view: { name: "labs" } },
-]
-
-// ============================================================
-// ADMIN nav items - shown to ADMIN role only
-// ============================================================
-const ADMIN_NAV: NavItem[] = [
-  { label: "Admin Console", icon: Shield, view: { name: "admin" } },
-  { label: "Courses", icon: BookOpen, view: { name: "admin-courses" } },
-  { label: "Course Studio", icon: PenLine, view: { name: "course-studio" } },
-  { label: "Content Studio (CMS)", icon: FileEdit, view: { name: "cms" } },
-  { label: "Invoice Generator", icon: FileText, view: { name: "invoice-generator" } },
-  { label: "Proposal Maker", icon: FileText, view: { name: "proposal-maker" } },
-  { label: "Lead / CRM", icon: Users, view: { name: "admin-lead-crm" } },
-  { label: "Batch Calendar", icon: Calendar, view: { name: "admin-batch-calendar" } },
-  { label: "Student Progress", icon: TrendingUp, view: { name: "admin-student-progress" } },
-  { label: "Revenue Analytics", icon: DollarSign, view: { name: "admin-revenue" } },
-  { label: "Bulk Certificates", icon: Award, view: { name: "admin-cert-bulk" } },
-  { label: "Email Campaigns", icon: Mail, view: { name: "admin-email-campaign" } },
-  { label: "Instructor Assign", icon: UserCog, view: { name: "admin-instructor-assignment" } },
-  { label: "Audit Logs", icon: Shield, view: { name: "admin-audit-log" } },
-  { label: "Platform Health", icon: Activity, view: { name: "admin-platform-health" } },
-  { label: "Notifications", icon: Bell, view: { name: "admin-notifications" } },
-  { label: "Coupons", icon: Ticket, view: { name: "admin-coupons" } },
-  { label: "SEO Optimization", icon: Search, view: { name: "admin-seo" } },
-  { label: "Open Schooling Leads", icon: GraduationCap, view: { name: "admin-open-schooling-leads" } },
-  { label: "Corporate Training Leads", icon: Building2, view: { name: "admin-corporate-leads" } },
-  { label: "Quiz Questions", icon: Brain, view: { name: "admin-cyber-quiz-questions" } },
-  { label: "Quiz Attempts", icon: Trophy, view: { name: "admin-cyber-quiz-attempts" } },
-  { label: "Quiz Certificates", icon: Award, view: { name: "admin-cyber-quiz-certs" } },
-  { label: "Platform Stats", icon: BarChart3, view: { name: "admin-platform-stats" } },
-  { label: "Settings", icon: Settings, view: { name: "admin-settings" } },
-]
-
-// Keep legacy NAV_ITEMS for backwards compat (mobile menu etc)
+// Keep legacy NAV_ITEMS alias for backwards compat (mobile menu etc)
 const NAV_ITEMS = STUDENT_NAV
+
+/* Nav data now lives in @/lib/nav-data.ts — single source of truth shared
+   with the command palette and the mobile tab bar. STUDENT_NAV,
+   INSTRUCTOR_NAV and ADMIN_NAV are imported at the top of this file. */
 
 function Logo({ onClick }: { onClick?: () => void }) {
   return (
@@ -332,6 +240,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen flex bg-background">
+      <RouteProgress />
       {/* Desktop sidebar */}
       <aside className="hidden lg:flex w-64 shrink-0 flex-col border-r border-border/40 bg-sidebar/50 backdrop-blur-xl">
         <div className="p-4 border-b border-border/40">
@@ -349,19 +258,28 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       <div className="lg:hidden fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-4 py-3 border-b border-border/40 bg-background/80 backdrop-blur-xl">
         <MobileNav />
         <Logo />
-        <NotificationBell />
+        <div className="flex items-center gap-1">
+          <GlobalSearch variant="icon" />
+          <NotificationBell />
+        </div>
       </div>
 
       {/* Main content */}
       <main id="main-content" className="flex-1 min-w-0 overflow-x-hidden">
-        {/* Desktop top strip — sticky, holds the notification bell */}
-        <div className="hidden lg:flex sticky top-0 z-30 h-12 items-center justify-end px-4 border-b border-border/40 bg-background/70 backdrop-blur-xl">
+        {/* Desktop top strip — sticky, holds search + notification bell */}
+        <div className="hidden lg:flex sticky top-0 z-30 h-12 items-center justify-end px-4 gap-2 border-b border-border/40 bg-background/70 backdrop-blur-xl">
+          <GlobalSearch variant="icon" />
           <NotificationBell />
         </div>
-        <div className="pt-16 lg:pt-0">
-          {children}
+        <div className="pt-16 lg:pt-0 pb-16 lg:pb-0">
+          <ViewEnter>
+            {children}
+          </ViewEnter>
         </div>
       </main>
+
+      {/* Role-aware bottom navigation (mobile, logged in) */}
+      <MobileTabBar />
     </div>
   )
 }
