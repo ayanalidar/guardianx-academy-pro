@@ -44,7 +44,7 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
     audience?: string
     testMode?: boolean
   }>(req, { maxBytes: 256 * 1024 })
-  if (parsed.error) return parsed.error
+  if (parsed.error || !parsed.data) return parsed.error ?? NextResponse.json({ error: "Invalid body" }, { status: 400 })
   const { subject, body, audience = "all", testMode } = parsed.data
 
   if (!subject?.trim() || !body?.trim()) {

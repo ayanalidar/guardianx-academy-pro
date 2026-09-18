@@ -25,7 +25,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ credenti
   try {
     // Rate limit: public endpoint used to guess credential IDs
     const { rateLimit, getClientIp } = await import("@/lib/session")
-    if (!rateLimit(`cred-verify:${getClientIp(req)}`, { max: 30, windowMs: 60 * 1000 })) {
+    if (!rateLimit(`cred-verify:${getClientIp(req as any)}`, { max: 30, windowMs: 60 * 1000 })) {
       return NextResponse.json({ valid: false, error: "Too many requests" }, { status: 429 })
     }
     const { credentialId } = await params

@@ -29,6 +29,7 @@ export type LegalPageType =
   | "refund"
   | "cookies"
   | "conduct"
+  | "conduct"
 
 interface LegalPageProps {
   pageType: LegalPageType

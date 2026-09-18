@@ -4,10 +4,10 @@ const nextConfig: NextConfig = {
   // Re-enabled: build errors must fail the build, otherwise broken code ships.
   // If you have a transient type error in a PR, fix it or use `// @ts-expect-error`.
   typescript: {
-    // Pre-existing code has type issues that need gradual cleanup.
-    // Setting to false would surface ~100+ type errors at once.
-    // TODO: Set to false after incremental cleanup.
-    ignoreBuildErrors: true,
+    // Type errors fail the build now — the codebase type-checks clean
+    // (the previous ignoreBuildErrors:true masked 8 missing Prisma models
+    // and silently broke production features).
+    ignoreBuildErrors: false,
   },
   // Re-enabled: catches effect double-fire bugs, suspense edge cases, etc.
   reactStrictMode: true,

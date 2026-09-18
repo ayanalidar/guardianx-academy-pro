@@ -94,7 +94,7 @@ export async function GET() {
 
   // Sort: overdue first, then due-soon, then by dueDate asc
   const sorted = result.sort((a, b) => {
-    const order = (r: typeof a) => (r.overdue ? 0 : r.dueSoon ? 1 : r.status === "graded" ? 3 : 2)
+    const order = (r: typeof a) => (r.overdue ? 0 : r.dueSoon ? 1 : (r.status as string) === "graded" ? 3 : 2)
     if (order(a) !== order(b)) return order(a) - order(b)
     return new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
   })

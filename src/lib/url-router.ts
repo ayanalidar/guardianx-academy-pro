@@ -169,7 +169,10 @@ export function hashToView(hash: string): View {
   }
 
   // Legal / info pages: /about /privacy /terms /faq /refund /cookies /conduct /partners
-  const legalPages = ["about", "privacy", "terms", "faq", "refund", "cookies", "conduct", "partners"]
+  const legalPages = ["about", "privacy", "terms", "faq", "refund", "cookies", "conduct"]
+  if (parts[0] === "partners") {
+    return { name: "institutions" }
+  }
   if (legalPages.includes(parts[0])) {
     return { name: "legal", pageType: parts[0] as any }
   }

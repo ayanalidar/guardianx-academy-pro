@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { api } from "@/lib/api"
 import { useUser } from "@/hooks/use-user"
 import { Button } from "@/components/ui/button"
+import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -19,7 +20,7 @@ import {
   Target, TrendingUp, Calendar, LogOut, Trophy, Lock, Zap, Flame,
   BookOpen, Terminal, Bug, Brain, Library, ShieldCheck, BookMarked,
   Activity, ChevronRight, ArrowUpRight, Pencil, KeyRound, Phone,
-  Linkedin, Briefcase, FileEdit, DollarSign, Users, Bell,
+  Linkedin, Briefcase, FileEdit, DollarSign, Users, Bell, UserCheck,
 } from "lucide-react"
 import { signOut } from "next-auth/react"
 import { useAppStore } from "@/store/app-store"
@@ -320,6 +321,19 @@ export function ProfileView() {
     enabled: !!user && (user.role === "STUDENT" || user.role === "SCHOOL_ADMIN"),
   })
 
+  // Parent-link consent requests (only meaningful for students/school roles)
+  const qc = useQueryClient()
+  const { data: consentData } = useQuery<{ requests: Array<{ id: string; name: string; email: string; relationship: string }> }>({
+    queryKey: ["parent-consent-requests"],
+    queryFn: () => api("/api/parent/consent"),
+    enabled: !!user && (user.role === "STUDENT" || user.role === "SCHOOL_ADMIN"),
+  })
+  const consentMutation = useMutation({
+    mutationFn: ({ parentId, action }: { parentId: string; action: "approve" | "reject" }) =>
+      api("/api/parent/consent", { method: "POST", body: JSON.stringify({ parentId, action }) }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["parent-consent-requests"] }),
+  })
+
   if (isLoading || !user) {
     return (
       <div className="relative min-h-screen">
@@ -409,6 +423,49 @@ export function ProfileView() {
             </span>
           </div>
         </ScrollReveal>
+
+        {/* Parent-link consent requests */}
+        {isStudentLike && (consentData?.requests?.length ?? 0) > 0 && (
+          <ScrollReveal>
+            <Card className="p-4 mb-8 border-amber-500/30 bg-amber-500/5">
+              <div className="flex items-start gap-3 mb-3">
+                <UserCheck className="h-4 w-4 text-amber-300 mt-0.5" />
+                <div>
+                  <h3 className="text-sm font-semibold text-amber-200">Parent/guardian link requests</h3>
+                  <p className="text-[11px] text-muted-foreground">
+                    These people want to link their parent portal to your profile. Only approve if you know them.
+                  </p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                {consentData!.requests.map((r) => (
+                  <div key={r.id} className="flex items-center justify-between gap-3 p-2.5 rounded-lg border border-border/40 bg-card/60">
+                    <div className="min-w-0">
+                      <div className="text-sm font-medium truncate">{r.name}</div>
+                      <div className="text-[10px] text-muted-foreground truncate">{r.email} · {r.relationship}</div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Button
+                        size="sm" variant="outline" className="h-7 text-[11px] border-rose-500/40 text-rose-300 hover:bg-rose-500/10"
+                        disabled={consentMutation.isPending}
+                        onClick={() => consentMutation.mutate({ parentId: r.id, action: "reject" })}
+                      >
+                        Reject
+                      </Button>
+                      <Button
+                        size="sm" className="h-7 text-[11px] bg-emerald-600 hover:bg-emerald-500 text-white"
+                        disabled={consentMutation.isPending}
+                        onClick={() => consentMutation.mutate({ parentId: r.id, action: "approve" })}
+                      >
+                        Approve
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </Card>
+          </ScrollReveal>
+        )}
 
         <div className="grid lg:grid-cols-12 gap-8 items-start mb-20">
           {/* Avatar + identity */}

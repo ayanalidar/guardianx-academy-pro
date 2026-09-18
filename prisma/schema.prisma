@@ -531,6 +531,7 @@ model Lab {
 
   progress      LabProgress[]
   sessions      LabSession[]
+  snapshots     LabSnapshot[]
 }
 
 model LabProgress {
@@ -1251,10 +1252,13 @@ model LabSnapshot {
   userId      String
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   labId       String
+  lab         Lab      @relation(fields: [labId], references: [id], onDelete: Cascade)
   name        String   @default("Untitled Snapshot")
   description String   @default("")
   state       String   @default("{}") // JSON: terminal history, env vars, progress
   createdAt   DateTime @default(now())
+
+  @@index([userId])
 }
 
 // --- 15. Collaborative Cyber Range ---
@@ -1972,6 +1976,8 @@ model LabSession {
   attackContainerId String?
   targetIp          String?
   attackIp          String?
+  sessionIp         String?   // simulated-session target IP (simulation mode)
+  sessionPort       String?   // simulated-session port (simulation mode)
   networkName       String?
   dynamicFlag       String?   // per-session flag — NEVER returned to the browser
   terminalToken     String?   // signed WebSocket token for terminal-gateway

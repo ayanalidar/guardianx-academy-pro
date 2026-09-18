@@ -26,11 +26,11 @@ interface ChatMessage {
 export async function POST(req: NextRequest) {
   try {
     const user = await getCurrentUser()
-  if (!rateLimit(`ai-assistant:${user.id}`, { max: 20, windowMs: 5 * 60 * 1000 })) {
-    return NextResponse.json({ error: "Rate limit reached — please wait a moment before asking again." }, { status: 429 })
-  }
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+    if (!rateLimit(`ai-assistant:${user.id}`, { max: 20, windowMs: 5 * 60 * 1000 })) {
+      return NextResponse.json({ error: "Rate limit reached — please wait a moment before asking again." }, { status: 429 })
     }
 
     const body = await req.json()
@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
     }
 
     // ---- Find or create session ----
-    let session = null
+    let session: any = null // typed as any — findFirst+create return shapes differ (pre-existing)
     if (sessionId) {
       session = await db.aIChatSession.findFirst({
         where: { id: sessionId, userId: user.id },

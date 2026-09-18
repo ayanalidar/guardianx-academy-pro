@@ -24,6 +24,34 @@ async function main() {
     },
   })
 
+  // Instructors referenced by the course seeds below (were removed with the
+  // dummy-user cleanup but still referenced — this caused
+  // "ReferenceError: instructor is not defined").
+  const instructor = await db.user.upsert({
+    where: { email: "sarah.chen@guardianx.io" },
+    update: {},
+    create: {
+      email: "sarah.chen@guardianx.io",
+      name: "Dr. Sarah Chen",
+      passwordHash: hash("instructor123"),
+      role: "INSTRUCTOR",
+      title: "Principal Security Instructor",
+      bio: "15 years in offensive security; OSCP, OSCE and CEH Master certified.",
+    },
+  })
+  const instructor2 = await db.user.upsert({
+    where: { email: "raj.patel@guardianx.io" },
+    update: {},
+    create: {
+      email: "raj.patel@guardianx.io",
+      name: "Raj Patel",
+      passwordHash: hash("instructor123"),
+      role: "INSTRUCTOR",
+      title: "Senior Instructor — Cloud & DFIR",
+      bio: "Cloud security architect turned educator; CISSP, CCSP, GCFE.",
+    },
+  })
+
   const student = await db.user.upsert({
     where: { email: "student@guardianx.io" },
     update: {},

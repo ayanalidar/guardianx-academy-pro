@@ -277,6 +277,11 @@ wss.on("connection", (ws: WebSocket, req) => {
   // The terminalToken must be an HMAC-signed token minted by the
   // lab-orchestrator for THIS exact session. The previous implementation
   // accepted any token string (the DB check was commented out).
+  if (!token || !sessionId) {
+    ws.send(JSON.stringify({ type: "error", message: "Missing token or sessionId" }))
+    ws.close(4001, "Unauthorized")
+    return
+  }
   const tokenPayload = verifyTerminalToken(token, sessionId)
   if (!tokenPayload) {
     console.warn(`[terminal] REJECTED connection: invalid/expired token for session=${sessionId}`)
@@ -290,7 +295,7 @@ wss.on("connection", (ws: WebSocket, req) => {
   const session: TerminalSession = {
     ws,
     containerId: containerId || "simulated",
-    sessionId,
+    sessionId: sessionId!,
     userId: tokenPayload.uid,
     lastActivity: Date.now(),
     cwd: "/root",

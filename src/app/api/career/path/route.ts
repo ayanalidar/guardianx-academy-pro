@@ -48,7 +48,7 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
     recommendedLabs?: string[]
     estimatedWeeks?: number
   }>(req)
-  if (parsed.error) return parsed.error
+  if (parsed.error || !parsed.data) return parsed.error ?? NextResponse.json({ error: "Invalid body" }, { status: 400 })
   const body = parsed.data
 
   if (!body.targetRole?.trim()) {

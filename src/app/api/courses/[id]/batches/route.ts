@@ -19,7 +19,7 @@ export const GET = withErrorHandler(async (_req: NextRequest, { params }: { para
     orderBy: { startDate: "asc" },
     take: 5,
     select: {
-      id: true, slug: true, certification: true, name: true, schedule: true,
+      id: true, certification: true, name: true, schedule: true,
       startDate: true, mode: true, instructor: true, seats: true,
       enrolled: true, level: true, status: true, googleFormUrl: true,
     },

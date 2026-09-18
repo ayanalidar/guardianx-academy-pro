@@ -36,9 +36,9 @@ export const GET = withErrorHandler(async (req: Request) => {
     leads,
   ] = await Promise.all([
     db.enrollment.findMany({
-      where: { createdAt: { gte: since } },
-      orderBy: { createdAt: "desc" }, take: limit,
-      select: { id: true, createdAt: true, user: { select: { name: true } }, course: { select: { title: true, shortName: true } } },
+      where: { enrolledAt: { gte: since } },
+      orderBy: { enrolledAt: "desc" }, take: limit,
+      select: { id: true, enrolledAt: true, user: { select: { name: true } }, course: { select: { title: true, shortName: true } } },
     }),
     db.certificate.findMany({
       where: { issuedAt: { gte: since } },
@@ -58,7 +58,7 @@ export const GET = withErrorHandler(async (req: Request) => {
     db.examAttempt.findMany({
       where: { submittedAt: { gte: since }, status: { not: "in_progress" } },
       orderBy: { submittedAt: "desc" }, take: limit,
-      select: { id: true, submittedAt: true, score: true, passed: true, user: { select: { name: true } }, exam: { select: { title: true } } },
+      select: { id: true, submittedAt: true, score: true, status: true, userId: true, examId: true },
     }),
     db.lead.findMany({
       where: { createdAt: { gte: since } },
@@ -66,6 +66,16 @@ export const GET = withErrorHandler(async (req: Request) => {
       select: { id: true, createdAt: true, name: true, email: true, type: true },
     }),
   ])
+
+  // Resolve exam titles + user names (ExamAttempt stores only ids)
+  const examIds = Array.from(new Set(examSubmissions.map((x) => x.examId)))
+  const userIds = Array.from(new Set(examSubmissions.map((x) => x.userId)))
+  const [examRows, examUsers] = await Promise.all([
+    db.exam.findMany({ where: { id: { in: examIds } }, select: { id: true, title: true } }),
+    userIds.length ? db.user.findMany({ where: { id: { in: userIds } }, select: { id: true, name: true } }) : Promise.resolve([] as Array<{ id: string; name: string }>),
+  ])
+  const examTitle = new Map(examRows.map((e) => [e.id, e.title]))
+  const userName = new Map(examUsers.map((u) => [u.id, u.name]))
 
   type FeedItem = {
     id: string
@@ -80,7 +90,7 @@ export const GET = withErrorHandler(async (req: Request) => {
     ...enrollments.map((e) => ({
       id: `enr-${e.id}`, type: "enrollment" as const, title: "New Enrollment",
       message: `${e.user?.name || "A student"} enrolled in ${e.course?.shortName || e.course?.title || "a course"}`,
-      createdAt: e.createdAt.toISOString(), read: false,
+      createdAt: e.enrolledAt.toISOString(), read: false,
     })),
     ...certificates.map((c) => ({
       id: `cert-${c.id}`, type: "certificate" as const, title: "Certificate Issued",
@@ -99,7 +109,7 @@ export const GET = withErrorHandler(async (req: Request) => {
     })),
     ...examSubmissions.map((x) => ({
       id: `exam-${x.id}`, type: "exam" as const, title: "Exam Submitted",
-      message: `${x.exam?.title || "An exam"} submitted by ${x.user?.name || "a student"} — Score: ${Math.round(x.score || 0)}% (${x.passed ? "PASSED" : "FAILED"})`,
+      message: `${examTitle.get(x.examId) || "An exam"} submitted by ${userName.get(x.userId) || "a student"} — Score: ${Math.round(x.score || 0)}% (${x.status === "passed" ? "PASSED" : x.status === "failed" ? "FAILED" : x.status.toUpperCase()})`,
       createdAt: (x.submittedAt || new Date()).toISOString(), read: false,
     })),
     ...leads.map((l) => ({

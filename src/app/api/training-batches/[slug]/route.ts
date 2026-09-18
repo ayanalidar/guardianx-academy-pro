@@ -9,7 +9,8 @@ export const runtime = "nodejs"
 export async function GET(_req: Request, { params }: { params: Promise<{ slug: string }> }) {
   try {
     const { slug } = await params
-    const batch = await db.trainingBatch.findUnique({ where: { slug } })
+    // NOTE: TrainingBatch has no slug field — the URL param is the batch id.
+    const batch = await db.trainingBatch.findUnique({ where: { id: slug } })
     if (!batch || !batch.published) {
       return NextResponse.json({ error: "Batch not found" }, { status: 404 })
     }

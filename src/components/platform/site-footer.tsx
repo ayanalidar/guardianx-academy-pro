@@ -35,7 +35,7 @@ const PLATFORM_LINKS: FooterLink[] = [
 
 const COMPANY_LINKS: FooterLink[] = [
   { label: "About Us", icon: Building2, view: { name: "legal", pageType: "about" } },
-  { label: "Partners", icon: Users, view: { name: "legal", pageType: "partners" } },
+  { label: "Partners", icon: Users, view: { name: "institutions" } },
   { label: "Impact", icon: Heart, view: { name: "impact" } },
   { label: "Contact", icon: MessageSquare, view: { name: "contact" } },
   { label: "Careers", icon: ArrowRight, view: { name: "contact" } },

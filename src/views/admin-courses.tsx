@@ -80,6 +80,9 @@ interface CourseForm {
   title: string
   shortName: string
   description: string
+  longDescription: string
+  tags: string
+  certBody: string
   category: string
   level: string
   durationHours: string
@@ -101,6 +104,9 @@ function emptyForm(): CourseForm {
     title: "",
     shortName: "",
     description: "",
+    longDescription: "",
+    tags: "",
+    certBody: "",
     category: CATEGORIES[0]!,
     level: LEVELS[0]!,
     durationHours: "40",
@@ -115,6 +121,9 @@ function formFromCourse(c: AdminCourse): CourseForm {
     title: c.title,
     shortName: c.shortName,
     description: c.description,
+    longDescription: (c as any).longDescription ?? "",
+    tags: (c as any).tags ?? "",
+    certBody: (c as any).certBody ?? "",
     category: c.category,
     level: c.level,
     durationHours: String(c.durationHours),

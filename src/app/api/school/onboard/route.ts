@@ -19,11 +19,14 @@ export async function POST(req: NextRequest) {
   // If the user already has a school, they cannot onboard again
   const existing = await db.user.findUnique({
     where: { id: user.id },
-    select: { schoolId: true, school: true },
+    select: { schoolId: true },
   })
-  if (existing?.schoolId && existing.school) {
+  const existingSchool = existing?.schoolId
+    ? await db.school.findUnique({ where: { id: existing.schoolId } })
+    : null
+  if (existingSchool) {
     return NextResponse.json({
-      school: existing.school,
+      school: existingSchool,
       message: "You already have a school associated with your account.",
     })
   }

@@ -31,15 +31,14 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       db.blogPost.findMany({ where: { published: true }, select: { slug: true, updatedAt: true } }).catch(() => []),
       db.event.findMany({ where: { published: true }, select: { slug: true, updatedAt: true } }).catch(() => []),
       db.user.findMany({ where: { role: "INSTRUCTOR" }, select: { id: true, updatedAt: true } }).catch(() => []),
-      db.trainingBatch.findMany({ where: { published: true }, select: { slug: true, updatedAt: true } }).catch(() => []),
+      db.trainingBatch.findMany({ where: { published: true }, select: { id: true, updatedAt: true } }).catch(() => []),
     ])
 
     for (const c of courses) {
       entries.push({ url: `${BASE_URL}/courses/${encodeURIComponent(c.slug)}`, lastModified: c.updatedAt, changeFrequency: "weekly" as const, priority: 0.9 })
     }
     for (const b of batches) {
-      if (!b.slug) continue
-      entries.push({ url: `${BASE_URL}/batches/${encodeURIComponent(b.slug)}`, lastModified: b.updatedAt, changeFrequency: "weekly" as const, priority: 0.8 })
+      entries.push({ url: `${BASE_URL}/batches/${encodeURIComponent(b.id)}`, lastModified: b.updatedAt, changeFrequency: "weekly" as const, priority: 0.8 })
     }
     for (const b of blogPosts) {
       entries.push({ url: `${BASE_URL}/blog/${encodeURIComponent(b.slug)}`, lastModified: b.updatedAt, changeFrequency: "monthly" as const, priority: 0.7 })

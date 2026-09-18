@@ -18,7 +18,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 
   // Check access: preview lessons are open; otherwise need enrollment
   let hasAccess = lesson.preview
-  let progress = null
+  let progress: any = null // findFirst/create shapes differ
   if (user) {
     const enrollment = await db.enrollment.findUnique({
       where: { userId_courseId: { userId: user.id, courseId: lesson.module.courseId } },
