@@ -7,7 +7,7 @@ import { motion } from "framer-motion"
 import {
   Shield, Terminal, Zap, Lock, Mail, User, GraduationCap, ChevronRight,
   Eye, EyeOff, Building2, Hash, BadgeCheck,
-  CheckCircle2, Users, BookOpen, ArrowRight, Globe, Cpu,
+  CheckCircle2, Users, BookOpen, ArrowRight, Globe, Cpu, AlertTriangle, X,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -75,6 +75,37 @@ export function AuthScreen() {
     return () => {
       cancelled = true
     }
+  }, [])
+
+  // Surface next-auth error redirects. When an OAuth flow fails, next-auth
+  // bounces back to the sign-in page with ?error=<code> — previously this was
+  // swallowed and the failure looked completely silent to the user.
+  const [authError, setAuthError] = React.useState<string | null>(null)
+  React.useEffect(() => {
+    const raw = new URLSearchParams(window.location.search).get("error")
+    if (!raw) return
+    const MESSAGES: Record<string, string> = {
+      Configuration:
+        "Server authentication is misconfigured. An admin should verify the Google Client ID/Secret in Admin → Settings → Google OAuth and the callback URL registered in Google Cloud Console.",
+      AccessDenied:
+        "Sign-in with Google was denied. Approve the consent screen and try again, or use email + password instead.",
+      Verification:
+        "The sign-in link has expired or was already used. Please request a new one.",
+      OAuthAccountNotLinked:
+        "This email is already registered with a different sign-in method. Sign in with your email + password, or use the same method you signed up with.",
+      OAuthSignin:
+        "Google sign-in could not start. If this persists, an admin should verify the Google OAuth settings under Admin → Settings → Google OAuth.",
+      OAuthCallback:
+        "Google sign-in failed while redirecting back to the site. Please try again.",
+      OAuthCreateAccount:
+        "We could not create your account from the Google profile. Try email sign-in or contact the admin.",
+      EmailSignin:
+        "The magic-link email could not be sent — double-check the address or contact the admin.",
+    }
+    setAuthError(
+      MESSAGES[raw] ||
+        `Sign-in failed (${raw}). If this keeps happening, an admin should check Admin → Settings → Google OAuth.`
+    )
   }, [])
 
   // If the user was redirected here from a protected view (e.g. they
@@ -394,6 +425,23 @@ export function AuthScreen() {
                 </motion.div>
 
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+                  {/* Failed sign-in banner (from ?error= after an OAuth round-trip) */}
+                  {authError && (
+                    <div className="mb-5 rounded-lg border border-rose-500/30 bg-rose-500/10 px-4 py-3 text-sm">
+                      <div className="flex items-start gap-2.5">
+                        <AlertTriangle className="h-4 w-4 text-rose-300 shrink-0 mt-0.5" aria-hidden />
+                        <p className="flex-1 text-rose-100/90 leading-snug">{authError}</p>
+                        <button
+                          type="button"
+                          aria-label="Dismiss"
+                          onClick={() => setAuthError(null)}
+                          className="text-rose-300/70 hover:text-rose-200 shrink-0"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </div>
+                  )}
                   <TabsList className="grid w-full grid-cols-3 mb-6">
                     <TabsTrigger value="login">Sign In</TabsTrigger>
                     <TabsTrigger value="school">

@@ -111,10 +111,27 @@ export const POST = withErrorHandler(async (req) => {
       })
       const data = await res.json().catch(() => ({} as any))
       if (data?.error === "invalid_grant") {
-        return NextResponse.json({ ok: true, message: "Google credentials are valid (token endpoint accepted the client)" })
+        return NextResponse.json({
+          ok: true,
+          message:
+            "Google credentials are valid (token endpoint accepted the client). Remember: the callback URL of THIS deployment must also be registered as an Authorized redirect URI in Google Cloud Console — see the panel in Admin → Settings → Google OAuth.",
+        })
+      }
+      if (data?.error === "redirect_uri_mismatch") {
+        // Google parsed the client pair fine but rejected the redirect_uri —
+        // credentials are valid, the callback URL just isn't registered.
+        return NextResponse.json({
+          ok: true,
+          message:
+            "Credentials are valid, BUT the redirect URI is NOT registered in Google Cloud Console — this is exactly what blocks sign-in with \"Access blocked: This app's request is invalid\". Add the callback URL shown in Admin → Settings → Google OAuth as an Authorized redirect URI.",
+        })
       }
       if (data?.error === "invalid_client") {
-        return NextResponse.json({ ok: false, error: "Google rejected the client — check the Client ID / Secret pair" }, { status: 400 })
+        return NextResponse.json({
+          ok: false,
+          error:
+            "Google rejected the client — the Client ID / Secret pair is wrong. Paste both exactly as shown in Google Cloud Console (no quotes, no extra characters).",
+        }, { status: 400 })
       }
       return NextResponse.json(
         { ok: false, error: `Unexpected Google response: ${data?.error || res.status}` },

@@ -55,6 +55,8 @@ export interface InvoicePdfData {
 export interface InvoicePdfOptions {
   /** PNG data-URL of the UPI QR code (browser passes one; Node passes null). */
   qrPngDataUrl?: string | null
+  /** PNG data-URL of the GuardianX shield logo (browser passes one; Node scripts may read the file directly). */
+  logoPngDataUrl?: string | null
   /** Injectable font loader — browser uses fetch(), Node scripts use fs. */
   loadFontFile?: (path: string) => Promise<ArrayBuffer>
 }
@@ -331,19 +333,49 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
   gradientBand(pdf, 0, 0, PW, 42, C.headerLeft, C.headerRight, 56)
   gradientBand3(pdf, 0, 42, PW, 2.2, C.accentA, C.accentB, C.accentC, 72)
 
-  // logo mark
-  pdf.setFillColor(C.accentA[0], C.accentA[1], C.accentA[2])
-  pdf.roundedRect(ML, 8, 13, 13, 2.6, 2.6, "F")
-  setFont(pdf, "bold", 12, C.white)
-  pdf.text("GX", ML + 6.5, 16.4, { align: "center" })
+  // logo — real GuardianX shield on a violet glow chip (mirrors the on-screen
+  // header); falls back to the drawn GX badge if the image is unavailable.
+  let logoDrawn = false
+  if (opts.logoPngDataUrl) {
+    try {
+      // glow chip (app-icon style) behind the shield
+      pdf.saveGraphicsState()
+      pdf.setGState(new (pdf as any).GState({ opacity: 0.5 }))
+      pdf.setFillColor(C.violetDark[0], C.violetDark[1], C.violetDark[2])
+      pdf.roundedRect(12.5, 6.5, 18, 18, 3.6, 3.6, "F")
+      pdf.setLineWidth(0.25)
+      pdf.setDrawColor(C.violet[0], C.violet[1], C.violet[2])
+      pdf.roundedRect(12.5, 6.5, 18, 18, 3.6, 3.6, "S")
+      pdf.restoreGraphicsState()
+      pdf.addImage(opts.logoPngDataUrl, "PNG", 13.5, 7.5, 16, 16)
+      logoDrawn = true
+    } catch {
+      logoDrawn = false
+    }
+  }
+  if (!logoDrawn) {
+    if (opts.logoPngDataUrl) {
+      // addImage failed after the chip was drawn — paint the chip area back
+      // with the local gradient colour so the fallback badge sits clean.
+      const bg = lerp(C.headerLeft, C.headerRight, 14 / PW)
+      pdf.setFillColor(bg[0], bg[1], bg[2])
+      pdf.rect(12.5, 6.5, 18, 18, "F")
+    }
+    pdf.setFillColor(C.accentA[0], C.accentA[1], C.accentA[2])
+    pdf.roundedRect(ML, 8, 13, 13, 2.6, 2.6, "F")
+    setFont(pdf, "bold", 12, C.white)
+    pdf.text("GX", ML + 6.5, 16.4, { align: "center" })
+  }
+
+  const brandX = logoDrawn ? 34.5 : 31
 
   // brand
   setFont(pdf, "bold", 15.5, C.white)
-  pdf.text("GUARDIANX ACADEMY", 31, 13.6)
+  pdf.text("GUARDIANX ACADEMY", brandX, 13.6)
   setFont(pdf, "med", 8, C.violetSoft)
-  pdf.text(safe("Cybersecurity Training & Certification"), 31, 18.6)
+  pdf.text(safe("Cybersecurity Training & Certification"), brandX, 18.6)
   setFont(pdf, "reg", 7.2, [161, 140, 250])
-  pdf.text(safe("academy@guardianx.in   ·   academy@guardianx.cloud   ·   Bengaluru, India"), 31, 23.6)
+  pdf.text(safe("academy@guardianx.in   ·   academy@guardianx.cloud   ·   Bengaluru, India"), brandX, 23.6)
 
   // right: INVOICE + number + status badge
   setFont(pdf, "bold", 19.5, C.white)

@@ -285,10 +285,30 @@ export function InvoiceGeneratorView() {
     }
   }
 
+  /** Load the GuardianX shield logo as a 256px PNG data-URL (keeps the PDF
+   *  small while staying ~460 DPI at the 16mm print size). */
+  async function buildLogoPng(): Promise<string | null> {
+    try {
+      const img = new Image()
+      img.src = "/guardianx-logo-v2.png"
+      await img.decode()
+      const canvas = document.createElement("canvas")
+      canvas.width = 256
+      canvas.height = 256
+      const ctx = canvas.getContext("2d")
+      if (!ctx) return null
+      ctx.drawImage(img, 0, 0, 256, 256)
+      return canvas.toDataURL("image/png")
+    } catch (e) {
+      console.warn("[invoice-pdf] logo load failed — falling back to drawn mark", e)
+      return null
+    }
+  }
+
   async function generateInvoicePdf() {
     const { buildInvoicePdf } = await import("@/lib/invoice-pdf")
-    const qrPngDataUrl = await buildQrPng()
-    return buildInvoicePdf(collectPdfData(), { qrPngDataUrl })
+    const [qrPngDataUrl, logoPngDataUrl] = await Promise.all([buildQrPng(), buildLogoPng()])
+    return buildInvoicePdf(collectPdfData(), { qrPngDataUrl, logoPngDataUrl })
   }
 
   async function handleGeneratePdf() {

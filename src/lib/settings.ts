@@ -121,8 +121,8 @@ export const SETTING_DEFINITIONS = [
   { key: "SENTRY_DSN", label: "Sentry DSN", category: "tracking", isSecret: false, placeholder: "https://xxx@sentry.io/xxx", description: "From sentry.io → project settings" },
 
   // Google OAuth
-  { key: "GOOGLE_CLIENT_ID", label: "Google Client ID", category: "auth", isSecret: false, placeholder: "xxx.apps.googleusercontent.com", description: "From Google Cloud Console → Credentials" },
-  { key: "GOOGLE_CLIENT_SECRET", label: "Google Client Secret", category: "auth", isSecret: true, placeholder: "••••••••••", description: "From Google Cloud Console → Credentials" },
+  { key: "GOOGLE_CLIENT_ID", label: "Google Client ID", category: "auth", isSecret: false, placeholder: "xxx.apps.googleusercontent.com", description: "From Google Cloud Console → APIs & Services → Credentials (OAuth 2.0 Client ID)" },
+  { key: "GOOGLE_CLIENT_SECRET", label: "Google Client Secret", category: "auth", isSecret: true, placeholder: "••••••••••", description: "From Google Cloud Console → Credentials. The callback URL shown in the panel above must be registered as an Authorized redirect URI." },
 ]
 
 export type SettingCategory = "payment" | "email" | "crm" | "tracking" | "auth"
@@ -132,5 +132,5 @@ export const CATEGORY_META: Record<SettingCategory, { label: string; icon: strin
   email: { label: "Email (SMTP)", icon: "📧", color: "text-cyan-300" },
   crm: { label: "CRM Webhook", icon: "🔗", color: "text-violet-300" },
   tracking: { label: "Error Tracking (Sentry)", icon: "🔴", color: "text-rose-300", note: "Requires redeploy to activate (Sentry loads at server start)" },
-  auth: { label: "Google OAuth", icon: "🔵", color: "text-blue-300", note: "Requires redeploy + Google Cloud Console redirect URI setup" },
+  auth: { label: "Google OAuth", icon: "🔵", color: "text-blue-300", note: "No redeploy needed. The callback URL shown in Admin → Settings → Google OAuth must be registered as an Authorized redirect URI in Google Cloud Console" },
 }
