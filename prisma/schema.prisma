@@ -78,6 +78,8 @@ model User {
   cyberRangeMemberships CyberRangeMember[]
   bugBountySubmissions  BugBountySubmission[]
   parentAccounts       ParentAccount[]
+  labSessions          LabSession[]
+  mockExamAttempts     MockExamAttempt[]
   authoredCourses      AuthoredCourse[]
   instructorProfile    InstructorProfile?
   leadNotes            LeadNote[]
@@ -336,6 +338,8 @@ model UserActivity {
   meta        String   @default("") // JSON-ish metadata
   date        String   // YYYY-MM-DD (for daily aggregation / streaks)
   createdAt   DateTime @default(now())
+
+  @@index([userId, date])
 }
 
 model Course {
@@ -526,6 +530,7 @@ model Lab {
   createdAt     DateTime @default(now())
 
   progress      LabProgress[]
+  sessions      LabSession[]
 }
 
 model LabProgress {
@@ -613,6 +618,9 @@ model Notification {
   link        String?  // optional view target, JSON-encoded e.g. {"name":"achievements"}
   read        Boolean  @default(false)
   createdAt   DateTime @default(now())
+
+  @@index([userId, read])
+  @@index([createdAt])
 }
 
 model CourseReview {
@@ -775,6 +783,7 @@ model MessageThread {
   messages      Message[]
 
   @@unique([userAId, userBId])
+  @@index([lastMessageAt])
 }
 
 model Message {
@@ -786,6 +795,8 @@ model Message {
   content       String
   read          Boolean  @default(false)
   createdAt     DateTime @default(now())
+
+  @@index([threadId, createdAt])
 }
 
 // --- Study Groups ---
@@ -1327,6 +1338,12 @@ model ParentAccount {
   studentId   String
   student     User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
   relationship String  @default("parent") // parent | guardian
+  // Consent flow: a parent link request starts PENDING and only becomes
+  // ACTIVE after the student explicitly approves it (see /api/parent/consent).
+  status       String   @default("PENDING") // PENDING | ACTIVE | BLOCKED
+  consentToken String?  @unique // one-time token the student clicks/approves with
+  consentExpiresAt DateTime?
+  decidedAt    DateTime? // when the student approved/rejected
   createdAt   DateTime @default(now())
 }
 
@@ -1854,6 +1871,9 @@ model AuditLog {
   resourceId String? @default("")
   details    String   @default("") // JSON string with before/after
   createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([userId])
 }
 
 // ============================================================
@@ -1929,4 +1949,185 @@ model Referral {
 
   @@index([referrerId])
   @@index([referredEmail])
+}
+
+// ============================================================
+// AUDIT FIXES — models that were referenced by API routes but
+// missing from the schema (caused silent runtime 500s / empty
+// responses because next.config.ts had ignoreBuildErrors: true).
+// ============================================================
+
+// --- Hands-on lab sessions (Docker-backed labs) ---
+// Powers /api/labs/[slug]/orchestrate + /api/lab-sessions.
+model LabSession {
+  id                String    @id @default(cuid())
+  userId            String
+  user              User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  labId             String
+  lab               Lab       @relation(fields: [labId], references: [id], onDelete: Cascade)
+  status            String    @default("starting") // starting | running | stopped | expired | error
+  ttlMinutes        Int       @default(60)
+  expiresAt         DateTime?
+  targetContainerId String?
+  attackContainerId String?
+  targetIp          String?
+  attackIp          String?
+  networkName       String?
+  dynamicFlag       String?   // per-session flag — NEVER returned to the browser
+  terminalToken     String?   // signed WebSocket token for terminal-gateway
+  startedAt         DateTime  @default(now())
+  endedAt           DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@index([userId, status])
+  @@index([labId, status])
+  @@index([expiresAt])
+}
+
+// --- Mock exams ---
+model MockExam {
+  id          String   @id @default(cuid())
+  title       String
+  description String   @default("")
+  category    String   @default("General")
+  difficulty  String   @default("Medium") // Easy | Medium | Hard
+  durationMin Int      @default(60)
+  questionIds String   @default("[]") // JSON array of QuestionBank ids
+  passingScore Int     @default(60) // percentage
+  status      String   @default("draft") // draft | published
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  attempts    MockExamAttempt[]
+
+  @@index([status])
+}
+
+model MockExamAttempt {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  mockExamId  String
+  mockExam    MockExam  @relation(fields: [mockExamId], references: [id], onDelete: Cascade)
+  status      String    @default("in_progress") // in_progress | completed | abandoned
+  score       Float     @default(0) // percentage
+  answers     String    @default("{}") // JSON map questionId → answer
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+
+  @@index([userId])
+  @@index([mockExamId])
+}
+
+// --- Certifications (admin-managed catalog shown on cert-landing / exams) ---
+model Certification {
+  id        String   @id @default(cuid())
+  short     String   @unique // e.g. "CEH"
+  full      String // e.g. "Certified Ethical Hacker"
+  body      String   @default("") // cert body e.g. "EC-Council"
+  level     String   @default("Beginner")
+  category  String   @default("General")
+  color     String   @default("emerald")
+  duration  String   @default("30h")
+  desc      String   @default("")
+  popular   Boolean  @default(false)
+  order     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// --- Partner institutions (universities / colleges / schools) ---
+model PartnerInstitution {
+  id               String   @id @default(cuid())
+  name             String
+  shortName        String
+  type             String   @default("school") // school | college | university | company
+  location         String?
+  city             String?
+  country          String?
+  established      Int?
+  studentsCount    String? // display string e.g. "12,000+"
+  mouSigned        String? // e.g. "2025-06-01"
+  mouDuration      String? // e.g. "3 years"
+  partnershipLevel String? // e.g. "Gold"
+  coursesOffered   String   @default("") // pipe-separated
+  studentsTrained  Int      @default(0)
+  certificationsEarned Int  @default(0)
+  labsSetup        Int      @default(0)
+  facultyTrained   Int      @default(0)
+  description      String   @default("")
+  achievements     String   @default("") // pipe-separated
+  contactPerson    String?
+  contactRole      String?
+  email            String?
+  phone            String?
+  website          String?
+  color            String   @default("emerald")
+  order            Int      @default(0)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([order])
+}
+
+// --- GRC (Governance / Risk / Compliance) content ---
+model GrcContent {
+  id               String   @id @default(cuid())
+  title            String
+  category         String   @default("Governance") // Governance | Risk | Compliance
+  summary          String   @default("")
+  content          String   @default("") // markdown body
+  framework        String   @default("") // e.g. "ISO 27001", "NIST CSF"
+  icon             String   @default("shield")
+  color            String   @default("emerald")
+  relatedCourseIds String   @default("[]") // JSON array of course ids
+  order            Int      @default(0)
+  published        Boolean  @default(true)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([published, order])
+}
+
+// --- Sentinel (SOAR) — security incidents / events / automated actions ---
+model Incident {
+  id          String   @id @default(cuid())
+  title       String
+  component   String   @default("unknown") // api | auth | database | labs | payments | ...
+  severity    String   @default("warning") // info | warning | critical
+  status      String   @default("open") // open | investigating | resolved | dismissed
+  description String?
+  evidence    String   @default("[]") // JSON array of evidence items
+  detectedAt  DateTime @default(now())
+  resolvedAt  DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([status])
+  @@index([detectedAt])
+}
+
+model SystemEvent {
+  id        String   @id @default(cuid())
+  level     String   @default("info") // info | warn | error
+  source    String   @default("system") // api | worker | orchestrator | auth | ...
+  message   String
+  meta      String   @default("{}") // JSON metadata
+  timestamp DateTime @default(now())
+
+  @@index([timestamp])
+  @@index([level])
+}
+
+model SentinelAction {
+  id          String   @id @default(cuid())
+  action      String // e.g. "block-ip" | "quarantine-session" | "rotate-secret"
+  target      String   @default("") // what the action was applied to
+  status      String   @default("completed") // pending | completed | failed | reverted
+  performedBy String   @default("sentinel") // sentinel | <admin user id>
+  details     String   @default("{}") // JSON metadata
+  timestamp   DateTime @default(now())
+
+  @@index([timestamp])
 }
