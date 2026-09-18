@@ -168,9 +168,10 @@ export default function RootLayout({
         <meta name="geo.placename" content="Jammu and Kashmir, India" />
         <meta name="geo.position" content="34.0837;74.7973" />
         <meta name="ICBM" content="34.0837, 74.7973" />
-        <link rel="icon" type="image/png" sizes="32x32" href="/guardianx-logo-v2.png" />
-        <link rel="icon" type="image/png" sizes="192x192" href="/guardianx-logo-v2.png" />
-        <link rel="icon" type="image/png" sizes="512x512" href="/guardianx-logo-v2.png" />
+        <link rel="icon" type="image/png" sizes="32x32" href="/icon-32.png" />
+        <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png" />
+        <link rel="icon" type="image/png" sizes="512x512" href="/icon-512.png" />
+        <link rel="apple-touch-icon" sizes="192x192" href="/icon-192.png" />
         <link rel="apple-touch-icon" href="/guardianx-logo-v2.png" />
         <link rel="apple-touch-icon" sizes="180x180" href="/guardianx-logo-v2.png" />
         <link rel="apple-touch-icon" sizes="192x192" href="/guardianx-logo-v2.png" />

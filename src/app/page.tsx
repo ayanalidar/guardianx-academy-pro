@@ -106,6 +106,7 @@ const ExamDetailView = dynamic(() => import("@/views/exam-detail").then(m => ({ 
 const SkillTreeView = dynamic(() => import("@/views/skill-tree").then(m => ({ default: m.SkillTreeView })), { ssr: false })
 const CyberRangeView = dynamic(() => import("@/views/cyber-range").then(m => ({ default: m.CyberRangeView })), { ssr: false })
 const LearningPathsView = dynamic(() => import("@/views/learning-paths").then(m => ({ default: m.LearningPathsView })), { ssr: false })
+const LegalPageView = dynamic(() => import("@/views/legal").then(m => ({ default: m.LegalPage })), { ssr: false })
 
 // Public views that show the header + footer (accessible without login)
 const PUBLIC_VIEWS = new Set([
@@ -151,6 +152,7 @@ function ViewRouter() {
       {view.name === "exams" && <ExamsView />}
       {view.name === "credentials" && <CredentialsView />}
       {view.name === "verify" && <VerifyView />}
+      {view.name === "legal" && "pageType" in view && <LegalPageView pageType={view.pageType} />}
       {view.name === "invoice-generator" && <InvoiceGeneratorView />}
       {view.name === "proposal-maker" && <ProposalMakerView />}
       {view.name === "admin-lead-crm" && <LeadCrmView />}

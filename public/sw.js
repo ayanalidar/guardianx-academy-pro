@@ -12,9 +12,10 @@ const RUNTIME_CACHE = `${VERSION}-runtime`;
 
 const APP_SHELL = [
   "/",
-  "/manifest.json",
+  "/manifest.webmanifest",
   "/logo.svg",
-  "/guardianx-logo.png",
+  "/icon-192.png",
+  "/icon-512.png",
 ];
 
 // Install: pre-cache the app shell

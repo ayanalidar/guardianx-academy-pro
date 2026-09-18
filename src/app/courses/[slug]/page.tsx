@@ -1,7 +1,6 @@
 import { db } from "@/lib/db"
 import { notFound } from "next/navigation"
-import { PublicPageShell } from "@/components/platform/public-page-shell"
-import { CourseDetailView } from "@/views/course-detail"
+import { PublicRouteView } from "@/components/platform/public-route-view"
 
 export const dynamic = "force-dynamic"
 interface Props { params: Promise<{ slug: string }> }
@@ -17,5 +16,7 @@ export default async function Page({ params }: Props) {
   const { slug } = await params
   const course = await db.course.findUnique({ where: { slug, published: true } })
   if (!course) notFound()
-  return <PublicPageShell><CourseDetailView /></PublicPageShell>
+  // PublicRouteView hydrates the SPA store with this view so CourseDetailView
+  // (which reads its id from the store) renders on direct/SEO visits.
+  return <PublicRouteView initialView={{ name: "course", courseId: course.id }} />
 }

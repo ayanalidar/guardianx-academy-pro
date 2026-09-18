@@ -168,6 +168,12 @@ export function hashToView(hash: string): View {
     return { name: "cyber-quiz" }
   }
 
+  // Legal / info pages: /about /privacy /terms /faq /refund /cookies /conduct /partners
+  const legalPages = ["about", "privacy", "terms", "faq", "refund", "cookies", "conduct", "partners"]
+  if (legalPages.includes(parts[0])) {
+    return { name: "legal", pageType: parts[0] as any }
+  }
+
   // /<view-name> — validate against the known set so we never produce
   // an unknown view from a user-typed URL.
   const knownViews: View["name"][] = [

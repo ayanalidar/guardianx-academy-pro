@@ -101,6 +101,20 @@ export function GlobalSearch({ className }: { className?: string }) {
   const debounceTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null)
   const blurTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  /* ---------- ⌘K / Ctrl+K keyboard shortcut (focus + open) ---------- */
+  React.useEffect(() => {
+    function onKeydown(e: KeyboardEvent) {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault()
+        setOpen(true)
+        // Focus after the input is visible
+        requestAnimationFrame(() => inputRef.current?.focus())
+      }
+    }
+    window.addEventListener("keydown", onKeydown)
+    return () => window.removeEventListener("keydown", onKeydown)
+  }, [])
+
   /* ---------- debounce 300ms ---------- */
   React.useEffect(() => {
     if (debounceTimer.current) clearTimeout(debounceTimer.current)
@@ -296,7 +310,7 @@ export function GlobalSearch({ className }: { className?: string }) {
             className="hidden md:inline-flex h-4 px-1.5 items-center text-[9px] font-mono text-muted-foreground/60 border border-border/60 rounded shrink-0"
             aria-hidden
           >
-            ⌘K
+            ⌘K / Ctrl K
           </kbd>
         )}
       </div>

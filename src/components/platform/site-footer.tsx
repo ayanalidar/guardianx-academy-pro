@@ -34,28 +34,28 @@ const PLATFORM_LINKS: FooterLink[] = [
 ]
 
 const COMPANY_LINKS: FooterLink[] = [
-  { label: "About Us", icon: Building2, view: { name: "about" } },
-  { label: "Partners", icon: Users, view: { name: "partners" } },
+  { label: "About Us", icon: Building2, view: { name: "legal", pageType: "about" } },
+  { label: "Partners", icon: Users, view: { name: "legal", pageType: "partners" } },
   { label: "Impact", icon: Heart, view: { name: "impact" } },
   { label: "Contact", icon: MessageSquare, view: { name: "contact" } },
   { label: "Careers", icon: ArrowRight, view: { name: "contact" } },
 ]
 
 const LEGAL_LINKS: FooterLink[] = [
-  { label: "Privacy Policy", icon: Lock, view: { name: "privacy" } },
-  { label: "Terms & Conditions", icon: FileText, view: { name: "terms" } },
-  { label: "FAQ", icon: HelpCircle, view: { name: "faq" } },
-  { label: "Refund Policy", icon: CreditCard, view: { name: "refund" } },
-  { label: "Cookie Policy", icon: Cookie, view: { name: "cookies" } },
-  { label: "Code of Conduct", icon: ScrollText, view: { name: "conduct" } },
+  { label: "Privacy Policy", icon: Lock, view: { name: "legal", pageType: "privacy" } },
+  { label: "Terms & Conditions", icon: FileText, view: { name: "legal", pageType: "terms" } },
+  { label: "FAQ", icon: HelpCircle, view: { name: "legal", pageType: "faq" } },
+  { label: "Refund Policy", icon: CreditCard, view: { name: "legal", pageType: "refund" } },
+  { label: "Cookie Policy", icon: Cookie, view: { name: "legal", pageType: "cookies" } },
+  { label: "Code of Conduct", icon: ScrollText, view: { name: "legal", pageType: "conduct" } },
 ]
 
 const RESOURCE_LINKS: FooterLink[] = [
   { label: "Payloads Library", icon: Database, href: "https://github.com/swisskyrepo/PayloadsAllTheThings" },
-  { label: "Documentation", icon: FileCode, view: { name: "faq" } },
+  { label: "Documentation", icon: FileCode, view: { name: "legal", pageType: "faq" } },
   { label: "Blog", icon: PenSquare, view: { name: "blog" } },
   { label: "Community", icon: Users, view: { name: "auth" } },
-  { label: "API Docs", icon: FileCode, view: { name: "faq" } },
+  { label: "API Docs", icon: FileCode, view: { name: "legal", pageType: "faq" } },
 ]
 
 const SOCIAL_LINKS = [
@@ -214,7 +214,7 @@ export function SiteFooter() {
             <p className="text-[10px] text-muted-foreground mt-2">
               By subscribing, you agree to our{" "}
               <button
-                onClick={() => navigate({ name: "privacy" } as unknown as View)}
+                onClick={() => navigate({ name: "legal", pageType: "privacy" })}
                 className="text-emerald-400 hover:underline"
               >
                 Privacy Policy
@@ -244,14 +244,14 @@ export function SiteFooter() {
             <span>© {new Date().getFullYear()} GuardianX Security Education</span>
             <span className="opacity-50">·</span>
             <button
-              onClick={() => navigate({ name: "conduct" } as unknown as View)}
+              onClick={() => navigate({ name: "legal", pageType: "conduct" })}
               className="hover:text-emerald-400 transition-colors"
             >
               Code of Conduct
             </button>
             <span className="opacity-50">·</span>
             <button
-              onClick={() => navigate({ name: "terms" } as unknown as View)}
+              onClick={() => navigate({ name: "legal", pageType: "terms" })}
               className="hover:text-emerald-400 transition-colors"
             >
               Terms

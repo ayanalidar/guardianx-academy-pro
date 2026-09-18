@@ -409,6 +409,7 @@ export function AuthScreen() {
                           <Input
                             id="email"
                             type="email"
+ autoComplete="email"
                             className="pl-9"
                             placeholder="you@example.com"
                             value={loginEmail}
@@ -530,6 +531,7 @@ export function AuthScreen() {
                           <Input
                             id="schoolEmail"
                             type="email"
+ autoComplete="email"
                             className="pl-9"
                             placeholder="admin@yourschool.edu"
                             value={schoolEmail}
@@ -605,6 +607,7 @@ export function AuthScreen() {
                           <Input
                             id="reg-email"
                             type="email"
+ autoComplete="email"
                             className="pl-9"
                             placeholder="you@example.com"
                             value={regEmail}
@@ -620,6 +623,7 @@ export function AuthScreen() {
                           <Input
                             id="reg-password"
                             type="password"
+ autoComplete="current-password"
                             className="pl-9"
                             placeholder="Min 6 characters"
                             value={regPass}

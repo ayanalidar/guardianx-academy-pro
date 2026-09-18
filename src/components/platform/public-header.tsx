@@ -379,8 +379,13 @@ export function PublicHeader() {
           </div>
         </motion.button>
 
-        {/* ===== Global search (between logo and nav) — hidden on mobile ===== */}
+        {/* ===== Global search (between logo and nav) — visible on all sizes ===== */}
         <div className="hidden lg:block flex-1 max-w-md mx-4">
+          <GlobalSearch />
+        </div>
+
+        {/* Mobile search — visible below lg (was desktop-only before) */}
+        <div className="lg:hidden flex-1 mx-3 min-w-0">
           <GlobalSearch />
         </div>
 

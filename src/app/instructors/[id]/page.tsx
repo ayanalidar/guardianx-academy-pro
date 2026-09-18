@@ -1,7 +1,6 @@
 import { db } from "@/lib/db"
 import { notFound } from "next/navigation"
-import { PublicPageShell } from "@/components/platform/public-page-shell"
-import { InstructorDetailView } from "@/views/instructor-detail"
+import { PublicRouteView } from "@/components/platform/public-route-view"
 
 export const dynamic = "force-dynamic"
 interface Props { params: Promise<{ id: string }> }
@@ -17,5 +16,5 @@ export default async function Page({ params }: Props) {
   const { id } = await params
   const instructor = await db.user.findUnique({ where: { id, role: "INSTRUCTOR" } })
   if (!instructor) notFound()
-  return <PublicPageShell><InstructorDetailView /></PublicPageShell>
+  return <PublicRouteView initialView={{ name: "instructor-detail", instructorId: instructor.id }} />
 }

@@ -329,7 +329,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
       </div>
 
       {/* Main content */}
-      <main className="flex-1 min-w-0 overflow-x-hidden">
+      <main id="main-content" className="flex-1 min-w-0 overflow-x-hidden">
         {/* Desktop top strip — sticky, holds the notification bell */}
         <div className="hidden lg:flex sticky top-0 z-30 h-12 items-center justify-end px-4 border-b border-border/40 bg-background/70 backdrop-blur-xl">
           <NotificationBell />

@@ -1,7 +1,6 @@
 import { db } from "@/lib/db"
 import { notFound } from "next/navigation"
-import { PublicPageShell } from "@/components/platform/public-page-shell"
-import { EventDetailView } from "@/views/event-detail"
+import { PublicRouteView } from "@/components/platform/public-route-view"
 
 export const dynamic = "force-dynamic"
 interface Props { params: Promise<{ slug: string }> }
@@ -17,5 +16,5 @@ export default async function Page({ params }: Props) {
   const { slug } = await params
   const event = await db.event.findUnique({ where: { slug, published: true } })
   if (!event) notFound()
-  return <PublicPageShell><EventDetailView /></PublicPageShell>
+  return <PublicRouteView initialView={{ name: "event-detail", eventSlug: event.slug }} />
 }

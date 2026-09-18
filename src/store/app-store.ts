@@ -98,6 +98,7 @@ export type View =
   // Public instructors + events (master-prompt §25 / §36)
   | { name: "instructors" }
   | { name: "instructor-detail"; instructorId: string }
+  | { name: "legal"; pageType: "about" | "privacy" | "terms" | "faq" | "refund" | "cookies" | "conduct" | "partners" }
   | { name: "events" }
   | { name: "event-detail"; eventSlug: string }
   | { name: "blog" }
