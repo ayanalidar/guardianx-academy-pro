@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentUser, withErrorHandler } from "@/lib/session"
+import { verifyAttemptToken } from "@/lib/link-signing"
 
 export const runtime = "nodejs"
 
@@ -12,16 +13,15 @@ export const runtime = "nodejs"
  *   (a) the authenticated user owns the attempt (userId matches), OR
  *   (b) the attempt was a guest attempt AND the request includes the matching
  *       guestEmail as a query param (verified via a magic link the guest
- *       received). This is still weak — see "TODO" below.
+ *       received), OR
+ *   (c) the request includes a valid HMAC-signed result token (?t=<token>)
+ *       issued in the submit response — see src/lib/link-signing.ts. This
+ *       closes the previous TODO: the token is unforgeable without the
+ *       server secret and is verified in constant time.
  *
  * Previously this endpoint was fully public, which exposed guestName +
  * guestEmail PII to anyone who could guess/scrape a CUID. CUIDs are not
  * security tokens.
- *
- * TODO: sign the attemptId with NEXTAUTH_SECRET and require the signature
- * in the URL, so the link is unforgeable. For now, require auth for any
- * attempt that has a userId, and accept guest attempts as anonymous (no
- * PII returned) unless the guest email is provided.
  */
 export const GET = withErrorHandler(async (req: NextRequest, { params }: { params: Promise<{ attemptId: string }> }) => {
   const { attemptId } = await params
@@ -50,19 +50,23 @@ export const GET = withErrorHandler(async (req: NextRequest, { params }: { param
 
   const currentUser = await getCurrentUser()
 
+  // A valid signed result token is unforgeable proof of ownership.
+  const signedAttemptId = verifyAttemptToken(new URL(req.url).searchParams.get("t"))
+  const tokenValid = signedAttemptId === attempt.id
+
   // Case 1: attempt belongs to a logged-in user — must be that user.
   if (attempt.userId) {
-    if (!currentUser || currentUser.id !== attempt.userId) {
+    if (!tokenValid && (!currentUser || currentUser.id !== attempt.userId)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
   } else {
-    // Case 2: guest attempt. Require the guest email to match a query param,
-    // OR require the user to be authenticated as an admin (for support/debug).
+    // Case 2: guest attempt. Accept the signed result token, the guest email
+    // query param, or an authenticated admin (for support/debug).
     const claimedEmail = new URL(req.url).searchParams.get("email")?.toLowerCase()
     const emailMatches =
       attempt.guestEmail && claimedEmail === attempt.guestEmail.toLowerCase()
     const isAdmin = currentUser?.role === "ADMIN" || currentUser?.role === "SUPER_ADMIN"
-    if (!emailMatches && !isAdmin) {
+    if (!tokenValid && !emailMatches && !isAdmin) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })
     }
   }
@@ -76,8 +80,9 @@ export const GET = withErrorHandler(async (req: NextRequest, { params }: { param
     }
   }
 
-  // Only expose PII (guestName, guestEmail) to the owner / admin.
+  // Only expose PII (guestName, guestEmail) to the owner / admin / valid token.
   const canSeePii =
+    tokenValid ||
     (currentUser && attempt.userId === currentUser.id) ||
     currentUser?.role === "ADMIN" ||
     currentUser?.role === "SUPER_ADMIN"

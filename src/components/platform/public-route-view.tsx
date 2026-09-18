@@ -7,6 +7,7 @@ import { ViewRouter } from "@/components/platform/view-router"
 import { HomeView } from "@/views/home"
 import { ImpactView } from "@/views/impact"
 import { ContactView } from "@/views/contact"
+import { InstitutionsView } from "@/views/institutions"
 import { InstitutionsSchoolsView } from "@/views/institutions-schools"
 import { InstitutionsCollegesView } from "@/views/institutions-colleges"
 import { InstitutionsUniversitiesView } from "@/views/institutions-universities"
@@ -55,6 +56,7 @@ function renderView(view: View): React.ReactNode {
     case "impact": return <ImpactView />
     case "contact": return <ContactView />
     case "institutions":
+      return <InstitutionsView />
     case "institutions-schools": return <InstitutionsSchoolsView />
     case "institutions-colleges": return <InstitutionsCollegesView />
     case "institutions-universities": return <InstitutionsUniversitiesView />

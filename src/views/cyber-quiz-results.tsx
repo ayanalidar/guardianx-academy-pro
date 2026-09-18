@@ -43,10 +43,11 @@ export function CyberQuizResultsView() {
   const { view, navigate } = useAppStore()
   const { formatPrice, isINR } = useCurrencyHook()
   const attemptId = (view as any)?.attemptId as string
+  const resultToken = (view as any)?.resultToken as string | undefined
 
   const { data, isLoading, error } = useQuery<{ attempt: Attempt }>({
-    queryKey: ["cyber-quiz-attempt", attemptId],
-    queryFn: () => api(`/api/cyber-quiz/attempt/${attemptId}`),
+    queryKey: ["cyber-quiz-attempt", attemptId, resultToken],
+    queryFn: () => api(`/api/cyber-quiz/attempt/${attemptId}${resultToken ? `?t=${encodeURIComponent(resultToken)}` : ""}`),
     enabled: !!attemptId,
   })
 

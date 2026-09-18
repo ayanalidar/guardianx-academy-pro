@@ -7,6 +7,7 @@ import { randomBytes } from "crypto"
 import { db } from "@/lib/db"
 import { sendEmail, magicLinkEmailTemplate } from "@/lib/email"
 import { requireSecret } from "@/lib/secrets"
+import { getSettings } from "@/lib/settings"
 
 // Generate a sentinel password hash for OAuth/magic-link accounts.
 // These accounts cannot log in via the credentials provider — the hash is
@@ -37,8 +38,38 @@ function checkLoginRateLimit(ip: string): boolean {
   return true
 }
 
-export const authOptions: NextAuthOptions = {
-  providers: [
+/**
+ * getAuthOptions() — builds NextAuth options dynamically per request.
+ *
+ * Google OAuth + SMTP credentials are read from the Platform Settings DB
+ * (admin-configurable via Admin → Settings) with env-var fallback, so saving
+ * keys in the admin panel takes effect on the NEXT request — no redeploy.
+ * getSettings() caches values in memory for 5 minutes, so this costs 0–1 DB
+ * queries per auth call.
+ *
+ * Providers are only registered when fully configured:
+ *  - GoogleProvider: needs BOTH GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET.
+ *    This makes /api/auth/providers truthful — the login UI checks it and
+ *    hides the "Sign in with Google" button when unconfigured (previously
+ *    the button always showed and led to a broken redirect).
+ *  - EmailProvider (magic link): needs SMTP_HOST + SMTP_USER + SMTP_PASSWORD.
+ */
+export async function getAuthOptions(): Promise<NextAuthOptions> {
+  const s = await getSettings([
+    "GOOGLE_CLIENT_ID",
+    "GOOGLE_CLIENT_SECRET",
+    "SMTP_HOST",
+    "SMTP_PORT",
+    "SMTP_USER",
+    "SMTP_PASSWORD",
+    "EMAIL_FROM",
+  ])
+
+  const googleConfigured = !!(s.GOOGLE_CLIENT_ID && s.GOOGLE_CLIENT_SECRET)
+  const smtpConfigured = !!(s.SMTP_HOST && s.SMTP_USER && s.SMTP_PASSWORD)
+
+  return {
+    providers: [
     // Standard credentials provider — email + password for students/instructors/admins
     CredentialsProvider({
       id: "credentials",
@@ -126,26 +157,29 @@ export const authOptions: NextAuthOptions = {
     // via the password-then-OAuth merge path. Users who try to OAuth with an
     // email already registered via password will be asked to sign in with
     // the original method first.
-    GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID || "",
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+    // Registered only when configured (DB → env fallback) so that the login
+    // UI can hide the button when Google OAuth is not set up.
+    ...(googleConfigured ? [GoogleProvider({
+      clientId: s.GOOGLE_CLIENT_ID!,
+      clientSecret: s.GOOGLE_CLIENT_SECRET!,
       allowDangerousEmailAccountLinking: false,
-    }),
+    })] : []),
 
     // Email (magic link) provider — passwordless login
     // User enters email → gets a login link → clicks → logged in
-    // Requires SMTP env vars (SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD)
+    // Requires SMTP settings (Platform Settings DB → env fallback):
+    // SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD
     // If SMTP not configured, the provider is silently skipped
-    ...(process.env.SMTP_HOST ? [EmailProvider({
+    ...(smtpConfigured ? [EmailProvider({
       server: {
-        host: process.env.SMTP_HOST,
-        port: parseInt(process.env.SMTP_PORT || "465", 10),
+        host: s.SMTP_HOST!,
+        port: parseInt(s.SMTP_PORT || "465", 10),
         auth: {
-          user: process.env.SMTP_USER!,
-          pass: process.env.SMTP_PASSWORD!,
+          user: s.SMTP_USER!,
+          pass: s.SMTP_PASSWORD!,
         },
       },
-      from: process.env.EMAIL_FROM || process.env.SMTP_USER,
+      from: s.EMAIL_FROM || s.SMTP_USER || undefined,
       maxAge: 24 * 60 * 60, // 24 hours
       // Custom sendMagicLink — uses our branded email template
       async sendVerificationRequest({ identifier: email, url, token, theme }) {
@@ -259,4 +293,5 @@ export const authOptions: NextAuthOptions = {
       },
     },
   },
+  }
 }

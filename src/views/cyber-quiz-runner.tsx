@@ -89,8 +89,8 @@ export function CyberQuizRunnerView() {
         setSubmitting(false)
         return
       }
-      // Navigate to the results view with the attemptId
-      navigate({ name: "cyber-quiz-results", attemptId: result.attemptId } as any)
+      // Navigate to the results view with the attemptId + signed result token
+      navigate({ name: "cyber-quiz-results", attemptId: result.attemptId, resultToken: result.resultToken } as any)
     } catch (e: any) {
       setSubmitError(e?.message || "Network error")
       setSubmitting(false)

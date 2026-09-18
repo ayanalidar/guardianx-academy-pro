@@ -2137,3 +2137,44 @@ model SentinelAction {
 
   @@index([timestamp])
 }
+
+// ============================================================
+// SETTINGS-FIXES — Invoice persistence for the Invoice Generator
+// (Admin → Invoice Generator). Previously invoices were only kept
+// in React state and were lost on refresh; the mini dashboard had
+// no real data. Admin-only CRUD via /api/invoices.
+// ============================================================
+model Invoice {
+  id              String   @id @default(cuid())
+  number          String   @unique // e.g. "GX-INV-2026-0042"
+  clientName      String
+  clientOrg       String?
+  clientEmail     String?
+  clientPhone     String?
+  clientAddress   String?
+  items           String   @default("[]") // JSON: [{description, quantity, unitPrice, icon}]
+  currency        String   @default("INR") // INR | USD | EUR | GBP
+  discountRate    Float    @default(0)     // percent 0-100
+  taxRate         Float    @default(0)     // percent 0-100
+  gstSplit        Boolean  @default(false) // CGST/SGST display split (INR)
+  subtotal        Float    @default(0)
+  taxAmount       Float    @default(0)
+  total           Float    @default(0)
+  roundingAdjustment Float @default(0)
+  status          String   @default("Draft") // Draft | Sent | Paid | Overdue
+  issueDate       String   @default("")      // ISO date "YYYY-MM-DD"
+  dueDate         String?
+  notes           String?
+  terms           String?
+  bankName        String?
+  accountName     String?
+  accountNumber   String?
+  ifscCode        String?
+  upiId           String?
+  createdById     String?  // admin who created it (no FK — plain id like ProctoringSession.userId)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+}

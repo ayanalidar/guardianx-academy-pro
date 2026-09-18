@@ -81,6 +81,7 @@ export function viewToPath(view: View): string {
     case "catalog":
       return "/courses"
     case "institutions":
+      return "/institutions"
     case "institutions-schools":
       return "/institutions/schools"
     case "institutions-colleges":

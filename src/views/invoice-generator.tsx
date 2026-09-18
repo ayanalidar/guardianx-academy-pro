@@ -3,7 +3,9 @@
 import * as React from "react"
 import { QRCodeSVG } from "qrcode.react"
 import { motion, AnimatePresence } from "framer-motion"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useAppStore } from "@/store/app-store"
+import { api } from "@/lib/api"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -23,7 +25,7 @@ import {
   MapPin, Calendar, Hash, Calculator, Shield, Award, Sparkles, Printer,
   Copy, Save, QrCode, Landmark, Signature, GraduationCap, FlaskConical,
   Award as CertIcon, Wrench, CheckCircle2, Clock, AlertTriangle, Send,
-  Wallet, TrendingUp, FileCheck, PenLine, Zap,
+  Wallet, TrendingUp, FileCheck, PenLine, Zap, Loader2,
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -42,10 +44,27 @@ interface SavedInvoice {
   id: string
   number: string
   clientName: string
+  clientOrg?: string | null
   total: number
   status: InvoiceStatus
   issueDate: string
   currency: string
+  items?: string
+  discountRate?: number
+  taxRate?: number
+  roundingAdjustment?: number
+  gstSplit?: boolean
+  dueDate?: string | null
+  clientEmail?: string | null
+  clientPhone?: string | null
+  clientAddress?: string | null
+  notes?: string | null
+  terms?: string | null
+  bankName?: string | null
+  accountName?: string | null
+  accountNumber?: string | null
+  ifscCode?: string | null
+  upiId?: string | null
 }
 
 const ITEM_ICON_CONFIG: Record<ItemIcon, { icon: React.ElementType; label: string; color: string; bg: string }> = {
@@ -71,6 +90,8 @@ const CURRENCY_LOCALE: Record<string, { locale: string; symbol: string; label: s
 
 export function InvoiceGeneratorView() {
   const { navigate } = useAppStore()
+  const queryClient = useQueryClient()
+  const [editingInvoiceId, setEditingInvoiceId] = React.useState<string | null>(null)
   const [invoiceNumber, setInvoiceNumber] = React.useState(
     `GX-INV-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 9999)).padStart(4, "0")}`,
   )
@@ -141,8 +162,41 @@ export function InvoiceGeneratorView() {
     "1. Training includes instructor-led sessions, study materials, and lab access.\n2. Certification exam fee is separate unless stated.\n3. Cancellation: 50% refund if cancelled 7+ days before start. No refund within 7 days.\n4. GuardianX Academy is not liable for third-party certification exam outcomes.",
   )
 
-  // Saved invoices (in-memory session list for the mini dashboard)
-  const [savedInvoices, setSavedInvoices] = React.useState<SavedInvoice[]>([])
+  // Saved invoices — persisted in the DB via /api/invoices (was: React state,
+  // lost on every refresh).
+  const invoicesQuery = useQuery<{ invoices: SavedInvoice[] }>({
+    queryKey: ["invoices"],
+    queryFn: () => api("/api/invoices"),
+  })
+  const savedInvoices = invoicesQuery.data?.invoices ?? []
+
+  const saveMutation = useMutation({
+    mutationFn: (payload: { id: string | null; body: Record<string, unknown> }) =>
+      payload.id
+        ? api(`/api/invoices/${payload.id}`, { method: "PATCH", body: JSON.stringify(payload.body) })
+        : api("/api/invoices", { method: "POST", body: JSON.stringify(payload.body) }),
+    onSuccess: (_data, payload) => {
+      queryClient.invalidateQueries({ queryKey: ["invoices"] })
+      toast.success(payload.id ? "Invoice updated" : `Invoice saved as ${status}`)
+    },
+    onError: (e: any) => toast.error(e?.message || "Save failed"),
+  })
+
+  const statusMutation = useMutation({
+    mutationFn: (payload: { id: string; status: InvoiceStatus }) =>
+      api(`/api/invoices/${payload.id}`, { method: "PATCH", body: JSON.stringify({ status: payload.status }) }),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["invoices"] }),
+    onError: (e: any) => toast.error(e?.message || "Status update failed"),
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => api(`/api/invoices/${id}`, { method: "DELETE" }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["invoices"] })
+      toast.success("Invoice deleted")
+    },
+    onError: (e: any) => toast.error(e?.message || "Delete failed"),
+  })
 
   function addItem() {
     setItems([...items, { id: String(Date.now()), description: "", quantity: 1, unitPrice: 0, icon: "training" }])
@@ -177,8 +231,11 @@ export function InvoiceGeneratorView() {
     }
     try {
       // Dynamically import the heavy PDF libraries (only when the user clicks Generate PDF)
+      // html2canvas-pro: maintained fork that understands modern CSS color
+      // functions (oklch / color-mix). Plain html2canvas@1.4.1 THROWS on
+      // Tailwind v4's oklch() colors, so "Generate PDF" always failed here.
       const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
-        import("html2canvas"),
+        import("html2canvas-pro"),
         import("jspdf"),
       ])
 
@@ -225,20 +282,88 @@ export function InvoiceGeneratorView() {
   }
 
   function handleSaveInvoice() {
-    const newSaved: SavedInvoice = {
-      id: String(Date.now()),
+    const body = {
       number: invoiceNumber,
       clientName: clientName || "Untitled",
-      total,
+      clientOrg,
+      clientEmail,
+      clientPhone,
+      clientAddress,
+      items: items.map((i) => ({ description: i.description, quantity: i.quantity, unitPrice: i.unitPrice, icon: i.icon })),
+      currency,
+      discountRate,
+      taxRate,
+      roundingAdjustment,
+      gstSplit,
       status,
       issueDate,
-      currency,
+      dueDate,
+      notes,
+      terms,
+      bankName,
+      accountName,
+      accountNumber,
+      ifscCode,
+      upiId,
     }
-    setSavedInvoices([newSaved, ...savedInvoices])
-    toast.success(`Invoice saved as ${status}`)
+    saveMutation.mutate({ id: editingInvoiceId, body })
   }
 
-  // Mini dashboard stats
+  /** Load a saved invoice back into the editor for re-editing. */
+  function handleEditInvoice(inv: SavedInvoice) {
+    setEditingInvoiceId(inv.id)
+    setInvoiceNumber(inv.number)
+    setClientName(inv.clientName || "")
+    setClientOrg(inv.clientOrg || "")
+    setClientEmail(inv.clientEmail || "")
+    setClientPhone(inv.clientPhone || "")
+    setClientAddress(inv.clientAddress || "")
+    setCurrency(inv.currency || "INR")
+    setDiscountRate(inv.discountRate ?? 0)
+    setTaxRate(inv.taxRate ?? 0)
+    setRoundingAdjustment(inv.roundingAdjustment ?? 0)
+    setGstSplit(inv.gstSplit ?? false)
+    setStatus(inv.status)
+    setIssueDate(inv.issueDate || new Date().toISOString().split("T")[0])
+    setDueDate(inv.dueDate || "")
+    setNotes(inv.notes || "")
+    setTerms(inv.terms || "")
+    setBankName(inv.bankName || "")
+    setAccountName(inv.accountName || "")
+    setAccountNumber(inv.accountNumber || "")
+    setIfscCode(inv.ifscCode || "")
+    setUpiId(inv.upiId || "")
+    try {
+      const parsed = typeof inv.items === "string" ? JSON.parse(inv.items) : inv.items
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        setItems(parsed.map((it: any, idx: number) => ({
+          id: `${inv.id}-${idx}`,
+          description: String(it.description || ""),
+          quantity: Number(it.quantity) || 0,
+          unitPrice: Number(it.unitPrice) || 0,
+          icon: (ITEM_ICON_CONFIG[it.icon as ItemIcon] ? it.icon : "training") as ItemIcon,
+        })))
+      }
+    } catch {
+      // keep current items if the stored JSON is unreadable
+    }
+    toast.success(`Editing ${inv.number}`)
+    window.scrollTo({ top: 0, behavior: "smooth" })
+  }
+
+  /** Start a fresh invoice (clears edit mode, new number). */
+  function handleNewInvoice() {
+    setEditingInvoiceId(null)
+    setInvoiceNumber(`GX-INV-${new Date().getFullYear()}-${String(Math.floor(Math.random() * 9999)).padStart(4, "0")}`)
+    toast.info("New invoice draft started")
+  }
+
+  function formatMoneyFor(amount: number, invoiceCurrency: string) {
+    const c = CURRENCY_LOCALE[invoiceCurrency] ?? CURRENCY_LOCALE.INR
+    return `${c.symbol}${amount.toLocaleString(c.locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  }
+
+  // Mini dashboard stats — computed from the DB-backed invoice list
   const totalInvoices = savedInvoices.length
   const pendingAmount = savedInvoices
     .filter((i) => i.status === "Sent" || i.status === "Overdue")
@@ -288,8 +413,18 @@ export function InvoiceGeneratorView() {
             <Button variant="outline" size="sm" onClick={handleCopyInvoiceNumber}>
               <Copy className="h-3.5 w-3.5 mr-1.5" /> Copy ID
             </Button>
-            <Button variant="outline" size="sm" onClick={handleSaveInvoice}>
-              <Save className="h-3.5 w-3.5 mr-1.5" /> Save
+            {editingInvoiceId && (
+              <Button variant="outline" size="sm" onClick={handleNewInvoice}>
+                <Plus className="h-3.5 w-3.5 mr-1.5" /> New
+              </Button>
+            )}
+            <Button variant="outline" size="sm" onClick={handleSaveInvoice} disabled={saveMutation.isPending}>
+              {saveMutation.isPending ? (
+                <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+              ) : (
+                <Save className="h-3.5 w-3.5 mr-1.5" />
+              )}
+              {editingInvoiceId ? "Update" : "Save"}
             </Button>
             <Button size="sm" onClick={handlePrint} className="bg-violet-600 hover:bg-violet-500 btn-premium">
               <Printer className="h-3.5 w-3.5 mr-1.5" /> Generate PDF
@@ -343,6 +478,89 @@ export function InvoiceGeneratorView() {
               <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Paid This Month</div>
             </div>
           </motion.div>
+        </div>
+
+        {/* === SAVED INVOICES (DB-backed) === */}
+        <div className="print:hidden mb-6">
+          <Card className="p-4 card-premium">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-sm font-semibold flex items-center gap-2">
+                <FileCheck className="h-4 w-4 text-cyan-400" /> Saved Invoices
+                <Badge variant="outline" className="text-[9px] text-muted-foreground">{savedInvoices.length}</Badge>
+              </h2>
+              {invoicesQuery.isFetching && <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />}
+            </div>
+            {invoicesQuery.isLoading ? (
+              <div className="flex items-center justify-center py-6">
+                <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
+              </div>
+            ) : savedInvoices.length === 0 ? (
+              <p className="text-xs text-muted-foreground py-4 text-center">
+                No invoices saved yet — fill in the details and click <span className="font-medium text-foreground">Save</span>.
+              </p>
+            ) : (
+              <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
+                {savedInvoices.map((inv) => {
+                  const cfg = STATUS_CONFIG[inv.status] ?? STATUS_CONFIG.Draft
+                  const StatusIcon = cfg.icon
+                  return (
+                    <div
+                      key={inv.id}
+                      className={cn(
+                        "flex items-center justify-between gap-3 rounded-lg border p-2.5 transition-colors",
+                        editingInvoiceId === inv.id
+                          ? "border-violet-500/50 bg-violet-500/5"
+                          : "border-border/60 hover:border-border",
+                      )}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => handleEditInvoice(inv)}
+                        className="flex items-center gap-3 min-w-0 flex-1 text-left"
+                        title="Load into editor"
+                      >
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-2">
+                            <span className="font-mono text-xs font-medium truncate">{inv.number}</span>
+                            <span className={cn("inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[9px] font-semibold border", cfg.bg, cfg.color, cfg.border)}>
+                              <StatusIcon className="h-2.5 w-2.5" /> {cfg.label}
+                            </span>
+                          </div>
+                          <p className="text-[10px] text-muted-foreground truncate">
+                            {inv.clientName}{inv.clientOrg ? ` · ${inv.clientOrg}` : ""} · {inv.issueDate}
+                          </p>
+                        </div>
+                      </button>
+                      <div className="flex items-center gap-2 shrink-0">
+                        <span className="text-sm font-bold tabular-nums">{formatMoneyFor(inv.total, inv.currency)}</span>
+                        {inv.status !== "Paid" && (
+                          <Button
+                            size="sm" variant="ghost"
+                            className="h-7 px-2 text-[10px] text-emerald-300 hover:text-emerald-200"
+                            disabled={statusMutation.isPending}
+                            onClick={() => statusMutation.mutate({ id: inv.id, status: "Paid" })}
+                          >
+                            <CheckCircle2 className="h-3 w-3 mr-1" /> Paid
+                          </Button>
+                        )}
+                        <Button
+                          size="sm" variant="ghost"
+                          className="h-7 px-2 text-rose-400 hover:text-rose-300"
+                          disabled={deleteMutation.isPending}
+                          onClick={() => {
+                            if (editingInvoiceId === inv.id) setEditingInvoiceId(null)
+                            deleteMutation.mutate(inv.id)
+                          }}
+                        >
+                          <Trash2 className="h-3.5 w-3.5" />
+                        </Button>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </Card>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
@@ -868,6 +1086,12 @@ export function InvoiceGeneratorView() {
             box-shadow: none !important;
             border: none !important;
             border-radius: 0 !important;
+          }
+          /* Force background colors into print output even when the browser's
+             'Background graphics' checkbox is OFF. */
+          #invoice-preview, #invoice-preview * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
           }
         }
       `}</style>

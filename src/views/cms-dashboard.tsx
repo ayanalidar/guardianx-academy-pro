@@ -69,10 +69,10 @@ const PAGES: PageMeta[] = [
   { id: "home",          label: "Home",              icon: HomeIcon,        description: "Landing page hero, audiences, courses, labs, partners", accent: "text-violet-300" },
   { id: "impact",        label: "Impact",            icon: TrendingUp,      description: "Outcomes, success stories, partner counts",            accent: "text-amber-300" },
   { id: "contact",       label: "Contact",           icon: Mail,            description: "Contact form, office info, FAQ",                       accent: "text-cyan-300" },
-  { id: "institutions",  label: "Institutions",      icon: Building2,       description: "Partner types, benefits, flow, models",                accent: "text-emerald-300" },
+  { id: "institutions",  label: "Institutions",      icon: Building2,       description: "Hub page: hero, partner types, benefits, flow, models, final CTA", accent: "text-emerald-300" },
   { id: "catalog",       label: "Catalog",           icon: BookOpen,        description: "Course catalog hero and filter labels",                accent: "text-violet-300" },
   { id: "auth",          label: "Auth",              icon: Shield,          description: "Login/register form labels and feature highlights",    accent: "text-amber-300" },
-  { id: "global",        label: "Global Header/Footer", icon: Globe,        description: "Brand name, nav links, footer links, copyright",       accent: "text-cyan-300" },
+  { id: "global",        label: "Global Header/Footer", icon: Globe,        description: "Brand name (header), footer CTA/brand/contact/social/copyright", accent: "text-cyan-300" },
 ]
 
 // Sections with friendly names per page (used in the section list)

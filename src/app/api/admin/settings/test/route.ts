@@ -7,7 +7,7 @@ export const runtime = "nodejs"
 
 /* POST /api/admin/settings/test
  * ADMIN-only. Tests a specific integration.
- * Body: { type: "payment" | "email" | "crm" }
+ * Body: { type: "payment" | "email" | "crm" | "tracking" | "auth" }
  */
 export const POST = withErrorHandler(async (req) => {
   const currentUser = await requireAdmin()
@@ -16,7 +16,7 @@ export const POST = withErrorHandler(async (req) => {
   const body = await req.json().catch(() => null)
   if (!body?.type) return NextResponse.json({ error: "type is required" }, { status: 400 })
 
-  const type = body.type as "payment" | "email" | "crm"
+  const type = body.type as "payment" | "email" | "crm" | "tracking" | "auth"
 
   if (type === "payment") {
     const s = await getSettings(["RAZORPAY_KEY_ID", "RAZORPAY_KEY_SECRET"])
@@ -64,6 +64,65 @@ export const POST = withErrorHandler(async (req) => {
     const s = await getSettings(["CRM_WEBHOOK_SECRET"])
     const token = s.CRM_WEBHOOK_SECRET || "guardianx-crm-webhook-2025"
     return NextResponse.json({ ok: true, message: `CRM webhook token is configured: ${token.slice(0, 8)}...` })
+  }
+
+  if (type === "tracking") {
+    // Send a real test event through the same pipeline used for errors.
+    const { captureServerError } = await import("@/lib/sentry-report")
+    const s = await getSettings(["SENTRY_DSN"])
+    if (!s.SENTRY_DSN) {
+      return NextResponse.json({ ok: false, error: "Sentry DSN not configured" }, { status: 400 })
+    }
+    const sent = await captureServerError("GuardianX settings test event", {
+      source: "admin-settings-test",
+      triggeredBy: currentUser.email,
+      at: new Date().toISOString(),
+    })
+    if (!sent) {
+      return NextResponse.json(
+        { ok: false, error: "Sentry rejected the event — check the DSN (must be a valid project DSN)" },
+        { status: 400 },
+      )
+    }
+    return NextResponse.json({ ok: true, message: "Test event delivered to Sentry — check your project issues" })
+  }
+
+  if (type === "auth") {
+    // Validate Google OAuth credentials WITHOUT a redirect dance:
+    // exchange a dummy code against Google's token endpoint.
+    //  - invalid_client  → the ID/secret pair is wrong
+    //  - invalid_grant   → credentials are VALID (Google parsed them and only
+    //                      rejected the fake code) — this is the success signal
+    const s = await getSettings(["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"])
+    if (!s.GOOGLE_CLIENT_ID || !s.GOOGLE_CLIENT_SECRET) {
+      return NextResponse.json({ ok: false, error: "Google Client ID / Secret not configured" }, { status: 400 })
+    }
+    try {
+      const res = await fetch("https://oauth2.googleapis.com/token", {
+        method: "POST",
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({
+          code: "gx-settings-test-invalid-code",
+          client_id: s.GOOGLE_CLIENT_ID,
+          client_secret: s.GOOGLE_CLIENT_SECRET,
+          redirect_uri: `${process.env.NEXTAUTH_URL || "https://academy.guardianx.cloud"}/api/auth/callback/google`,
+          grant_type: "authorization_code",
+        }),
+      })
+      const data = await res.json().catch(() => ({} as any))
+      if (data?.error === "invalid_grant") {
+        return NextResponse.json({ ok: true, message: "Google credentials are valid (token endpoint accepted the client)" })
+      }
+      if (data?.error === "invalid_client") {
+        return NextResponse.json({ ok: false, error: "Google rejected the client — check the Client ID / Secret pair" }, { status: 400 })
+      }
+      return NextResponse.json(
+        { ok: false, error: `Unexpected Google response: ${data?.error || res.status}` },
+        { status: 400 },
+      )
+    } catch (e: any) {
+      return NextResponse.json({ ok: false, error: e?.message || "Connection to Google failed" }, { status: 500 })
+    }
   }
 
   return NextResponse.json({ error: "Unknown test type" }, { status: 400 })

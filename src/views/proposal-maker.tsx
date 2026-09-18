@@ -31,7 +31,7 @@ import {
   Layers, Network, CloudCog, Sword, Crosshair, CalendarDays,
   FileCheck, Handshake, PenLine, Rocket, TrendingUp,
   Video, Microscope, FileQuestion, ClipboardList,
-  CalendarClock, Eye, ChevronDown, Briefcase, Star, Zap,
+  CalendarClock, Eye, ChevronDown, Briefcase, Star, Zap, Loader2,
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -183,6 +183,7 @@ const PARTNERSHIP_MODELS = [
 
 export function ProposalMakerView() {
   const { navigate } = useAppStore()
+  const [exporting, setExporting] = React.useState(false)
 
   // Proposal meta
   const [proposalNumber, setProposalNumber] = React.useState(
@@ -337,9 +338,69 @@ export function ProposalMakerView() {
     setFacultyBenefits(facultyBenefits.map((b, i) => (i === index ? value : b)))
   }
 
+  /**
+   * Real PDF export — captures each of the 13 slides with html2canvas-pro
+   * and writes one A4-landscape page per slide via jsPDF.
+   *
+   * The previous implementation called window.print() and relied on the
+   * browser's "Background graphics" checkbox being ON — with the default
+   * (OFF), the dark oklch-colored deck printed as blank/ghost pages.
+   * html2canvas-pro understands Tailwind v4's oklch()/color-mix colors and
+   * produces a deterministic PDF independent of browser print settings.
+   * window.print() stays available as the secondary "Print" button.
+   */
+  async function handleExportPDF() {
+    const preview = document.getElementById("proposal-preview")
+    if (!preview) {
+      toast.error("Proposal preview not found")
+      return
+    }
+    if (exporting) return
+    setExporting(true)
+    try {
+      toast.info("Generating PDF... this captures 13 slides")
+      const [{ default: html2canvas }, { default: jsPDF }] = await Promise.all([
+        import("html2canvas-pro"),
+        import("jspdf"),
+      ])
+
+      const pdf = new jsPDF({ orientation: "landscape", unit: "mm", format: "a4" })
+      const pageW = 297
+      const pageH = 210
+      let first = true
+
+      for (const s of SLIDES) {
+        const el = document.getElementById(`slide-${s.id}`)
+        if (!el) continue
+        const canvas = await html2canvas(el, {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: "#0a0a0f",
+          logging: false,
+          windowWidth: el.scrollWidth,
+          windowHeight: el.scrollHeight,
+        })
+        const ratio = Math.min(pageW / canvas.width, pageH / canvas.height)
+        const w = canvas.width * ratio
+        const h = canvas.height * ratio
+        if (!first) pdf.addPage()
+        first = false
+        pdf.addImage(canvas.toDataURL("image/jpeg", 0.92), "JPEG", (pageW - w) / 2, (pageH - h) / 2, w, h)
+      }
+
+      pdf.save(`${proposalNumber || "proposal"}.pdf`)
+      toast.success("PDF downloaded — one page per slide")
+    } catch (err: any) {
+      console.error("[proposal-pdf]", err)
+      toast.error(err?.message || "Failed to generate PDF. Try the Print button as a fallback.")
+    } finally {
+      setExporting(false)
+    }
+  }
+
   function handlePrint() {
     window.print()
-    toast.success("Proposal print dialog opened - save as multi-page PDF")
+    toast.info("Print dialog opened — enable 'Background graphics' for correct colors")
   }
 
   function scrollToSlide(id: number) {
@@ -367,9 +428,19 @@ export function ProposalMakerView() {
               <p className="text-[10px] text-muted-foreground font-mono">{proposalNumber}</p>
             </div>
           </div>
-          <Button size="sm" onClick={handlePrint} className="bg-cyan-600 hover:bg-cyan-500 btn-premium">
-            <Printer className="h-3.5 w-3.5 mr-1.5" /> Generate PDF
-          </Button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <Button size="sm" variant="outline" onClick={handlePrint} disabled={exporting}>
+              <Printer className="h-3.5 w-3.5 mr-1.5" /> Print
+            </Button>
+            <Button size="sm" onClick={handleExportPDF} disabled={exporting} className="bg-cyan-600 hover:bg-cyan-500 btn-premium">
+              {exporting ? (
+                <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+              ) : (
+                <Printer className="h-3.5 w-3.5 mr-1.5" />
+              )}
+              Generate PDF
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -980,6 +1051,13 @@ export function ProposalMakerView() {
           #proposal-preview > section {
             page-break-after: always;
             break-after: page;
+          }
+          /* Force background colors into print output even when the browser's
+             'Background graphics' checkbox is OFF — most browsers honor
+             print-color-adjust on the element itself. */
+          #proposal-preview, #proposal-preview * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
           }
         }
       `}</style>

@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { captureClientError } from "@/lib/sentry-report"
 
 interface ErrorBoundaryState {
   hasError: boolean
@@ -22,6 +23,11 @@ export class ErrorBoundary extends React.Component<
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error("[ErrorBoundary] Caught error:", error, errorInfo)
+    // Relay to Sentry (via /api/telemetry/client-error) when SENTRY_DSN is
+    // configured — rate-limited server-side, fire-and-forget.
+    captureClientError(error?.message || "React render error", {
+      stack: [error?.stack, errorInfo?.componentStack].filter(Boolean).join("\n"),
+    })
   }
 
   render() {

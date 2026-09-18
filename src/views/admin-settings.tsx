@@ -31,8 +31,8 @@ const CATEGORIES = [
   { id: "payment", label: "Payment (Razorpay)", icon: CreditCard, color: "text-emerald-300", tint: "bg-emerald-500/10", border: "border-emerald-500/30" },
   { id: "email", label: "Email (SMTP)", icon: Mail, color: "text-cyan-300", tint: "bg-cyan-500/10", border: "border-cyan-500/30" },
   { id: "crm", label: "CRM Webhook", icon: LinkIcon, color: "text-violet-300", tint: "bg-violet-500/10", border: "border-violet-500/30" },
-  { id: "tracking", label: "Error Tracking (Sentry)", icon: ShieldAlert, color: "text-rose-300", tint: "bg-rose-500/10", border: "border-rose-500/30", note: "Requires redeploy to activate" },
-  { id: "auth", label: "Google OAuth", icon: Settings, color: "text-blue-300", tint: "bg-blue-500/10", border: "border-blue-500/30", note: "Requires redeploy + Google Cloud Console redirect URI setup" },
+  { id: "tracking", label: "Error Tracking (Sentry)", icon: ShieldAlert, color: "text-rose-300", tint: "bg-rose-500/10", border: "border-rose-500/30", note: "Takes effect immediately — unhandled errors are forwarded to Sentry" },
+  { id: "auth", label: "Google OAuth", icon: Settings, color: "text-blue-300", tint: "bg-blue-500/10", border: "border-blue-500/30", note: "Takes effect on the next login — no redeploy needed. Also set the redirect URI in Google Cloud Console." },
 ]
 
 export function AdminSettingsView() {
@@ -125,7 +125,7 @@ export function AdminSettingsView() {
           <h1 className="text-2xl font-bold tracking-tight">Platform Settings</h1>
         </div>
         <p className="text-sm text-muted-foreground">
-          Configure integrations directly from the admin panel. Changes to Payment, Email, and CRM sections take effect immediately. Sentry and Google OAuth require a redeploy.
+          Configure integrations directly from the admin panel — every change takes effect immediately, no redeploy required. Use the Test button in each section to verify the saved credentials.
         </p>
       </div>
 
@@ -176,6 +176,16 @@ export function AdminSettingsView() {
                 )}
                 {cat.id === "crm" && (
                   <Button size="sm" variant="outline" className="h-7 text-[10px]" disabled={testMutation.isPending} onClick={() => testMutation.mutate("crm")}>
+                    <Zap className="h-3 w-3 mr-1" /> Test
+                  </Button>
+                )}
+                {cat.id === "tracking" && (
+                  <Button size="sm" variant="outline" className="h-7 text-[10px]" disabled={testMutation.isPending} onClick={() => testMutation.mutate("tracking")}>
+                    <Zap className="h-3 w-3 mr-1" /> Test
+                  </Button>
+                )}
+                {cat.id === "auth" && (
+                  <Button size="sm" variant="outline" className="h-7 text-[10px]" disabled={testMutation.isPending} onClick={() => testMutation.mutate("auth")}>
                     <Zap className="h-3 w-3 mr-1" /> Test
                   </Button>
                 )}

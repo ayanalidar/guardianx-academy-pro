@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentUser, withErrorHandler } from "@/lib/session"
+import { signAttemptToken } from "@/lib/link-signing"
 
 export const runtime = "nodejs"
 
@@ -14,7 +15,7 @@ export const runtime = "nodejs"
  *   answers: [{ questionId, selected: "A"|"B"|"C"|"D" }]  // 30 items
  * }
  *
- * Returns: { attemptId, score, totalQuestions, percentage, passed, domainScores, difficulty }
+ * Returns: { attemptId, resultToken, score, totalQuestions, percentage, passed, domainScores, difficulty }
  */
 const DIFFICULTIES = ["Easy", "Hard", "Advanced"]
 const CATEGORIES = ["Phishing", "Passwords", "Social Engineering", "Web Safety", "Mobile Security", "Data Privacy", "Malware", "Wi-Fi Safety"]
@@ -94,6 +95,10 @@ export const POST = withErrorHandler(async (req) => {
 
   return NextResponse.json({
     attemptId: attempt.id,
+    // HMAC-signed proof that this result belongs to whoever holds this
+    // response — lets guests (no session) fetch their own results without
+    // exposing PII to anyone who guesses the CUID.
+    resultToken: signAttemptToken(attempt.id),
     score: correctCount,
     totalQuestions: 30,
     percentage,

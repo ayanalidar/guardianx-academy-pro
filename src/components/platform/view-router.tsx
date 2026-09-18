@@ -37,6 +37,7 @@ function ViewLoading() {
 // ── Lazy-loaded views (only loaded when the user navigates to them) ──
 const ImpactView = dynamic(() => import("@/views/impact").then(m => ({ default: m.ImpactView })), { ssr: false, loading: ViewLoading })
 const ContactView = dynamic(() => import("@/views/contact").then(m => ({ default: m.ContactView })), { ssr: false, loading: ViewLoading })
+const InstitutionsHubView = dynamic(() => import("@/views/institutions").then(m => ({ default: m.InstitutionsView })), { ssr: false, loading: ViewLoading })
 const InstitutionsSchoolsView = dynamic(() => import("@/views/institutions-schools").then(m => ({ default: m.InstitutionsSchoolsView })), { ssr: false, loading: ViewLoading })
 const InstitutionsCollegesView = dynamic(() => import("@/views/institutions-colleges").then(m => ({ default: m.InstitutionsCollegesView })), { ssr: false, loading: ViewLoading })
 const InstitutionsUniversitiesView = dynamic(() => import("@/views/institutions-universities").then(m => ({ default: m.InstitutionsUniversitiesView })), { ssr: false, loading: ViewLoading })
@@ -139,8 +140,9 @@ export function ViewRouter() {
       {view.name === "home" && <HomeView />}
       {view.name === "impact" && <ImpactView />}
       {view.name === "contact" && <ContactView />}
-      {/* "institutions" redirects to institutions-schools — no combined page anymore */}
-      {(view.name === "institutions" || view.name === "institutions-schools") && <InstitutionsSchoolsView />}
+      {/* "institutions" = CMS-driven hub linking to the three product pages */}
+      {view.name === "institutions" && <InstitutionsHubView />}
+      {view.name === "institutions-schools" && <InstitutionsSchoolsView />}
       {view.name === "institutions-colleges" && <InstitutionsCollegesView />}
       {view.name === "institutions-universities" && <InstitutionsUniversitiesView />}
       {view.name === "institutions-open-schooling" && <OpenSchoolingView />}

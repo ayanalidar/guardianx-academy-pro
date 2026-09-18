@@ -18,6 +18,7 @@ import { useAppStore, type View } from "@/store/app-store"
 import { viewToPath } from "@/lib/url-router"
 import { AnimatedLogoMark } from "@/components/platform/animated-logo"
 import { GlobalSearch } from "@/components/platform/global-search"
+import { usePageContent, getContent } from "@/lib/use-content"
 
 /* ============================================================
    PublicHeader - floating mega-menu navigation
@@ -249,6 +250,13 @@ export function PublicHeader() {
   const lastScroll = React.useRef(0)
   const closeTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null)
 
+  // CMS-driven brand (Admin → Content Studio → Global → Header).
+  // The CMS header navLinks/tagline keys are superseded by the mega-menu
+  // structure — only the brand name/accent are consumed here.
+  const globalCms = usePageContent("global")
+  const brandName = getContent(globalCms.data, "header", "brandName", "Guardian")
+  const brandAccent = getContent(globalCms.data, "header", "brandAccent", "X")
+
   // Scroll behaviour - preserve from original header
   useMotionValueEvent(scrollY, "change", (latest) => {
     setScrolled(latest > 40)
@@ -363,7 +371,7 @@ export function PublicHeader() {
           <AnimatedLogoMark size={32} />
           <div className="text-left">
             <div className="font-bold text-sm leading-none tracking-tight">
-              Guardian<span className="text-violet-400">X</span>
+              {brandName}<span className="text-violet-400">{brandAccent}</span>
             </div>
           </div>
         </motion.a>
@@ -463,7 +471,7 @@ export function PublicHeader() {
                 <div className="flex items-center gap-1.5">
                   <AnimatedLogoMark size={28} />
                   <div className="font-bold text-sm leading-none tracking-tight">
-                    Guardian<span className="text-violet-400">X</span>
+                    {brandName}<span className="text-violet-400">{brandAccent}</span>
                   </div>
                 </div>
                 <SheetTitle className="sr-only">GuardianX navigation menu</SheetTitle>

@@ -1,10 +1,15 @@
 import { NextResponse, NextRequest } from "next/server"
 import { getServerSession } from "next-auth"
-import { authOptions } from "@/lib/auth"
+import { getAuthOptions } from "@/lib/auth"
 import { db } from "@/lib/db"
+import { captureServerError } from "@/lib/sentry-report"
 
 export async function getCurrentUser() {
-  const session = await getServerSession(authOptions)
+  // Dynamic options: same DB-backed provider config as the auth route handler.
+  // The secret is identical (requireSecret("NEXTAUTH_SECRET")) so JWT decoding
+  // is unaffected — only the provider list differs, which getServerSession
+  // does not need.
+  const session = await getServerSession(await getAuthOptions())
   if (!session?.user) return null
   const user = await db.user.findUnique({
     where: { id: (session.user as any).id },
@@ -74,6 +79,15 @@ export function withErrorHandler<T extends any[]>(
     } catch (error: any) {
       // Log the error server-side for debugging
       console.error("[API Error]", error?.message || error)
+      // Forward to Sentry when SENTRY_DSN is configured (Admin → Settings).
+      // Fire-and-forget: reporting failures must never affect the response.
+      void captureServerError(
+        `API ${error?.message || "unhandled error"}`,
+        {
+          path: args[0] instanceof NextRequest ? args[0].nextUrl?.pathname : undefined,
+          stack: typeof error?.stack === "string" ? error.stack.slice(0, 1500) : undefined,
+        },
+      )
       // Return a generic 500 — never leak the stack trace
       return NextResponse.json(
         { error: "Internal server error" },

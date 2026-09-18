@@ -19,7 +19,7 @@ import {
   Database, Eye, FileCheck, Fingerprint, Flag, FlaskConical, FolderSearch,
   Github, Globe, GraduationCap, Key, KeyRound, Landmark, Layers,
   Linkedin, Lock, Mail, MapPin, MessageSquare, Mic, Network, Phone,
-  PlayCircle, Radar, Radio, Rocket, Route, ScanLine, Server, Shield,
+  PlayCircle, Radar, Radio, Rocket, Route, ScanLine, School, Server, Shield,
   ShieldAlert, ShieldCheck, Sparkles, Star, Swords, Target, Terminal,
   Tv, Twitter, Users, Wifi, Wrench, Youtube, Zap, TrendingUp, Trophy,
 } from "lucide-react"
@@ -32,7 +32,7 @@ const ICONS: Record<string, LucideIcon> = {
   Database, Eye, FileCheck, Fingerprint, Flag, FlaskConical, FolderSearch,
   Github, Globe, GraduationCap, Key, KeyRound, Landmark, Layers,
   Linkedin, Lock, Mail, MapPin, MessageSquare, Mic, Network, Phone,
-  PlayCircle, Radar, Radio, Rocket, Route, ScanLine, Server, Shield,
+  PlayCircle, Radar, Radio, Rocket, Route, ScanLine, School, Server, Shield,
   ShieldAlert, ShieldCheck, Sparkles, Star, Swords, Target, Terminal,
   Tv, Twitter, Users, Wifi, Wrench, Youtube, Zap, TrendingUp, Trophy,
   // Aliases — lucide-react renamed some icons. Map old names → current

@@ -640,8 +640,8 @@ const GLOBAL_FOOTER: ContentItem[] = [
   {
     page: "global", section: "footer", key: "contactInfo",
     value: [
-      { icon: "Mail", value: "hello@guardianx.io" },
-      { icon: "Phone", value: "+91 80 4567 8900" },
+      { icon: "Mail", value: "academy@guardianx.in" },
+      { icon: "Phone", value: "+91 80 1234 5678" },
       { icon: "MapPin", value: "Bengaluru, India" },
     ]
   },

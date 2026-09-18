@@ -55,6 +55,28 @@ export function AuthScreen() {
   const [showPass, setShowPass] = React.useState(false)
   const [activeTab, setActiveTab] = React.useState("login")
 
+  // Only show the "Sign in with Google" button when the Google provider is
+  // actually registered server-side (Admin → Settings → Google OAuth, or env).
+  // Previously the button always showed — clicking it with no OAuth keys
+  // configured led to a NextAuth error page.
+  const [googleEnabled, setGoogleEnabled] = React.useState(false)
+  React.useEffect(() => {
+    let cancelled = false
+    fetch("/api/auth/providers")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((providers) => {
+        if (!cancelled && providers && typeof providers === "object") {
+          setGoogleEnabled(!!providers.google)
+        }
+      })
+      .catch(() => {
+        /* provider list unavailable — keep the button hidden (safe default) */
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   // If the user was redirected here from a protected view (e.g. they
   // clicked "Career Paths" while logged out), show a contextual banner
   // telling them which page they were trying to reach, so the login
@@ -449,7 +471,8 @@ export function AuthScreen() {
                       </Button>
                     </form>
 
-                    {/* Sign in with Google */}
+                    {/* Sign in with Google — only when the provider is configured */}
+                    {googleEnabled && (
                     <div className="mt-4">
                       <div className="relative mb-3">
                         <div className="absolute inset-0 flex items-center">
@@ -477,6 +500,7 @@ export function AuthScreen() {
                         Sign in with Google
                       </Button>
                     </div>
+                    )}
 
                     <div className="mt-4 flex items-center justify-between text-xs">
                       <button
