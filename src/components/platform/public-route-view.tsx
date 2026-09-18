@@ -10,8 +10,14 @@ import { ContactView } from "@/views/contact"
 import { InstitutionsSchoolsView } from "@/views/institutions-schools"
 import { InstitutionsCollegesView } from "@/views/institutions-colleges"
 import { InstitutionsUniversitiesView } from "@/views/institutions-universities"
+import { OpenSchoolingView } from "@/views/open-schooling"
+import { CorporateTrainingView } from "@/views/corporate-training"
+import { CyberQuizLandingView } from "@/views/cyber-quiz-landing"
+import { LearningPathsView } from "@/views/learning-paths"
+import { CyberRangeView } from "@/views/cyber-range"
 import { CourseCatalogView } from "@/views/course-catalog"
 import { BatchesView } from "@/views/batches"
+import { BatchDetailView } from "@/views/batch-detail"
 import { ExamsView } from "@/views/exams"
 import { CredentialsView } from "@/views/credentials"
 import { VerifyView } from "@/views/verify"
@@ -25,10 +31,6 @@ import { BlogPostView } from "@/views/blog-post"
 import { CertLandingView } from "@/views/cert-landing"
 import { PricingView } from "@/views/pricing"
 import { CourseDetailView } from "@/views/course-detail"
-import dynamic from "next/dynamic"
-
-const LearningPathsView = dynamic(() => import("@/views/learning-paths").then(m => ({ default: m.LearningPathsView })), { ssr: false })
-const CyberRangeView = dynamic(() => import("@/views/cyber-range").then(m => ({ default: m.CyberRangeView })), { ssr: false })
 
 /* ============================================================
    PublicRouteView — wraps a public page rendered at a real
@@ -56,8 +58,12 @@ function renderView(view: View): React.ReactNode {
     case "institutions-schools": return <InstitutionsSchoolsView />
     case "institutions-colleges": return <InstitutionsCollegesView />
     case "institutions-universities": return <InstitutionsUniversitiesView />
+    case "institutions-open-schooling": return <OpenSchoolingView />
+    case "corporate-training": return <CorporateTrainingView />
+    case "cyber-quiz": return <CyberQuizLandingView />
     case "catalog": return <CourseCatalogView />
     case "batches": return <BatchesView />
+    case "batch-detail": return "batchSlug" in view ? <BatchDetailView slug={view.batchSlug} /> : null
     case "exams": return <ExamsView />
     case "credentials": return <CredentialsView />
     case "verify": return <VerifyView />
@@ -78,24 +84,32 @@ function renderView(view: View): React.ReactNode {
 }
 
 export function PublicRouteView({ initialView }: { initialView: View }) {
-  const view = useAppStore((s) => s.view)
-  const didInit = React.useRef(false)
+  const storeView = useAppStore((s) => s.view)
+  const hydratedRef = React.useRef(false)
 
-  // Hydrate the store with the initial view on mount. We use a ref so
-  // this only fires once per mount (not on every re-render). The store
-  // is the single source of truth for the existing view components.
+  // Hydrate the store with the initial view after mount. The store is the
+  // single source of truth from that point on: clicking any nav link, footer
+  // link or pressing the browser back button updates the store and this
+  // component re-renders IN PLACE (this is what fixes the old dead-end pages
+  // where the URL changed but the screen never did).
   React.useEffect(() => {
-    if (didInit.current) return
-    didInit.current = true
+    hydratedRef.current = true
     const current = useAppStore.getState().view
     if (JSON.stringify(current) !== JSON.stringify(initialView)) {
       useAppStore.setState({ view: initialView, sidebarOpen: false })
     }
   }, [initialView])
 
+  // SSR + the first client paint must render the DEEP-LINKED view
+  // (initialView) — not the store's pristine `{name:"home"}` default, which
+  // would otherwise give crawlers and pre-hydration users homepage HTML on
+  // detail pages. After the mount effect runs, always follow the store.
+  const storeIsPristine = JSON.stringify(storeView) === JSON.stringify({ name: "home" })
+  const active = !hydratedRef.current && storeIsPristine ? initialView : storeView
+
   return (
     <PublicPageShell>
-      {renderView(view) ?? <ViewRouter />}
+      {renderView(active) ?? <ViewRouter />}
     </PublicPageShell>
   )
 }

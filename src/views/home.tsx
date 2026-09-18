@@ -786,7 +786,15 @@ export function HomeView() {
                 </dl>
 
                 {b.slug ? (
-                  <a href={`/batches/${b.slug}`} className="block w-full">
+                  <a
+                    href={`/batches/${b.slug}`}
+                    className="block w-full"
+                    onClick={(e) => {
+                      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return
+                      e.preventDefault()
+                      navigate({ name: "batch-detail", batchSlug: b.slug! })
+                    }}
+                  >
                     <Button
                       className={cn("w-full btn-premium", b.btnClass)}
                       size="sm"

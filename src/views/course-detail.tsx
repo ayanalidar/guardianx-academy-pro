@@ -2150,7 +2150,15 @@ function BatchSchedulePreview({
 
                   <div className="flex gap-2">
                     {b.slug && (
-                      <a href={`/batches/${b.slug}`} className="flex-1">
+                      <a
+                        href={`/batches/${b.slug}`}
+                        className="flex-1"
+                        onClick={(e) => {
+                          if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey || e.button !== 0) return
+                          e.preventDefault()
+                          navigate({ name: "batch-detail", batchSlug: b.slug! })
+                        }}
+                      >
                         <Button size="sm" variant="outline" className="w-full">
                           View Details
                         </Button>

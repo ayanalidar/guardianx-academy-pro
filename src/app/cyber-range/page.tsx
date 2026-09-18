@@ -1,7 +1,5 @@
-import { PublicPageShell } from "@/components/platform/public-page-shell"
-import dynamic from "next/dynamic"
+import { PublicRouteView } from "@/components/platform/public-route-view"
 
-const CyberRangeView = dynamic(() => import("@/views/cyber-range").then(m => ({ default: m.CyberRangeView })))
 
 export const metadata = {
   title: "Cyber Range — Hands-On Hacking Labs | GuardianX Academy",
@@ -10,8 +8,6 @@ export const metadata = {
 
 export default function Page() {
   return (
-    <PublicPageShell>
-      <CyberRangeView />
-    </PublicPageShell>
+    <PublicRouteView initialView={{ name: "cyber-range" }} />
   )
 }

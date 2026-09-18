@@ -26,6 +26,7 @@ export type View =
   | { name: "dashboard" }
   | { name: "catalog" }
   | { name: "batches" }
+  | { name: "batch-detail"; batchSlug: string }
   | { name: "course"; courseId: string }
   | { name: "lesson"; lessonId: string; courseId: string }
   | { name: "learning" }

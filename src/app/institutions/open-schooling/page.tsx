@@ -1,5 +1,4 @@
-import { PublicPageShell } from "@/components/platform/public-page-shell"
-import { OpenSchoolingView } from "@/views/open-schooling"
+import { PublicRouteView } from "@/components/platform/public-route-view"
 
 export const metadata = {
   title: "Open Schooling — Complete 10th & 12th | GuardianX Academy",
@@ -9,8 +8,6 @@ export const metadata = {
 
 export default function Page() {
   return (
-    <PublicPageShell>
-      <OpenSchoolingView />
-    </PublicPageShell>
+    <PublicRouteView initialView={{ name: "institutions-open-schooling" }} />
   )
 }

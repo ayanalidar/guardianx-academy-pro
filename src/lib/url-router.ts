@@ -48,6 +48,8 @@ export function viewToPath(view: View): string {
       return `/blog/${encodeURIComponent(view.slug)}`
     case "cert-landing":
       return `/cert/${encodeURIComponent(view.certSlug)}`
+    case "batch-detail":
+      return `/batches/${encodeURIComponent(view.batchSlug)}`
     case "cyber-quiz-runner":
       return `/cyber-quiz/start/${encodeURIComponent(view.difficulty)}`
     case "cyber-quiz-results":
@@ -107,7 +109,7 @@ const KNOWN_FLAT_VIEWS = new Set<View["name"]>([
   "prerequisites-visualizer", "lab-snapshots", "skill-tree", "bug-bounty",
   "parent-portal", "course-studio", "cms", "exams", "credentials",
   "invoice-generator", "proposal-maker", "support", "instructors", "events",
-  "blog", "affiliate", "pricing",
+  "blog", "affiliate", "pricing", "batches", "contact", "learning-paths",
   "admin-lead-crm", "admin-batch-calendar", "admin-student-progress",
   "admin-revenue", "admin-cert-bulk", "admin-email-campaign",
   "admin-instructor-assignment", "admin-audit-log", "admin-platform-health",
@@ -166,6 +168,10 @@ export function pathToView(pathWithSearch: string): View | null {
   }
   if (parts[0] === "school" && !parts[1]) return { name: "school" }
   if (parts[0] === "admin" && !parts[1]) return { name: "admin" }
+  // /batches/<slug> (batch detail — real page + SPA view)
+  if (parts[0] === "batches" && parts[1]) {
+    return { name: "batch-detail", batchSlug: parts[1] }
+  }
   // /events/<slug> (canonical) or /event/<slug> (legacy)
   if (parts[0] === "events" && parts[1]) return { name: "event-detail", eventSlug: parts[1] }
   if (parts[0] === "event" && parts[1]) return { name: "event-detail", eventSlug: parts[1] }
@@ -277,7 +283,7 @@ export const PUBLIC_VIEWS = new Set<View["name"]>([
   "corporate-training",
   "cyber-quiz", "cyber-quiz-runner", "cyber-quiz-results",
   "cyber-quiz-certificate", "cyber-quiz-progress",
-  "catalog", "batches", "course", "cyber-range", "learning-paths", "skill-tree",
+  "catalog", "batches", "batch-detail", "course", "cyber-range", "learning-paths", "skill-tree",
   "exams", "credentials", "support", "verify",
   "instructors", "instructor-detail", "events", "event-detail",
   "blog", "blog-post",
@@ -294,6 +300,7 @@ const VIEW_TITLES: Partial<Record<View["name"], string>> = {
   dashboard: "Student Dashboard",
   catalog: "Cybersecurity Courses & Certifications",
   batches: "Training Batches",
+  "batch-detail": "Training Batch Details",
   exams: "Exam Platform",
   credentials: "My Credentials",
   verify: "Verify a Credential",

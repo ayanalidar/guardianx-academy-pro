@@ -1,5 +1,4 @@
-import { PublicPageShell } from "@/components/platform/public-page-shell"
-import { CyberQuizLandingView } from "@/views/cyber-quiz-landing"
+import { PublicRouteView } from "@/components/platform/public-route-view"
 
 export const metadata = {
   title: "Cyber Security Foundation Quiz — Free Public Quiz + ₹199 Certificate | GuardianX Academy",
@@ -9,8 +8,6 @@ export const metadata = {
 
 export default function Page() {
   return (
-    <PublicPageShell>
-      <CyberQuizLandingView />
-    </PublicPageShell>
+    <PublicRouteView initialView={{ name: "cyber-quiz" }} />
   )
 }

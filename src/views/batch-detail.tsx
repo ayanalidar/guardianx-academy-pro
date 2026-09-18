@@ -22,20 +22,32 @@ interface BatchData {
   levelTint: string; levelBorder: string; googleFormUrl: string | null; featured: boolean
 }
 
-export function BatchDetailClient({ slug }: { slug: Promise<{ slug: string }> }) {
+/**
+ * BatchDetailView — renders a training batch's details for `/batches/<slug>`.
+ *
+ * Used in two spaces:
+ *   1. The real Next.js page `src/app/batches/[slug]/page.tsx` via
+ *      PublicRouteView (server-renderable initial paint + store hydration).
+ *   2. The SPA ViewRouter as the `batch-detail` store view, so navigating
+ *      from anywhere in the platform works without a full reload.
+ *
+ * The internal navigate() calls (All batches / Browse courses / Contact)
+ * are store-driven — they work because the page follows the store
+ * reactively (PublicRouteView), fixing the old "URL changes but the
+ * screen stays" dead-end on batch detail pages.
+ */
+export function BatchDetailView({ slug }: { slug: string }) {
   const { navigate } = useAppStore()
-  const [slugValue, setSlugValue] = React.useState("")
-
-  React.useEffect(() => { slug.then((s) => setSlugValue(s.slug)) }, [slug])
 
   const { data, isLoading, error } = useQuery<{ batch: BatchData }>({
-    queryKey: ["batch-detail", slugValue],
+    queryKey: ["batch-detail", slug],
     queryFn: async () => {
-      const res = await fetch(`/api/training-batches/${slugValue}`)
+      const res = await fetch(`/api/training-batches/${slug}`)
       if (!res.ok) throw new Error("Batch not found")
       return res.json()
     },
-    enabled: !!slugValue,
+    enabled: !!slug,
+    retry: 1,
   })
 
   const batch = data?.batch
@@ -68,7 +80,10 @@ export function BatchDetailClient({ slug }: { slug: Promise<{ slug: string }> })
   const fillPct = batch.seats > 0 ? Math.round((batch.enrolled / batch.seats) * 100) : 0
   const shareUrl = typeof window !== "undefined" ? `${window.location.origin}/batches/${batch.slug}` : ""
 
-  const copyLink = () => { navigator.clipboard.writeText(shareUrl); toast.success("Link copied!") }
+  const copyLink = () => {
+    navigator.clipboard.writeText(shareUrl)
+    toast.success("Link copied!")
+  }
   const shareWhatsApp = () => {
     const text = `Check out this batch: ${batch.name} (${batch.certification}) at GuardianX Academy. Starts ${batch.startDate}. ${shareUrl}`
     window.open(`https://wa.me/?text=${encodeURIComponent(text)}`, "_blank", "noopener,noreferrer")

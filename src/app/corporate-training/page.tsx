@@ -1,5 +1,4 @@
-import { PublicPageShell } from "@/components/platform/public-page-shell"
-import { CorporateTrainingView } from "@/views/corporate-training"
+import { PublicRouteView } from "@/components/platform/public-route-view"
 
 export const metadata = {
   title: "Corporate Training — Cyber Security Training for Teams | GuardianX Academy",
@@ -9,8 +8,6 @@ export const metadata = {
 
 export default function Page() {
   return (
-    <PublicPageShell>
-      <CorporateTrainingView />
-    </PublicPageShell>
+    <PublicRouteView initialView={{ name: "corporate-training" }} />
   )
 }

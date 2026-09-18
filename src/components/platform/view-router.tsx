@@ -33,6 +33,7 @@ const CyberQuizProgressView = dynamic(() => import("@/views/cyber-quiz-progress"
 const DashboardView = dynamic(() => import("@/views/dashboard").then(m => ({ default: m.DashboardView })), { ssr: false })
 const CourseCatalogView = dynamic(() => import("@/views/course-catalog").then(m => ({ default: m.CourseCatalogView })), { ssr: false })
 const BatchesView = dynamic(() => import("@/views/batches").then(m => ({ default: m.BatchesView })), { ssr: false })
+const BatchDetailView = dynamic(() => import("@/views/batch-detail").then(m => ({ default: m.BatchDetailView })), { ssr: false })
 const ExamsView = dynamic(() => import("@/views/exams").then(m => ({ default: m.ExamsView })), { ssr: false })
 const CredentialsView = dynamic(() => import("@/views/credentials").then(m => ({ default: m.CredentialsView })), { ssr: false })
 const VerifyView = dynamic(() => import("@/views/verify").then(m => ({ default: m.VerifyView })), { ssr: false })
@@ -135,6 +136,7 @@ export function ViewRouter() {
       {view.name === "dashboard" && <DashboardView />}
       {view.name === "catalog" && <CourseCatalogView />}
       {view.name === "batches" && <BatchesView />}
+      {view.name === "batch-detail" && "batchSlug" in view && <BatchDetailView slug={view.batchSlug} />}
       {view.name === "exams" && <ExamsView />}
       {view.name === "credentials" && <CredentialsView />}
       {view.name === "verify" && <VerifyView />}
