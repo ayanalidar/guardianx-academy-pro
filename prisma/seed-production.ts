@@ -19,6 +19,7 @@
  * Run:
  *   DATABASE_URL="postgresql://..." bunx tsx prisma/seed-production.ts
  */
+import bcrypt from "bcryptjs"
 import { db } from "../src/lib/db"
 
 // ---------------------------------------------------------------
@@ -654,8 +655,54 @@ async function upsertTechnologyPartners() {
 // ---------------------------------------------------------------
 // Main
 // ---------------------------------------------------------------
+/**
+ * Ensure the platform ADMIN account always exists.
+ *
+ * Why: `npm run db:seed` runs THIS script (not prisma/seed.ts), so any
+ * production database seeded the normal way previously had NO admin user —
+ * logging in with admin@guardianx.io then failed with "invalid login
+ * credentials". This upsert is idempotent: it creates the admin on first
+ * run and, by default, leaves an existing account untouched (so runtime
+ * password/profile changes are never clobbered).
+ *
+ * Override via env:
+ *   ADMIN_EMAIL    (default admin@guardianx.io)
+ *   ADMIN_PASSWORD (default admin123 — only used when creating or when
+ *                   ADMIN_RESET_PASSWORD=1 is set)
+ *   ADMIN_RESET_PASSWORD=1  → also reset the password hash on existing row
+ */
+async function upsertAdminUser() {
+  const email = (process.env.ADMIN_EMAIL || "admin@guardianx.io").toLowerCase()
+  const password = process.env.ADMIN_PASSWORD || "admin123"
+  const reset = process.env.ADMIN_RESET_PASSWORD === "1"
+
+  console.log("→ Admin user")
+  const passwordHash = bcrypt.hashSync(password, 10)
+
+  const existing = await db.user.findUnique({ where: { email } })
+  if (!existing) {
+    await db.user.create({
+      data: {
+        email,
+        name: "Alex Mercer",
+        passwordHash,
+        role: "ADMIN",
+        title: "Platform Administrator",
+        bio: "GuardianX platform administrator and lead security architect.",
+      },
+    })
+    console.log(`  ✓ created admin ${email}`)
+  } else if (reset) {
+    await db.user.update({ where: { email }, data: { passwordHash, role: "ADMIN" } })
+    console.log(`  ✓ password reset for admin ${email}`)
+  } else {
+    console.log(`  • admin ${email} already exists (set ADMIN_RESET_PASSWORD=1 to reset password)`)
+  }
+}
+
 async function main() {
   console.log("== GuardianX Production Seed (PROD-DB) ==")
+  await upsertAdminUser()
   await upsertLearningPaths()
   const cats = await upsertSkillCategories()
   await upsertSkills(cats)
