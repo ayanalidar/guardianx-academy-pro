@@ -1,7 +1,16 @@
-"use client"
-
 /**
  * Path-based URL router for GuardianX Academy.
+ *
+ * NOTE: deliberately NOT "use client" — this module contains pure mapping
+ * functions that are ALSO called from server components (the catch-all
+ * bridge `src/app/[...gx]/page.tsx` and `batches/[slug]` use pathToView /
+ * viewTitle / viewDescription for SSR + metadata). A "use client" directive
+ * here makes those server-side calls throw
+ * ("Attempted to call pathToView() from the server…"), which crashed every
+ * route without a dedicated page (/login, /course/<id>, /dashboard, …).
+ * Only URL-mutating helpers (pushViewToUrl / replaceViewInUrl /
+ * readViewFromUrl) touch browser APIs, and those are only ever invoked from
+ * client code (the Zustand store).
  *
  * Previously every view lived in the URL hash (`/#/skill-assessments`),
  * which broke SEO (hash fragments never reach the server), deep links,
