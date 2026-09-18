@@ -286,7 +286,15 @@ export function InvoiceGeneratorView() {
   }
 
   /** Load the GuardianX shield logo as a 256px PNG data-URL (keeps the PDF
-   *  small while staying ~460 DPI at the 16mm print size). */
+   *  small while staying ~460 DPI at the 16mm print size).
+   *
+   *  CRITICAL: the canvas is pre-filled with the exact violet (#2E1065) the
+   *  shield sits on in the PDF header chip. This flattens alpha to fully
+   *  opaque — jsPDF then embeds the PNG WITHOUT an /SMask object. Chrome's
+   *  print / Save-as-PDF renderer drops SMask'd images, which made the logo
+   *  vanish in "Print → Save as PDF" output (screen rendering was fine).
+   *  Transparent pixels become chip-violet and blend invisibly into the chip
+   *  drawn behind them, so the visual result is pixel-identical. */
   async function buildLogoPng(): Promise<string | null> {
     try {
       const img = new Image()
@@ -297,6 +305,8 @@ export function InvoiceGeneratorView() {
       canvas.height = 256
       const ctx = canvas.getContext("2d")
       if (!ctx) return null
+      ctx.fillStyle = "#2E1065"
+      ctx.fillRect(0, 0, 256, 256)
       ctx.drawImage(img, 0, 0, 256, 256)
       return canvas.toDataURL("image/png")
     } catch (e) {
@@ -324,14 +334,41 @@ export function InvoiceGeneratorView() {
   }
 
   async function handlePrintPdf() {
+    // Open the tab SYNCHRONOUSLY inside the user gesture. window.open() after
+    // the async PDF build (font fetch + QR/logo raster can exceed 5s) loses
+    // transient activation and gets popup-blocked, silently pushing people
+    // into Ctrl+P of the app page instead of the vector A4 document.
+    // NOTE: do NOT document.write a placeholder into the tab — a written
+    // about:blank document silently REFUSES the later blob: navigation
+    // (verified empirically: the tab stays stuck on about:blank forever).
+    const win = window.open("", "_blank")
     try {
       toast.info("Preparing print-ready A4 document…")
       const pdf = await generateInvoicePdf()
       pdf.autoPrint()
-      const url = pdf.output("bloburl")
-      const win = window.open(url as unknown as string, "_blank")
-      if (!win) toast.error("Popup blocked — allow popups to use Print, or use Generate PDF")
+      const url = pdf.output("bloburl") as unknown as string
+      if (win) {
+        win.location.href = url
+      } else if (typeof document !== "undefined") {
+        // Popups blocked → fall back to a hidden in-page frame. Chrome's
+        // embedded PDF viewer honours the document's autoPrint action, so the
+        // print dialog still opens over the current page.
+        const frame = document.createElement("iframe")
+        frame.style.position = "fixed"
+        frame.style.right = "0"
+        frame.style.bottom = "0"
+        frame.style.width = "1px"
+        frame.style.height = "1px"
+        frame.style.opacity = "0"
+        frame.style.border = "0"
+        frame.src = url
+        document.body.appendChild(frame)
+        setTimeout(() => frame.remove(), 120000)
+      } else {
+        toast.error("Popup blocked — allow popups to use Print, or use Generate PDF")
+      }
     } catch (err: any) {
+      win?.close()
       console.error("[invoice-pdf-print]", err)
       toast.error(err?.message || "Failed to open print view")
     }
@@ -491,7 +528,7 @@ export function InvoiceGeneratorView() {
               <Printer className="h-3.5 w-3.5 mr-1.5" /> Generate PDF
             </Button>
             <Button size="sm" variant="outline" onClick={handlePrintPdf} className="border-violet-500/40 hover:bg-violet-500/10">
-              <FileText className="h-3.5 w-3.5 mr-1.5" /> Print
+              <FileText className="h-3.5 w-3.5 mr-1.5" /> Print / Save PDF
             </Button>
           </div>
         </div>
@@ -1157,6 +1194,11 @@ export function InvoiceGeneratorView() {
           #invoice-preview, #invoice-preview * {
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
+          }
+          /* CSS filters (the logo's drop-shadow glow) can blank <img> elements
+             in Chrome's print renderer — strip them for print output. */
+          #invoice-preview img {
+            filter: none !important;
           }
         }
       `}</style>
