@@ -1,37 +1,30 @@
 "use client"
 
 /**
- * URL-hash router for GuardianX Academy SPA.
+ * Path-based URL router for GuardianX Academy.
  *
- * The platform runs on a single Next.js route (`/`) per the sandbox
- * constraint, but every public view must have a real, shareable URL
- * (master-prompt section 7-10). We satisfy both by serializing the
- * Zustand `View` state into the URL hash:
+ * Previously every view lived in the URL hash (`/#/skill-assessments`),
+ * which broke SEO (hash fragments never reach the server), deep links,
+ * open-in-new-tab and analytics. This module now maps every Zustand
+ * `View` to a REAL path (`/skill-assessments`) and back:
  *
- *   `#/`                              → { name: "home" }
- *   `#/batches`                       → { name: "batches" }
- *   `#/course/<courseId>`             → { name: "course", courseId }
- *   `#/course/<courseId>/lesson/<id>` → { name: "lesson", courseId, lessonId }
- *   `#/lab/<labSlug>`                 → { name: "lab", labSlug }
- *   `#/exam/<examId>`                 → { name: "exam-detail", examId }
- *   `#/verify/<credentialId>`         → { name: "verify", credentialId }
- *   `#/verify?credentialId=<id>`      → { name: "verify", credentialId }
- *   `#/instructors`                   → { name: "instructors" }
- *   `#/instructor/<id>`               → { name: "instructor-detail", instructorId }
- *   `#/events`                         → { name: "events" }
- *   `#/event/<slug>`                   → { name: "event-detail", eventSlug }
+ *   viewToPath(view)   — View → canonical URL path (used by navigate())
+ *   pathToView(path)   — URL path → View (used on load, popstate, bridge page)
+ *   hashToView(hash)   — LEGACY `#/...` → View (one-time redirect on load)
  *
- * This gives us: URL changes on nav, refresh works, browser back/forward
- * works, direct URL entry works, "open in new tab" works — all while
- * staying on the single `/` Next.js route.
+ * Views that have dedicated Next.js pages (e.g. /courses, /blog/<slug>)
+ * map to those real routes; everything else is served by the catch-all
+ * bridge page `src/app/[...gx]/page.tsx` which hydrates the SPA store —
+ * so every view gets a real, shareable, crawlable URL with zero view
+ * rewrites.
  */
 
 import type { View } from "@/store/app-store"
 
-/* ----------------------------- serialization ---------------------------- */
+/* ----------------------------- view → path ------------------------------ */
 
-/** Convert a View object into a URL hash string (without leading "#"). */
-export function viewToHash(view: View): string {
+/** Convert a View object into its canonical URL path. */
+export function viewToPath(view: View): string {
   switch (view.name) {
     case "home":
       return "/"
@@ -42,15 +35,15 @@ export function viewToHash(view: View): string {
     case "lab":
       return `/lab/${encodeURIComponent(view.labSlug)}`
     case "exam-detail":
-      return `/exam/${encodeURIComponent(view.examId)}`
+      return `/exams/${encodeURIComponent(view.examId)}`
     case "verify":
       return view.credentialId
         ? `/verify/${encodeURIComponent(view.credentialId)}`
         : "/verify"
     case "instructor-detail":
-      return `/instructor/${encodeURIComponent(view.instructorId)}`
+      return `/instructors/${encodeURIComponent(view.instructorId)}`
     case "event-detail":
-      return `/event/${encodeURIComponent(view.eventSlug)}`
+      return `/events/${encodeURIComponent(view.eventSlug)}`
     case "blog-post":
       return `/blog/${encodeURIComponent(view.slug)}`
     case "cert-landing":
@@ -63,33 +56,83 @@ export function viewToHash(view: View): string {
       return `/cyber-quiz/certificate/${encodeURIComponent(view.credentialId)}`
     case "cyber-quiz-progress":
       return `/cyber-quiz/progress/${encodeURIComponent(view.credentialId)}`
+    case "legal":
+      return `/${view.pageType}`
+    // Role dashboards get explicit names so they never collide with the
+    // public "/instructors" listing or the "/admin-…" config pages.
+    case "instructor":
+      return "/instructor-dashboard"
+    case "school":
+      return "/school-dashboard"
+    case "admin":
+      return "/admin-dashboard"
+    // Views with dedicated real Next.js pages:
+    case "catalog":
+      return "/courses"
+    case "institutions":
+    case "institutions-schools":
+      return "/institutions/schools"
+    case "institutions-colleges":
+      return "/institutions/colleges"
+    case "institutions-universities":
+      return "/institutions/universities"
+    case "institutions-open-schooling":
+      return "/institutions/open-schooling"
+    // Everything else: 1:1 name → path (served by the catch-all bridge).
     default:
       return `/${view.name}`
   }
 }
 
-/** Convert a URL hash (with or without leading "#") into a View object.
- *  Returns { name: "home" } for unrecognized / empty hashes. */
-export function hashToView(hash: string): View {
-  const raw = hash.replace(/^#/, "")
-  // Treat empty / "#" / "#/" as home
-  if (!raw || raw === "/" || raw === "") return { name: "home" }
+/* ----------------------------- path → view ------------------------------ */
 
-  // Strip leading slash for parsing
-  const path = raw.startsWith("/") ? raw.slice(1) : raw
-  // Wrap decodeURIComponent in try/catch — a malformed % sequence (e.g.
-  // "#/course/%ZZ") would otherwise throw an uncaught URIError and break
-  // the SPA. Fall back to the raw segment if decoding fails.
-  const safeDecode = (s: string): string => {
-    try {
-      return decodeURIComponent(s)
-    } catch {
-      return s
-    }
+const safeDecode = (s: string): string => {
+  try {
+    return decodeURIComponent(s)
+  } catch {
+    return s
   }
-  const parts = path.split("/").map(safeDecode)
+}
 
-  // /course/<id>
+const LEGAL_PAGES = ["about", "privacy", "terms", "faq", "refund", "cookies", "conduct"]
+
+/** Every view name that maps 1:1 to `/<name>` (the bridge-space routes). */
+const KNOWN_FLAT_VIEWS = new Set<View["name"]>([
+  "impact", "dashboard", "learning", "notes", "live", "labs", "certificates",
+  "achievements", "leaderboard", "community", "profile", "assignments",
+  "messaging", "study-groups", "office-hours", "book-session", "auth",
+  "ai-assistant", "threat-feed", "code-review", "career-planner", "job-board",
+  "mock-interview", "resume-builder", "ctf-platform", "weekly-challenges",
+  "team-missions", "learning-analytics", "skill-assessments",
+  "prerequisites-visualizer", "lab-snapshots", "skill-tree", "bug-bounty",
+  "parent-portal", "course-studio", "cms", "exams", "credentials",
+  "invoice-generator", "proposal-maker", "support", "instructors", "events",
+  "blog", "affiliate", "pricing",
+  "admin-lead-crm", "admin-batch-calendar", "admin-student-progress",
+  "admin-revenue", "admin-cert-bulk", "admin-email-campaign",
+  "admin-instructor-assignment", "admin-audit-log", "admin-platform-health",
+  "admin-notifications", "admin-coupons", "admin-open-schooling-leads",
+  "admin-corporate-leads", "admin-cyber-quiz-questions",
+  "admin-cyber-quiz-attempts", "admin-cyber-quiz-certs",
+  "admin-platform-stats", "admin-settings", "admin-courses", "admin-seo",
+  "cyber-quiz", "corporate-training", "verify", "login",
+])
+
+/**
+ * Convert a URL path (pathname [+ search]) into a View.
+ * Returns `null` for unrecognized paths so callers can render a 404.
+ * Accepts canonical paths AND legacy variants (e.g. /exam/<id>, /event/<slug>).
+ */
+export function pathToView(pathWithSearch: string): View | null {
+  if (typeof pathWithSearch !== "string") return null
+  const [rawPath, rawSearch = ""] = pathWithSearch.split("?")
+  const path = rawPath.replace(/\/+$/, "") || "/"
+  const parts = path.split("/").filter(Boolean).map(safeDecode)
+  const search = new URLSearchParams(rawSearch)
+
+  if (parts.length === 0) return { name: "home" }
+
+  // /course/<id>  and  /course/<id>/lesson/<lid>
   if (parts[0] === "course" && parts[1]) {
     if (parts[2] === "lesson" && parts[3]) {
       return { name: "lesson", courseId: parts[1], lessonId: parts[3] }
@@ -97,58 +140,45 @@ export function hashToView(hash: string): View {
     return { name: "course", courseId: parts[1] }
   }
   // /lab/<slug>
-  if (parts[0] === "lab" && parts[1]) {
-    return { name: "lab", labSlug: parts[1] }
-  }
-  // /exam/<id>
-  if (parts[0] === "exam" && parts[1]) {
+  if (parts[0] === "lab" && parts[1]) return { name: "lab", labSlug: parts[1] }
+  // /exams/<id> (canonical) or /exam/<id> (legacy)
+  if ((parts[0] === "exams" || parts[0] === "exam") && parts[1]) {
     return { name: "exam-detail", examId: parts[1] }
   }
-  // /verify/<id>  OR  /verify?credentialId=<id>  OR  /verify
-  // Note: when the URL is `#/verify?credentialId=...` (no path slash),
-  // split("/") yields a single segment "verify?credentialId=..." — so
-  // we match against both "verify" and the "verify?..." prefix.
-  if (parts[0] === "verify" || parts[0].startsWith("verify?")) {
-    // Format A: /verify/<credentialId>
-    if (parts[1]) {
-      return { name: "verify", credentialId: parts[1] }
-    }
-    // Format B: /verify?credentialId=<id>  — `parts[0]` still contains
-    // the raw "verify?credentialId=..." because split("/") didn't
-    // separate it. Parse the query string off the first segment.
-    const qIdx = parts[0].indexOf("?")
-    if (qIdx !== -1) {
-      const query = new URLSearchParams(parts[0].slice(qIdx + 1))
-      const id = query.get("credentialId") ?? undefined
-      return { name: "verify", credentialId: id }
-    }
-    // Format C: /verify (no id)
-    return { name: "verify" }
+  // /verify, /verify/<id>, /verify?credentialId=<id>
+  if (parts[0] === "verify") {
+    const credentialId = parts[1] ?? search.get("credentialId") ?? undefined
+    return { name: "verify", credentialId }
   }
-
-  // /instructor/<id>
-  if (parts[0] === "instructor" && parts[1]) {
+  // /instructors/<id>  (listing handled by flat views below)
+  if (parts[0] === "instructors" && parts[1]) {
     return { name: "instructor-detail", instructorId: parts[1] }
   }
-  // /event/<slug>
-  if (parts[0] === "event" && parts[1]) {
-    return { name: "event-detail", eventSlug: parts[1] }
+  // Role-dashboard canonical paths (view names stay "instructor"/"school"/
+  // "admin"; the -dashboard suffix avoids colliding with public listings).
+  if (parts[0] === "instructor-dashboard" && !parts[1]) return { name: "instructor" }
+  if (parts[0] === "school-dashboard" && !parts[1]) return { name: "school" }
+  if (parts[0] === "admin-dashboard" && !parts[1]) return { name: "admin" }
+  // /instructor/<id> (legacy detail) — "/instructor" alone → dashboard
+  if (parts[0] === "instructor") {
+    if (parts[1]) return { name: "instructor-detail", instructorId: parts[1] }
+    return { name: "instructor" }
   }
-  // /blog/<slug>  → single blog post view
-  if (parts[0] === "blog" && parts[1]) {
-    return { name: "blog-post", slug: parts[1] }
-  }
-  // /cert/<slug>  → certification landing page (SEO)
-  if (parts[0] === "cert" && parts[1]) {
-    return { name: "cert-landing", certSlug: parts[1] }
-  }
+  if (parts[0] === "school" && !parts[1]) return { name: "school" }
+  if (parts[0] === "admin" && !parts[1]) return { name: "admin" }
+  // /events/<slug> (canonical) or /event/<slug> (legacy)
+  if (parts[0] === "events" && parts[1]) return { name: "event-detail", eventSlug: parts[1] }
+  if (parts[0] === "event" && parts[1]) return { name: "event-detail", eventSlug: parts[1] }
+  // /blog/<slug>
+  if (parts[0] === "blog" && parts[1]) return { name: "blog-post", slug: parts[1] }
+  // /cert/<slug>
+  if (parts[0] === "cert" && parts[1]) return { name: "cert-landing", certSlug: parts[1] }
+  // /catalog (legacy listing) → catalog view (viewToPath canonicalizes to /courses)
+  if (parts[0] === "catalog" && !parts[1]) return { name: "catalog" }
+  // /partners (legacy) → institutions
+  if (parts[0] === "partners" && !parts[1]) return { name: "institutions" }
 
   // Cyber quiz sub-routes:
-  // /cyber-quiz/start/<difficulty>     → runner
-  // /cyber-quiz/results/<attemptId>    → results
-  // /cyber-quiz/certificate/<credId>   → certificate
-  // /cyber-quiz/progress/<credId>      → progress report
-  // /cyber-quiz                       → landing
   if (parts[0] === "cyber-quiz") {
     if (parts[1] === "start" && parts[2]) {
       const diff = parts[2] as "Easy" | "Hard" | "Advanced"
@@ -168,87 +198,174 @@ export function hashToView(hash: string): View {
     return { name: "cyber-quiz" }
   }
 
-  // Legal / info pages: /about /privacy /terms /faq /refund /cookies /conduct /partners
-  const legalPages = ["about", "privacy", "terms", "faq", "refund", "cookies", "conduct"]
-  if (parts[0] === "partners") {
-    return { name: "institutions" }
-  }
-  if (legalPages.includes(parts[0])) {
+  // Legal / info pages: /about /privacy /terms /faq /refund /cookies /conduct
+  if (parts.length === 1 && (LEGAL_PAGES.includes(parts[0]) as boolean)) {
     return { name: "legal", pageType: parts[0] as any }
   }
 
-  // /<view-name> — validate against the known set so we never produce
-  // an unknown view from a user-typed URL.
-  const knownViews: View["name"][] = [
-    "home", "impact", "contact", "login", "institutions",
-    "institutions-schools", "institutions-colleges", "institutions-universities",
-    "institutions-open-schooling",
-    "corporate-training",
-    "cyber-quiz",
-    "dashboard", "catalog", "batches", "learning", "notes", "live",
-    "labs", "certificates", "achievements", "leaderboard", "instructor",
-    "school", "admin", "community", "profile", "assignments", "messaging",
-    "study-groups", "office-hours", "book-session", "auth", "ai-assistant", "threat-feed",
-    "code-review", "career-planner", "job-board", "mock-interview",
-    "resume-builder", "ctf-platform", "weekly-challenges", "team-missions",
-    "learning-analytics", "skill-assessments", "prerequisites-visualizer",
-    "lab-snapshots", "cyber-range", "learning-paths", "skill-tree",
-    "bug-bounty", "parent-portal", "course-studio", "cms", "exams",
-    "credentials", "invoice-generator", "proposal-maker", "admin-lead-crm",
-    "admin-batch-calendar", "admin-student-progress", "admin-revenue",
-    "admin-cert-bulk", "admin-email-campaign", "admin-instructor-assignment",
-    "admin-audit-log", "admin-platform-health", "admin-notifications",
-    "admin-coupons",
-    "admin-open-schooling-leads",
-    "admin-corporate-leads",
-    "admin-cyber-quiz-questions",
-    "admin-cyber-quiz-attempts",
-    "admin-cyber-quiz-certs",
-    "admin-platform-stats",
-    "admin-settings",
-    "support", "verify",
-    "instructors", "events",
-    "blog",
-    "admin-courses",
-    "affiliate",
-    "pricing",
-    "admin-seo",
-  ]
-  if (knownViews.includes(parts[0] as View["name"])) {
+  // Institutions section (real pages exist):
+  if (parts[0] === "institutions" && parts[1]) {
+    switch (parts[1]) {
+      case "schools": return { name: "institutions-schools" }
+      case "colleges": return { name: "institutions-colleges" }
+      case "universities": return { name: "institutions-universities" }
+      case "open-schooling": return { name: "institutions-open-schooling" }
+    }
+  }
+
+  // /<view-name> flat routes (validated so unknown paths 404 instead of
+  // silently rendering the homepage).
+  if (parts.length === 1 && KNOWN_FLAT_VIEWS.has(parts[0] as View["name"])) {
     return { name: parts[0] as View["name"] } as View
   }
 
-  // Unknown → fall back to home so the app never crashes on a bad URL
-  return { name: "home" }
+  return null
 }
 
-/* ----------------------------- side-effects ----------------------------- */
+/* --------------------------- legacy hash support ------------------------- */
 
-/** Push a view into the URL hash WITHOUT triggering a hashchange event
- *  (we use history.replaceState for the initial-load sync, and
- *  history.pushState for user-initiated navigation so the back button
- *  works). The store listener will pick up state changes. */
-export function pushViewToHash(view: View) {
+/** LEGACY ONLY: old `#/...` hash → View. Kept so existing shared links
+ *  (`/#/skill-assessments`) redirect to the clean path on first load. */
+export function hashToView(hash: string): View {
+  const raw = hash.replace(/^#/, "")
+  if (!raw || raw === "/") return { name: "home" }
+  // Delegate to the path parser — the hash body used the same grammar
+  // (e.g. "#/course/<id>", "#/verify?credentialId=x").
+  const parsed = pathToView(raw)
+  return parsed ?? { name: "home" }
+}
+
+/* ------------------------------ URL side-effects ------------------------- */
+
+/** Push a view into the address bar as a REAL path (history.pushState),
+ *  without triggering Next.js navigation — the SPA store drives rendering. */
+export function pushViewToUrl(view: View) {
   if (typeof window === "undefined") return
-  const hash = `#${viewToHash(view)}`
-  // Only push if it actually changed — avoids spamming history
-  if (window.location.hash !== hash) {
-    window.history.pushState({ view }, "", hash)
+  const url = viewToPath(view)
+  if (window.location.pathname + window.location.search !== url) {
+    window.history.pushState({ view }, "", url)
   }
 }
 
-/** Replace the current hash without adding a history entry. Used for
- *  the initial-load sync so we don't pollute the back stack. */
-export function replaceViewInHash(view: View) {
+/** Replace the current URL with the view's path (no history entry). */
+export function replaceViewInUrl(view: View) {
   if (typeof window === "undefined") return
-  const hash = `#${viewToHash(view)}`
-  if (window.location.hash !== hash) {
-    window.history.replaceState({ view }, "", hash)
+  const url = viewToPath(view)
+  if (window.location.pathname + window.location.search !== url) {
+    window.history.replaceState({ view }, "", url)
   }
 }
 
-/** Read the current view from the URL hash. SSR-safe (returns home). */
-export function readViewFromHash(): View {
+/** Read the current view from the URL (pathname; falls back to a legacy
+ *  hash if one is present). SSR-safe (returns home). */
+export function readViewFromUrl(): View {
   if (typeof window === "undefined") return { name: "home" }
-  return hashToView(window.location.hash)
+  if (window.location.hash && window.location.hash !== "#") {
+    return hashToView(window.location.hash)
+  }
+  const path = window.location.pathname + window.location.search
+  return pathToView(path) ?? { name: "home" }
+}
+
+/* ------------------------------- public views ---------------------------- */
+
+/** Views renderable without a session (header/footer shell). */
+export const PUBLIC_VIEWS = new Set<View["name"]>([
+  "home", "impact", "contact", "institutions", "institutions-schools",
+  "institutions-colleges", "institutions-universities",
+  "institutions-open-schooling",
+  "corporate-training",
+  "cyber-quiz", "cyber-quiz-runner", "cyber-quiz-results",
+  "cyber-quiz-certificate", "cyber-quiz-progress",
+  "catalog", "batches", "course", "cyber-range", "learning-paths", "skill-tree",
+  "exams", "credentials", "support", "verify",
+  "instructors", "instructor-detail", "events", "event-detail",
+  "blog", "blog-post",
+  "cert-landing",
+  "pricing",
+  "legal",
+])
+
+/** Human-readable titles for bridge-route metadata (SEO). */
+const VIEW_TITLES: Partial<Record<View["name"], string>> = {
+  home: "Cybersecurity Training & Certifications",
+  impact: "Our Impact",
+  login: "Log In",
+  dashboard: "Student Dashboard",
+  catalog: "Cybersecurity Courses & Certifications",
+  batches: "Training Batches",
+  exams: "Exam Platform",
+  credentials: "My Credentials",
+  verify: "Verify a Credential",
+  support: "Support",
+  instructors: "Meet Our Instructors",
+  events: "Events & Workshops",
+  blog: "Security Blog",
+  pricing: "Pricing & Subscription Plans",
+  contact: "Contact Us",
+  certificates: "My Certificates",
+  achievements: "Achievements",
+  leaderboard: "Leaderboard",
+  community: "Community",
+  profile: "My Profile",
+  assignments: "Assignments",
+  messaging: "Messages",
+  "study-groups": "Study Groups",
+  "office-hours": "Office Hours",
+  "book-session": "Book a 1:1 Session",
+  "ai-assistant": "AI Security Assistant",
+  "threat-feed": "Live Threat Feed",
+  "code-review": "AI Code Review",
+  "career-planner": "Career Planner",
+  "job-board": "Cybersecurity Job Board",
+  "mock-interview": "Mock Interview",
+  "resume-builder": "Resume Builder",
+  "ctf-platform": "CTF Platform",
+  "weekly-challenges": "Weekly Challenges",
+  "team-missions": "Team Missions",
+  "learning-analytics": "Learning Analytics",
+  "skill-assessments": "Skill Assessments",
+  "prerequisites-visualizer": "Course Prerequisites",
+  "lab-snapshots": "Lab Snapshots",
+  "cyber-range": "Cyber Range",
+  "learning-paths": "Learning Paths",
+  "skill-tree": "Skill Tree",
+  "bug-bounty": "Bug Bounty",
+  "parent-portal": "Parent Portal",
+  "course-studio": "Course Studio",
+  cms: "CMS Dashboard",
+  affiliate: "Affiliate Program",
+  "corporate-training": "Corporate Training",
+  "instructor": "Instructor Dashboard",
+  "school": "School Dashboard",
+  "admin": "Admin Dashboard",
+}
+
+/** Metadata title for a view (used by the catch-all's generateMetadata). */
+export function viewTitle(view: View): string {
+  if (view.name === "legal") {
+    return `${view.pageType.charAt(0).toUpperCase()}${view.pageType.slice(1)} | GuardianX Academy`
+  }
+  if (view.name === "course") return "Course Details | GuardianX Academy"
+  if (view.name === "lab") return "Hands-on Lab | GuardianX Academy"
+  if (view.name === "exam-detail") return "Exam Details | GuardianX Academy"
+  if (view.name === "lesson") return "Lesson | GuardianX Academy"
+  if (view.name === "blog-post") return "Blog | GuardianX Academy"
+  if (view.name === "event-detail") return "Event | GuardianX Academy"
+  if (view.name === "instructor-detail") return "Instructor Profile | GuardianX Academy"
+  if (view.name === "cert-landing") return "Certification | GuardianX Academy"
+  if (view.name === "cyber-quiz-runner") return "Cyber Quiz | GuardianX Academy"
+  if (view.name === "cyber-quiz-results") return "Quiz Results | GuardianX Academy"
+  if (view.name === "cyber-quiz-certificate") return "Your Certificate | GuardianX Academy"
+  if (view.name === "cyber-quiz-progress") return "Quiz Progress | GuardianX Academy"
+  const t = VIEW_TITLES[view.name]
+  return t ? `${t} | GuardianX Academy` : "GuardianX Academy"
+}
+
+/** Metadata description fallback for bridge routes. */
+export function viewDescription(view: View): string {
+  const t = VIEW_TITLES[view.name]
+  return t
+    ? `${t} — GuardianX Academy, hands-on cybersecurity training with live instructors, real labs and industry certifications.`
+    : "GuardianX Academy — hands-on cybersecurity training with live instructors, real labs and industry certifications."
 }

@@ -2,9 +2,9 @@
 
 import { create } from "zustand"
 import {
-  pushViewToHash,
-  replaceViewInHash,
-  readViewFromHash,
+  pushViewToUrl,
+  replaceViewInUrl,
+  readViewFromUrl,
 } from "@/lib/url-router"
 
 export type View =
@@ -139,9 +139,9 @@ export const useAppStore = create<AppState>((set) => ({
   navigate: (view) => {
     set({ view, sidebarOpen: false })
     if (typeof window !== "undefined") {
-      // Push the new view into the URL hash so the address bar updates
-      // and the back button works.
-      pushViewToHash(view)
+      // Push the new view into the URL as a REAL path (no more `#/hash`
+      // URLs) so the address bar updates and the back button works.
+      pushViewToUrl(view)
       window.scrollTo({ top: 0, behavior: "smooth" })
       // Dispatch a custom event for components that might not re-render
       window.dispatchEvent(new CustomEvent("guardianx-navigate", { detail: view }))
@@ -151,22 +151,24 @@ export const useAppStore = create<AppState>((set) => ({
   setPendingView: (pendingView) => set({ pendingView }),
 }))
 
-/** Read the URL hash and sync the store. Called by page.tsx on mount
- *  (after hydration) so deep links + refresh + direct-URL entry work
- *  without causing SSR mismatches. Returns the hydrated view. */
-export function hydrateFromHash(): View {
+/** Read the current URL (path-based; legacy hashes supported) and sync the
+ *  store. Deep links + refresh + direct-URL entry work without causing SSR
+ *  mismatches. Returns the hydrated view. */
+export function hydrateFromUrl(): View {
   if (typeof window === "undefined") return { name: "home" }
-  const fromHash = readViewFromHash()
+  const fromUrl = readViewFromUrl()
   const current = useAppStore.getState().view
-  if (JSON.stringify(fromHash) !== JSON.stringify(current)) {
-    useAppStore.setState({ view: fromHash, sidebarOpen: false })
-    window.dispatchEvent(new CustomEvent("guardianx-navigate", { detail: fromHash }))
+  if (JSON.stringify(fromUrl) !== JSON.stringify(current)) {
+    useAppStore.setState({ view: fromUrl, sidebarOpen: false })
+    window.dispatchEvent(new CustomEvent("guardianx-navigate", { detail: fromUrl }))
   }
-  // Normalize the URL hash so the address bar shows a clean canonical
-  // hash for the loaded view (e.g. `/` instead of empty).
-  replaceViewInHash(fromHash)
-  return fromHash
+  // Normalize the URL so the address bar shows the clean canonical path.
+  replaceViewInUrl(fromUrl)
+  return fromUrl
 }
+
+/** Back-compat alias (pre-path-routing name). */
+export const hydrateFromHash = hydrateFromUrl
 
 /* --------------------------------------------------------------- *
  *  Browser back/forward support. When the user hits back/forward, *
@@ -175,8 +177,8 @@ export function hydrateFromHash(): View {
  *  before any navigation happens.                                 *
  * --------------------------------------------------------------- */
 if (typeof window !== "undefined") {
-  const onHashChange = () => {
-    const next = readViewFromHash()
+  const onUrlChange = () => {
+    const next = readViewFromUrl()
     const current = useAppStore.getState().view
     // Only update if the parsed view actually differs — avoids loops
     if (JSON.stringify(next) !== JSON.stringify(current)) {
@@ -186,6 +188,8 @@ if (typeof window !== "undefined") {
     }
   }
 
-  window.addEventListener("popstate", onHashChange)
-  window.addEventListener("hashchange", onHashChange)
+  // Back/forward now works across real paths (popstate) and, for legacy
+  // `#/…` bookmarks, across hash changes during the same session.
+  window.addEventListener("popstate", onUrlChange)
+  window.addEventListener("hashchange", onUrlChange)
 }

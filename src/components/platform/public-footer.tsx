@@ -5,8 +5,8 @@ import { motion } from "framer-motion"
 import {
   Shield, Mail, Phone, MapPin, ArrowRight, ChevronRight,
 } from "lucide-react"
-import { useAppStore } from "@/store/app-store"
-import { Button } from "@/components/ui/button"
+import { useAppStore, type View } from "@/store/app-store"
+import { viewToPath } from "@/lib/url-router"
 
 /**
  * PublicFooter - 7-column LEGAL-inclusive structure per master-prompt §55.
@@ -20,13 +20,14 @@ import { Button } from "@/components/ui/button"
  *   6. RESOURCES    — Events, Workshops, Webinars, Help
  *   7. LEGAL        — Privacy, Terms, Refund Policy, Responsible Disclosure, Cookie Policy
  *
- * Each link uses navigate({ name: "viewname" }) — SPA hash routing.
+ * Each link is a REAL anchor (`href` from viewToPath) — crawlable,
+ * shareable, middle-click safe — with SPA click interception.
  * Bottom bar (contact info + copyright + Privacy/Terms/Security buttons) is unchanged.
  */
 export function PublicFooter() {
   const { navigate } = useAppStore()
 
-  type FooterLink = { label: string; view: Parameters<typeof navigate>[0] }
+  type FooterLink = { label: string; view: View }
   type FooterSection = { title: string; links: FooterLink[] }
 
   const footerSections: FooterSection[] = [
@@ -90,11 +91,11 @@ export function PublicFooter() {
     {
       title: "LEGAL",
       links: [
-        { label: "Privacy", view: { name: "support" } },
-        { label: "Terms", view: { name: "support" } },
-        { label: "Refund Policy", view: { name: "support" } },
+        { label: "Privacy", view: { name: "legal", pageType: "privacy" } },
+        { label: "Terms", view: { name: "legal", pageType: "terms" } },
+        { label: "Refund Policy", view: { name: "legal", pageType: "refund" } },
         { label: "Responsible Disclosure", view: { name: "contact" } },
-        { label: "Cookie Policy", view: { name: "support" } },
+        { label: "Cookie Policy", view: { name: "legal", pageType: "cookies" } },
       ],
     },
   ]
@@ -116,14 +117,19 @@ export function PublicFooter() {
           <p className="text-base text-muted-foreground max-w-xl mx-auto mb-6">
             Free to start. No credit card required.
           </p>
-          <Button
-            size="lg"
-            onClick={() => navigate({ name: "login" })}
-            className="bg-violet-600 hover:bg-violet-500 btn-premium px-8 py-6 text-sm"
+          <a
+            href={viewToPath({ name: "login" })}
+            onClick={(e) => {
+              if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return
+              if (e.button !== 0) return
+              e.preventDefault()
+              navigate({ name: "login" })
+            }}
+            className="inline-flex items-center justify-center gap-2 h-12 px-8 rounded-md bg-violet-600 hover:bg-violet-500 btn-premium text-sm font-medium text-primary-foreground transition-colors"
           >
             Create Free Account
             <ArrowRight className="h-4 w-4 ml-2" />
-          </Button>
+          </a>
         </div>
       </div>
 
@@ -163,13 +169,19 @@ export function PublicFooter() {
               <ul className="space-y-2">
                 {section.links.map((item) => (
                   <li key={item.label}>
-                    <button
-                      onClick={() => navigate(item.view)}
+                    <a
+                      href={viewToPath(item.view)}
+                      onClick={(e) => {
+                        if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return
+                        if (e.button !== 0) return
+                        e.preventDefault()
+                        navigate(item.view)
+                      }}
                       className="text-muted-foreground hover:text-violet-300 transition-colors flex items-center gap-1 group text-xs"
                     >
                       {item.label}
                       <ChevronRight className="h-3 w-3 opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
-                    </button>
+                    </a>
                   </li>
                 ))}
               </ul>
@@ -193,11 +205,11 @@ export function PublicFooter() {
           <div className="flex items-center gap-4 text-[11px] text-muted-foreground">
             <span>© {new Date().getFullYear()} GuardianX Academy</span>
             <span className="opacity-30">·</span>
-            <button onClick={() => navigate({ name: "support" })} className="hover:text-violet-300 transition-colors">Privacy</button>
+            <a href="/privacy" className="hover:text-violet-300 transition-colors">Privacy</a>
             <span className="opacity-30">·</span>
-            <button onClick={() => navigate({ name: "support" })} className="hover:text-violet-300 transition-colors">Terms</button>
+            <a href="/terms" className="hover:text-violet-300 transition-colors">Terms</a>
             <span className="opacity-30">·</span>
-            <button onClick={() => navigate({ name: "contact" })} className="hover:text-violet-300 transition-colors">Security</button>
+            <a href="/contact" className="hover:text-violet-300 transition-colors">Security</a>
           </div>
         </div>
       </div>

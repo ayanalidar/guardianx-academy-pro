@@ -18,6 +18,7 @@ import {
   Gift,
 } from "lucide-react"
 import { useAppStore, type View } from "@/store/app-store"
+import { viewToPath } from "@/lib/url-router"
 import { useUser } from "@/hooks/use-user"
 import { useBatchLeadNotifications } from "@/hooks/use-batch-lead-notifications"
 import { Button } from "@/components/ui/button"
@@ -123,7 +124,18 @@ const NAV_ITEMS = STUDENT_NAV
 
 function Logo({ onClick }: { onClick?: () => void }) {
   return (
-    <button onClick={onClick} className="flex items-center gap-2.5 group">
+    // Real anchor: middle-click/new-tab works, href visible, SPA nav on click.
+    <a
+      href="/"
+      onClick={(e) => {
+        if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return
+        if (e.button !== 0) return
+        e.preventDefault()
+        useAppStore.getState().navigate({ name: "home" })
+        onClick?.()
+      }}
+      className="flex items-center gap-2.5 group"
+    >
       <div className="relative">
         <img
           src="/guardianx-logo-v2.png"
@@ -140,7 +152,7 @@ function Logo({ onClick }: { onClick?: () => void }) {
         </div>
         <div className="text-[9px] text-muted-foreground font-mono tracking-widest">SECURE · LEARN · DEFEND</div>
       </div>
-    </button>
+    </a>
   )
 }
 
@@ -169,12 +181,18 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
     }
     const c = colorMap[activeColor] || colorMap.emerald
     return (
-      <button
+      // Real anchor (was <button>): crawlable, open-in-new-tab, native semantics.
+      <a
         key={item.label}
-        onClick={() => {
+        href={viewToPath(item.view)}
+        onClick={(e) => {
+          if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return
+          if (e.button !== 0) return
+          e.preventDefault()
           navigate(item.view)
           onNavigate?.()
         }}
+        aria-current={active ? "page" : undefined}
         className={cn(
           "w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all group relative border",
           active
@@ -186,7 +204,7 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
         <item.icon className={cn("h-4 w-4 shrink-0", active && c.text)} />
         <span className="flex-1 text-left">{item.label}</span>
         {active && <ChevronRight className="h-3.5 w-3.5" />}
-      </button>
+      </a>
     )
   }
 
@@ -213,8 +231,14 @@ function SidebarFooter() {
   return (
     <div className="mt-auto pt-4 border-t border-border/40 space-y-3">
       {/* User card */}
-      <button
-        onClick={() => navigate({ name: "profile" })}
+      <a
+        href={viewToPath({ name: "profile" })}
+        onClick={(e) => {
+          if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return
+          if (e.button !== 0) return
+          e.preventDefault()
+          navigate({ name: "profile" })
+        }}
         className="w-full flex items-center gap-3 p-2 rounded-lg hover:bg-accent/50 transition-colors"
       >
         <div className="h-8 w-8 rounded-full bg-gradient-to-br from-violet-500 to-cyan-500 flex items-center justify-center text-white text-xs font-bold shrink-0">
@@ -225,7 +249,7 @@ function SidebarFooter() {
           <div className="text-[10px] text-muted-foreground truncate">{user.email}</div>
         </div>
         <Settings className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-      </button>
+      </a>
 
       {/* ADMIN: System Admin badge + platform-control label (no XP bar) */}
       {isAdmin ? (

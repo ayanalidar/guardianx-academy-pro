@@ -16,6 +16,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/
 import { useTheme } from "next-themes"
 import { cn } from "@/lib/utils"
 import { useAppStore, type View } from "@/store/app-store"
+import { viewToPath } from "@/lib/url-router"
 import { AnimatedLogoMark } from "@/components/platform/animated-logo"
 import { GlobalSearch } from "@/components/platform/global-search"
 
@@ -299,38 +300,30 @@ export function PublicHeader() {
     closeTimer.current = setTimeout(() => setOpenMenuId(null), 120)
   }, [cancelCloseTimer])
 
-  const handleNavigate = React.useCallback(
-    (v: View) => {
+  // Menu item URL — external items (e.g. Open Schooling) point at their
+  // dedicated Next.js route opened in a new browser tab; internal items use
+  // the canonical SPA path so middle-click / new-tab / SEO all work.
+  const menuItemHref = React.useCallback((item: MegaMenuItem): string => {
+    if (item.external) {
+      const slug = item.view.name.replace(/^institutions-/, "")
+      return `/institutions/${slug}`
+    }
+    return viewToPath(item.view)
+  }, [])
+
+  // Anchor onClick for INTERNAL items: SPA navigation (no reload).
+  // Modified clicks (Ctrl/Cmd/Shift/Alt) fall through to the browser so
+  // "open in new tab" keeps working via the real href.
+  const handleLinkClick = React.useCallback(
+    (e: React.MouseEvent, v: View) => {
+      if (e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return
+      if (e.button !== 0) return
+      e.preventDefault()
       navigate(v)
       setOpenMenuId(null)
       setMobileOpen(false)
     },
     [navigate]
-  )
-
-  // For external menu items (e.g. Open Schooling landing page): open the
-  // dedicated Next.js route in a new browser tab + close the dropdown.
-  // We use the view name to build the URL — `/institutions-open-schooling`
-  // is served by `src/app/institutions/open-schooling/page.tsx`.
-  const handleExternalNavigate = React.useCallback(
-    (v: View) => {
-      const slug = v.name.replace(/^institutions-/, "")
-      // `institutions-open-schooling` → `institutions/open-schooling`
-      const url = `/institutions/${slug}`
-      window.open(url, "_blank", "noopener,noreferrer")
-      setOpenMenuId(null)
-      setMobileOpen(false)
-    },
-    []
-  )
-
-  // Unified click handler — picks internal vs external based on the item flag.
-  const onItemClick = React.useCallback(
-    (item: MegaMenuItem) => {
-      if (item.external) handleExternalNavigate(item.view)
-      else handleNavigate(item.view)
-    },
-    [handleNavigate, handleExternalNavigate]
   )
 
   const isViewActive = React.useCallback((v: View) => view.name === v.name, [view.name])
@@ -364,8 +357,9 @@ export function PublicHeader() {
         onMouseLeave={scheduleCloseMenu}
       >
         {/* ===== Logo (left) ===== */}
-        <motion.button
-          onClick={() => handleNavigate({ name: "home" })}
+        <motion.a
+          href="/"
+          onClick={(e) => handleLinkClick(e, { name: "home" })}
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           className="flex items-center gap-1.5 group shrink-0"
@@ -377,7 +371,7 @@ export function PublicHeader() {
               Guardian<span className="text-violet-400">X</span>
             </div>
           </div>
-        </motion.button>
+        </motion.a>
 
         {/* ===== Global search (between logo and nav) — visible on all sizes ===== */}
         <div className="hidden lg:block flex-1 max-w-md mx-4">
@@ -486,14 +480,14 @@ export function PublicHeader() {
           {/* Currency toggle */}
           <CurrencyToggle />
 
-          <Button
-            size="sm"
-            onClick={() => handleNavigate({ name: "login" })}
-            className="bg-violet-600 hover:bg-violet-500 btn-premium h-8 px-4 text-xs hidden sm:inline-flex"
+          <a
+            href="/login"
+            onClick={(e) => handleLinkClick(e, { name: "login" })}
+            className="hidden sm:inline-flex items-center justify-center gap-1 rounded-md bg-violet-600 hover:bg-violet-500 btn-premium h-8 px-4 text-xs font-medium text-primary-foreground transition-colors"
           >
             <LogIn className="h-3 w-3 mr-1" />
             <span>Login</span>
-          </Button>
+          </a>
 
           {/* Mobile hamburger → Sheet */}
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
@@ -529,10 +523,14 @@ export function PublicHeader() {
                           {group.items.map((item) => {
                             const active = isViewActive(item.view)
                             return (
-                              <button
+                              <a
                                 key={item.title}
-                                type="button"
-                                onClick={() => onItemClick(item)}
+                                href={menuItemHref(item)}
+                                onClick={(e) => {
+                                  if (!item.external) handleLinkClick(e, item.view)
+                                  else { setOpenMenuId(null); setMobileOpen(false) }
+                                }}
+                                {...(item.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
                                 className={cn(
                                   "flex items-start gap-3 p-2 rounded-lg text-left transition-colors",
                                   "hover:bg-accent/60",
@@ -551,7 +549,7 @@ export function PublicHeader() {
                                     {item.description}
                                   </div>
                                 </div>
-                              </button>
+                              </a>
                             )
                           })}
                         </div>
@@ -562,13 +560,14 @@ export function PublicHeader() {
               </div>
 
               <div className="border-t border-border/60 p-4 flex flex-col gap-2">
-                <Button
-                  onClick={() => handleNavigate({ name: "login" })}
-                  className="bg-violet-600 hover:bg-violet-500 btn-premium w-full h-10"
+                <a
+                  href="/login"
+                  onClick={(e) => handleLinkClick(e, { name: "login" })}
+                  className="w-full h-10 inline-flex items-center justify-center gap-2 rounded-md bg-violet-600 hover:bg-violet-500 btn-premium text-sm font-medium text-primary-foreground transition-colors"
                 >
                   <LogIn className="h-4 w-4 mr-2" />
                   Login
-                </Button>
+                </a>
                 <p className="text-[10px] text-muted-foreground text-center">
                   © {new Date().getFullYear()} GuardianX Academy
                 </p>
@@ -612,11 +611,15 @@ export function PublicHeader() {
                 {openGroup.items.map((item) => {
                   const active = isViewActive(item.view)
                   return (
-                    <button
+                    <a
                       key={item.title}
-                      type="button"
+                      href={menuItemHref(item)}
                       role="menuitem"
-                      onClick={() => onItemClick(item)}
+                      onClick={(e) => {
+                        if (!item.external) handleLinkClick(e, item.view)
+                        else { setOpenMenuId(null); setMobileOpen(false) }
+                      }}
+                      {...(item.external ? { target: "_blank", rel: "noopener noreferrer" } : {})}
                       className={cn(
                         "flex items-start gap-3 p-3 rounded-lg text-left transition-all group/item",
                         "hover:bg-accent/60",
@@ -641,7 +644,7 @@ export function PublicHeader() {
                           {item.description}
                         </div>
                       </div>
-                    </button>
+                    </a>
                   )
                 })}
               </div>

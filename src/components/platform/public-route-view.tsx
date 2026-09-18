@@ -1,10 +1,9 @@
 "use client"
 
 import * as React from "react"
-import { useRouter } from "next/navigation"
 import { useAppStore, type View } from "@/store/app-store"
-import { viewToHash } from "@/lib/url-router"
 import { PublicPageShell } from "@/components/platform/public-page-shell"
+import { ViewRouter } from "@/components/platform/view-router"
 import { HomeView } from "@/views/home"
 import { ImpactView } from "@/views/impact"
 import { ContactView } from "@/views/contact"
@@ -33,44 +32,20 @@ const CyberRangeView = dynamic(() => import("@/views/cyber-range").then(m => ({ 
 
 /* ============================================================
    PublicRouteView — wraps a public page rendered at a real
-   Next.js route (e.g. /courses, /blog/<slug>) with:
+   Next.js route (e.g. /courses/[slug]) with:
      1. The PublicPageShell (header + footer).
      2. The initial view component, server-rendered for SEO.
-     3. A tiny client-side effect that:
-        - Hydrates the Zustand store with the initial view so
-          the existing view components (which read `useAppStore().view`)
-          work without modification.
-        - Watches for in-app navigation (the header / footer still
-          call `navigate()` which uses hash routing). When the user
-          navigates to a different view, we redirect to the matching
-          real route (fast client-side navigation via Next.js router)
-          or fall back to the SPA root with the original hash (for
-          views that don't have a real route — e.g. dashboard, login).
-   ============================================================ */
+     3. Hydration of the Zustand store with the initial view so
+        the existing view components (which read `useAppStore().view`)
+        work without modification.
 
-const VIEW_TO_REAL_PATH: Partial<Record<string, (v: View) => string>> = {
-  home: () => "/",
-  catalog: () => "/courses",
-  batches: () => "/batches",
-  instructors: () => "/instructors",
-  events: () => "/events",
-  blog: () => "/blog",
-  "learning-paths": () => "/learning-paths",
-  "cyber-range": () => "/cyber-range",
-  contact: () => "/contact",
-  pricing: () => "/pricing",
-  // "institutions" is an alias for "institutions-schools" (per page.tsx
-  // ViewRouter) — both route to the schools page.
-  institutions: () => "/institutions/schools",
-  "institutions-schools": () => "/institutions/schools",
-  "institutions-colleges": () => "/institutions/colleges",
-  "institutions-universities": () => "/institutions/universities",
-  verify: () => "/verify",
-  "blog-post": (v) => (v.name === "blog-post" ? `/blog/${encodeURIComponent(v.slug)}` : "/blog"),
-  "instructor-detail": (v) => (v.name === "instructor-detail" ? `/instructors/${encodeURIComponent(v.instructorId)}` : "/instructors"),
-  "event-detail": (v) => (v.name === "event-detail" ? `/events/${encodeURIComponent(v.eventSlug)}` : "/events"),
-  course: (v) => (v.name === "course" ? `/courses/${encodeURIComponent(v.courseId)}` : "/courses"),
-}
+   Navigation note (path-routing era): `navigate()` now pushes REAL
+   paths via history.pushState and updates the store. This component
+   simply follows the store reactively — when the user clicks a nav
+   item, the new view renders in place (no reload, no hash fallback).
+   Views covered by renderView() render from statically-imported
+   components; anything else falls through to the lazy ViewRouter.
+   ============================================================ */
 
 function renderView(view: View): React.ReactNode {
   switch (view.name) {
@@ -102,15 +77,8 @@ function renderView(view: View): React.ReactNode {
   }
 }
 
-function viewToHref(view: View): string {
-  const hash = viewToHash(view)
-  // viewToHash returns "/course/abc" → we want "/#/course/abc"
-  return `/#${hash.startsWith("/") ? hash : `/${hash}`}`
-}
-
 export function PublicRouteView({ initialView }: { initialView: View }) {
   const view = useAppStore((s) => s.view)
-  const router = useRouter()
   const didInit = React.useRef(false)
 
   // Hydrate the store with the initial view on mount. We use a ref so
@@ -125,34 +93,9 @@ export function PublicRouteView({ initialView }: { initialView: View }) {
     }
   }, [initialView])
 
-  // Watch for in-app navigation. The header / footer still call
-  // `navigate()` which updates the store + pushes a hash. When the
-  // view changes to something other than the initial view, redirect
-  // to the matching real route (Next.js router, no full reload) or
-  // fall back to a hard navigation to the SPA root with the hash
-  // (for views that don't have a real route — e.g. dashboard, login).
-  React.useEffect(() => {
-    if (!didInit.current) return
-    if (view.name === initialView.name) return
-    const builder = VIEW_TO_REAL_PATH[view.name]
-    if (builder) {
-      const path = builder(view)
-      if (path === "/") {
-        // Home is the SPA root — use hash navigation
-        window.location.href = viewToHref(view)
-      } else {
-        // Real route — fast client-side navigation
-        router.push(path)
-      }
-    } else {
-      // No real route — go to the SPA root with the hash
-      window.location.href = viewToHref(view)
-    }
-  }, [view, initialView, router])
-
   return (
     <PublicPageShell>
-      {renderView(initialView)}
+      {renderView(view) ?? <ViewRouter />}
     </PublicPageShell>
   )
 }
