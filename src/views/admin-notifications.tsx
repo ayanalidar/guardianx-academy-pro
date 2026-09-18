@@ -7,22 +7,22 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { api } from "@/lib/api"
 import {
   ArrowLeft, Bell, Users, Award, BookOpen, FlaskConical,
-  Mail, Shield, AlertCircle, CheckCircle2, Trash2,
+  Mail, Shield, AlertCircle, CheckCircle2, Trash2, UserPlus,
 } from "lucide-react"
 
 const NOTIF_ICONS: Record<string, any> = {
   enrollment: Users, certificate: Award, course: BookOpen, lab: FlaskConical,
-  contact: Mail, exam: Shield, system: AlertCircle,
+  contact: Mail, exam: Shield, system: AlertCircle, registration: UserPlus,
 }
 
 const NOTIF_COLORS: Record<string, string> = {
   enrollment: "text-violet-300", certificate: "text-emerald-300",
   course: "text-cyan-300", lab: "text-amber-300", contact: "text-blue-300",
-  exam: "text-rose-300", system: "text-amber-300",
+  exam: "text-rose-300", system: "text-amber-300", registration: "text-emerald-300",
 }
 
 // Real platform event feed from /api/admin/notifications
@@ -49,6 +49,7 @@ function timeAgo(iso: string): string {
 export function NotificationCenterView() {
   const { navigate } = useAppStore()
   // Real feed — aggregated from enrollments/certs/labs/exams/leads (30 days)
+  const qc = useQueryClient()
   const { data, isLoading, error } = useQuery({
     queryKey: ["admin-notifications"],
     refetchInterval: 60_000,
@@ -57,6 +58,16 @@ export function NotificationCenterView() {
   const [readIds, setReadIds] = React.useState<Set<string>>(new Set())
   const [dismissed, setDismissed] = React.useState<Set<string>>(new Set())
   const [filter, setFilter] = React.useState<"all" | "unread">("all")
+
+  // Optimistic state + server persistence — read/dismiss used to live only
+  // in component state and was lost on every reload.
+  function persist(patch: { readIds?: string[]; dismissedIds?: string[]; markAllRead?: boolean }) {
+    api("/api/admin/notifications", { method: "PATCH", body: JSON.stringify(patch) })
+      .then(() => qc.invalidateQueries({ queryKey: ["admin-notifications"] }))
+      .catch(() => {
+        // best-effort — local state already updated
+      })
+  }
 
   const notifications = React.useMemo(
     () => (data?.notifications || []).map(n => ({ ...n, read: n.read || readIds.has(n.id) })),
@@ -70,14 +81,18 @@ export function NotificationCenterView() {
 
   function markAllRead() {
     setReadIds(new Set(notifications.map(n => n.id)))
+    persist({ markAllRead: true })
   }
 
   function markRead(id: string) {
+    if (readIds.has(id)) return
     setReadIds(prev => new Set(prev).add(id))
+    persist({ readIds: [id] })
   }
 
   function removeNotif(id: string) {
     setDismissed(prev => new Set(prev).add(id))
+    persist({ dismissedIds: [id] })
   }
 
   return (
@@ -107,13 +122,6 @@ export function NotificationCenterView() {
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
             <Card className="p-6 border-rose-500/30 bg-rose-500/5 text-center text-sm text-rose-300">
               Couldn't load the notification feed. Please retry.
-            </Card>
-          </div>
-        )}
-        {!loading && !error && filtered.length === 0 && (
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-            <Card className="p-6 text-center text-sm text-muted-foreground">
-              No {filter === "unread" ? "unread " : ""}notifications in the last 30 days.
             </Card>
           </div>
         )}

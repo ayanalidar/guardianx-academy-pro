@@ -1,7 +1,14 @@
 import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
+import { getCurrentUser } from "@/lib/session"
 export const runtime = "nodejs"
 export async function GET() {
+  // Auth-optional: uptime monitors ping this unauthenticated, so anonymous
+  // callers get status booleans ONLY. The detailed per-service latencies and
+  // row counts (users/courses/leads…) — genuine recon value — are included
+  // for admins only.
+  const user = await getCurrentUser().catch(() => null)
+  const isAdmin = !!user && (user.role === "ADMIN" || user.role === "SUPER_ADMIN" || user.role === "INSTRUCTOR")
   const services: Array<{ name: string; status: string; latency: number; detail?: string }> = []
   const start = Date.now()
   try { await db.$queryRaw`SELECT 1`; services.push({ name: "Database", status: "operational", latency: Date.now() - start }) } catch { services.push({ name: "Database", status: "down", latency: Date.now() - start }) }
@@ -45,5 +52,13 @@ export async function GET() {
   }
 
   const overall = services.every(s => s.status === "operational") ? "operational" : services.some(s => s.status === "down") ? "down" : "degraded"
+  if (!isAdmin) {
+    // Minimal public shape — statuses only, no counts, no latencies
+    return NextResponse.json({
+      overall,
+      services: services.map((s) => ({ name: s.name, status: s.status })),
+      timestamp: new Date().toISOString(),
+    })
+  }
   return NextResponse.json({ overall, services, timestamp: new Date().toISOString() })
 }

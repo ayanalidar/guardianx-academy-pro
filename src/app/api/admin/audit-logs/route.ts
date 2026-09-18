@@ -24,15 +24,26 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
   const action = url.searchParams.get("action")?.trim() || undefined
   const userId = url.searchParams.get("userId")?.trim() || undefined
   const resource = url.searchParams.get("resource")?.trim() || undefined
+  // Server-side free-text search — previously the search box only filtered
+  // the current page client-side, hiding matches on other pages.
+  const q = url.searchParams.get("q")?.trim() || undefined
 
   const where: {
     action?: { contains: string }
+    OR?: Array<{ action?: { contains: string } } | { resource?: { contains: string } } | { userName?: { contains: string } }>
     userId?: string
     resource?: string
   } = {}
   if (action) where.action = { contains: action }
   if (userId) where.userId = userId
   if (resource) where.resource = resource
+  if (q) {
+    where.OR = [
+      { action: { contains: q } },
+      { resource: { contains: q } },
+      { userName: { contains: q } },
+    ]
+  }
 
   const [total, logs] = await Promise.all([
     db.auditLog.count({ where }),

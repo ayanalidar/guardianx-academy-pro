@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { requireAdmin, withErrorHandler } from "@/lib/session"
 import { logAction } from "@/lib/audit"
+import { COURSE_LIST_FIELDS, normalizeCourseListInput } from "@/lib/course-lists"
 
 // GET /api/admin/courses — list all courses with enrollment counts, module counts, lesson counts
 export const GET = withErrorHandler(async (req: NextRequest) => {
@@ -49,6 +50,7 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
       color: c.color,
       tags: c.tags,
       certBody: c.certBody,
+      ...Object.fromEntries(COURSE_LIST_FIELDS.map(({ key }) => [key, (c as any)[key] ?? "[]"])),
       published: c.published,
       createdAt: c.createdAt,
       updatedAt: c.updatedAt,
@@ -91,6 +93,13 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
     instructorId?: string
   }
 
+  // Course extras lists (whatYouWillLearn, prerequisites, whoShouldAttend,
+  // toolsCovered, careerOutcomes) — accepted as arrays, newline text, or
+  // stored JSON; normalized to encoded JSON arrays.
+  const extrasData = Object.fromEntries(
+    COURSE_LIST_FIELDS.map(({ key }) => [key, normalizeCourseListInput((body as any)[key])])
+  ) as Record<string, string>
+
   if (!title?.trim()) return NextResponse.json({ error: "Title required" }, { status: 400 })
   if (!shortName?.trim()) return NextResponse.json({ error: "Short name required" }, { status: 400 })
 
@@ -126,6 +135,7 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
       color: color || "violet",
       tags: tags || "",
       certBody: certBody || null,
+      ...extrasData,
       published: true,
       instructorId: finalInstructorId,
     },

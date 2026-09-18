@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/session"
+import { COURSE_LIST_FIELDS, normalizeCourseListInput } from "@/lib/course-lists"
 
 export const runtime = "nodejs"
 
@@ -31,6 +32,13 @@ interface StudioConfig {
   tags: string[]
   certBody: string | null
   thumbnail: string | null
+  // Course extras — optional JSON arrays (what you'll learn, prerequisites,
+  // who should attend, tools covered, career outcomes)
+  whatYouWillLearn?: string[]
+  prerequisites?: string[]
+  whoShouldAttend?: string[]
+  toolsCovered?: string[]
+  careerOutcomes?: string[]
   modules: Array<{
     id: string
     title: string
@@ -243,6 +251,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   const existing = await db.course.findUnique({ where: { slug: desiredSlug } })
 
+  // Course extras — config arrays normalized to the canonical JSON encoding
+  const extrasData = Object.fromEntries(
+    COURSE_LIST_FIELDS.map(({ key }) => [key, normalizeCourseListInput((config as any)[key])])
+  ) as Record<string, string>
+
   try {
     const published = await db.$transaction(async (tx) => {
       let course: any
@@ -267,6 +280,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
             tags: Array.isArray(config.tags) ? config.tags.join(",") : "",
             certBody: config.certBody || null,
             thumbnail: config.thumbnail || null,
+            ...extrasData,
             published: true,
           },
         })
@@ -286,6 +300,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
             tags: Array.isArray(config.tags) ? config.tags.join(",") : "",
             certBody: config.certBody || null,
             thumbnail: config.thumbnail || null,
+            ...extrasData,
             published: true,
             instructorId: user.id,
           },

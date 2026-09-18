@@ -4,6 +4,7 @@ import * as React from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { motion, useInView, AnimatePresence } from "framer-motion"
 import { api } from "@/lib/api"
+import { parseCourseList } from "@/lib/course-lists"
 import { useAppStore } from "@/store/app-store"
 import { LEVEL_COLORS } from "@/lib/colors"
 import { useUser } from "@/hooks/use-user"
@@ -441,6 +442,15 @@ export function CourseDetailView() {
     outcomes.push("Develop practical, hands-on skills through GuardianX lab exercises.")
   }
 
+  // Course extras — real, admin-authored content (Course Studio → Course Details).
+  // Empty lists mean the course was never authored with them; sections then fall
+  // back to the derived content above / legacy placeholders.
+  const whatYouWillLearn = parseCourseList((course as any).whatYouWillLearn)
+  const prerequisiteTexts = parseCourseList((course as any).prerequisites)
+  const whoShouldAttend = parseCourseList((course as any).whoShouldAttend)
+  const toolsCovered = parseCourseList((course as any).toolsCovered)
+  const careerOutcomes = parseCourseList((course as any).careerOutcomes)
+
   return (
     <div className="relative min-h-screen">
       {/* Atmospheric background */}
@@ -537,6 +547,23 @@ export function CourseDetailView() {
               <div className="lg:col-span-4" ref={enrollCardRef}>
                 <Card className="relative overflow-hidden border-border/60 bg-card/50 backdrop-blur-xl p-6">
                   <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-violet-500/50 to-transparent" />
+
+                  {/* Text prerequisites — real, admin-authored (Course Studio) */}
+                  {prerequisiteTexts.length > 0 && (
+                    <div className="mb-5 rounded-lg border border-cyan-500/25 bg-cyan-500/5 p-3">
+                      <div className="flex items-center gap-1.5 text-[10px] font-medium text-cyan-300 mb-2 tracking-[0.2em] font-mono">
+                        <AlertTriangle className="h-3.5 w-3.5" /> BEFORE YOU START
+                      </div>
+                      <ul className="space-y-1">
+                        {prerequisiteTexts.map((p, i) => (
+                          <li key={i} className="flex items-start gap-2 text-xs text-muted-foreground">
+                            <CheckCircle2 className="h-3 w-3 text-cyan-300/70 shrink-0 mt-0.5" />
+                            <span>{p}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
 
                   {isEnrolled ? (
                     <div className="space-y-5">
@@ -671,7 +698,7 @@ export function CourseDetailView() {
         {/* ====================================================
             4. WHAT YOU'LL ACHIEVE — visual achievement cards
             ==================================================== */}
-        <AchievementCollection course={course} outcomes={outcomes} />
+        <AchievementCollection course={course} outcomes={outcomes} whatYouWillLearn={whatYouWillLearn} toolsCovered={toolsCovered} careerOutcomes={careerOutcomes} />
 
         {/* ====================================================
             5. ANIMATED SKILL PROGRESSION CHART (Before vs After)
@@ -698,7 +725,7 @@ export function CourseDetailView() {
         {/* ====================================================
             8. IS THIS COURSE RIGHT FOR YOU?
             ==================================================== */}
-        <FitChecklist level={course.level} category={course.category} />
+        <FitChecklist level={course.level} category={course.category} whoShouldAttend={whoShouldAttend} />
 
         {/* ====================================================
             9. COURSE DIFFICULTY METER
@@ -1182,7 +1209,93 @@ function StatsHeroBar({ course }: { course: any }) {
 // ============================================================
 // 4. WHAT YOU'LL ACHIEVE — Badge Collection
 // ============================================================
-function AchievementCollection({ course, outcomes }: { course: any; outcomes: string[] }) {
+function AchievementCollection({
+  course,
+  outcomes,
+  whatYouWillLearn,
+  toolsCovered,
+  careerOutcomes,
+}: {
+  course: any
+  outcomes: string[]
+  whatYouWillLearn: string[]
+  toolsCovered: string[]
+  careerOutcomes: string[]
+}) {
+  // Real, admin-authored "What you will learn" list (Course Studio → Course
+  // Details) — rendered as a checklist. Falls back to the derived cards below
+  // for courses that were never authored with extras.
+  if (whatYouWillLearn.length > 0) {
+    return (
+      <section className="py-8 lg:py-10 border-t border-border/60">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="max-w-2xl mb-6">
+            <SectionLabel index="01" className="text-violet-300">OUTCOMES</SectionLabel>
+            <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance">
+              What you&apos;ll
+              <span className="text-gradient-premium"> learn.</span>
+            </h2>
+            <p className="text-muted-foreground mt-6 leading-relaxed">
+              Everything you&apos;ll be able to do by the end of this course.
+            </p>
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-3">
+            {whatYouWillLearn.map((item, i) => (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, amount: 0.2 }}
+                transition={{ duration: 0.4, delay: Math.min(i * 0.05, 0.4), ease: [0.16, 1, 0.3, 1] }}
+                className="flex items-start gap-3 rounded-xl border border-border/60 bg-card/40 backdrop-blur p-4 hover:border-violet-500/40 hover:bg-card/60 transition-all"
+              >
+                <div className="mt-0.5 h-6 w-6 shrink-0 rounded-lg bg-violet-500/10 border border-violet-500/30 flex items-center justify-center">
+                  <CheckCircle2 className="h-3.5 w-3.5 text-violet-300" />
+                </div>
+                <p className="text-sm leading-relaxed">{item}</p>
+              </motion.div>
+            ))}
+          </div>
+
+          {(toolsCovered.length > 0 || careerOutcomes.length > 0) && (
+            <div className="mt-6 grid sm:grid-cols-2 gap-4">
+              {toolsCovered.length > 0 && (
+                <div className="rounded-xl border border-border/60 bg-card/40 backdrop-blur p-5">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Code className="h-4 w-4 text-cyan-300" />
+                    <h3 className="text-sm font-semibold">Tools you&apos;ll use</h3>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {toolsCovered.map((t, i) => (
+                      <Badge key={i} variant="outline" className="text-[11px] py-1 border-cyan-500/30 bg-cyan-500/10 text-cyan-200">{t}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {careerOutcomes.length > 0 && (
+                <div className="rounded-xl border border-border/60 bg-card/40 backdrop-blur p-5">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Trophy className="h-4 w-4 text-amber-300" />
+                    <h3 className="text-sm font-semibold">Career outcomes</h3>
+                  </div>
+                  <ul className="space-y-2">
+                    {careerOutcomes.map((o, i) => (
+                      <li key={i} className="flex items-start gap-2 text-sm text-muted-foreground">
+                        <ChevronRight className="h-3.5 w-3.5 text-amber-300/70 shrink-0 mt-0.5" />
+                        <span>{o}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </section>
+    )
+  }
+
   // Build 3-6 achievement cards from outcomes + tags
   const tags = safeParseTags(course.tags)
   const cards: { icon: any; title: string; description: string }[] = []
@@ -1664,13 +1777,16 @@ function CurriculumTimeline({
 // ============================================================
 // 8. IS THIS COURSE RIGHT FOR YOU?
 // ============================================================
-function FitChecklist({ level, category }: { level: string; category: string }) {
+function FitChecklist({ level, category, whoShouldAttend }: { level: string; category: string; whoShouldAttend: string[] }) {
   // Generate fit/non-fit items based on level + category
   const fitItems: { text: string; icon: any }[] = []
   const notFitItems: { text: string; icon: any }[] = []
 
-  // Fit items — derived from level + category
-  if (level === "Beginner") {
+  // Real, admin-authored "Who should attend" list (Course Studio → Course
+  // Details) replaces the level-derived fit items when present.
+  if (whoShouldAttend.length > 0) {
+    whoShouldAttend.forEach((text) => fitItems.push({ text, icon: CheckCircle2 }))
+  } else if (level === "Beginner") {
     fitItems.push(
       { text: "You're new to cybersecurity and want a structured entry point", icon: Sparkles },
       { text: "You have basic IT literacy and want to learn security fundamentals", icon: CheckCircle2 },

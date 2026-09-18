@@ -64,10 +64,12 @@ import {
   GraduationCap,
   Users,
   IndianRupee,
+  Settings2,
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
+import { COURSE_LIST_FIELDS, parseCourseList } from "@/lib/course-lists"
 
 // ---------------------------------------------------------------------------
 // Types
@@ -80,6 +82,7 @@ interface CourseListItem {
   title: string
   shortName: string
   description: string
+  longDescription: string
   category: string
   level: string
   durationHours: number
@@ -90,6 +93,12 @@ interface CourseListItem {
   color: string
   tags: string
   certBody: string | null
+  // Course extras (JSON-encoded string arrays — see src/lib/course-lists.ts)
+  whatYouWillLearn: string
+  prerequisites: string
+  whoShouldAttend: string
+  toolsCovered: string
+  careerOutcomes: string
   published: boolean
   createdAt: string
   updatedAt: string
@@ -864,6 +873,8 @@ function EditorView({
   const [selectedModuleId, setSelectedModuleId] = React.useState<string | null>(null)
   const [selectedLessonId, setSelectedLessonId] = React.useState<string | null>(null)
   const [expanded, setExpanded] = React.useState<Set<string>>(new Set())
+  // "content" = modules/lessons tree, "details" = course metadata + extras
+  const [tab, setTab] = React.useState<"content" | "details">("content")
 
   const modulesKey = ["course-studio-modules", course.id]
   const { data, isLoading, isError, error, refetch } = useQuery<{ modules: AdminModule[] }>({
@@ -1047,10 +1058,38 @@ function EditorView({
             </p>
           </div>
         </div>
+
+        {/* Tab switcher — Content (modules/lessons) vs Course Details */}
+        <div className="flex items-center gap-1 p-1 rounded-lg border border-border/60 bg-card/40">
+          <button
+            onClick={() => setTab("content")}
+            className={cn(
+              "px-3 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-1.5",
+              tab === "content"
+                ? "bg-violet-500/15 text-violet-200 border border-violet-500/30"
+                : "text-muted-foreground hover:text-foreground border border-transparent"
+            )}
+          >
+            <Layers className="h-3.5 w-3.5" /> Content
+          </button>
+          <button
+            onClick={() => setTab("details")}
+            className={cn(
+              "px-3 py-1.5 text-xs font-medium rounded-md transition-colors flex items-center gap-1.5",
+              tab === "details"
+                ? "bg-violet-500/15 text-violet-200 border border-violet-500/30"
+                : "text-muted-foreground hover:text-foreground border border-transparent"
+            )}
+          >
+            <Settings2 className="h-3.5 w-3.5" /> Course Details
+          </button>
+        </div>
       </div>
 
-      {/* Two-pane editor */}
-      <div className="grid lg:grid-cols-[340px_1fr] gap-4">
+      {tab === "details" ? (
+        <CourseDetailsEditor key={course.id} course={course} />
+      ) : (
+        <div className="grid lg:grid-cols-[340px_1fr] gap-4">
         {/* LEFT - module/lesson outline */}
         <Card className="bg-card/40 border-border/60 flex flex-col max-h-[80vh] overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-border/60">
@@ -1160,7 +1199,205 @@ function EditorView({
           )}
         </Card>
       </div>
+      )}
     </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Course Details Editor — full metadata + course extras (what you'll learn,
+// prerequisites, who should attend, tools, career outcomes). Persists via
+// PATCH /api/admin/courses/[id].
+// ---------------------------------------------------------------------------
+function CourseDetailsEditor({
+  course,
+}: {
+  course: CourseListItem
+  onPublishedChange?: (published: boolean) => void
+}) {
+  const qc = useQueryClient()
+  const [form, setForm] = React.useState(() => ({
+    title: course.title,
+    shortName: course.shortName,
+    description: course.description,
+    longDescription: course.longDescription ?? "",
+    category: course.category,
+    level: course.level,
+    durationHours: String(course.durationHours),
+    price: String(course.price),
+    color: course.color,
+    tags: course.tags ?? "",
+    certBody: course.certBody ?? "",
+    thumbnail: course.thumbnail ?? "",
+    published: course.published,
+    // Extras: decode stored JSON arrays into one-item-per-line textarea text
+    ...Object.fromEntries(
+      COURSE_LIST_FIELDS.map(({ key }) => [key, parseCourseList((course as any)[key]).join("\n")])
+    ),
+  }))
+  const [saving, setSaving] = React.useState(false)
+
+  const set = (k: string, v: string | boolean) => setForm((p) => ({ ...p, [k]: v }))
+
+  const saveMutation = useMutation({
+    mutationFn: () =>
+      api<{ course: CourseListItem }>(`/api/admin/courses/${course.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({
+          title: form.title,
+          shortName: form.shortName,
+          description: form.description,
+          longDescription: form.longDescription,
+          category: form.category,
+          level: form.level,
+          durationHours: Number(form.durationHours) || 0,
+          price: Number(form.price) || 0,
+          color: form.color,
+          tags: form.tags,
+          certBody: form.certBody,
+          thumbnail: form.thumbnail,
+          published: form.published,
+          // extras — newline text is normalized server-side (course-lists.ts)
+          ...Object.fromEntries(COURSE_LIST_FIELDS.map(({ key }) => [key, (form as any)[key]])),
+        }),
+      }),
+    onSuccess: () => {
+      toast.success("Course details saved")
+      qc.invalidateQueries({ queryKey: ["admin-courses-studio"] })
+      qc.invalidateQueries({ queryKey: ["course", course.slug] })
+      qc.invalidateQueries({ queryKey: ["course", course.id] })
+      qc.invalidateQueries({ queryKey: ["catalog"] })
+    },
+    onError: (e: any) => toast.error(e.message || "Failed to save course details"),
+  })
+
+  return (
+    <Card className="bg-card/40 border-border/60">
+      <div className="px-5 py-4 border-b border-border/60 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Settings2 className="h-4 w-4 text-violet-300" />
+          <h3 className="text-sm font-semibold">Course Details</h3>
+          <span className="text-[11px] text-muted-foreground hidden sm:inline">
+            everything shown on the public course page
+          </span>
+        </div>
+        <div className="flex items-center gap-3">
+          <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer">
+            <Switch checked={form.published} onCheckedChange={(v) => set("published", v)} />
+            {form.published ? "Published" : "Draft"}
+          </label>
+          <Button
+            size="sm"
+            onClick={() => saveMutation.mutate()}
+            disabled={saving || saveMutation.isPending}
+            className="bg-violet-600 hover:bg-violet-500"
+          >
+            {saveMutation.isPending ? (
+              <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+            ) : (
+              <Save className="h-3.5 w-3.5 mr-1.5" />
+            )}
+            Save
+          </Button>
+        </div>
+      </div>
+
+      <div className="p-5 space-y-5 max-h-[72vh] overflow-y-auto custom-scroll">
+        {/* Basics */}
+        <div className="grid sm:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <Label className="text-xs">Title</Label>
+            <Input value={form.title} onChange={(e) => set("title", e.target.value)} className="bg-background/60" />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Short name (badge)</Label>
+            <Input value={form.shortName} onChange={(e) => set("shortName", e.target.value)} className="bg-background/60" />
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-xs">Short description (cards & previews)</Label>
+          <Textarea rows={2} value={form.description} onChange={(e) => set("description", e.target.value)} className="bg-background/60" />
+        </div>
+        <div className="space-y-1.5">
+          <Label className="text-xs">Long description (course page overview)</Label>
+          <Textarea rows={5} value={form.longDescription} onChange={(e) => set("longDescription", e.target.value)} className="bg-background/60" />
+        </div>
+
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="space-y-1.5">
+            <Label className="text-xs">Category</Label>
+            <Select value={form.category} onValueChange={(v) => set("category", v)}>
+              <SelectTrigger className="bg-background/60"><SelectValue /></SelectTrigger>
+              <SelectContent>{CATEGORIES.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Level</Label>
+            <Select value={form.level} onValueChange={(v) => set("level", v)}>
+              <SelectTrigger className="bg-background/60"><SelectValue /></SelectTrigger>
+              <SelectContent>{LEVELS.map((l) => <SelectItem key={l} value={l}>{l}</SelectItem>)}</SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Duration (hours)</Label>
+            <Input type="number" min="0" value={form.durationHours} onChange={(e) => set("durationHours", e.target.value)} className="bg-background/60" />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Price (₹)</Label>
+            <Input type="number" min="0" value={form.price} onChange={(e) => set("price", e.target.value)} className="bg-background/60" />
+          </div>
+        </div>
+
+        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="space-y-1.5">
+            <Label className="text-xs">Theme color</Label>
+            <Select value={form.color} onValueChange={(v) => set("color", v)}>
+              <SelectTrigger className="bg-background/60"><SelectValue /></SelectTrigger>
+              <SelectContent>
+                {Object.keys(COURSE_COLOR_GRADIENTS).map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Tags (comma separated)</Label>
+            <Input value={form.tags} onChange={(e) => set("tags", e.target.value)} className="bg-background/60" placeholder="pentesting, linux, nmap" />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Certification body</Label>
+            <Input value={form.certBody} onChange={(e) => set("certBody", e.target.value)} className="bg-background/60" placeholder="EC-Council" />
+          </div>
+          <div className="space-y-1.5">
+            <Label className="text-xs">Thumbnail URL</Label>
+            <Input value={form.thumbnail} onChange={(e) => set("thumbnail", e.target.value)} className="bg-background/60" placeholder="https://…" />
+          </div>
+        </div>
+
+        {/* Course extras — the sections on the public course page */}
+        <div className="pt-2 border-t border-border/60">
+          <div className="flex items-center gap-2 mb-3 mt-2">
+            <Sparkles className="h-4 w-4 text-amber-300" />
+            <h4 className="text-sm font-semibold">Course page sections</h4>
+            <span className="text-[11px] text-muted-foreground">one item per line — shown exactly as typed</span>
+          </div>
+          <div className="grid lg:grid-cols-2 gap-4">
+            {COURSE_LIST_FIELDS.map(({ key, label, hint, placeholder }) => (
+              <div key={key} className="space-y-1.5">
+                <Label className="text-xs">{label}</Label>
+                <Textarea
+                  rows={4}
+                  value={(form as any)[key]}
+                  onChange={(e) => set(key, e.target.value)}
+                  placeholder={placeholder}
+                  className="bg-background/60 text-sm"
+                />
+                <p className="text-[11px] text-muted-foreground">{hint}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </Card>
   )
 }
 

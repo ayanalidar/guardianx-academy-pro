@@ -394,17 +394,20 @@ export function LeadCrmView() {
                 <div className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider mb-1">WEBHOOK URL</div>
                 <div className="flex items-center gap-2">
                   <code className="text-xs text-violet-300 font-mono break-all flex-1">
-                    https://academy.guardianx.cloud/api/crm/webhook
+                    {typeof window !== "undefined" ? window.location.origin : ""}/api/crm/webhook
                   </code>
                   <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => {
-                    navigator.clipboard?.writeText("https://academy.guardianx.cloud/api/crm/webhook")
+                    navigator.clipboard?.writeText(`${window.location.origin}/api/crm/webhook`)
                     toast.success("Webhook URL copied!")
                   }}>
                     Copy
                   </Button>
                 </div>
                 <div className="text-[10px] font-mono text-muted-foreground mt-2">
-                  TOKEN: <span className="text-cyan-300">guardianx-crm-webhook-2025</span>
+                  TOKEN: <span className="text-cyan-300">set in Admin → Settings → CRM Webhook</span>
+                  <span className="block mt-1 text-amber-300/80">
+                    The server REJECTS requests with any other token — the old hardcoded default was removed for security.
+                  </span>
                 </div>
               </div>
 

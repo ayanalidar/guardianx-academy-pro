@@ -33,6 +33,20 @@ export function EmailCampaignView() {
       .catch(() => {})
   }, [])
 
+  // Delivery history — real EmailLog rows (was persisted but never shown)
+  const [history, setHistory] = React.useState<
+    { id: string; toEmail: string; subject: string; status: string; sentAt: string }[]
+  >([])
+  const [historyLoading, setHistoryLoading] = React.useState(false)
+  const loadHistory = React.useCallback(() => {
+    setHistoryLoading(true)
+    api("/api/admin/emails?type=notification&pageSize=25")
+      .then((d: any) => setHistory(d.logs ?? []))
+      .catch(() => {})
+      .finally(() => setHistoryLoading(false))
+  }, [])
+  React.useEffect(loadHistory, [loadHistory])
+
   const audiences = [
     { value: "all", label: "All Users", count: counts.all ?? 0 },
     { value: "students", label: "Students Only", count: counts.students ?? 0 },
@@ -54,6 +68,7 @@ export function EmailCampaignView() {
       })
       toast.success(`Campaign sent — ${res.sent} delivered, ${res.failed} failed (${res.total} recipients)`)
       setSubject(""); setBody("")
+      loadHistory()
     } catch (e: any) {
       toast.error(e?.message || "Failed to send campaign")
     }
@@ -125,6 +140,42 @@ export function EmailCampaignView() {
               {sending ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Sending...</> : <><Send className="h-4 w-4 mr-2" /> Send Campaign</>}
             </Button>
           </div>
+        </Card>
+
+        {/* Delivery history — from the EmailLog table */}
+        <Card className="p-5">
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold">Recent Sends</h2>
+            <Button size="sm" variant="ghost" onClick={loadHistory} disabled={historyLoading}>
+              {historyLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Refresh"}
+            </Button>
+          </div>
+          {history.length === 0 ? (
+            <p className="text-xs text-muted-foreground">No emails sent yet — campaign sends are logged here.</p>
+          ) : (
+            <div className="space-y-1.5 max-h-64 overflow-y-auto custom-scroll">
+              {history.map((h) => (
+                <div key={h.id} className="flex items-center justify-between text-xs p-2 rounded-md bg-muted/30 border border-border/40">
+                  <div className="min-w-0">
+                    <div className="font-medium truncate">{h.subject}</div>
+                    <div className="text-muted-foreground truncate">{h.toEmail} · {new Date(h.sentAt).toLocaleString()}</div>
+                  </div>
+                  <Badge
+                    className={cn(
+                      "text-[9px] shrink-0 ml-2",
+                      h.status === "sent"
+                        ? "bg-emerald-500/10 text-emerald-300 border border-emerald-500/30"
+                        : h.status === "skipped"
+                          ? "bg-amber-500/10 text-amber-300 border border-amber-500/30"
+                          : "bg-rose-500/10 text-rose-300 border border-rose-500/30",
+                    )}
+                  >
+                    {h.status.toUpperCase()}
+                  </Badge>
+                </div>
+              ))}
+            </div>
+          )}
         </Card>
 
         {/* Hostinger SMTP info */}

@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { requireAdmin, withErrorHandler } from "@/lib/session"
 
@@ -16,9 +16,14 @@ export const runtime = "nodejs"
  *   - recentOrders        last 20 paid orders with user + course names
  *   - couponStats         per-coupon usage summary (uses, discount given, revenue impact)
  */
-export const GET = withErrorHandler(async () => {
+export const GET = withErrorHandler(async (req: NextRequest) => {
   const currentUser = await requireAdmin()
   if (currentUser instanceof NextResponse) return currentUser
+
+  // Export mode: return up to 5000 orders for the CSV export (the normal
+  // dashboard view only needs the 20 most recent).
+  const isExport = new URL(req.url).searchParams.get("export") === "1"
+  const orderTake = isExport ? 5000 : undefined
 
   // Pull all paid orders in one query and aggregate in JS — orders table
   // is small enough (per the PAYMENT-COUPON-SEARCH worklog) that this is
@@ -30,6 +35,7 @@ export const GET = withErrorHandler(async () => {
       course: { select: { id: true, title: true, shortName: true, color: true } },
     },
     orderBy: { createdAt: "desc" },
+    ...(orderTake ? { take: orderTake } : {}),
   })
 
   // ----- overview totals -----
@@ -87,8 +93,8 @@ export const GET = withErrorHandler(async () => {
       orders: e.orders,
     }))
 
-  // ----- recent orders (last 20) -----
-  const recentOrders = paidOrders.slice(0, 20).map((o) => ({
+  // ----- recent orders (last 20, or 5000 in export mode) -----
+  const recentOrders = paidOrders.slice(0, orderTake ?? 20).map((o) => ({
     id: o.id,
     createdAt: o.createdAt.toISOString(),
     userName: o.user?.name ?? "—",

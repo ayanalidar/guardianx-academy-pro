@@ -18,8 +18,9 @@ import { cn } from "@/lib/utils"
 import {
   ArrowLeft, BookOpen, Plus, Pencil, Trash2, X, Loader2,
   CheckCircle2, AlertTriangle, Star, Users, Clock, Layers,
-  IndianRupee, Search, GraduationCap,
+  IndianRupee, Search, GraduationCap, Sparkles,
 } from "lucide-react"
+import { COURSE_LIST_FIELDS, parseCourseList } from "@/lib/course-lists"
 import { toast } from "sonner"
 
 /* ============================================================
@@ -89,6 +90,12 @@ interface CourseForm {
   price: string
   instructorId: string
   published: boolean
+  // Course extras — one item per line in the UI (see course-lists.ts)
+  whatYouWillLearn: string
+  prerequisites: string
+  whoShouldAttend: string
+  toolsCovered: string
+  careerOutcomes: string
 }
 
 const CATEGORIES = [
@@ -113,6 +120,11 @@ function emptyForm(): CourseForm {
     price: "0",
     instructorId: "",
     published: true,
+    whatYouWillLearn: "",
+    prerequisites: "",
+    whoShouldAttend: "",
+    toolsCovered: "",
+    careerOutcomes: "",
   }
 }
 
@@ -130,7 +142,11 @@ function formFromCourse(c: AdminCourse): CourseForm {
     price: String(c.price),
     instructorId: c.instructor?.id ?? "",
     published: c.published,
-  }
+    // Stored as JSON arrays — decode to one-item-per-line for the textareas
+    ...Object.fromEntries(
+      COURSE_LIST_FIELDS.map(({ key }) => [key, parseCourseList((c as any)[key]).join("\n")])
+    ),
+  } as CourseForm
 }
 
 function validateForm(form: CourseForm, instructors: InstructorOption[]): string | null {
@@ -254,11 +270,15 @@ export function AdminCoursesView() {
           title: form.title,
           shortName: form.shortName,
           description: form.description,
+          longDescription: form.longDescription,
+          tags: form.tags,
+          certBody: form.certBody,
           category: form.category,
           level: form.level,
           durationHours: Number(form.durationHours),
           price: Number(form.price),
           instructorId: form.instructorId,
+          ...Object.fromEntries(COURSE_LIST_FIELDS.map(({ key }) => [key, (form as any)[key]])),
         }),
       })
       const j = await res.json()
@@ -295,12 +315,16 @@ export function AdminCoursesView() {
           title: form.title,
           shortName: form.shortName,
           description: form.description,
+          longDescription: form.longDescription,
+          tags: form.tags,
+          certBody: form.certBody,
           category: form.category,
           level: form.level,
           durationHours: Number(form.durationHours),
           price: Number(form.price),
           instructorId: form.instructorId,
           published: form.published,
+          ...Object.fromEntries(COURSE_LIST_FIELDS.map(({ key }) => [key, (form as any)[key]])),
         }),
       })
       const j = await res.json()
@@ -829,6 +853,31 @@ function CourseFormDialog({
                 onChange={(e) => setForm((f) => ({ ...f, price: e.target.value }))}
                 className="bg-background/60 border-border/60"
               />
+            </div>
+          </div>
+
+          {/* Course page sections — what you'll learn, prerequisites, etc. */}
+          <div className="rounded-lg border border-border/60 bg-background/30 p-3 space-y-3">
+            <div>
+              <div className="text-sm font-medium flex items-center gap-1.5">
+                <Sparkles className="h-3.5 w-3.5 text-amber-300" /> Course page sections
+              </div>
+              <p className="text-[10px] text-muted-foreground">One item per line — rendered exactly as typed on the public course page.</p>
+            </div>
+            <div className="grid sm:grid-cols-2 gap-3">
+              {COURSE_LIST_FIELDS.map(({ key, label, hint, placeholder }) => (
+                <div key={key} className="space-y-1.5">
+                  <Label htmlFor={`course-${key}`} className="text-xs font-medium">{label}</Label>
+                  <Textarea
+                    id={`course-${key}`}
+                    placeholder={placeholder}
+                    value={(form as any)[key]}
+                    onChange={(e) => setForm((f) => ({ ...f, [key]: e.target.value }))}
+                    className="bg-background/60 border-border/60 min-h-[72px] text-sm"
+                  />
+                  <p className="text-[10px] text-muted-foreground">{hint}</p>
+                </div>
+              ))}
             </div>
           </div>
 

@@ -1,16 +1,17 @@
 "use client"
 
 import * as React from "react"
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { api } from "@/lib/api"
 import { useAppStore } from "@/store/app-store"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
 import {
-  Award, Search, Loader2, ArrowRight, Fingerprint,
+  Award, Search, Loader2, ArrowRight, Fingerprint, ShieldOff, ShieldCheck,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { toast } from "sonner"
 
 interface Cert {
   id: string
@@ -28,9 +29,10 @@ interface Cert {
 
 export function AdminCyberQuizCertsView() {
   const { navigate } = useAppStore()
+  const qc = useQueryClient()
   const [search, setSearch] = React.useState("")
 
-  const { data, isLoading } = useQuery<{ certificates: Cert[]; count: number }>({
+  const { data, isLoading } = useQuery<{ certificates: Cert[]; count: number; total?: number }>({
     queryKey: ["admin-cyber-quiz-certs", search],
     queryFn: () => {
       const params = new URLSearchParams()
@@ -40,6 +42,19 @@ export function AdminCyberQuizCertsView() {
   })
 
   const certs = data?.certificates ?? []
+  const validCount = certs.filter((c) => c.status !== "revoked").length
+  const totalIssued = (data as any)?.total ?? certs.length
+
+  // Revoke / restore — persisted via PATCH; was impossible before (no route)
+  const revokeMutation = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: "valid" | "revoked" }) =>
+      api(`/api/admin/cyber-quiz/certificates/${id}`, { method: "PATCH", body: JSON.stringify({ status }) }),
+    onSuccess: (_res, vars) => {
+      qc.invalidateQueries({ queryKey: ["admin-cyber-quiz-certs"] })
+      toast.success(vars.status === "revoked" ? "Certificate revoked — it will no longer verify" : "Certificate restored")
+    },
+    onError: (e: any) => toast.error(e.message || "Status update failed"),
+  })
 
   return (
     <div className="space-y-6">
@@ -54,15 +69,15 @@ export function AdminCyberQuizCertsView() {
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         <div className="rounded-xl border border-border/60 bg-card/40 p-4">
           <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground mb-1">Total issued</div>
-          <div className="text-2xl font-bold tabular-nums">{certs.length}</div>
+          <div className="text-2xl font-bold tabular-nums">{totalIssued}</div>
         </div>
         <div className="rounded-xl border border-border/60 bg-card/40 p-4">
           <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground mb-1">Avg score</div>
           <div className="text-2xl font-bold tabular-nums">{certs.length ? Math.round(certs.reduce((a, c) => a + c.percentage, 0) / certs.length) + "%" : "—"}</div>
         </div>
         <div className="rounded-xl border border-border/60 bg-card/40 p-4">
-          <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground mb-1">Revenue</div>
-          <div className="text-2xl font-bold tabular-nums">₹{certs.length * 199}</div>
+          <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground mb-1">Revoked</div>
+          <div className="text-2xl font-bold tabular-nums text-rose-300">{certs.filter((c) => c.status === "revoked").length}</div>
         </div>
       </div>
 
@@ -83,32 +98,66 @@ export function AdminCyberQuizCertsView() {
           </div>
         ) : (
           <div className="divide-y divide-border/40 max-h-[700px] overflow-y-auto custom-scrollbar">
-            {certs.map((c) => (
-              <button
-                key={c.id}
-                onClick={() => navigate({ name: "cyber-quiz-certificate", credentialId: c.credentialId } as any)}
-                className="w-full p-4 hover:bg-violet-500/[0.03] transition-colors text-left flex items-start justify-between gap-3"
-              >
-                <div className="flex items-start gap-3 min-w-0 flex-1">
-                  <div className="flex items-center justify-center w-10 h-10 rounded-full bg-violet-500/10 text-violet-300 shrink-0">
-                    <Award className="h-5 w-5" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                      <span className="font-medium text-sm truncate">{c.candidateName}</span>
-                      <Badge variant="outline" className="text-[9px]">{c.difficulty}</Badge>
-                      <Badge variant="secondary" className="text-[9px] font-mono">{c.credentialId}</Badge>
+            {certs.map((c) => {
+              const revoked = c.status === "revoked"
+              return (
+                <div
+                  key={c.id}
+                  className={cn(
+                    "p-4 hover:bg-violet-500/[0.03] transition-colors flex items-start justify-between gap-3",
+                    revoked && "opacity-70",
+                  )}
+                >
+                  <button
+                    onClick={() => navigate({ name: "cyber-quiz-certificate", credentialId: c.credentialId } as any)}
+                    className="flex items-start gap-3 min-w-0 flex-1 text-left"
+                  >
+                    <div className="flex items-center justify-center w-10 h-10 rounded-full bg-violet-500/10 text-violet-300 shrink-0">
+                      <Fingerprint className="h-5 w-5" />
                     </div>
-                    <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
-                      <span>{c.email}</span>
-                      <span className="tabular-nums">{c.score}/{c.totalQuestions} · {c.percentage}%</span>
-                      <span>{new Date(c.issueDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2 mb-0.5 flex-wrap">
+                        <span className={cn("font-medium text-sm truncate", revoked && "line-through")}>{c.candidateName}</span>
+                        <Badge variant="outline" className="text-[9px]">{c.difficulty}</Badge>
+                        <Badge variant="secondary" className="text-[9px] font-mono">{c.credentialId}</Badge>
+                        {revoked && (
+                          <Badge className="text-[9px] bg-rose-500/10 text-rose-300 border border-rose-500/30">REVOKED</Badge>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+                        <span>{c.email}</span>
+                        <span className="tabular-nums">{c.score}/{c.totalQuestions} · {c.percentage}%</span>
+                        <span>{new Date(c.issueDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</span>
+                      </div>
                     </div>
-                  </div>
+                    <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 mt-1" />
+                  </button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className={cn(
+                      "shrink-0",
+                      revoked
+                        ? "text-emerald-300 hover:bg-emerald-500/10 border-emerald-500/30"
+                        : "text-rose-300 hover:bg-rose-500/10 border-rose-500/30",
+                    )}
+                    onClick={() =>
+                      revokeMutation.mutate({
+                        id: c.id,
+                        status: revoked ? "valid" : "revoked",
+                      })
+                    }
+                    disabled={revokeMutation.isPending}
+                  >
+                    {revoked ? (
+                      <><ShieldCheck className="h-3.5 w-3.5 mr-1" /> Restore</>
+                    ) : (
+                      <><ShieldOff className="h-3.5 w-3.5 mr-1" /> Revoke</>
+                    )}
+                  </Button>
                 </div>
-                <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0 mt-1" />
-              </button>
-            ))}
+              )
+            })}
           </div>
         )}
       </div>

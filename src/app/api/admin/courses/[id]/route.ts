@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { requireAdmin, withErrorHandler } from "@/lib/session"
 import { logAction } from "@/lib/audit"
+import { COURSE_LIST_FIELDS, normalizeCourseListInput } from "@/lib/course-lists"
 
 // PATCH /api/admin/courses/[id] — update any course field (incl. published toggle)
 export const PATCH = withErrorHandler(
@@ -19,6 +20,14 @@ export const PATCH = withErrorHandler(
       category, level, durationHours, price, color, tags, certBody,
       thumbnail, published, instructorId,
     } = body as Record<string, unknown>
+
+    // Course extras lists — accepted as arrays, newline text, or stored JSON.
+    const extrasData: Record<string, string> = {}
+    for (const { key } of COURSE_LIST_FIELDS) {
+      if ((body as Record<string, unknown>)[key] !== undefined) {
+        extrasData[key] = normalizeCourseListInput((body as Record<string, unknown>)[key])
+      }
+    }
 
     // slug uniqueness check (if changing)
     let finalSlug: string | undefined
@@ -59,6 +68,7 @@ export const PATCH = withErrorHandler(
         ...(thumbnail !== undefined && { thumbnail: thumbnail ? String(thumbnail) : null }),
         ...(published !== undefined && { published: !!published }),
         ...(finalInstructorId !== undefined && { instructorId: finalInstructorId }),
+        ...extrasData,
       },
       include: {
         instructor: { select: { id: true, name: true, title: true } },

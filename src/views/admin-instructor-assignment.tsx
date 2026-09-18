@@ -67,18 +67,23 @@ interface Instructor {
   createdAt: string
 }
 
-const BATCHES = [
-  { id: "b1", name: "CEH Weekend Batch", cert: "CEH", schedule: "Sat-Sun 7PM", instructor: "Dr. Sarah Chen", status: "assigned" },
-  { id: "b2", name: "Security+ Weekday", cert: "Security+", schedule: "MWF 8PM", instructor: "Raj Patel", status: "assigned" },
-  { id: "b3", name: "CCNA Morning", cert: "CCNA", schedule: "Tue-Thu 7AM", instructor: "Raj Patel", status: "assigned" },
-  { id: "b4", name: "CISSP Weekend", cert: "CISSP", schedule: "Sat-Sun 10AM", instructor: "Alex Mercer", status: "assigned" },
-  { id: "b5", name: "WAPT Bootcamp", cert: "WAPT", schedule: "Mon-Fri 6PM", instructor: null, status: "unassigned" },
-]
+// Real batch rows come from /api/admin/training-batches (TrainingBatch model).
+// The previous hardcoded BATCHES array + local-state-only assignment was fake:
+// assignments vanished on reload and conflicts were computed against mock data.
+interface TrainingBatchRow {
+  id: string
+  name: string
+  certification: string
+  schedule: string
+  instructor: string
+  instructorId: string | null
+  status: string
+  startDate: string
+}
 
 export function InstructorAssignmentView() {
   const { navigate } = useAppStore()
   const queryClient = useQueryClient()
-  const [batches, setBatches] = React.useState(BATCHES)
   const [search, setSearch] = React.useState("")
   const [expertiseFilter, setExpertiseFilter] = React.useState<string>("all")
   const [addOpen, setAddOpen] = React.useState(false)
@@ -137,9 +142,44 @@ export function InstructorAssignmentView() {
     onError: (err: Error) => toast.error(err.message),
   })
 
-  function assignInstructor(batchId: string, instructorName: string) {
-    setBatches(batches.map((b) => (b.id === batchId ? { ...b, instructor: instructorName, status: "assigned" } : b)))
-    toast.success(`Assigned ${instructorName} to batch`)
+  // Real training batches — the assignment target (TrainingBatch model)
+  const { data: batchesData, isLoading: batchesLoading } = useQuery<{
+    batches: TrainingBatchRow[]
+    count: number
+  }>({
+    queryKey: ["admin-assign-batches"],
+    queryFn: async () => {
+      const res = await fetch("/api/admin/training-batches")
+      if (!res.ok) return { batches: [], count: 0 }
+      return res.json()
+    },
+  })
+  const batches = batchesData?.batches ?? []
+
+  // Assign instructor to a batch — PERSISTS via PATCH /api/admin/training-batches/[id]
+  const assignMutation = useMutation({
+    mutationFn: async ({ batchId, instructorId, instructorName }: { batchId: string; instructorId: string | null; instructorName: string | null }) => {
+      const res = await fetch(`/api/admin/training-batches/${batchId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ instructorId, instructor: instructorName }),
+      })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error || "Failed to assign instructor")
+      }
+      return res.json()
+    },
+    onSuccess: (_res, vars) => {
+      queryClient.invalidateQueries({ queryKey: ["admin-assign-batches"] })
+      toast.success(vars.instructorName ? `Assigned ${vars.instructorName} to batch` : "Instructor unassigned")
+    },
+    onError: (err: Error) => toast.error(err.message),
+  })
+
+  function assignInstructor(batchId: string, instructorId: string) {
+    const inst = instructors.find((i) => i.id === instructorId)
+    assignMutation.mutate({ batchId, instructorId, instructorName: inst?.name ?? null })
   }
 
   // Delete instructor
@@ -158,8 +198,11 @@ export function InstructorAssignmentView() {
     }
   }
 
-  function hasConflict(batch: (typeof BATCHES)[number]): boolean {
-    return batches.some((b) => b.id !== batch.id && b.instructor === batch.instructor && b.schedule === batch.schedule)
+  function hasConflict(batch: TrainingBatchRow): boolean {
+    if (!batch.instructorId || !batch.schedule) return false
+    return batches.some(
+      (b) => b.id !== batch.id && b.instructorId === batch.instructorId && b.schedule === batch.schedule
+    )
   }
 
   return (
@@ -281,35 +324,53 @@ export function InstructorAssignmentView() {
                   </tr>
                 </thead>
                 <tbody>
-                  {batches.map((b) => {
-                    const conflict = b.instructor && hasConflict(b)
-                    return (
-                      <tr key={b.id} className="border-t border-border/40 hover:bg-muted/30">
-                        <td className="py-3 px-4">
-                          <div className="font-medium text-sm">{b.name}</div>
-                          <Badge variant="outline" className="text-[9px] mt-0.5">{b.cert}</Badge>
-                        </td>
-                        <td className="py-3 px-4 text-sm text-muted-foreground"><Clock className="h-3 w-3 inline mr-1" />{b.schedule}</td>
-                        <td className="py-3 px-4">
-                          <Select value={b.instructor ?? ""} onValueChange={(v) => assignInstructor(b.id, v)}>
-                            <SelectTrigger className="w-[180px] h-8 text-xs"><SelectValue placeholder="Unassigned" /></SelectTrigger>
-                            <SelectContent>
-                              {instructors.map((i) => <SelectItem key={i.id} value={i.name}>{i.name}</SelectItem>)}
-                            </SelectContent>
-                          </Select>
-                        </td>
-                        <td className="py-3 px-4">
-                          {conflict ? (
-                            <Badge className="text-[9px] bg-rose-500/10 text-rose-300 border border-rose-500/30"><AlertTriangle className="h-3 w-3 mr-1" />Conflict</Badge>
-                          ) : b.instructor ? (
-                            <Badge className="text-[9px] bg-emerald-500/10 text-emerald-300 border border-emerald-500/30"><CheckCircle2 className="h-3 w-3 mr-1" />Assigned</Badge>
-                          ) : (
-                            <Badge className="text-[9px] bg-amber-500/10 text-amber-300 border border-amber-500/30">Unassigned</Badge>
-                          )}
-                        </td>
-                      </tr>
-                    )
-                  })}
+                  {batches.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="py-10 text-center text-sm text-muted-foreground">
+                        {batchesLoading ? "Loading batches…" : "No training batches yet — create one via Admin → Batch Calendar."}
+                      </td>
+                    </tr>
+                  ) : (
+                    batches.map((b) => {
+                      const conflict = hasConflict(b)
+                      return (
+                        <tr key={b.id} className="border-t border-border/40 hover:bg-muted/30">
+                          <td className="py-3 px-4">
+                            <div className="font-medium text-sm">{b.name || b.certification}</div>
+                            <Badge variant="outline" className="text-[9px] mt-0.5">{b.certification}</Badge>
+                          </td>
+                          <td className="py-3 px-4 text-sm text-muted-foreground"><Clock className="h-3 w-3 inline mr-1" />{b.schedule || "—"}</td>
+                          <td className="py-3 px-4">
+                            <Select
+                              value={b.instructorId ?? "__NONE__"}
+                              onValueChange={(v) =>
+                                v === "__NONE__"
+                                  ? assignMutation.mutate({ batchId: b.id, instructorId: null, instructorName: null })
+                                  : assignInstructor(b.id, v)
+                              }
+                            >
+                              <SelectTrigger className="w-[180px] h-8 text-xs"><SelectValue placeholder="Unassigned" /></SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="__NONE__">
+                                  <span className="text-muted-foreground italic">Unassigned</span>
+                                </SelectItem>
+                                {instructors.map((i) => <SelectItem key={i.id} value={i.id}>{i.name}</SelectItem>)}
+                              </SelectContent>
+                            </Select>
+                          </td>
+                          <td className="py-3 px-4">
+                            {conflict ? (
+                              <Badge className="text-[9px] bg-rose-500/10 text-rose-300 border border-rose-500/30"><AlertTriangle className="h-3 w-3 mr-1" />Conflict</Badge>
+                            ) : b.instructorId ? (
+                              <Badge className="text-[9px] bg-emerald-500/10 text-emerald-300 border border-emerald-500/30"><CheckCircle2 className="h-3 w-3 mr-1" />Assigned</Badge>
+                            ) : (
+                              <Badge className="text-[9px] bg-amber-500/10 text-amber-300 border border-amber-500/30">Unassigned</Badge>
+                            )}
+                          </td>
+                        </tr>
+                      )
+                    })
+                  )}
                 </tbody>
               </table>
             </div>
@@ -612,8 +673,8 @@ function AddInstructorDialog({
 
           {/* Password */}
           <div>
-            <Label className="text-xs">Initial Password (optional - defaults to GuardianX@123)</Label>
-            <Input type="text" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Instructor can reset later" className="text-xs" />
+            <Label className="text-xs">Initial Password (required — min 6 characters)</Label>
+            <Input type="text" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="e.g. Teach@2026" className="text-xs" />
           </div>
 
           <div className="rounded-lg border border-violet-500/20 bg-violet-500/5 p-3">

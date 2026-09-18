@@ -33,7 +33,11 @@ export function AdminCyberQuizAttemptsView() {
   const [difficultyFilter, setDifficultyFilter] = React.useState("ALL")
   const [search, setSearch] = React.useState("")
 
-  const { data, isLoading } = useQuery<{ attempts: Attempt[]; count: number }>({
+  const { data, isLoading } = useQuery<{
+    attempts: Attempt[]
+    count: number
+    stats?: { total: number; passed: number; withCert: number; passRate: number }
+  }>({
     queryKey: ["admin-cyber-quiz-attempts", { passedFilter, difficultyFilter, search }],
     queryFn: () => {
       const params = new URLSearchParams()
@@ -46,8 +50,13 @@ export function AdminCyberQuizAttemptsView() {
   })
 
   const attempts = data?.attempts ?? []
-  const passed = attempts.filter((a) => a.passed).length
-  const withCert = attempts.filter((a) => a.certificateId).length
+  // Server-computed stats cover ALL matching rows (view previously derived
+  // them from the capped 200-row page). Falls back to local derivation.
+  const stats = data?.stats
+  const passed = stats?.passed ?? attempts.filter((a) => a.passed).length
+  const withCert = stats?.withCert ?? attempts.filter((a) => a.certificateId).length
+  const totalCount = stats?.total ?? attempts.length
+  const passRate = stats?.passRate ?? (attempts.length ? Math.round((passed / attempts.length) * 100) : 0)
 
   return (
     <div className="space-y-6">
@@ -60,10 +69,10 @@ export function AdminCyberQuizAttemptsView() {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <StatCard label="Total attempts" value={attempts.length} />
+        <StatCard label="Total attempts" value={totalCount} />
         <StatCard label="Passed" value={passed} color="text-emerald-300" />
         <StatCard label="With certificate" value={withCert} color="text-violet-300" />
-        <StatCard label="Pass rate" value={attempts.length ? Math.round((passed / attempts.length) * 100) + "%" : "—"} color="text-cyan-300" />
+        <StatCard label="Pass rate" value={totalCount ? passRate + "%" : "—"} color="text-cyan-300" />
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3">

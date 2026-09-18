@@ -2,6 +2,8 @@
 
 import * as React from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { api } from "@/lib/api"
 import { useAppStore } from "@/store/app-store"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -32,8 +34,13 @@ import {
   FileCheck, Handshake, PenLine, Rocket, TrendingUp,
   Video, Microscope, FileQuestion, ClipboardList,
   CalendarClock, Eye, ChevronDown, Briefcase, Star, Zap, Loader2,
+  Save, FolderOpen,
 } from "lucide-react"
 import { toast } from "sonner"
+
+// Icon components for the key-stats slide — re-attached by position when a
+// saved proposal is loaded (icons themselves are not serializable).
+const KEY_STAT_ICONS = [Award, FlaskConical, Users, Building2]
 
 interface Module {
   id: string
@@ -302,6 +309,113 @@ export function ProposalMakerView() {
 
   const [activeSlide, setActiveSlide] = React.useState<number>(1)
 
+  // ------------------------------------------------------------------
+  // Saved-proposal persistence (/api/proposals) — the whole deck used
+  // to live only in React state and was lost on every refresh.
+  // ------------------------------------------------------------------
+  const queryClient = useQueryClient()
+  const [proposalId, setProposalId] = React.useState<string | null>(null)
+
+  function snapshotConfig() {
+    return {
+      proposalNumber, proposalDate, validUntil,
+      institutionName, institutionType, contactName, contactEmail, contactPhone, institutionAddress,
+      proposalTitle, programDuration, deliveryMode, targetAudience, studentCount,
+      executiveSummary, valueProps, missionStatement,
+      // icon components can't be serialized — store label/value only
+      keyStats: keyStats.map((k) => ({ label: k.label, value: k.value })),
+      modules, studentBenefits, institutionBenefits, facultyBenefits,
+      currency, perStudentPrice, labAccessFee, instructorFee, discountRate, revenueShare,
+      termsText,
+    }
+  }
+
+  function applyConfig(c: any) {
+    if (!c || typeof c !== "object") return
+    if (c.proposalNumber) setProposalNumber(c.proposalNumber)
+    if (c.proposalDate) setProposalDate(c.proposalDate)
+    if (c.validUntil) setValidUntil(c.validUntil)
+    if (c.institutionName !== undefined) setInstitutionName(c.institutionName || "")
+    if (c.institutionType) setInstitutionType(c.institutionType)
+    if (c.contactName !== undefined) setContactName(c.contactName || "")
+    if (c.contactEmail !== undefined) setContactEmail(c.contactEmail || "")
+    if (c.contactPhone !== undefined) setContactPhone(c.contactPhone || "")
+    if (c.institutionAddress !== undefined) setInstitutionAddress(c.institutionAddress || "")
+    if (c.proposalTitle) setProposalTitle(c.proposalTitle)
+    if (c.programDuration) setProgramDuration(c.programDuration)
+    if (c.deliveryMode) setDeliveryMode(c.deliveryMode)
+    if (c.targetAudience) setTargetAudience(c.targetAudience)
+    if (typeof c.studentCount === "number") setStudentCount(c.studentCount)
+    if (c.executiveSummary) setExecutiveSummary(c.executiveSummary)
+    if (Array.isArray(c.valueProps)) setValueProps(c.valueProps)
+    if (c.missionStatement) setMissionStatement(c.missionStatement)
+    if (Array.isArray(c.keyStats)) {
+      // re-attach icon components by position (defaults for new rows)
+      setKeyStats(c.keyStats.map((k: any, i: number) => ({
+        label: String(k?.label ?? ""),
+        value: String(k?.value ?? ""),
+        icon: KEY_STAT_ICONS[i % KEY_STAT_ICONS.length],
+      })))
+    }
+    if (Array.isArray(c.modules)) setModules(c.modules)
+    if (Array.isArray(c.studentBenefits)) setStudentBenefits(c.studentBenefits)
+    if (Array.isArray(c.institutionBenefits)) setInstitutionBenefits(c.institutionBenefits)
+    if (Array.isArray(c.facultyBenefits)) setFacultyBenefits(c.facultyBenefits)
+    if (c.currency) setCurrency(c.currency)
+    if (typeof c.perStudentPrice === "number") setPerStudentPrice(c.perStudentPrice)
+    if (typeof c.labAccessFee === "number") setLabAccessFee(c.labAccessFee)
+    if (typeof c.instructorFee === "number") setInstructorFee(c.instructorFee)
+    if (typeof c.discountRate === "number") setDiscountRate(c.discountRate)
+    if (typeof c.revenueShare === "number") setRevenueShare(c.revenueShare)
+    if (c.termsText) setTermsText(c.termsText)
+  }
+
+  const savedProposalsQuery = useQuery<{ proposals: { id: string; title: string; clientName: string | null; updatedAt: string }[] }>({
+    queryKey: ["proposals"],
+    queryFn: () => api("/api/proposals"),
+    staleTime: 30_000,
+  })
+  const savedProposals = savedProposalsQuery.data?.proposals ?? []
+
+  const saveMutation = useMutation({
+    mutationFn: (id: string | null) =>
+      id
+        ? api(`/api/proposals/${id}`, {
+            method: "PATCH",
+            body: JSON.stringify({ title: proposalTitle, clientName: institutionName, config: snapshotConfig() }),
+          })
+        : api("/api/proposals", {
+            method: "POST",
+            body: JSON.stringify({ title: proposalTitle, clientName: institutionName, config: snapshotConfig() }),
+          }),
+    onSuccess: (res: any, wasNew) => {
+      if (wasNew && res?.proposal?.id) setProposalId(res.proposal.id)
+      queryClient.invalidateQueries({ queryKey: ["proposals"] })
+      toast.success("Proposal saved — safe to leave this page")
+    },
+    onError: (e: any) => toast.error(e.message || "Save failed"),
+  })
+
+  const loadMutation = useMutation({
+    mutationFn: (id: string) => api<{ proposal: { id: string; title: string; config: any } }>(`/api/proposals/${id}`),
+    onSuccess: (res) => {
+      applyConfig(res.proposal.config)
+      setProposalId(res.proposal.id)
+      toast.success(`Loaded "${res.proposal.title || res.proposal.id}"`)
+    },
+    onError: (e: any) => toast.error(e.message || "Load failed"),
+  })
+
+  const deleteProposalMutation = useMutation({
+    mutationFn: (id: string) => api(`/api/proposals/${id}`, { method: "DELETE" }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["proposals"] })
+      setProposalId(null)
+      toast.success("Saved proposal deleted")
+    },
+    onError: (e: any) => toast.error(e.message || "Delete failed"),
+  })
+
   // Pricing calculations
   const studentTotal = perStudentPrice * studentCount
   const subtotal = studentTotal + labAccessFee + instructorFee
@@ -429,6 +543,59 @@ export function ProposalMakerView() {
             </div>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
+            {/* Saved proposals — load / save / delete */}
+            <Select
+              value={proposalId ?? "__NONE__"}
+              onValueChange={(v) => v !== "__NONE__" && loadMutation.mutate(v)}
+            >
+              <SelectTrigger className="w-[190px] h-8 text-xs"><SelectValue placeholder="Saved proposals" /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__NONE__">
+                  <span className="flex items-center gap-1.5 text-muted-foreground italic">
+                    <FolderOpen className="h-3 w-3" /> Saved proposals
+                  </span>
+                </SelectItem>
+                {savedProposals.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>{p.title || p.clientName || p.id}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => saveMutation.mutate(proposalId)}
+              disabled={saveMutation.isPending}
+            >
+              {saveMutation.isPending ? (
+                <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+              ) : (
+                <Save className="h-3.5 w-3.5 mr-1.5" />
+              )}
+              {proposalId ? "Update" : "Save"}
+            </Button>
+            {proposalId && (
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => saveMutation.mutate(null)}
+                disabled={saveMutation.isPending}
+              >
+                <Plus className="h-3.5 w-3.5 mr-1.5" /> Save as new
+              </Button>
+            )}
+            {proposalId && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="text-rose-300 hover:bg-rose-500/10"
+                onClick={() => {
+                  if (confirm("Delete this saved proposal?")) deleteProposalMutation.mutate(proposalId)
+                }}
+                disabled={deleteProposalMutation.isPending}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </Button>
+            )}
             <Button size="sm" variant="outline" onClick={handlePrint} disabled={exporting}>
               <Printer className="h-3.5 w-3.5 mr-1.5" /> Print
             </Button>

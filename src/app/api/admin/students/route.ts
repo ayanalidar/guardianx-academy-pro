@@ -24,12 +24,20 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
   const where: {
     role: string
     OR?: { email?: { contains: string }; name?: { contains: string } }[]
+    enrollments?: { some: { courseId: string } }
   } = { role: "STUDENT" }
   if (q) {
     where.OR = [
       { email: { contains: q } },
       { name: { contains: q } },
     ]
+  }
+  // Course filter: the param is a real Course id (the view's dropdown is fed
+  // from /api/admin/courses). When set, only students actually enrolled in
+  // that course are listed — previously the filter only zeroed stats while
+  // still listing every student.
+  if (course) {
+    where.enrollments = { some: { courseId: course } }
   }
 
   const [total, students] = await Promise.all([

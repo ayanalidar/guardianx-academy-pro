@@ -29,7 +29,7 @@ export const GET = withErrorHandler(async (req) => {
     ]
   }
 
-  const [attempts, total] = await Promise.all([
+  const [attempts, total, passedCount, certCount] = await Promise.all([
     db.cyberQuizAttempt.findMany({
       where,
       orderBy: { createdAt: "desc" },
@@ -49,7 +49,21 @@ export const GET = withErrorHandler(async (req) => {
       },
     }),
     db.cyberQuizAttempt.count({ where }),
+    // Stats computed over ALL matching rows — previously the view derived
+    // them from the capped 200-row page, which silently undercounted.
+    db.cyberQuizAttempt.count({ where: { ...where, passed: true } }),
+    db.cyberQuizAttempt.count({ where: { ...where, certificateId: { not: null } } }),
   ])
 
-  return NextResponse.json({ attempts, count: attempts.length, total })
+  return NextResponse.json({
+    attempts,
+    count: attempts.length,
+    total,
+    stats: {
+      total,
+      passed: passedCount,
+      withCert: certCount,
+      passRate: total > 0 ? Math.round((passedCount / total) * 100) : 0,
+    },
+  })
 })

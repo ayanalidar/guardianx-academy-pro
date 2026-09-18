@@ -25,24 +25,28 @@ export const GET = withErrorHandler(async (req) => {
     ]
   }
 
-  const certs = await db.cyberQuizCertificate.findMany({
-    where,
-    orderBy: { issueDate: "desc" },
-    take: 200,
-    select: {
-      id: true,
-      credentialId: true,
-      candidateName: true,
-      email: true,
-      difficulty: true,
-      score: true,
-      totalQuestions: true,
-      percentage: true,
-      issueDate: true,
-      status: true,
-      verificationUrl: true,
-    },
-  })
+  const [certs, total] = await Promise.all([
+    db.cyberQuizCertificate.findMany({
+      where,
+      orderBy: { issueDate: "desc" },
+      take: 200,
+      select: {
+        id: true,
+        credentialId: true,
+        candidateName: true,
+        email: true,
+        difficulty: true,
+        score: true,
+        totalQuestions: true,
+        percentage: true,
+        issueDate: true,
+        status: true,
+        verificationUrl: true,
+      },
+    }),
+    // Unfiltered total — "Total issued" must not shrink when searching
+    db.cyberQuizCertificate.count({}),
+  ])
 
-  return NextResponse.json({ certificates: certs, count: certs.length })
+  return NextResponse.json({ certificates: certs, count: certs.length, total })
 })

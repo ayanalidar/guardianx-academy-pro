@@ -197,7 +197,16 @@ export function AdminPlatformStatsView() {
                       </div>
                       <div className="flex items-center gap-1 shrink-0">
                         {s.source !== "calculated" && (
-                          <Button size="sm" variant="ghost" onClick={() => deleteMutation.mutate(s.id)} className="text-rose-400 hover:text-rose-300 hover:bg-rose-500/10">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => {
+                              if (confirm(`Delete the "${s.label}" stat? This cannot be undone.`)) {
+                                deleteMutation.mutate(s.id)
+                              }
+                            }}
+                            className="text-rose-400 hover:text-rose-300 hover:bg-rose-500/10"
+                          >
                             <Trash2 className="h-3.5 w-3.5" />
                           </Button>
                         )}

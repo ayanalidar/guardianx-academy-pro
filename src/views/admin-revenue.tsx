@@ -2,6 +2,8 @@
 
 import * as React from "react"
 import { useQuery } from "@tanstack/react-query"
+import { api } from "@/lib/api"
+import { toast } from "sonner"
 import {
   ResponsiveContainer, LineChart, Line, BarChart, Bar,
   XAxis, YAxis, CartesianGrid, Tooltip as RTooltip, Cell,
@@ -135,31 +137,37 @@ export function RevenueAnalyticsView() {
           <Button
             size="sm"
             variant="outline"
-            onClick={() => {
-              if (!data) return
-              // Export recent orders as CSV
-              const rows = [
-                ["Date", "User", "Email", "Course", "Amount", "Discount", "Final", "Coupon", "Status"],
-                ...data.recentOrders.map((o) => [
-                  new Date(o.createdAt).toISOString(),
-                  o.userName,
-                  o.userEmail ?? "",
-                  o.courseTitle ?? "",
-                  String(o.amount),
-                  String(o.discount),
-                  String(o.finalAmount),
-                  o.couponCode ?? "",
-                  o.status,
-                ]),
-              ]
-              const csv = rows.map((r) => r.map((c) => `"${c.replace(/"/g, '""')}"`).join(",")).join("\n")
-              const blob = new Blob([csv], { type: "text/csv" })
-              const url = URL.createObjectURL(blob)
-              const a = document.createElement("a")
-              a.href = url
-              a.download = `revenue-orders-${new Date().toISOString().slice(0, 10)}.csv`
-              a.click()
-              URL.revokeObjectURL(url)
+            onClick={async () => {
+              // Export ALL paid orders (server export mode), not just the 20
+              // most recent shown in the table.
+              try {
+                const d = await api<{ recentOrders: RecentOrder[] }>("/api/admin/revenue?export=1")
+                const rows = [
+                  ["Date", "User", "Email", "Course", "Amount", "Discount", "Final", "Coupon", "Status"],
+                  ...(d.recentOrders ?? []).map((o) => [
+                    new Date(o.createdAt).toISOString(),
+                    o.userName,
+                    o.userEmail ?? "",
+                    o.courseTitle ?? "",
+                    String(o.amount),
+                    String(o.discount),
+                    String(o.finalAmount),
+                    o.couponCode ?? "",
+                    o.status,
+                  ]),
+                ]
+                const csv = rows.map((r) => r.map((c) => `"${c.replace(/"/g, '""')}"`).join(",")).join("\n")
+                const blob = new Blob([csv], { type: "text/csv" })
+                const url = URL.createObjectURL(blob)
+                const a = document.createElement("a")
+                a.href = url
+                a.download = `revenue-orders-${new Date().toISOString().slice(0, 10)}.csv`
+                a.click()
+                URL.revokeObjectURL(url)
+                toast.success(`Exported ${d.recentOrders?.length ?? 0} orders`)
+              } catch (e: any) {
+                toast.error(e?.message || "Export failed")
+              }
             }}
           >
             <Download className="h-3.5 w-3.5 mr-1.5" /> Export Orders

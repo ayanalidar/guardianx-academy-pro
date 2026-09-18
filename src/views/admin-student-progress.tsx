@@ -99,6 +99,7 @@ export function StudentProgressView() {
   const { navigate } = useAppStore()
   const [search, setSearch] = React.useState("")
   const [courseFilter, setCourseFilter] = React.useState("all")
+  const [page, setPage] = React.useState(1)
 
   /* ----------- Report dialog state ----------- */
   const [reportOpen, setReportOpen] = React.useState(false)
@@ -112,17 +113,31 @@ export function StudentProgressView() {
 
   /* ----------- DB query: students ----------- */
   const { data, isLoading } = useQuery({
-    queryKey: ["admin-student-progress", search, courseFilter],
+    queryKey: ["admin-student-progress", search, courseFilter, page],
     queryFn: async () => {
       const params = new URLSearchParams()
       if (search) params.set("q", search)
       if (courseFilter !== "all") params.set("course", courseFilter)
+      params.set("page", String(page))
       const res = await fetch(`/api/admin/students?${params}`)
-      if (!res.ok) return { students: [], total: 0 }
+      if (!res.ok) return { students: [], total: 0, page: 1, totalPages: 1 }
       return res.json()
     },
     staleTime: 60_000,
   })
+
+  /* ----------- DB query: real courses for the filter dropdown ----------- */
+  const { data: coursesData } = useQuery({
+    queryKey: ["admin-student-progress-courses"],
+    staleTime: 5 * 60_000,
+    queryFn: async () => {
+      const res = await fetch("/api/admin/courses", { credentials: "include" })
+      if (!res.ok) return { courses: [] }
+      return res.json()
+    },
+  })
+  const courses: { id: string; shortName: string; title: string }[] =
+    (coursesData as any)?.courses ?? []
 
   /* ----------- DB query: institutions (schools) for the report dialog filter ----------- */
   const { data: schoolsData } = useQuery({
@@ -139,11 +154,41 @@ export function StudentProgressView() {
 
   const students = data?.students ?? []
   const totalStudents = (data as any)?.total ?? students.length
+  const totalPages: number = Math.max(1, (data as any)?.totalPages ?? 1)
+  const currentPage: number = (data as any)?.page ?? page
   const avgProgress = students.length > 0
     ? Math.round(students.reduce((sum: number, s: any) => sum + (s.progress ?? 0), 0) / students.length)
     : 0
   const totalLabs = students.reduce((sum: number, s: any) => sum + (s.labsCompleted ?? 0), 0)
   const totalCerts = students.reduce((sum: number, s: any) => sum + (s.certCount ?? 0), 0)
+
+  /* ----------- Export CSV across ALL pages (not just the visible 50) ----------- */
+  const [exporting, setExporting] = React.useState(false)
+  async function exportAllStudents() {
+    setExporting(true)
+    try {
+      const params = new URLSearchParams()
+      if (search) params.set("q", search)
+      if (courseFilter !== "all") params.set("course", courseFilter)
+      const all: any[] = []
+      const maxPages = 40 // 40 × 50 = 2000 students hard cap
+      for (let p = 1; p <= maxPages; p++) {
+        params.set("page", String(p))
+        const res = await fetch(`/api/admin/students?${params}`, { credentials: "include" })
+        if (!res.ok) break
+        const j = await res.json()
+        all.push(...(j.students ?? []))
+        if (p >= (j.totalPages ?? 1)) break
+      }
+      if (all.length === 0) {
+        toast.info("Nothing to export")
+        return
+      }
+      downloadCsv(`students-${todayISO()}.csv`, all as unknown as ReportRow[])
+    } finally {
+      setExporting(false)
+    }
+  }
 
   /* ----------- Report handlers ----------- */
   function openReportDialog() {
@@ -245,9 +290,10 @@ export function StudentProgressView() {
             <Button
               size="sm"
               variant="outline"
-              onClick={() => downloadCsv(`students-${todayISO()}.csv`, students as unknown as ReportRow[])}
+              onClick={exportAllStudents}
+              disabled={exporting}
             >
-              <Download className="h-3.5 w-3.5 mr-1.5" /> Export CSV
+              <Download className="h-3.5 w-3.5 mr-1.5" /> {exporting ? "Exporting…" : "Export CSV"}
             </Button>
           </div>
         </div>
@@ -275,15 +321,23 @@ export function StudentProgressView() {
         <div className="flex items-center gap-3 flex-wrap">
           <div className="relative flex-1 min-w-[200px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input placeholder="Search students..." className="pl-9" value={search} onChange={e => setSearch(e.target.value)} />
+            <Input placeholder="Search students..." className="pl-9" value={search} onChange={e => { setSearch(e.target.value); setPage(1) }} />
           </div>
-          <Select value={courseFilter} onValueChange={setCourseFilter}>
-            <SelectTrigger className="w-[200px]"><SelectValue /></SelectTrigger>
+          <Select
+            value={courseFilter}
+            onValueChange={(v) => {
+              setCourseFilter(v)
+              setPage(1)
+            }}
+          >
+            <SelectTrigger className="w-[220px]"><SelectValue /></SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Courses</SelectItem>
-              <SelectItem value="ceh">CEH</SelectItem>
-              <SelectItem value="ccna">CCNA</SelectItem>
-              <SelectItem value="ciSSP">CISSP</SelectItem>
+              {courses.map((c) => (
+                <SelectItem key={c.id} value={c.id}>
+                  {c.shortName} — {c.title}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
         </div>
@@ -332,6 +386,33 @@ export function StudentProgressView() {
               </tbody>
             </table>
           </div>
+
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="flex items-center justify-between px-4 py-3 border-t border-border/60">
+              <p className="text-xs text-muted-foreground">
+                Page {currentPage} of {totalPages} · {totalStudents} students
+              </p>
+              <div className="flex items-center gap-2">
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={currentPage <= 1}
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                >
+                  Previous
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  disabled={currentPage >= totalPages}
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                >
+                  Next
+                </Button>
+              </div>
+            </div>
+          )}
         </Card>
       </div>
 

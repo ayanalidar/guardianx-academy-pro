@@ -362,6 +362,15 @@ model Course {
   certBody      String? // e.g. "EC-Council"
   published     Boolean  @default(true)
   prerequisiteIds String @default("") // comma-separated course IDs (Course Prerequisites feature)
+  // Course extras — editable in Course Studio / Admin → Courses.
+  // Each is a JSON-encoded array of strings (see src/lib/course-lists.ts).
+  // Rendered on the public course page; empty ("[]") = not authored, and
+  // the page falls back to its legacy derived/hardcoded content.
+  whatYouWillLearn String @default("[]")
+  prerequisites    String @default("[]") // text requirements (distinct from prerequisiteIds graph)
+  whoShouldAttend  String @default("[]")
+  toolsCovered     String @default("[]")
+  careerOutcomes   String @default("[]")
   certificateTemplateId String? // optional template override
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -1933,6 +1942,26 @@ model PlatformSetting {
   category  String             // "payment" | "email" | "crm" | "tracking" | "auth"
   isSecret  Boolean  @default(false)  // masks value in UI
   updatedAt DateTime @updatedAt
+}
+
+// ============================================================
+// Proposal — saved Proposal Maker documents (Admin → Proposal Maker).
+// ============================================================
+// The whole editable slide deck (all 13 slides of client/program/pricing
+// content) is stored as JSON in `config`. ownerId has no FK on purpose
+// (same pattern as Invoice.createdById) so deleting an admin user never
+// cascades into commercial documents.
+model Proposal {
+  id          String   @id @default(cuid())
+  ownerId     String?  // admin who created it (no FK — plain id)
+  title       String   @default("") // display name in the saved list
+  clientName  String   @default("")
+  config      String   @default("{}") // JSON: full slide content
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([ownerId])
+  @@index([updatedAt])
 }
 
 // ============================================================

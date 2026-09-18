@@ -74,9 +74,15 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
 
   // Sequential send — SMTP servers prefer steady paced sends over bursts.
   for (const r of recipients) {
+    // Placeholder substitution — every placeholder the composer templates
+    // advertise must render, otherwise students get literal {{credId}} mail.
+    // Unresolvable ones fall back to a sensible generic value.
     const rendered = body
       .replace(/\{\{name\}\}/g, r.name || "there")
       .replace(/\{\{email\}\}/g, r.email)
+      .replace(/\{\{course\}\}/g, "your course")
+      .replace(/\{\{cert\}\}/g, "your certificate")
+      .replace(/\{\{credId\}\}/g, "your certificate ID")
     let status = "failed"
     try {
       const ok = await sendEmail({

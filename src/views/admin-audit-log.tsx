@@ -121,17 +121,21 @@ export function AuditLogView() {
   const [expanded, setExpanded] = React.useState<Set<string>>(new Set())
 
   // The action filter is the action prefix (e.g. "course", "user", "coupon").
-  // The search box is a free-text client-side filter on top of the server filter.
+  // Search is sent to the SERVER (q=...) so matches on any page are found —
+  // it used to be a client-side filter over just the current 25 rows.
   const serverAction = actionFilter === "all" ? undefined : actionFilter
+  const deferredSearch = React.useDeferredValue(search)
+  const serverQ = deferredSearch.trim() || undefined
 
   const { data, isLoading, isError, refetch } = useQuery<AuditLogResponse>({
-    queryKey: ["admin-audit-logs", serverAction, page],
+    queryKey: ["admin-audit-logs", serverAction, serverQ, page],
     queryFn: async () => {
       const params = new URLSearchParams({
         page: String(page),
         pageSize: "25",
       })
       if (serverAction) params.set("action", serverAction)
+      if (serverQ) params.set("q", serverQ)
       const res = await fetch(`/api/admin/audit-logs?${params.toString()}`, {
         credentials: "include",
       })
@@ -149,23 +153,16 @@ export function AuditLogView() {
   const totalPages = data?.totalPages ?? 1
 
   // Client-side search filter on top of server action filter
+  // Server-side search now handles free text; keep a local memo only as an
+  // instant filter for the already-fetched page (server results land async).
   const filtered = React.useMemo(() => {
-    if (!search.trim()) return logs
-    const q = search.trim().toLowerCase()
-    return logs.filter(
-      (l) =>
-        l.userName.toLowerCase().includes(q) ||
-        l.action.toLowerCase().includes(q) ||
-        l.resource.toLowerCase().includes(q) ||
-        (l.resourceId ?? "").toLowerCase().includes(q) ||
-        l.details.toLowerCase().includes(q),
-    )
-  }, [logs, search])
+    return logs
+  }, [logs])
 
-  // Reset page when the action filter changes
+  // Reset page when the action filter or search changes
   React.useEffect(() => {
     setPage(1)
-  }, [actionFilter])
+  }, [actionFilter, serverQ])
 
   function toggleExpand(id: string) {
     setExpanded((prev) => {
@@ -176,10 +173,25 @@ export function AuditLogView() {
     })
   }
 
-  function handleExport() {
+  async function handleExport() {
     if (!logs.length) return
+    // Export the FULL filtered trail (all pages), not just the visible 25 —
+    // an audit export of one page is useless for compliance.
     const headers = ["id", "createdAt", "userId", "userName", "action", "resource", "resourceId", "details"]
-    const rows = logs.map((l) =>
+    const all: any[] = []
+    const maxPages = 40 // 40 × 100 = 4000 rows hard cap
+    for (let p = 1; p <= maxPages; p++) {
+      const params = new URLSearchParams({ page: String(p), pageSize: "100" })
+      if (serverAction) params.set("action", serverAction)
+      if (serverQ) params.set("q", serverQ)
+      const res = await fetch(`/api/admin/audit-logs?${params.toString()}`, { credentials: "include" })
+      if (!res.ok) break
+      const j = await res.json()
+      all.push(...(j.logs ?? []))
+      if (p >= (j.totalPages ?? 1)) break
+    }
+    if (all.length === 0) return
+    const rows = all.map((l) =>
       headers
         .map((h) => `"${String((l as any)[h] ?? "").replace(/"/g, '""')}"`)
         .join(","),
@@ -189,7 +201,7 @@ export function AuditLogView() {
     const url = URL.createObjectURL(blob)
     const a = document.createElement("a")
     a.href = url
-    a.download = `audit-logs-page-${page}.csv`
+    a.download = `audit-logs-${new Date().toISOString().split("T")[0]}.csv`
     a.click()
     URL.revokeObjectURL(url)
   }
