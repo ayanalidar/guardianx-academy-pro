@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { getCurrentUser } from "@/lib/session"
+import { getCurrentUser, rateLimit } from "@/lib/session"
 
 export const runtime = "nodejs"
 
@@ -26,6 +26,9 @@ interface ChatMessage {
 export async function POST(req: NextRequest) {
   try {
     const user = await getCurrentUser()
+  if (!rateLimit(`ai-assistant:${user.id}`, { max: 20, windowMs: 5 * 60 * 1000 })) {
+    return NextResponse.json({ error: "Rate limit reached — please wait a moment before asking again." }, { status: 429 })
+  }
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }

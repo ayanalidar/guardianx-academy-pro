@@ -4,7 +4,7 @@ import { getCurrentUser } from "@/lib/session"
 export const runtime = "nodejs"
 export async function GET() {
   const user = await getCurrentUser()
-  if (!user || user.role !== "ADMIN") return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  if (!user || (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN")) return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   try {
     const incidents = await db.incident.findMany({ orderBy: { detectedAt: "desc" }, take: 50 })
     const openCount = incidents.filter(i => i.status === "open" || i.status === "investigating").length
@@ -13,7 +13,7 @@ export async function GET() {
 }
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser()
-  if (!user || user.role !== "ADMIN") return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  if (!user || (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN")) return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   const body = await req.json().catch(() => null)
   if (!body) return NextResponse.json({ error: "Invalid body" }, { status: 400 })
   try {

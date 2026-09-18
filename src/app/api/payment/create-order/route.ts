@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { getCurrentUser, withErrorHandler } from "@/lib/session"
+import { getCurrentUser, withErrorHandler, rateLimit } from "@/lib/session"
 import { getSettings } from "@/lib/settings"
 
 export const runtime = "nodejs"
@@ -16,6 +16,9 @@ export const runtime = "nodejs"
 export const POST = withErrorHandler(async (req: NextRequest) => {
   const user = await getCurrentUser()
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  if (!rateLimit(`pay-order:${user.id}`, { max: 10, windowMs: 60 * 1000 })) {
+    return NextResponse.json({ error: "Too many order attempts" }, { status: 429 })
+  }
 
   const body = await req.json().catch(() => null)
   if (!body) return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })

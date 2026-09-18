@@ -21,8 +21,13 @@ export const runtime = "nodejs"
  * internal DB id, email, or any PII beyond the candidate name as it
  * appears on the certificate.
  */
-export async function GET(_req: Request, { params }: { params: Promise<{ credentialId: string }> }) {
+export async function GET(req: Request, { params }: { params: Promise<{ credentialId: string }> }) {
   try {
+    // Rate limit: public endpoint used to guess credential IDs
+    const { rateLimit, getClientIp } = await import("@/lib/session")
+    if (!rateLimit(`cred-verify:${getClientIp(req)}`, { max: 30, windowMs: 60 * 1000 })) {
+      return NextResponse.json({ valid: false, error: "Too many requests" }, { status: 429 })
+    }
     const { credentialId } = await params
 
     // ── Check GuardianCredential (GX-CERT-XXXX format) ──

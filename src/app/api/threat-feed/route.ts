@@ -294,7 +294,7 @@ export async function POST(req: NextRequest) {
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
-    if (user.role !== "ADMIN" && user.role !== "INSTRUCTOR") {
+    if (!["ADMIN", "SUPER_ADMIN", "INSTRUCTOR"].includes(user.role)) {
       return NextResponse.json({ error: "Forbidden — admin only" }, { status: 403 })
     }
 

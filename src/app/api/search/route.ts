@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { withErrorHandler } from "@/lib/session"
+import { withErrorHandler, rateLimit, getClientIp } from "@/lib/session"
 
 export const runtime = "nodejs"
 
@@ -22,6 +22,9 @@ export const runtime = "nodejs"
  *   - extra contextual fields (level for courses, difficulty for labs, etc.)
  */
 export const GET = withErrorHandler(async (req: NextRequest) => {
+  if (!rateLimit(`search:${getClientIp(req)}`, { max: 60, windowMs: 60 * 1000 })) {
+    return NextResponse.json({ error: "Too many requests" }, { status: 429 })
+  }
   const { searchParams } = new URL(req.url)
   const q = (searchParams.get("q") ?? "").trim()
   const limit = Math.min(

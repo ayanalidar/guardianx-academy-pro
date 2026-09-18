@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { getCurrentUser } from "@/lib/session"
+import { getCurrentUser, rateLimit } from "@/lib/session"
 import ZAI from "z-ai-web-dev-sdk"
 
 export const runtime = "nodejs"
@@ -28,8 +28,11 @@ export const maxDuration = 300
  */
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser()
+  if (!rateLimit(`ai-gen:${user.id}`, { max: 3, windowMs: 10 * 60 * 1000 })) {
+    return NextResponse.json({ error: "Generator cooling down — try again in a few minutes." }, { status: 429 })
+  }
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (user.role !== "ADMIN") return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  if (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN") return NextResponse.json({ error: "Forbidden" }, { status: 403 })
 
   const body = await req.json().catch(() => null)
   if (!body) return NextResponse.json({ error: "Invalid body" }, { status: 400 })

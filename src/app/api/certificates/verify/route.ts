@@ -10,6 +10,11 @@ import { verifyVerificationHash } from "@/lib/credentials"
  * GET /api/certificates/verify?certificateId=GX-XXXXX
  */
 export async function GET(req: Request) {
+  // Rate limit: this endpoint is public and used to guess credential IDs
+  const { rateLimit, getClientIp } = await import("@/lib/session")
+  if (!rateLimit(`cert-verify:${getClientIp(req as any)}`, { max: 30, windowMs: 60 * 1000 })) {
+    return NextResponse.json({ valid: false, error: "Too many requests" }, { status: 429 })
+  }
   const { searchParams } = new URL(req.url)
   const certificateId = (searchParams.get("certificateId") ?? "").trim().toUpperCase()
 

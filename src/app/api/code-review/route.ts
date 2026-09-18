@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { getCurrentUser } from "@/lib/session"
+import { getCurrentUser, rateLimit } from "@/lib/session"
 
 export const runtime = "nodejs"
 
@@ -76,6 +76,9 @@ export async function POST(req: NextRequest) {
     const user = await getCurrentUser()
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+    if (!rateLimit(`code-review:${user.id}`, { max: 10, windowMs: 5 * 60 * 1000 })) {
+      return NextResponse.json({ error: "Rate limit reached — try again in a few minutes." }, { status: 429 })
     }
 
     const body = await req.json()
