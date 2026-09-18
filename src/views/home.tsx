@@ -1410,31 +1410,21 @@ export function HomeView() {
 
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
           <motion.div {...FADE_UP} className="max-w-2xl mb-6">
-            <div className="flex items-center gap-2 mb-3">
-              <span className="holo-badge inline-flex items-center gap-1.5 rounded-md border border-violet-500/40 px-2 py-1 font-mono text-[10px] font-semibold uppercase tracking-wider text-violet-200 shadow-[0_0_18px_rgba(167,139,250,0.25)]">
-                <Network className="size-3 holo-flicker" aria-hidden />
+            <div className="flex items-center gap-2 mb-3 flex-wrap">
+              <span className="inline-flex items-center gap-1.5 rounded-md border border-violet-500/40 bg-violet-500/10 px-2 py-1 font-mono text-[10px] font-semibold uppercase tracking-wider text-violet-300">
+                <Network className="size-3" aria-hidden />
                 SKILL MAP
-                <span className="ml-1 inline-flex items-center gap-1 text-cyan-300/80">
-                  <span className="size-1.5 rounded-full bg-cyan-300 animate-pulse" aria-hidden />
-                  HOLO·PROJECTED
-                </span>
+              </span>
+              <span className="text-[10px] font-mono text-muted-foreground tracking-wider">
+                7 domains · {SKILL_MAP_DATA.reduce((n, d) => n + d.skills.length, 0)} skills
               </span>
             </div>
             <h2
               id="skills-heading"
-              className="holo-text text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-[-0.02em] mb-3"
+              className="text-[clamp(1.75rem,3.5vw,2.5rem)] font-bold tracking-[-0.02em] mb-3"
             >
               {skillsTitle}
             </h2>
-            <div
-              className="h-[2px] w-24 rounded-full mb-4"
-              style={{
-                background: "linear-gradient(90deg, rgba(103,232,249,0.9), rgba(167,139,250,0.9), rgba(52,211,153,0.9), transparent)",
-                backgroundSize: "280% 100%",
-                animation: "holo-gradient 6s ease-in-out infinite",
-              }}
-              aria-hidden
-            />
             <p className="text-sm text-muted-foreground leading-relaxed">
               {skillsDesc}
             </p>
