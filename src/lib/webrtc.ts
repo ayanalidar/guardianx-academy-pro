@@ -56,7 +56,11 @@ export class WebRTCSession {
   }
 
   async connect() {
-    this.socket = io("/?XTransformPort=3003", { transports: ["websocket"], path: "/" })
+    // Signaling server URL — configurable so deployments can point at a
+    // dedicated host (the old /?XTransformPort= proxy path was removed from
+    // Caddy as an SSRF risk). Falls back to the local dev default.
+    const SIGNALING_URL = process.env.NEXT_PUBLIC_SIGNALING_URL || "http://localhost:3003"
+    this.socket = io(SIGNALING_URL, { transports: ["websocket"], path: "/" })
     this.socket.on("connect", () => {
       this.socket?.emit("join-room", { roomId: this.roomId, userId: this.userId, userName: this.userName, role: this.role })
     })

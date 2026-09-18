@@ -51,7 +51,16 @@ export const POST = withErrorHandler(async (req: NextRequest, { params }: { para
   }
 
   if (action === "submit") {
-    const correct = flag?.trim() === lab.flag
+    // Flag validation: if the user has an orchestrated (Docker) session with a
+    // per-session dynamic flag, validate against THAT; otherwise fall back to
+    // the lab's static flag (simulation mode / non-orchestrated labs).
+    const activeSession = await db.labSession.findFirst({
+      where: { userId: user.id, labId: lab.id, status: { in: ["running", "starting"] } },
+      orderBy: { createdAt: "desc" },
+      select: { id: true, dynamicFlag: true },
+    })
+    const expectedFlag = activeSession?.dynamicFlag || lab.flag
+    const correct = !!flag?.trim() && flag.trim() === expectedFlag
     let gamification: Awaited<ReturnType<typeof awardXp>> | null = null
     let autoGrade: { passed: boolean; score: number; xpAwarded: number } | null = null
     if (correct && progress.status !== "completed") {
@@ -86,7 +95,7 @@ export const POST = withErrorHandler(async (req: NextRequest, { params }: { para
     }
     return NextResponse.json({
       correct,
-      flag: correct ? lab.flag : null,
+      flag: correct ? expectedFlag : null,
       gamification,
       autoGrade,
       timeSpentMs: progress.timeSpentMs,

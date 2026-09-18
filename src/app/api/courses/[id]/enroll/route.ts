@@ -46,6 +46,26 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     }
   }
 
+  // SECURITY: paid courses require a paid order. Without this check any
+  // student could bypass /api/payment/* entirely and enroll for free.
+  if (course.price > 0) {
+    const paidOrder = await db.order.findFirst({
+      where: { userId: user.id, courseId: id, status: "paid" },
+      select: { id: true },
+    })
+    const isAdmin = user.role === "ADMIN" || user.role === "SUPER_ADMIN"
+    if (!paidOrder && !isAdmin) {
+      return NextResponse.json(
+        {
+          error: "Payment required",
+          message: `This is a paid course (₹${course.price}). Complete checkout before enrolling.`,
+          checkoutRequired: true,
+        },
+        { status: 402 } // Payment Required
+      )
+    }
+  }
+
   const enrollment = await db.enrollment.create({
     data: { userId: user.id, courseId: id, lastAccessed: new Date() },
   })

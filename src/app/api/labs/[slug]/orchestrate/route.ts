@@ -1,12 +1,42 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { getCurrentUser } from "@/lib/session"
+import { getCurrentUser, rateLimit, getClientIp } from "@/lib/session"
 import { awardXp, XP_REWARDS } from "@/lib/gamification"
+import { ORCHESTRATOR_URL, signOrchestratorRequest } from "@/lib/orchestrator"
 
-// Lab orchestration endpoint — connects to the lab-orchestrator mini-service (port 3004)
+// Lab orchestration endpoint — connects to the lab-orchestrator mini-service.
+// All requests are HMAC-signed with LAB_SHARED_SECRET (see src/lib/orchestrator.ts).
+// SECURITY: session.dynamicFlag is NEVER returned to the browser — it is
+// server-side data used only by /api/labs/[slug]/submit for validation.
 // Handles: start, stop, extend, reset lab sessions
 
-const ORCHESTRATOR_URL = "http://localhost:3004"
+async function fetchOrchestrator(path: string, body: unknown): Promise<Response> {
+  const raw = JSON.stringify(body)
+  return fetch(`${ORCHESTRATOR_URL}${path}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...signOrchestratorRequest(raw) },
+    body: raw,
+  })
+}
+
+/** Strip server-only fields before sending a session to the browser. */
+function publicSession(s: {
+  id: string; status: string; targetIp: string | null; attackIp: string | null;
+  expiresAt: Date | null; terminalToken: string | null;
+  targetContainerId: string | null; attackContainerId: string | null; networkName?: string | null;
+}) {
+  return {
+    id: s.id,
+    status: s.status,
+    targetIp: s.targetIp,
+    attackIp: s.attackIp,
+    expiresAt: s.expiresAt,
+    terminalToken: s.terminalToken,
+    targetContainerId: s.targetContainerId,
+    attackContainerId: s.attackContainerId,
+    ...(s.networkName !== undefined ? { networkName: s.networkName } : {}),
+  }
+}
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params
@@ -20,26 +50,16 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
 
   // === START: Create a new lab session with Docker containers ===
   if (action === "start") {
+    // Rate limit lab starts (container exhaustion / cost control)
+    if (!rateLimit(`lab-start:${getClientIp(req)}:${user.id}`, { max: 5, windowMs: 10 * 60 * 1000 })) {
+      return NextResponse.json({ error: "Too many lab starts. Try again in a few minutes." }, { status: 429 })
+    }
     // Check if user already has an active session
     const existing = await db.labSession.findFirst({
       where: { userId: user.id, labId: lab.id, status: { in: ["running", "starting"] } },
     })
     if (existing) {
-      return NextResponse.json({
-        session: {
-          id: existing.id,
-          status: existing.status,
-          targetIp: existing.targetIp,
-          attackIp: existing.attackIp,
-          dynamicFlag: existing.dynamicFlag,
-          expiresAt: existing.expiresAt,
-          terminalToken: existing.terminalToken,
-          targetContainerId: existing.targetContainerId,
-          attackContainerId: existing.attackContainerId,
-          networkName: existing.networkName,
-        },
-        resumed: true,
-      })
+      return NextResponse.json({ session: publicSession(existing), resumed: true })
     }
 
     // Create session record (requesting state)
@@ -56,14 +76,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
 
     try {
       // Call the orchestrator service to spin up Docker containers
-      const orchestratorRes = await fetch(`${ORCHESTRATOR_URL}/start`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          labSlug: slug,
-          userId: user.id,
-          ttlMinutes: ttl,
-        }),
+      const orchestratorRes = await fetchOrchestrator("/start", {
+        labSlug: slug,
+        userId: user.id,
+        ttlMinutes: ttl,
       })
 
       if (!orchestratorRes.ok) {
@@ -95,21 +111,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
         create: { userId: user.id, labId: lab.id, status: "in_progress", startedAt: new Date() },
       })
 
-      return NextResponse.json({
-        session: {
-          id: updated.id,
-          status: updated.status,
-          targetIp: updated.targetIp,
-          attackIp: updated.attackIp,
-          dynamicFlag: updated.dynamicFlag,
-          expiresAt: updated.expiresAt,
-          terminalToken: updated.terminalToken,
-          targetContainerId: updated.targetContainerId,
-          attackContainerId: updated.attackContainerId,
-          networkName: updated.networkName,
-        },
-        resumed: false,
-      })
+      return NextResponse.json({ session: publicSession(updated), resumed: false })
     } catch (err: any) {
       // Mark session as error
       await db.labSession.update({
@@ -128,15 +130,11 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
     if (!session) return NextResponse.json({ error: "No active session" }, { status: 404 })
 
     try {
-      await fetch(`${ORCHESTRATOR_URL}/stop`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          sessionId: session.id,
-          targetContainerId: session.targetContainerId,
-          attackContainerId: session.attackContainerId,
-          networkName: session.networkName,
-        }),
+      await fetchOrchestrator("/stop", {
+        sessionId: session.id,
+        targetContainerId: session.targetContainerId,
+        attackContainerId: session.attackContainerId,
+        networkName: session.networkName,
       })
     } catch {}
 
@@ -174,14 +172,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
     if (!session) return NextResponse.json({ error: "No active session" }, { status: 404 })
 
     try {
-      const resetRes = await fetch(`${ORCHESTRATOR_URL}/reset`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          sessionId: session.id,
-          targetContainerId: session.targetContainerId,
-          dynamicFlag: session.dynamicFlag,
-        }),
+      const resetRes = await fetchOrchestrator("/reset", {
+        sessionId: session.id,
+        targetContainerId: session.targetContainerId,
+        dynamicFlag: session.dynamicFlag,
       })
       const resetData = await resetRes.json()
 
@@ -190,7 +184,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
         data: { dynamicFlag: resetData.newFlag },
       })
 
-      return NextResponse.json({ ok: true, newFlag: resetData.newFlag })
+      // SECURITY: the new flag is stored server-side only — it is never
+      // echoed to the client.
+      return NextResponse.json({ ok: true })
     } catch (err: any) {
       return NextResponse.json({ error: `Reset failed: ${err.message}` }, { status: 500 })
     }
@@ -208,17 +204,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
 
     return NextResponse.json({
       session: {
-        id: session.id,
-        status: session.status,
-        targetIp: session.targetIp,
-        attackIp: session.attackIp,
-        dynamicFlag: session.dynamicFlag,
-        expiresAt: session.expiresAt,
+        ...publicSession(session),
         timeLeftMs: timeLeft,
         timeLeftMin: Math.floor(timeLeft / 60000),
-        terminalToken: session.terminalToken,
-        targetContainerId: session.targetContainerId,
-        attackContainerId: session.attackContainerId,
       },
     })
   }

@@ -11,9 +11,16 @@
 #
 # SECURITY NOTES:
 #   - All secrets must be supplied via .env (see .env.example). No defaults.
+#   - LAB_SHARED_SECRET is REQUIRED. It authenticates web→orchestrator calls
+#     (HMAC) and orchestrator→terminal-gateway terminal tokens.
+#   - The lab-orchestrator is NOT published to the host — it is only reachable
+#     over the internal compose network (web → lab-orchestrator:3004).
+#     It also HMAC-verifies every mutating request.
+#   - terminal-gateway (3005) and live-signaling (3003) ARE published because
+#     browsers connect to them directly (WebSocket / WebRTC). Terminal access
+#     requires an HMAC-signed token minted per lab session.
 #   - The Docker socket is mounted only into lab-orchestrator + terminal-gateway
-#     (both intentionally sandboxed). The web app talks to them via HTTP, not
-#     via the socket. Consider replacing this with a Docker socket proxy
+#     (both intentionally sandboxed). Consider a Docker socket proxy
 #     (tecnativa/docker-socket-proxy) in production.
 
 services:
@@ -39,6 +46,14 @@ services:
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}
       - PAYMENT_MOCK_MODE=${PAYMENT_MOCK_MODE:-false}
+      - CRM_WEBHOOK_SECRET=${CRM_WEBHOOK_SECRET:?CRM_WEBHOOK_SECRET must be set in .env}
+      - LAB_SHARED_SECRET=${LAB_SHARED_SECRET:?LAB_SHARED_SECRET must be set in .env}
+      # The web app talks to the orchestrator over the compose network
+      - LAB_ORCHESTRATOR_URL=http://lab-orchestrator:3004
+      # Browser-facing service URLs (must be reachable from the user's browser)
+      - NEXT_PUBLIC_TERMINAL_WS_URL=${NEXT_PUBLIC_TERMINAL_WS_URL:-ws://localhost:3005}
+      - NEXT_PUBLIC_SIGNALING_URL=${NEXT_PUBLIC_SIGNALING_URL:-http://localhost:3003}
+      - NEXT_PUBLIC_WHITEBOARD_URL=${NEXT_PUBLIC_WHITEBOARD_URL:-http://localhost:3006}
     depends_on:
       lab-orchestrator:
         condition: service_healthy
@@ -52,7 +67,7 @@ services:
       retries: 3
       start_period: 60s
 
-  # === Lab Orchestrator (port 3004) ===
+  # === Lab Orchestrator (INTERNAL ONLY — not published to the host) ===
   # NOTE: The Docker socket is required here because this service manages
   # container lifecycles. In production, prefer a Docker socket proxy with
   # only `containers` + `networks` scopes enabled.
@@ -60,11 +75,13 @@ services:
     build:
       context: ./mini-services/lab-orchestrator
       dockerfile: Dockerfile
-    ports:
-      - "3004:3004"
+    expose:
+      - "3004"
     environment:
       - DOCKER_AVAILABLE=1
       - DOCKER_HOST=unix:///var/run/docker.sock
+      - LAB_SHARED_SECRET=${LAB_SHARED_SECRET:?LAB_SHARED_SECRET must be set in .env}
+      - LAB_MAX_CONCURRENT_SESSIONS=${LAB_MAX_CONCURRENT_SESSIONS:-25}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     restart: unless-stopped
@@ -75,8 +92,9 @@ services:
       retries: 3
       start_period: 15s
 
-  # === Terminal Gateway (port 3005) ===
+  # === Terminal Gateway (published — browsers open lab terminals) ===
   # NOTE: Needs Docker socket for `docker exec` to attach to lab containers.
+  # Connections require an HMAC-signed terminal token per session.
   # Consider a gVisor runtime profile or rootless Docker in production.
   terminal-gateway:
     build:
@@ -87,6 +105,7 @@ services:
     environment:
       - DOCKER_AVAILABLE=1
       - DOCKER_HOST=unix:///var/run/docker.sock
+      - LAB_SHARED_SECRET=${LAB_SHARED_SECRET:?LAB_SHARED_SECRET must be set in .env}
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     restart: unless-stopped
@@ -97,7 +116,7 @@ services:
       retries: 3
       start_period: 15s
 
-  # === WebRTC Signaling (port 3003) ===
+  # === WebRTC Signaling (published — browsers connect for live sessions) ===
   live-signaling:
     build:
       context: ./mini-services/live-signaling
@@ -107,6 +126,21 @@ services:
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "wget", "--spider", "-q", "http://localhost:3003/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  # === Whiteboard (published — browsers connect for live-session whiteboard) ===
+  whiteboard:
+    build:
+      context: ./mini-services/whiteboard-service
+      dockerfile: Dockerfile
+    ports:
+      - "3006:3006"
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3006/health"]
       interval: 30s
       timeout: 5s
       retries: 3

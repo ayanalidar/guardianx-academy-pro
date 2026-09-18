@@ -1,21 +1,31 @@
 import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { withErrorHandler } from "@/lib/session"
-import { createHash, createHmac, timingSafeEqual, randomBytes } from "crypto"
+import { getCurrentUser, withErrorHandler } from "@/lib/session"
+import { createHmac, timingSafeEqual, randomBytes } from "crypto"
 import { getSetting } from "@/lib/settings"
+import { getSigningSecret } from "@/lib/credentials"
 
 export const runtime = "nodejs"
 
 /* POST /api/cyber-quiz/verify-payment
  * Called after the candidate pays via Razorpay checkout. Verifies the payment
- * (mock mode accepts any non-empty paymentId), marks the Order as paid, and
- * auto-issues the CyberSecurityCertificate + verification hash + URL.
+ * (HMAC-verified when RAZORPAY_KEY_SECRET is set), marks the Order as paid, and
+ * auto-issues the CyberQuizCertificate + verification hash + URL.
+ *
+ * SECURITY:
+ *  - Requires an authenticated session.
+ *  - Order ownership is enforced (order.userId must match session user).
+ *  - If RAZORPAY_KEY_SECRET is unconfigured, verification REFUSES (no silent
+ *    accept) unless PAYMENT_MOCK_MODE=true AND NODE_ENV !== "production".
  *
  * Body: { orderId, razorpayPaymentId, razorpaySignature }
  *
  * Returns: { ok: true, credentialId, verificationUrl, certificate }
  */
 export const POST = withErrorHandler(async (req) => {
+  const user = await getCurrentUser()
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+
   let body: any
   try {
     body = await req.json()
@@ -38,13 +48,16 @@ export const POST = withErrorHandler(async (req) => {
   if (order.purpose !== "QUIZ_CERT") {
     return NextResponse.json({ error: "This order is not a quiz certificate order" }, { status: 400 })
   }
+  // Object-level authz: only the buyer may verify payment for this order
+  if (order.userId && order.userId !== user.id) {
+    return NextResponse.json({ error: "Forbidden — order belongs to another user" }, { status: 403 })
+  }
   if (order.status === "paid") {
     return NextResponse.json({ error: "Order already paid", alreadyPaid: true }, { status: 400 })
   }
 
   // --- Payment verification ---
   // Real HMAC SHA-256 verification when RAZORPAY_KEY_SECRET is set.
-  // Mock mode (no secret) accepts any non-empty paymentId + signature.
   const keySecret = await getSetting("RAZORPAY_KEY_SECRET")
   if (keySecret) {
     const expected = createHmac("sha256", keySecret)
@@ -55,6 +68,20 @@ export const POST = withErrorHandler(async (req) => {
     if (expectedBuf.length !== providedBuf.length || !timingSafeEqual(expectedBuf, providedBuf)) {
       return NextResponse.json({ error: "Payment signature verification failed" }, { status: 400 })
     }
+  } else if (process.env.PAYMENT_MOCK_MODE === "true" && process.env.NODE_ENV !== "production") {
+    // Explicit mock mode, dev only
+    console.warn("[cyber-quiz/verify-payment] PAYMENT_MOCK_MODE=true — accepting unverified payment (dev only)")
+  } else {
+    // No secret + no explicit dev mock flag → REFUSE. Prevents a misconfigured
+    // production deploy from silently issuing paid certificates for free.
+    return NextResponse.json(
+      {
+        error:
+          "Payment verification is not configured. Set RAZORPAY_KEY_SECRET " +
+          "(or PAYMENT_MOCK_MODE=true for local dev).",
+      },
+      { status: 500 }
+    )
   }
 
   // Mark order as paid
@@ -86,13 +113,14 @@ export const POST = withErrorHandler(async (req) => {
     return NextResponse.json({ ok: true, certificate: existing, alreadyExisted: true })
   }
 
-  // Generate the credential ID: GX-QUIZ-YYYY-XXXX
+  // Generate the credential ID: GX-QUIZ-YYYY-XXXXXX (crypto-random, non-guessable)
   const year = new Date().getFullYear()
-  const seq = randomBytes(2).toString("hex").toUpperCase().padStart(4, "0").slice(0, 4)
+  const seq = randomBytes(3).toString("hex").toUpperCase() // 6 hex chars = 16.7M combos/year
   const credentialId = `GX-QUIZ-${year}-${seq}`
 
-  // Tamper-evident verification hash
-  const verificationHash = createHash("sha256")
+  // Tamper-evident verification hash — keyed HMAC-SHA256 (was: unkeyed SHA-256
+  // over guessable fields, forgeable by anyone who knew the inputs).
+  const verificationHash = createHmac("sha256", await getSigningSecret())
     .update(`${credentialId}|${attempt.id}|${order.id}|${attempt.guestEmail || order.user.email}|${attempt.percentage}`)
     .digest("hex")
 

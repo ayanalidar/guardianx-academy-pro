@@ -59,6 +59,17 @@ export async function GET(req: NextRequest) {
       { status: 404 }
     )
   }
+  // Defense-in-depth: also confirm the account was approved by the student
+  const parentStatus = await db.parentAccount.findUnique({
+    where: { id: payload.id },
+    select: { status: true },
+  })
+  if (parentStatus?.status !== "ACTIVE") {
+    return NextResponse.json(
+      { error: "This parent link is not active — awaiting student approval or blocked." },
+      { status: 403 }
+    )
+  }
 
   const student = await db.user.findUnique({
     where: { id: parent.studentId },
@@ -272,18 +283,42 @@ export async function POST(req: NextRequest) {
     }
     const { email, password } = parsed.data
 
+    // Rate limit login attempts per IP (brute-force protection)
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown"
+    const { rateLimit } = await import("@/lib/session")
+    if (!rateLimit(`parent-login:${ip}`, { max: 10, windowMs: 60 * 1000 })) {
+      return NextResponse.json(
+        { error: "Too many attempts. Please try again later." },
+        { status: 429 }
+      )
+    }
+
     const parent = await db.parentAccount.findUnique({
       where: { email: email.toLowerCase() },
     })
     if (!parent) {
+      // Anti-enumeration: identical message for unknown email and bad password
       return NextResponse.json(
-        { error: "No parent account found with that email" },
-        { status: 404 }
+        { error: "Invalid email or password" },
+        { status: 401 }
       )
     }
     const ok = bcrypt.compareSync(password, parent.passwordHash)
     if (!ok) {
-      return NextResponse.json({ error: "Incorrect password" }, { status: 401 })
+      return NextResponse.json({ error: "Invalid email or password" }, { status: 401 })
+    }
+    // Consent gate: the portal only unlocks after the student approves
+    if (parent.status !== "ACTIVE") {
+      return NextResponse.json(
+        {
+          error:
+            parent.status === "PENDING"
+              ? "Your link request is awaiting the student's approval. They must approve it from their GuardianX profile before the portal unlocks."
+              : "This parent account is blocked. Contact support.",
+          status: parent.status,
+        },
+        { status: 403 }
+      )
     }
 
     const token = signParentToken({

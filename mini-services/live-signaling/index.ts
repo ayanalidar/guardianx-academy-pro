@@ -33,7 +33,15 @@ function broadcastRoomState(io: Server, roomId: string) {
   io.to(roomId).emit("room-state", { members })
 }
 
-const httpServer = createServer()
+const httpServer = createServer((req, res) => {
+  if (req.url === "/health") {
+    res.writeHead(200, { "Content-Type": "application/json" })
+    res.end(JSON.stringify({ status: "ok", port: 3003 }))
+    return
+  }
+  res.writeHead(404)
+  res.end("Not found")
+})
 const io = new Server(httpServer, {
   path: "/",
   cors: { origin: "*", methods: ["GET", "POST"] },

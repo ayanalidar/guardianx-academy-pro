@@ -1,5 +1,4 @@
 import nodemailer from "nodemailer"
-import { createHash } from "crypto"
 import { getSettings } from "@/lib/settings"
 
 /**
@@ -149,16 +148,17 @@ export function leadNotificationEmailTemplate(type: string, fields: { label: str
  * Generate a tamper-evident verification hash for a certificate.
  * Used by the certificate issuance + verification endpoints.
  *
- * Hash = SHA-256(credentialId | userId | courseId | issuedAt)
+ * SECURITY (hardened): now a keyed HMAC-SHA256 (was an unkeyed SHA-256 over
+ * guessable fields, which anyone could forge). Re-exported from
+ * @/lib/credentials so issuance and verification always share one
+ * implementation. verifyVerificationHash() accepts legacy unkeyed hashes
+ * for certificates issued before this change.
  */
-export function generateVerificationHash(
-  credentialId: string,
-  userId: string,
-  courseId: string,
-  issuedAt: Date | string
-): string {
-  const iso = typeof issuedAt === "string" ? issuedAt : issuedAt.toISOString()
-  return createHash("sha256")
-    .update(`${credentialId}|${userId}|${courseId}|${iso}`)
-    .digest("hex")
-}
+export {
+  generateVerificationHash,
+  verifyVerificationHash,
+  legacyVerificationHash,
+  generateCredentialId,
+  isPlausibleCredentialId,
+  getSigningSecret,
+} from "@/lib/credentials"

@@ -13,7 +13,7 @@ export const runtime = "nodejs"
  *
  * Expected body (from the per-batch Apps Script):
  * {
- *   "token": "guardianx-crm-webhook-2025",
+ *   "token": "<CRM_WEBHOOK_SECRET>",
  *   "formId": "form-id-from-google",
  *   "lead": {
  *     "batchId": "cmt...",        // baked into the script
@@ -35,12 +35,28 @@ export async function POST(req: NextRequest) {
     const body = await req.json().catch(() => null)
     if (!body) return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
 
-    // Verify webhook token
-    // Falls back to the hardcoded token that the Apps Script sends.
-    // The user can override by setting CRM_WEBHOOK_SECRET on Vercel.
-    const webhookSecret = await getSetting("CRM_WEBHOOK_SECRET") || "guardianx-crm-webhook-2025"
-    if (body.token !== webhookSecret) {
+    // SECURITY: verify the webhook secret. There is NO hardcoded fallback —
+    // the previous default ("guardianx-crm-webhook-2025") was shipped in a
+    // public file and let anyone inject leads / email-bomb admins.
+    // Set CRM_WEBHOOK_SECRET (env or Platform Settings) and share it with
+    // the Google Apps Script out-of-band.
+    const { timingSafeEqual } = await import("crypto")
+    const webhookSecret = await getSetting("CRM_WEBHOOK_SECRET")
+    if (!webhookSecret) {
+      console.error("[crm/webhook] CRM_WEBHOOK_SECRET not configured — rejecting webhook")
+      return NextResponse.json({ error: "Webhook not configured" }, { status: 503 })
+    }
+    const provided = typeof body.token === "string" ? body.token : ""
+    const a = Buffer.from(webhookSecret)
+    const b = Buffer.from(provided)
+    if (a.length !== b.length || !timingSafeEqual(a, b)) {
       return NextResponse.json({ error: "Invalid webhook token" }, { status: 401 })
+    }
+    // Rate limit per IP (spam/DoS protection on an unauthenticated endpoint)
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown"
+    const { rateLimit } = await import("@/lib/session")
+    if (!rateLimit(`crm-webhook:${ip}`, { max: 30, windowMs: 60 * 1000 })) {
+      return NextResponse.json({ error: "Too many requests" }, { status: 429 })
     }
 
     const lead = body.lead || {}

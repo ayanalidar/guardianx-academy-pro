@@ -115,7 +115,7 @@ export const SETTING_DEFINITIONS = [
   { key: "EMAIL_TO_ADMINS", label: "Admin Notification Emails", category: "email", isSecret: false, placeholder: "admin@academy.guardianx.cloud", description: "Where lead notifications are sent (comma-separated)" },
 
   // CRM Webhook
-  { key: "CRM_WEBHOOK_SECRET", label: "CRM Webhook Token", category: "crm", isSecret: true, placeholder: "guardianx-crm-webhook-2025", description: "Token the Google Apps Scripts use" },
+  { key: "CRM_WEBHOOK_SECRET", label: "CRM Webhook Token", category: "crm", isSecret: true, placeholder: "••••••••••••••••", description: "Token the Google Apps Scripts use (rotate it if it ever leaks)" },
 
   // Error Tracking (Sentry)
   { key: "SENTRY_DSN", label: "Sentry DSN", category: "tracking", isSecret: false, placeholder: "https://xxx@sentry.io/xxx", description: "From sentry.io → project settings" },

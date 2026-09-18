@@ -32,7 +32,15 @@ function getRoom(roomId: string): BoardRoom {
   return rooms.get(roomId)!
 }
 
-const httpServer = createServer()
+const httpServer = createServer((req, res) => {
+  if (req.url === "/health") {
+    res.writeHead(200, { "Content-Type": "application/json" })
+    res.end(JSON.stringify({ status: "ok", port: 3006 }))
+    return
+  }
+  res.writeHead(404)
+  res.end("Not found")
+})
 const io = new Server(httpServer, {
   path: "/",
   cors: { origin: "*", methods: ["GET", "POST"] },

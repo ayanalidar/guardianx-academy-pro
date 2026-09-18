@@ -96,15 +96,16 @@ export function InBrowserTerminal({ labSlug, sessionData, onExit }: InBrowserTer
     xtermRef.current = term
     fitRef.current = fitAddon
 
-    // Connect to Terminal Gateway via WebSocket
-    // Caddy forwards /?XTransformPort=3005 to the terminal-gateway service
-    const wsUrl = `/?XTransformPort=3005?token=${sessionData.terminalToken}&sessionId=${sessionData.id}&containerId=${sessionData.attackContainerId || ""}&userId=${sessionData.id}`
-    
-    // Note: We use wss:// in production (Caddy handles TLS termination)
-    // In dev, we connect directly to the gateway
-    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:"
-    const host = window.location.host
-    const ws = new WebSocket(`${protocol}//${host}/?XTransformPort=3005&token=${sessionData.terminalToken}&sessionId=${sessionData.id}&containerId=${sessionData.attackContainerId || ""}`)
+    // Connect DIRECTLY to the terminal-gateway WebSocket service.
+    // The old /?XTransformPort=3005 proxy path was removed from Caddy (SSRF
+    // risk), so the gateway URL is now configurable via
+    // NEXT_PUBLIC_TERMINAL_WS_URL (e.g. ws://lab.example.com:3005 or a
+    // wss:// path behind your reverse proxy).
+    const base = process.env.NEXT_PUBLIC_TERMINAL_WS_URL
+      || `${window.location.protocol === "https:" ? "wss:" : "ws:"}//${window.location.hostname}:3005`
+    const ws = new WebSocket(
+      `${base}?token=${sessionData.terminalToken}&sessionId=${sessionData.id}&containerId=${sessionData.attackContainerId || ""}`
+    )
     
     wsRef.current = ws
 

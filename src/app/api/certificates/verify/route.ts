@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { generateVerificationHash } from "@/lib/email"
+import { verifyVerificationHash } from "@/lib/credentials"
 
 /**
  * PUBLIC certificate verification endpoint.
@@ -43,9 +43,10 @@ export async function GET(req: Request) {
     )
   }
 
-  // Verify the tamper-evident hash
-  const expectedHash = generateVerificationHash(cert.certificateId, cert.userId, cert.courseId, cert.issuedAt)
-  const hashValid = !cert.verificationHash || cert.verificationHash === expectedHash
+  // Verify the tamper-evident hash (keyed HMAC; legacy unkeyed hashes still accepted)
+  const hashValid = await verifyVerificationHash(
+    cert.verificationHash, cert.certificateId, cert.userId, cert.courseId, cert.issuedAt
+  )
 
   return NextResponse.json({
     valid: true,

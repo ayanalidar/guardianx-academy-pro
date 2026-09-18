@@ -18,11 +18,12 @@
  * 7. Your form responses will now automatically sync to GuardianX CRM
  * 
  * WEBHOOK URL: https://academy.guardianx.cloud/api/crm/webhook
- * WEBHOOK TOKEN: guardianx-crm-webhook-2025
+ * WEBHOOK TOKEN: (SECRET) — ask the platform admin for the current value of
+ *   CRM_WEBHOOK_SECRET and paste it below. Never commit real tokens to git.
  */
 
 var WEBHOOK_URL = "https://academy.guardianx.cloud/api/crm/webhook";
-var WEBHOOK_TOKEN = "guardianx-crm-webhook-2025";
+var WEBHOOK_TOKEN = ""; // paste CRM_WEBHOOK_SECRET here (do NOT commit real values)
 
 // BATCH-SPECIFIC: Set these to auto-tag leads with the correct batch
 // When creating a Google Form for a specific batch, set these variables

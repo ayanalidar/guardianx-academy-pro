@@ -46,7 +46,8 @@ export async function GET(_req: Request, { params }: { params: Promise<{ credent
           status: cred.status,
           skillsAssessed: JSON.parse(cred.skillsAssessed || "[]"),
           examType: cred.examType,
-          verificationHash: cred.verificationHash,
+          // NOTE: verificationHash is intentionally NOT returned publicly —
+          // it is a server-side integrity value, not a display field.
         },
       })
     }
@@ -73,7 +74,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ credent
             expiryDate: null,
             status: quizCert.status,
             examType: "online-quiz",
-            verificationHash: quizCert.verificationHash,
+            // verificationHash intentionally omitted (server-side only)
             verificationUrl: quizCert.verificationUrl,
           },
         })

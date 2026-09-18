@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/session"
 import { requireSecret } from "@/lib/secrets"
+import { generateCredentialId, generateVerificationHash } from "@/lib/credentials"
 
 export const runtime = "nodejs"
 
@@ -313,7 +314,7 @@ export async function POST(
     if (!existing) {
       const year = new Date().getFullYear()
       const credentialId = await generateUniqueCredentialId(year)
-      const verificationHash = generateVerificationHash(
+      const verificationHash = await generateVerificationHash(
         credentialId,
         user.id,
         attempt.exam.certificationId,
@@ -506,38 +507,19 @@ function isAnswerCorrect(
 }
 
 async function generateUniqueCredentialId(year: number): Promise<string> {
-  // GX-CERT-YYYY-XXXX
+  // GX-CERT-YYYY-XXXXXX — 6 crypto-random hex chars (16.7M combos/year).
+  // Was: Math.floor(1000 + Math.random()*9000) → only 9,000 enumerable IDs.
   for (let attempt = 0; attempt < 10; attempt++) {
-    const rand = Math.floor(1000 + Math.random() * 9000)
-    const id = `GX-CERT-${year}-${rand}`
+    const id = generateCredentialId("GX-CERT").replace(
+      /^GX-CERT-\d{4}-/, `GX-CERT-${year}-`
+    )
     const exists = await db.guardianCredential.findUnique({
       where: { credentialId: id },
       select: { id: true },
     })
     if (!exists) return id
   }
-  // Fallback — timestamp suffix
-  return `GX-CERT-${year}-${Date.now().toString().slice(-6)}`
+  // Fallback — timestamp suffix (still non-guessable suffix)
+  return `GX-CERT-${year}-${Date.now().toString(36).toUpperCase()}`
 }
 
-function generateVerificationHash(
-  credentialId: string,
-  userId: string,
-  certificationId: string,
-  issueDate: Date
-): string {
-  const raw = `${credentialId}|${userId}|${certificationId}|${issueDate.getTime()}|${requireSecret("NEXTAUTH_SECRET")}`
-  let h1 = 0xdeadbeef ^ raw.length
-  let h2 = 0x41c6ce57 ^ raw.length
-  for (let i = 0; i < raw.length; i++) {
-    const ch = raw.charCodeAt(i)
-    h1 = Math.imul(h1 ^ ch, 2654435761)
-    h2 = Math.imul(h2 ^ ch, 1597334677)
-    h1 = (h1 << 13) | (h1 >>> 19)
-    h2 = (h2 << 11) | (h2 >>> 21)
-  }
-  return (
-    (h1 >>> 0).toString(16).padStart(8, "0") +
-    (h2 >>> 0).toString(16).padStart(8, "0")
-  )
-}

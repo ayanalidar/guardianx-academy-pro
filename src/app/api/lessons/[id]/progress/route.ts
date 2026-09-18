@@ -57,7 +57,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       const certId = `GX-${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).slice(2, 6).toUpperCase()}`
       const issuedAt = new Date()
       const { generateVerificationHash, sendEmail } = await import("@/lib/email")
-      const verificationHash = generateVerificationHash(certId, user.id, lesson.module.courseId, issuedAt)
+      const verificationHash = await generateVerificationHash(certId, user.id, lesson.module.courseId, issuedAt)
       // Find the default certificate template (if any)
       const defaultTemplate = await db.certificateTemplate.findFirst({ where: { isDefault: true } })
       await db.certificate.create({

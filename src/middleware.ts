@@ -31,9 +31,10 @@ const PROTECTED_API_PREFIXES: Array<[string, string[] | "any-auth"]> = [
   ["/api/instructor", ["INSTRUCTOR", "ADMIN", "SUPER_ADMIN"]],
   // School admin endpoints: SCHOOL_ADMIN + ADMIN/SUPER_ADMIN.
   ["/api/school", ["SCHOOL_ADMIN", "ADMIN", "SUPER_ADMIN"]],
-  // Parent endpoints: validated via parent token (still required, but we let
-  // the route handler do the parent-token check).
-  ["/api/parent", "any-auth"],
+  // NOTE: /api/parent is intentionally NOT listed here — parents authenticate
+  // with their own signed x-parent-token (src/lib/parent-auth.ts), not a
+  // NextAuth session cookie, so requiring one here would 401 every parent
+  // request. Parent routes perform their own token verification.
   // Exam endpoints (start, submit, list-attempts): any authenticated user.
   // Proctor-only mutations still need a fine-grained check in the handler.
   ["/api/exams", "any-auth"],

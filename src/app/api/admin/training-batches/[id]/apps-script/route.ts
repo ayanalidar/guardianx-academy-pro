@@ -31,7 +31,15 @@ export const GET = withErrorHandler(async (_req, { params }: { params: Promise<{
   if (!batch) return NextResponse.json({ error: "Batch not found" }, { status: 404 })
 
   const webhookUrl = `${process.env.NEXTAUTH_URL || "https://academy.guardianx.cloud"}/api/crm/batch-webhook`
-  const webhookToken = process.env.CRM_WEBHOOK_SECRET || "guardianx-crm-webhook-2025"
+  // Secret comes from Platform Settings (DB) or env — never a hardcoded default.
+  const { getSetting } = await import("@/lib/settings")
+  const webhookToken = (await getSetting("CRM_WEBHOOK_SECRET")) || process.env.CRM_WEBHOOK_SECRET || ""
+  if (!webhookToken) {
+    return NextResponse.json(
+      { error: "CRM_WEBHOOK_SECRET is not configured. Set it in Admin → Settings before generating webhook scripts." },
+      { status: 503 }
+    )
+  }
   const slug = batch.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || batch.id
   const fileName = `guardianx-batch-${slug}.gs`
 

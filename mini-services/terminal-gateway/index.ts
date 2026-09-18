@@ -28,10 +28,51 @@
 
 import { WebSocketServer, WebSocket } from "ws"
 import { createServer } from "http"
-import { randomBytes } from "crypto"
+import { createHmac, timingSafeEqual } from "crypto"
 
 const PORT = 3005
 const SIMULATION_MODE = !process.env.DOCKER_AVAILABLE
+
+// === Shared secret (same value as lab-orchestrator's LAB_SHARED_SECRET) ===
+const LAB_SHARED_SECRET = process.env.LAB_SHARED_SECRET || ""
+if (!LAB_SHARED_SECRET) {
+  console.warn(
+    "[security] LAB_SHARED_SECRET not set — terminal connections will be REJECTED.\n" +
+    "[security] This service requires signed terminal tokens minted by the lab-orchestrator."
+  )
+}
+
+interface TerminalTokenPayload {
+  sid: string
+  uid: string
+  exp: number
+}
+
+/** Verify an HMAC-signed terminal token minted by the lab-orchestrator. */
+function verifyTerminalToken(token: string | null, sessionId: string): TerminalTokenPayload | null {
+  if (!token || !LAB_SHARED_SECRET) return null
+  const parts = token.split(".")
+  if (parts.length !== 2) return null
+  const [payloadB64, sig] = parts
+  const expected = createHmac("sha256", LAB_SHARED_SECRET).update(payloadB64).digest("hex")
+  if (
+    expected.length !== sig.length ||
+    !timingSafeEqual(Buffer.from(expected, "hex"), Buffer.from(sig, "hex"))
+  ) {
+    return null
+  }
+  try {
+    const payload = JSON.parse(
+      Buffer.from(payloadB64, "base64url").toString("utf8")
+    ) as TerminalTokenPayload
+    if (!payload?.sid || Date.now() > payload.exp) return null
+    // The token must belong to the session the client claims to join
+    if (payload.sid !== sessionId) return null
+    return payload
+  } catch {
+    return null
+  }
+}
 
 // === Active terminal sessions ===
 interface TerminalSession {
@@ -232,25 +273,25 @@ wss.on("connection", (ws: WebSocket, req) => {
   const containerId = url.searchParams.get("containerId")
   const userId = url.searchParams.get("userId")
 
-  // === Token-based authentication ===
-  // The terminalToken must match the one stored in the LabSession record.
-  if (!token || !sessionId) {
-    ws.send(JSON.stringify({ type: "error", message: "Missing token or sessionId" }))
+  // === Token-based authentication (ENFORCED) ===
+  // The terminalToken must be an HMAC-signed token minted by the
+  // lab-orchestrator for THIS exact session. The previous implementation
+  // accepted any token string (the DB check was commented out).
+  const tokenPayload = verifyTerminalToken(token, sessionId)
+  if (!tokenPayload) {
+    console.warn(`[terminal] REJECTED connection: invalid/expired token for session=${sessionId}`)
+    ws.send(JSON.stringify({ type: "error", message: "Invalid or expired terminal token" }))
     ws.close(4001, "Unauthorized")
     return
   }
 
-  // In production: verify token against database
-  // const session = await db.labSession.findUnique({ where: { id: sessionId } })
-  // if (!session || session.terminalToken !== token) { ws.close(4001); return }
-
-  console.log(`[terminal] Connection established: session=${sessionId}, user=${userId}, container=${containerId}`)
+  console.log(`[terminal] Connection established: session=${sessionId}, user=${tokenPayload.uid}, container=${containerId}`)
 
   const session: TerminalSession = {
     ws,
     containerId: containerId || "simulated",
     sessionId,
-    userId: userId || "unknown",
+    userId: tokenPayload.uid,
     lastActivity: Date.now(),
     cwd: "/root",
     history: [],
