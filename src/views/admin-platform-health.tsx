@@ -9,26 +9,45 @@ import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
 import {
   ArrowLeft, Activity, Server, Database, Zap, Clock,
-  CheckCircle2, AlertTriangle, Cpu, HardDrive, Wifi,
+  CheckCircle2, AlertTriangle, Cpu, HardDrive, Wifi, Award, Mail, RefreshCw,
 } from "lucide-react"
+import { useQuery } from "@tanstack/react-query"
+import { api } from "@/lib/api"
 
 export function PlatformHealthView() {
   const { navigate } = useAppStore()
 
-  const services = [
-    { name: "Web Application", status: "operational", latency: 45, icon: Server, color: "text-emerald-300" },
-    { name: "Database (Neon PostgreSQL)", status: "operational", latency: 12, icon: Database, color: "text-emerald-300" },
-    { name: "Authentication (NextAuth)", status: "operational", latency: 38, icon: Cpu, color: "text-emerald-300" },
-    { name: "CMS API", status: "operational", latency: 28, icon: HardDrive, color: "text-emerald-300" },
-    { name: "Email Service (Hostinger SMTP)", status: "degraded", latency: 250, icon: Wifi, color: "text-amber-300" },
-    { name: "Cyber Range Labs", status: "operational", latency: 120, icon: Zap, color: "text-emerald-300" },
-  ]
+  // LIVE health data from /api/sentinel/health (real DB queries + service
+  // checks) — replaces the previous hardcoded services + Math.random() charts.
+  const { data, isLoading, isError, refetch, dataUpdatedAt } = useQuery({
+    queryKey: ["platform-health"],
+    refetchInterval: 30_000,
+    queryFn: () => api<{ overall: string; services: Array<{ name: string; status: string; latency: number; detail?: string }>; timestamp: string }>(
+      "/api/sentinel/health"
+    ),
+  })
+
+  const SERVICE_ICONS: Record<string, any> = {
+    Database: Database, Authentication: Cpu, LMS: HardDrive, "Cyber Labs": Zap,
+    Exams: Server, CMS: HardDrive, Certifications: Award, CRM: Mail,
+    "Lab Orchestrator": Server, "Email (SMTP)": Wifi,
+  }
+  const serviceList = (data?.services || []).map((svc) => ({
+    ...svc,
+    icon: SERVICE_ICONS[svc.name] || Server,
+    color: svc.status === "operational" ? "text-emerald-300" : svc.status === "degraded" ? "text-amber-300" : "text-rose-300",
+  }))
+
+  const operational = serviceList.filter(s => s.status === "operational").length
+  const avgLatency = serviceList.length
+    ? Math.round(serviceList.filter(s => s.latency >= 0).reduce((a, s) => a + s.latency, 0) / Math.max(serviceList.filter(s => s.latency >= 0).length, 1))
+    : 0
 
   const stats = [
-    { label: "Uptime (30d)", value: "99.94%", icon: CheckCircle2, color: "text-emerald-300", tint: "bg-emerald-500/10" },
-    { label: "Avg Response", value: "82ms", icon: Clock, color: "text-cyan-300", tint: "bg-cyan-500/10" },
-    { label: "Error Rate", value: "0.06%", icon: AlertTriangle, color: "text-amber-300", tint: "bg-amber-500/10" },
-    { label: "Active Sessions", value: 3, icon: Activity, color: "text-violet-300", tint: "bg-violet-500/10" },
+    { label: "Services OK", value: `${operational}/${serviceList.length}`, icon: CheckCircle2, color: "text-emerald-300", tint: "bg-emerald-500/10" },
+    { label: "Overall", value: data?.overall || "—", icon: Activity, color: data?.overall === "operational" ? "text-emerald-300" : data?.overall === "down" ? "text-rose-300" : "text-amber-300", tint: "bg-violet-500/10" },
+    { label: "Avg Response", value: avgLatency >= 0 ? `${avgLatency}ms` : "—", icon: Clock, color: "text-cyan-300", tint: "bg-cyan-500/10" },
+    { label: "Last Check", value: dataUpdatedAt ? new Date(dataUpdatedAt).toLocaleTimeString() : "—", icon: AlertTriangle, color: "text-amber-300", tint: "bg-amber-500/10" },
   ]
 
   const STATUS_BADGE: Record<string, string> = {
@@ -71,16 +90,32 @@ export function PlatformHealthView() {
 
         {/* Services */}
         <Card className="p-5">
-          <h2 className="text-sm font-semibold mb-4">Service Status</h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-semibold">Service Status</h2>
+            <Button size="sm" variant="ghost" onClick={() => refetch()}>
+              <RefreshCw className="h-3.5 w-3.5 mr-1" /> Refresh
+            </Button>
+          </div>
           <div className="space-y-2">
-            {services.map(s => (
+            {isLoading && [...Array(6)].map((_, i) => (
+              <div key={i} className="h-12 rounded-lg bg-muted/30 animate-pulse" />
+            ))}
+            {!isLoading && isError && (
+              <div className="p-4 rounded-lg border border-rose-500/30 bg-rose-500/5 text-sm text-rose-300 text-center">
+                Health check failed — retry in a moment.
+              </div>
+            )}
+            {!isLoading && !isError && serviceList.map(s => (
               <div key={s.name} className="flex items-center justify-between p-3 rounded-lg border border-border/40 hover:bg-muted/30 transition-colors">
                 <div className="flex items-center gap-3">
                   <div className={cn("inline-flex p-2 rounded-lg bg-muted/50", s.color)}><s.icon className="h-3.5 w-3.5" /></div>
-                  <span className="text-sm font-medium">{s.name}</span>
+                  <div>
+                    <span className="text-sm font-medium">{s.name}</span>
+                    {s.detail && <div className="text-[10px] text-muted-foreground">{s.detail}</div>}
+                  </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <span className="text-xs text-muted-foreground font-mono">{s.latency}ms</span>
+                  {s.latency >= 0 && <span className="text-xs text-muted-foreground font-mono">{s.latency}ms</span>}
                   <Badge className={cn("text-[9px] border", STATUS_BADGE[s.status])}>{s.status}</Badge>
                 </div>
               </div>
@@ -88,16 +123,16 @@ export function PlatformHealthView() {
           </div>
         </Card>
 
-        {/* Response time chart */}
+        {/* Response time by service (measured, not simulated) */}
         <Card className="p-5">
-          <h2 className="text-sm font-semibold mb-4">Response Time (last 24h)</h2>
+          <h2 className="text-sm font-semibold mb-4">Response Time by Service</h2>
           <div className="flex items-end gap-1 h-32">
-            {Array.from({ length: 24 }).map((_, i) => {
-              const height = 30 + Math.random() * 60
+            {serviceList.filter(s => s.latency >= 0).map((s, i) => {
+              const height = Math.min(90, Math.max(6, (s.latency / Math.max(avgLatency * 2, 50)) * 100))
               return (
-                <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                  <div className="w-full bg-gradient-to-t from-violet-600 to-violet-400 rounded-t" style={{ height: `${height}%` }} />
-                  <span className="text-[8px] text-muted-foreground">{i}h</span>
+                <div key={s.name} className="flex-1 flex flex-col items-center gap-1" title={`${s.name}: ${s.latency}ms`}>
+                  <div className={cn("w-full rounded-t transition-all", s.status === "down" ? "bg-gradient-to-t from-rose-600 to-rose-400" : "bg-gradient-to-t from-violet-600 to-violet-400")} style={{ height: `${height}%` }} />
+                  <span className="text-[8px] text-muted-foreground truncate w-full text-center">{s.name.split(" ")[0]}</span>
                 </div>
               )
             })}

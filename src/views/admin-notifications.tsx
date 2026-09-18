@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
+import { useQuery } from "@tanstack/react-query"
+import { api } from "@/lib/api"
 import {
   ArrowLeft, Bell, Users, Award, BookOpen, FlaskConical,
   Mail, Shield, AlertCircle, CheckCircle2, Trash2,
@@ -23,35 +25,59 @@ const NOTIF_COLORS: Record<string, string> = {
   exam: "text-rose-300", system: "text-amber-300",
 }
 
-// Mock notifications - in production from /api/admin/notifications
-const NOTIFICATIONS = [
-  { id: 1, type: "enrollment", title: "New Enrollment", message: "Jamie Rivera enrolled in CEH Weekend Batch", time: "2 min ago", read: false },
-  { id: 2, type: "certificate", title: "Certificate Issued", message: "GX-CERT-2025-0001 issued to student@academy.guardianx.cloud", time: "15 min ago", read: false },
-  { id: 3, type: "contact", title: "New Contact Form Submission", message: "School inquiry from Delhi Public School", time: "1 hour ago", read: false },
-  { id: 4, type: "lab", title: "Lab Completed", message: "SQL Injection lab completed by Jamie Rivera", time: "2 hours ago", read: true },
-  { id: 5, type: "exam", title: "Exam Submitted", message: "Security+ exam submitted - Score: 85% (PASSED)", time: "3 hours ago", read: true },
-  { id: 6, type: "system", title: "System Update", message: "Security headers added to next.config.ts", time: "5 hours ago", read: true },
-  { id: 7, type: "enrollment", title: "New Registration", message: "New student registered: test-vapt@academy.guardianx.cloud", time: "8 hours ago", read: true },
-]
+// Real platform event feed from /api/admin/notifications
+interface AdminNotification {
+  id: string
+  type: string
+  title: string
+  message: string
+  createdAt: string
+  read: boolean
+}
+
+function timeAgo(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime()
+  const mins = Math.floor(diff / 60000)
+  if (mins < 1) return "just now"
+  if (mins < 60) return `${mins} min ago`
+  const hrs = Math.floor(mins / 60)
+  if (hrs < 24) return `${hrs} hour${hrs > 1 ? "s" : ""} ago`
+  const days = Math.floor(hrs / 24)
+  return `${days} day${days > 1 ? "s" : ""} ago`
+}
 
 export function NotificationCenterView() {
   const { navigate } = useAppStore()
-  const [notifications, setNotifications] = React.useState(NOTIFICATIONS)
+  // Real feed — aggregated from enrollments/certs/labs/exams/leads (30 days)
+  const { data, isLoading, error } = useQuery({
+    queryKey: ["admin-notifications"],
+    refetchInterval: 60_000,
+    queryFn: () => api<{ notifications: AdminNotification[]; unreadCount: number }>("/api/admin/notifications"),
+  })
+  const [readIds, setReadIds] = React.useState<Set<string>>(new Set())
+  const [dismissed, setDismissed] = React.useState<Set<string>>(new Set())
   const [filter, setFilter] = React.useState<"all" | "unread">("all")
 
-  const filtered = filter === "unread" ? notifications.filter(n => !n.read) : notifications
+  const notifications = React.useMemo(
+    () => (data?.notifications || []).map(n => ({ ...n, read: n.read || readIds.has(n.id) })),
+    [data, readIds]
+  )
+  const filtered = filter === "unread"
+    ? notifications.filter(n => !n.read)
+    : notifications.filter(n => !dismissed.has(n.id))
   const unreadCount = notifications.filter(n => !n.read).length
+  const loading = isLoading
 
   function markAllRead() {
-    setNotifications(notifications.map(n => ({ ...n, read: true })))
+    setReadIds(new Set(notifications.map(n => n.id)))
   }
 
-  function markRead(id: number) {
-    setNotifications(notifications.map(n => n.id === id ? { ...n, read: true } : n))
+  function markRead(id: string) {
+    setReadIds(prev => new Set(prev).add(id))
   }
 
-  function removeNotif(id: number) {
-    setNotifications(notifications.filter(n => n.id !== id))
+  function removeNotif(id: string) {
+    setDismissed(prev => new Set(prev).add(id))
   }
 
   return (
@@ -72,6 +98,25 @@ export function NotificationCenterView() {
             <Button size="sm" variant={filter === "unread" ? "default" : "outline"} onClick={() => setFilter("unread")}>Unread ({unreadCount})</Button>
             <Button size="sm" variant="ghost" onClick={markAllRead}><CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Mark all read</Button>
           </div>
+        {loading && (
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+            <div className="space-y-3">{[...Array(5)].map((_, i) => <Card key={i} className="h-16 animate-pulse bg-card/40" />)}</div>
+          </div>
+        )}
+        {!loading && error && (
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+            <Card className="p-6 border-rose-500/30 bg-rose-500/5 text-center text-sm text-rose-300">
+              Couldn't load the notification feed. Please retry.
+            </Card>
+          </div>
+        )}
+        {!loading && !error && filtered.length === 0 && (
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+            <Card className="p-6 text-center text-sm text-muted-foreground">
+              No {filter === "unread" ? "unread " : ""}notifications in the last 30 days.
+            </Card>
+          </div>
+        )}
         </div>
       </div>
 
@@ -103,7 +148,7 @@ export function NotificationCenterView() {
                         {!n.read && <span className="h-1.5 w-1.5 rounded-full bg-violet-400" />}
                       </div>
                       <p className="text-xs text-muted-foreground mt-0.5">{n.message}</p>
-                      <span className="text-[10px] text-muted-foreground/60 mt-1">{n.time}</span>
+                      <span className="text-[10px] text-muted-foreground/60 mt-1">{timeAgo(n.createdAt)}</span>
                     </div>
                     <Button size="sm" variant="ghost" onClick={() => removeNotif(n.id)} className="text-muted-foreground hover:text-rose-400 px-2">
                       <Trash2 className="h-3.5 w-3.5" />

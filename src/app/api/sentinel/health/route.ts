@@ -12,6 +12,38 @@ export async function GET() {
   try { const c = await db.siteContent.count(); services.push({ name: "CMS", status: "operational", latency: Date.now() - start, detail: `${c} items` }) } catch { services.push({ name: "CMS", status: "degraded", latency: Date.now() - start }) }
   try { const c = await db.guardianCredential.count(); services.push({ name: "Certifications", status: "operational", latency: Date.now() - start, detail: `${c} credentials` }) } catch { services.push({ name: "Certifications", status: "degraded", latency: Date.now() - start }) }
   try { const c = await db.lead.count(); services.push({ name: "CRM", status: "operational", latency: Date.now() - start, detail: `${c} leads` }) } catch { services.push({ name: "CRM", status: "degraded", latency: Date.now() - start }) }
+  // Lab orchestrator (only meaningful when configured)
+  try {
+    const { ORCHESTRATOR_URL } = await import("@/lib/orchestrator")
+    const startO = Date.now()
+    const ctrl = new AbortController()
+    const timer = setTimeout(() => ctrl.abort(), 1500)
+    const res = await fetch(`${ORCHESTRATOR_URL}/health`, { signal: ctrl.signal, cache: "no-store" }).catch(() => null)
+    clearTimeout(timer)
+    if (res?.ok) {
+      const d = await res.json().catch(() => null)
+      services.push({
+        name: "Lab Orchestrator",
+        status: "operational",
+        latency: Date.now() - startO,
+        detail: d?.mode ? `${d.mode}${typeof d.activeSessions === "number" ? ` · ${d.activeSessions} active` : ""}` : undefined,
+      })
+    } else {
+      services.push({ name: "Lab Orchestrator", status: "down", latency: Date.now() - startO, detail: "unreachable" })
+    }
+  } catch {
+    services.push({ name: "Lab Orchestrator", status: "down", latency: -1, detail: "unreachable" })
+  }
+  // Email (configuration check — no test send)
+  try {
+    const { getSettings } = await import("@/lib/settings")
+    const s = await getSettings(["SMTP_HOST", "SMTP_USER"])
+    const configured = !!(s.SMTP_HOST && s.SMTP_USER)
+    services.push({ name: "Email (SMTP)", status: configured ? "operational" : "degraded", latency: 0, detail: configured ? "configured" : "not configured" })
+  } catch {
+    services.push({ name: "Email (SMTP)", status: "degraded", latency: 0, detail: "check failed" })
+  }
+
   const overall = services.every(s => s.status === "operational") ? "operational" : services.some(s => s.status === "down") ? "down" : "degraded"
   return NextResponse.json({ overall, services, timestamp: new Date().toISOString() })
 }

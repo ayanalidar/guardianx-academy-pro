@@ -16,6 +16,7 @@ import {
   AlertCircle, Loader2,
 } from "lucide-react"
 import { toast } from "sonner"
+import { api } from "@/lib/api"
 
 export function EmailCampaignView() {
   const { navigate } = useAppStore()
@@ -24,12 +25,20 @@ export function EmailCampaignView() {
   const [audience, setAudience] = React.useState("all")
   const [sending, setSending] = React.useState(false)
 
+  // Real audience counts from /api/admin/email-campaign (GET)
+  const [counts, setCounts] = React.useState<Record<string, number>>({})
+  React.useEffect(() => {
+    api("/api/admin/email-campaign")
+      .then((d: any) => setCounts(d.audiences || {}))
+      .catch(() => {})
+  }, [])
+
   const audiences = [
-    { value: "all", label: "All Users", count: 4 },
-    { value: "students", label: "Students Only", count: 1 },
-    { value: "instructors", label: "Instructors Only", count: 2 },
-    { value: "admins", label: "Admins Only", count: 1 },
-    { value: "school_admins", label: "School Admins", count: 0 },
+    { value: "all", label: "All Users", count: counts.all ?? 0 },
+    { value: "students", label: "Students Only", count: counts.students ?? 0 },
+    { value: "instructors", label: "Instructors Only", count: counts.instructors ?? 0 },
+    { value: "admins", label: "Admins Only", count: counts.admins ?? 0 },
+    { value: "school_admins", label: "School Admins", count: counts.school_admins ?? 0 },
   ]
 
   const selectedAudience = audiences.find(a => a.value === audience)
@@ -38,11 +47,16 @@ export function EmailCampaignView() {
     if (!subject || !body) { toast.error("Subject and body are required"); return }
     setSending(true)
     try {
-      // In production, this calls /api/admin/email-campaign which uses Hostinger SMTP
-      await new Promise(r => setTimeout(r, 1500))
-      toast.success(`Campaign sent to ${selectedAudience?.count} recipients via Hostinger SMTP!`)
+      // Real campaign send via /api/admin/email-campaign (SMTP + EmailLog)
+      const res = await api<{ sent: number; failed: number; total: number }>("/api/admin/email-campaign", {
+        method: "POST",
+        body: JSON.stringify({ subject, body, audience }),
+      })
+      toast.success(`Campaign sent — ${res.sent} delivered, ${res.failed} failed (${res.total} recipients)`)
       setSubject(""); setBody("")
-    } catch { toast.error("Failed to send campaign") }
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to send campaign")
+    }
     finally { setSending(false) }
   }
 
