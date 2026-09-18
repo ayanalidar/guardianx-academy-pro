@@ -8,10 +8,15 @@
  * changes (with lazy chunks loaded by ViewRouter on first visit), we show
  * the bar during the transition window so navigation always FEELS tracked:
  *
- *   view change → bar animates to ~85% over 500ms → completes & fades
+ *   view change → bar animates to ~85% over 300ms → completes & fades
  *
  * Also listens to `guardianx-navigate` (fired by AppRoot/store) and
  * popstate (browser back/forward). Honors prefers-reduced-motion.
+ *
+ * Timings are tuned for the preloaded-router era: chunks are warmed by
+ * view-preloader.ts, so views usually render in <50ms and the bar
+ * completes at 380ms — it signals the swap without lingering after the
+ * content is already visible.
  */
 
 import * as React from "react"
@@ -34,11 +39,11 @@ export function RouteProgress() {
     setKey((k) => k + 1)
     setPhase("loading")
     setProgress(18)
-    timers.current.push(setTimeout(() => setProgress(55), 120))
-    timers.current.push(setTimeout(() => setProgress(82), 320))
+    timers.current.push(setTimeout(() => setProgress(55), 90))
+    timers.current.push(setTimeout(() => setProgress(82), 220))
     // Views render quickly after the store swap; complete shortly after.
-    timers.current.push(setTimeout(() => { setProgress(100); setPhase("done") }, 650))
-    timers.current.push(setTimeout(() => { setPhase("idle"); setProgress(0) }, 1000))
+    timers.current.push(setTimeout(() => { setProgress(100); setPhase("done") }, 380))
+    timers.current.push(setTimeout(() => { setPhase("idle"); setProgress(0) }, 620))
   }, [])
 
   // Every real view change (including the first mount) starts the bar.
@@ -73,7 +78,7 @@ export function RouteProgress() {
         )}
         style={{
           width: `${progress}%`,
-          transition: "width 420ms cubic-bezier(0.22, 1, 0.36, 1), opacity 250ms ease",
+          transition: "width 280ms cubic-bezier(0.22, 1, 0.36, 1), opacity 200ms ease",
         }}
       />
     </div>

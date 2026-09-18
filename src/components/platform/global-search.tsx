@@ -4,7 +4,7 @@
  * GlobalSearch → full ⌘K Command Palette (v2).
  *
  * Upgraded from a search-only dropdown to a jump-to-anything palette:
- *   - Empty query: quick actions (theme, sign in/out) + role-aware
+ *   - Empty query: quick actions (sign in/out) + role-aware
  *     navigation commands + public pages.
  *   - Query ≥ 2 chars: live results from GET /api/search grouped by type
  *     (courses / instructors / events / paths / labs), alongside matching
@@ -19,11 +19,10 @@
 
 import * as React from "react"
 import { useQuery } from "@tanstack/react-query"
-import { useTheme } from "next-themes"
 import { signOut, useSession } from "next-auth/react"
 import {
   BookOpen, Users, Calendar, Route, FlaskConical, Search, Loader2,
-  Sun, Moon, LogIn, LogOut, ArrowRight, GraduationCap, LayoutDashboard,
+  LogIn, LogOut, ArrowRight, GraduationCap, LayoutDashboard,
 } from "lucide-react"
 import { useAppStore, type View } from "@/store/app-store"
 import { navForRole, PUBLIC_NAV, type NavItem } from "@/lib/nav-data"
@@ -71,7 +70,6 @@ export function GlobalSearch({ className, variant = "input" }: GlobalSearchProps
   const { navigate } = useAppStore()
   const { data: session } = useSession()
   const { user } = useUser()
-  const { theme, setTheme } = useTheme()
   const [open, setOpen] = React.useState(false)
   const [query, setQuery] = React.useState("")
   const [debounced, setDebounced] = React.useState("")
@@ -131,9 +129,6 @@ export function GlobalSearch({ className, variant = "input" }: GlobalSearchProps
   const runCommand = React.useCallback((cmd: CommandId) => {
     setOpen(false)
     switch (cmd) {
-      case "toggle-theme":
-        setTheme(theme === "dark" ? "light" : "dark")
-        break
       case "sign-out":
         signOut({ callbackUrl: "/" })
         break
@@ -141,7 +136,7 @@ export function GlobalSearch({ className, variant = "input" }: GlobalSearchProps
         navigate({ name: "login" })
         break
     }
-  }, [setTheme, theme, navigate])
+  }, [navigate])
 
   /* ---------- hit navigation (same mapping as v1) ---------- */
   function navigateHit(type: (typeof RESULT_GROUPS)[number]["key"], item: any) {
@@ -273,10 +268,6 @@ export function GlobalSearch({ className, variant = "input" }: GlobalSearchProps
 
           {/* ---- quick actions ---- */}
           <CommandGroup heading="Actions">
-            <CommandItem value="toggle theme dark light appearance" onSelect={() => runCommand("toggle-theme")}>
-              {theme === "dark" ? <Sun className="size-4 text-amber-300" aria-hidden /> : <Moon className="size-4 text-cyan-300" aria-hidden />}
-              <span>Switch to {theme === "dark" ? "light" : "dark"} theme</span>
-            </CommandItem>
             {authed ? (
               <CommandItem value="sign out logout" onSelect={() => runCommand("sign-out")}>
                 <LogOut className="size-4 text-rose-300" aria-hidden />
@@ -332,4 +323,4 @@ export function GlobalSearch({ className, variant = "input" }: GlobalSearchProps
 }
 
 /* keep a stable command-id union for future additions */
-type CommandId = "toggle-theme" | "sign-out" | "sign-in"
+type CommandId = "sign-out" | "sign-in"

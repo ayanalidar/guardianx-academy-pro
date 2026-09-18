@@ -538,7 +538,7 @@ export function CourseCatalogView() {
                     ["Rating", (c: CourseItem) => `★ ${c.rating} / 5`],
                     ["Students", (c: CourseItem) => c.studentsCount.toLocaleString()],
                     ["Certification", (c: CourseItem) => c.certBody || "Self-paced"],
-                    ["Price", (c: CourseItem) => (c.price > 0 ? `$${c.price}` : "FREE")],
+                    ["Price", (c: CourseItem) => (c.price > 0 ? `₹${c.price.toLocaleString("en-IN")}` : "FREE")],
                     ["Instructor", (c: CourseItem) => c.instructor.name],
                   ] as Array<[string, (c: CourseItem) => string]>).map(([label, get]) => (
                     <tr key={label} className="odd:bg-muted/20">
@@ -729,7 +729,7 @@ function FeaturedCourse({ course }: { course: CourseItem }) {
           <FeaturedMeta
             icon={Tag}
             label="Price"
-            value={course.price && course.price > 0 ? `$${course.price}` : "Free"}
+            value={course.price && course.price > 0 ? `₹${course.price.toLocaleString("en-IN")}` : "Free"}
             highlight
           />
         </div>
@@ -832,7 +832,7 @@ function CourseCard({
                 ? "bg-amber-500/15 border-amber-500/40 text-amber-200"
                 : "bg-emerald-500/15 border-emerald-500/40 text-emerald-200"
             )}>
-              {course.price && course.price > 0 ? `$${course.price}` : "FREE"}
+              {course.price && course.price > 0 ? `₹${course.price.toLocaleString("en-IN")}` : "FREE"}
             </span>
           </div>
         </div>
@@ -1011,7 +1011,7 @@ function CourseListRow({
           "hidden sm:inline-flex items-center px-2 py-0.5 rounded border text-xs font-mono font-semibold",
           course.price > 0 ? "bg-amber-500/15 border-amber-500/40 text-amber-200" : "bg-emerald-500/15 border-emerald-500/40 text-emerald-200",
         )}>
-          {course.price > 0 ? `$${course.price}` : "FREE"}
+          {course.price > 0 ? `₹${course.price.toLocaleString("en-IN")}` : "FREE"}
         </span>
         {onToggleCompare && (
           <button

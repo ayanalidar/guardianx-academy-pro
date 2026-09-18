@@ -71,7 +71,6 @@ const PUBLIC_API_ROUTES = new Set<string>([
   "/api/grc",
   "/api/ranks",
   "/api/contact",
-  "/api/currency-rates",
   "/api/subscription-plans",
   "/api/affiliate/track",
   "/api/referral/track",

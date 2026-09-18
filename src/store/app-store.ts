@@ -143,7 +143,7 @@ export const useAppStore = create<AppState>((set) => ({
       // Push the new view into the URL as a REAL path (no more `#/hash`
       // URLs) so the address bar updates and the back button works.
       pushViewToUrl(view)
-      window.scrollTo({ top: 0, behavior: "smooth" })
+      window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior })
       // Dispatch a custom event for components that might not re-render
       window.dispatchEvent(new CustomEvent("guardianx-navigate", { detail: view }))
     }
@@ -185,7 +185,7 @@ if (typeof window !== "undefined") {
     if (JSON.stringify(next) !== JSON.stringify(current)) {
       useAppStore.setState({ view: next, sidebarOpen: false })
       window.dispatchEvent(new CustomEvent("guardianx-navigate", { detail: next }))
-      window.scrollTo({ top: 0, behavior: "smooth" })
+      window.scrollTo({ top: 0, behavior: "instant" as ScrollBehavior })
     }
   }
 

@@ -12,7 +12,9 @@
  *       logged-out + protected   → AuthScreen (remembers pendingView)
  *       logged-in + public       → PublicPageShell
  *       logged-in + app view     → AppShell (sidebar)
- *   - Re-fetches the session on every navigation (post-login flow).
+ *   - Re-fetches the session only when we have none (post-login flow).
+ *     Per-tap session refetches were removed: each one added a serverless
+ *     roundtrip to every navigation.
  *
  * `initialView` is passed by the bridge page for deep links; the root page
  * omits it and hydrates from the URL instead.
@@ -26,6 +28,7 @@ import { ErrorBoundary } from "@/components/platform/error-boundary"
 import { ViewRouter } from "@/components/platform/view-router"
 import { useAppStore, type View } from "@/store/app-store"
 import { hashToView, replaceViewInUrl, pathToView, PUBLIC_VIEWS } from "@/lib/url-router"
+import { startIdlePreload, attachIntentPrefetch } from "@/lib/view-preloader"
 
 export function AppRoot({ initialView }: { initialView?: View }) {
   const { view, pendingView, setPendingView } = useAppStore()
@@ -33,23 +36,44 @@ export function AppRoot({ initialView }: { initialView?: View }) {
   const [sessionChecked, setSessionChecked] = React.useState(false)
   const [, forceRender] = React.useState(0)
 
-  // Listen for navigation events — re-fetch the session after every navigate.
-  // This is critical for the post-login flow: signIn() sets the session cookie,
-  // then auth-screen calls navigate({name:"dashboard"}); without re-fetching
-  // the session here, the root still thinks session=null and bounces back to
-  // the AuthScreen. Re-fetching on the navigate event ensures the session
-  // state is fresh right before we decide which shell to render.
+  // Mirror of `session` readable from event handlers (stale-closure safe)
+  // plus a throttle timestamp so rapid navigation never spams the endpoint.
+  const sessionRef = React.useRef<any>(null)
+  const lastSessionFetchAt = React.useRef(0)
+
+  /** Fetch the session once, unless one is already known or we fetched
+   *  within the last 5s. `force` bypasses both guards. */
+  const fetchSession = React.useCallback((force = false) => {
+    const now = Date.now()
+    if (!force && (sessionRef.current || now - lastSessionFetchAt.current < 5000)) return
+    lastSessionFetchAt.current = now
+    fetch("/api/auth/session", { credentials: "include" })
+      .then(r => r.json())
+      .then(data => {
+        const next = data?.user ? data : null
+        sessionRef.current = next
+        setSession(next)
+        setSessionChecked(true)
+      })
+      .catch(() => {
+        sessionRef.current = null
+        setSession(null)
+        setSessionChecked(true)
+      })
+  }, [])
+
+  // Listen for navigation events. Re-check the session ONLY when we don't
+  // already have one — that is exactly the post-login flow (signIn() sets
+  // the cookie, then auth-screen calls navigate()). Logged-in taps no
+  // longer pay a serverless roundtrip per navigation.
   React.useEffect(() => {
     const handler = () => {
       forceRender((v: number) => v + 1)
-      fetch("/api/auth/session", { credentials: "include" })
-        .then(r => r.json())
-        .then(data => { setSession(data?.user ? data : null); setSessionChecked(true) })
-        .catch(() => { /* keep existing session state */ })
+      fetchSession()
     }
     window.addEventListener("guardianx-navigate", handler)
     return () => window.removeEventListener("guardianx-navigate", handler)
-  }, [forceRender])
+  }, [fetchSession])
 
   // Hydrate the view from the URL after mount. Handles three cases:
   //   1. Legacy hash URL (`/#/skill-assessments`) → rewrite the address bar
@@ -103,15 +127,20 @@ export function AppRoot({ initialView }: { initialView?: View }) {
     }
   }, [])
 
-  // Check session via fetch instead of useSession hook (avoids CLIENT_FETCH_ERROR blocking).
-  // Re-runs whenever the view name changes so that after a successful login +
-  // navigate(), the session state is refreshed before the shell decision.
+  // Check the session ONCE on mount (via fetch instead of the useSession
+  // hook — avoids CLIENT_FETCH_ERROR blocking). Post-login refreshes are
+  // handled by the navigate listener above; sign-out does a full reload.
   React.useEffect(() => {
-    fetch("/api/auth/session", { credentials: "include" })
-      .then(r => r.json())
-      .then(data => { setSession(data?.user ? data : null); setSessionChecked(true) })
-      .catch(() => { setSession(null); setSessionChecked(true) })
-  }, [view.name])
+    fetchSession()
+  }, [fetchSession])
+
+  // Warm every view chunk during idle time + prefetch on hover/touch
+  // intent. Together they make taps render instantly instead of paying
+  // a chunk-download roundtrip on first visit to each view.
+  React.useEffect(() => {
+    startIdlePreload()
+    return attachIntentPrefetch()
+  }, [])
 
   // Force re-render when view changes
   React.useEffect(() => {

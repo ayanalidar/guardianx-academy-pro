@@ -7,13 +7,12 @@ import {
   Brain,
   FileText, School, Building, Landmark, ShieldCheck, Award, GraduationCap,
   ExternalLink,
-  TrendingUp, Mail, Menu, ChevronDown, Sun, Moon, LogIn,
+  TrendingUp, Mail, Menu, ChevronDown, LogIn,
   CalendarCheck, Terminal, Shield, FileBadge, Users,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
-import { useTheme } from "next-themes"
 import { cn } from "@/lib/utils"
 import { useAppStore, type View } from "@/store/app-store"
 import { viewToPath } from "@/lib/url-router"
@@ -28,7 +27,7 @@ import { GlobalSearch } from "@/components/platform/global-search"
    - Desktop (lg+): top-level group buttons reveal a shared
      glass-strong mega panel with 2-column item grid
    - Mobile: Sheet + Accordion with the same items vertically
-   - Logo (left) → Mega menu (center) → Theme/Login/Hamburger (right)
+   - Logo (left) → Mega menu (center) → Login/Hamburger (right)
    ============================================================ */
 
 type IconType = React.ComponentType<{ className?: string }>
@@ -241,9 +240,7 @@ const MEGA_MENU_GROUPS: MegaMenuGroup[] = [
 ]
 
 export function PublicHeader() {
-  const { theme, setTheme } = useTheme()
   const { navigate, view } = useAppStore()
-  const [mounted, setMounted] = React.useState(false)
   const [scrolled, setScrolled] = React.useState(false)
   const [hidden, setHidden] = React.useState(false)
   const [openMenuId, setOpenMenuId] = React.useState<string | null>(null)
@@ -263,8 +260,6 @@ export function PublicHeader() {
     }
     lastScroll.current = latest
   })
-
-  React.useEffect(() => setMounted(true), [])
 
   // Cleanup close timer on unmount
   React.useEffect(() => () => {
@@ -443,43 +438,6 @@ export function PublicHeader() {
 
         {/* ===== Right actions ===== */}
         <div className="flex items-center gap-2 shrink-0">
-          {mounted && (
-            <motion.button
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-              className="h-8 w-8 rounded-lg flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-all"
-              aria-label="Toggle theme"
-            >
-              <AnimatePresence mode="wait">
-                {theme === "dark" ? (
-                  <motion.div
-                    key="sun"
-                    initial={{ rotate: -90, opacity: 0 }}
-                    animate={{ rotate: 0, opacity: 1 }}
-                    exit={{ rotate: 90, opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <Sun className="h-4 w-4" />
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="moon"
-                    initial={{ rotate: 90, opacity: 0 }}
-                    animate={{ rotate: 0, opacity: 1 }}
-                    exit={{ rotate: -90, opacity: 0 }}
-                    transition={{ duration: 0.2 }}
-                  >
-                    <Moon className="h-4 w-4" />
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </motion.button>
-          )}
-
-          {/* Currency toggle */}
-          <CurrencyToggle />
-
           <a
             href="/login"
             onClick={(e) => handleLinkClick(e, { name: "login" })}
@@ -653,75 +611,5 @@ export function PublicHeader() {
         </AnimatePresence>
       </motion.div>
     </motion.header>
-  )
-}
-
-// ============================================================
-// CurrencyToggle — lets the user switch display currency
-// ============================================================
-function CurrencyToggle() {
-  const [mounted, setMounted] = React.useState(false)
-  const [open, setOpen] = React.useState(false)
-  
-  // Lazy-load the hook only when mounted (avoids SSR issues)
-  const [currency, setCurrency] = React.useState<{ code: string; symbol: string }>({ code: "USD", symbol: "$" })
-  
-  React.useEffect(() => {
-    setMounted(true)
-    import("@/hooks/use-currency").then(({ useCurrency }) => {
-      // Can't call hooks dynamically, so we'll use a simpler approach
-      // Just read from localStorage
-      const stored = localStorage.getItem("guardianx-currency") || "USD"
-      const symbols: Record<string, string> = { INR: "₹", USD: "$", EUR: "€", GBP: "£", AED: "AED ", SGD: "S$", AUD: "A$", CAD: "C$" }
-      setCurrency({ code: stored, symbol: symbols[stored] || "$" })
-    })
-  }, [])
-
-  if (!mounted) return null
-
-  const options = [
-    { code: "INR", symbol: "₹", label: "INR" },
-    { code: "USD", symbol: "$", label: "USD" },
-    { code: "EUR", symbol: "€", label: "EUR" },
-    { code: "GBP", symbol: "£", label: "GBP" },
-    { code: "AED", symbol: "AED", label: "AED" },
-    { code: "SGD", symbol: "S$", label: "SGD" },
-  ]
-
-  return (
-    <div className="relative">
-      <button
-        onClick={() => setOpen(!open)}
-        className="h-8 px-2 rounded-lg flex items-center gap-1 text-xs font-mono text-muted-foreground hover:text-foreground hover:bg-accent/50 transition-all"
-        aria-label="Change currency"
-      >
-        <span>{currency.symbol}</span>
-        <span className="hidden sm:inline">{currency.code}</span>
-        <ChevronDown className="h-3 w-3" />
-      </button>
-      {open && (
-        <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-9 z-50 rounded-lg border border-border/60 bg-popover shadow-lg p-1 min-w-[80px]">
-            {options.map((opt) => (
-              <button
-                key={opt.code}
-                onClick={() => {
-                  localStorage.setItem("guardianx-currency", opt.code)
-                  setCurrency({ code: opt.code, symbol: opt.symbol })
-                  setOpen(false)
-                  // Force a page reload so all prices update
-                  window.location.reload()
-                }}
-                className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-md text-xs hover:bg-accent/60 transition-colors"
-              >
-                <span className="font-mono w-8 text-left">{opt.symbol}</span>
-                <span className="font-mono">{opt.label}</span>
-              </button>
-            ))}
-          </div>
-        </>
-      )}
-    </div>
   )
 }
