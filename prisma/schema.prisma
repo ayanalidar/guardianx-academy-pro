@@ -1936,6 +1936,24 @@ model PlatformSetting {
 }
 
 // ============================================================
+// VerificationToken — one-time tokens for the Email (magic link)
+// login provider (next-auth EmailProvider REQUIRES an adapter
+// that can store these — see src/lib/auth-adapter.ts).
+// ============================================================
+// next-auth stores the token already hashed (HMAC with the auth
+// secret), so rows are safe to keep in the DB. Tokens are single
+// use: useVerificationToken() deletes the row on read. Rows are
+// self-cleaning — expired ones are purged opportunistically when
+// a new token is created.
+model VerificationToken {
+  identifier String   // the email the token was issued for
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ============================================================
 // Referral Program — referral-program-1
 // ============================================================
 // Enrolled students share a unique referral link. When someone
