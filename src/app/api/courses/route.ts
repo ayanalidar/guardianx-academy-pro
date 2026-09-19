@@ -57,21 +57,51 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
     }
   }
 
-  const courses = await db.course.findMany({
-    where,
-    include: {
-      instructor: { select: { id: true, name: true, title: true, avatar: true } },
-      modules: { select: { id: true, lessons: { select: { id: true } } } },
-      _count: { select: { enrollments: true } },
-      ...(includeEnrollments
-        ? { enrollments: { where: { userId }, select: { progress: true, completed: true, lastAccessed: true, enrolledAt: true } } }
-        : {}),
-    },
-    orderBy: enrolledOnly ? { enrollments: { _count: "desc" } } : { studentsCount: "desc" },
-  })
+  // Full query — joins instructor, modules→lessons, enrollment counts. This
+  // is the shape the catalog UI expects, but it requires the CURRENT schema
+  // (studentsCount, course.instructorId, module.lessons relations, …). On
+  // deployments whose database was seeded from an older schema (e.g. Vercel
+  // auto-deploying fresh code against a stale remote DB) Prisma throws
+  // P2022/P2021 and the whole catalog 500s. Instead of a blank page, degrade:
+  // retry with only the core columns every historical schema version has.
+  let courses: any[]
+  let degraded = false
+  try {
+    courses = await db.course.findMany({
+      where,
+      include: {
+        instructor: { select: { id: true, name: true, title: true, avatar: true } },
+        modules: { select: { id: true, lessons: { select: { id: true } } } },
+        _count: { select: { enrollments: true } },
+        ...(includeEnrollments
+          ? { enrollments: { where: { userId }, select: { progress: true, completed: true, lastAccessed: true, enrolledAt: true } } }
+          : {}),
+      },
+      orderBy: enrolledOnly ? { enrollments: { _count: "desc" } } : { studentsCount: "desc" },
+    })
+  } catch {
+    degraded = true
+    courses = await db.course.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        slug: true,
+        title: true,
+        shortName: true,
+        description: true,
+        category: true,
+        level: true,
+        price: true,
+      },
+    })
+  }
 
   const result = courses.map((c) => {
-    const lessonCount = c.modules.reduce((acc, m) => acc + m.lessons.length, 0)
+    // Degraded rows lack modules/lessons/enrollment — never crash the mapper.
+    const lessonCount = Array.isArray(c.modules)
+      ? c.modules.reduce((acc: number, m: any) => acc + (Array.isArray(m?.lessons) ? m.lessons.length : 0), 0)
+      : 0
     const enrollment = includeEnrollments ? (c as any).enrollments?.[0] : null
     return {
       id: c.id,
@@ -81,17 +111,17 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
       description: c.description,
       category: c.category,
       level: c.level,
-      durationHours: c.durationHours,
+      durationHours: c.durationHours ?? 0,
       price: c.price,
-      rating: c.rating,
-      studentsCount: c.studentsCount,
-      color: c.color,
-      thumbnail: c.thumbnail,
-      tags: c.tags,
-      certBody: c.certBody,
-      instructor: c.instructor,
+      rating: c.rating ?? null,
+      studentsCount: c.studentsCount ?? 0,
+      color: c.color ?? "violet",
+      thumbnail: c.thumbnail ?? null,
+      tags: c.tags ?? "",
+      certBody: c.certBody ?? null,
+      instructor: c.instructor ?? null,
       lessonCount,
-      moduleCount: c.modules.length,
+      moduleCount: Array.isArray(c.modules) ? c.modules.length : 0,
       enrollment: enrollment
         ? {
             progress: enrollment.progress,
@@ -103,5 +133,5 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
     }
   })
 
-  return NextResponse.json({ courses: result })
+  return NextResponse.json({ courses: result, degraded })
 })

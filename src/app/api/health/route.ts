@@ -66,7 +66,7 @@ async function readWatchdog(): Promise<Record<string, any> | null> {
   }
 }
 
-export async function GET() {
+export async function GET(req: Request) {
   const payload: Record<string, any> = {
     ok: true,
     service: "guardianx-academy",
@@ -89,6 +89,39 @@ export async function GET() {
   } catch (e: any) {
     payload.ok = false
     payload.db = { ok: false, error: String(e?.message ?? e).slice(0, 200) }
+  }
+
+  // ?probe=courses — deep diagnostic: run the EXACT query /api/courses uses
+  // (take 1) and surface the raw Prisma error. Purpose: when production code
+  // (auto-deployed latest) meets an older database schema, the catalog 500s
+  // with a generic "Internal server error" and the real cause only shows in
+  // host logs. This probe makes the cause visible from the outside so the
+  // fix (schema sync) can be targeted. Prisma error codes: P2021 table
+  // missing, P2022 column missing, P2023 relation issues.
+  const url = new URL(req.url)
+  if (url.searchParams.get("probe") === "courses") {
+    try {
+      const t0 = Date.now()
+      const rows = await db.course.findMany({
+        where: { published: true },
+        include: {
+          instructor: { select: { id: true, name: true, title: true, avatar: true } },
+          modules: { select: { id: true, lessons: { select: { id: true } } } },
+          _count: { select: { enrollments: true } },
+        },
+        orderBy: { studentsCount: "desc" },
+        take: 1,
+      })
+      payload.probe = { query: "courses", ok: true, ms: Date.now() - t0, rows: rows.length }
+    } catch (e: any) {
+      payload.probe = {
+        query: "courses",
+        ok: false,
+        name: e?.name ?? null,
+        code: e?.code ?? null,
+        message: String(e?.message ?? e).slice(0, 500),
+      }
+    }
   }
 
   payload.watchdog = await readWatchdog()
