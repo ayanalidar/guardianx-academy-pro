@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { motion, useInView, AnimatePresence } from "framer-motion"
+import { motion, useInView, AnimatePresence, useScroll, useSpring } from "framer-motion"
 import { api } from "@/lib/api"
 import { parseCourseList } from "@/lib/course-lists"
 import { useAppStore } from "@/store/app-store"
@@ -156,6 +156,113 @@ function SectionLabel({
       {index && <span className="text-muted-foreground/50">{index} - </span>}
       {children}
     </p>
+  )
+}
+
+// ============================================================
+// Helper: HERO_ITEM — shared stagger variant for the hero column
+// ============================================================
+const HERO_ITEM: any = {
+  hidden: { opacity: 0, y: 26 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.65, ease: [0.22, 1, 0.36, 1] } },
+}
+
+// ============================================================
+// Helper: Reveal — scroll-triggered entrance (fade + rise)
+// ============================================================
+function Reveal({
+  children,
+  delay = 0,
+  y = 24,
+  className,
+}: {
+  children: React.ReactNode
+  delay?: number
+  y?: number
+  className?: string
+}) {
+  return (
+    <motion.div
+      className={className}
+      initial={{ opacity: 0, y }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.12 }}
+      transition={{ duration: 0.7, delay, ease: [0.22, 1, 0.36, 1] }}
+    >
+      {children}
+    </motion.div>
+  )
+}
+
+// ============================================================
+// Helper: ScrollProgress — fixed reading-progress bar (top of viewport)
+// ============================================================
+function ScrollProgress() {
+  const { scrollYProgress } = useScroll()
+  const scaleX = useSpring(scrollYProgress, { stiffness: 120, damping: 30, restDelta: 0.001 })
+  return (
+    <motion.div
+      aria-hidden
+      className="fixed top-0 left-0 right-0 h-[2px] z-[70] origin-left bg-gradient-to-r from-violet-500 via-fuchsia-400 to-cyan-400 pointer-events-none"
+      style={{ scaleX }}
+    />
+  )
+}
+
+// ============================================================
+// Helper: StickySectionNav — in-page anchor nav with scroll-spy.
+// Sticks under the auto-hiding fixed header (z-50); sits below it.
+// ============================================================
+const SECTION_NAV_ITEMS = [
+  { id: "gx-overview", label: "Overview" },
+  { id: "gx-skills", label: "Skills" },
+  { id: "gx-curriculum", label: "Curriculum" },
+  { id: "gx-instructor", label: "Instructor" },
+  { id: "gx-reviews", label: "Reviews" },
+]
+
+function StickySectionNav({ items }: { items: { id: string; label: string }[] }) {
+  const [active, setActive] = React.useState(items[0]?.id ?? "")
+
+  React.useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) if (e.isIntersecting) setActive(e.target.id)
+      },
+      { rootMargin: "-25% 0px -65% 0px" }
+    )
+    for (const { id } of items) {
+      const el = document.getElementById(id)
+      if (el) observer.observe(el)
+    }
+    return () => observer.disconnect()
+  }, [items])
+
+  return (
+    <div className="sticky top-0 z-40 border-b border-border/60 bg-background/85 backdrop-blur-xl">
+      <div className="mx-auto max-w-[1400px] px-4 sm:px-8 lg:px-10 flex items-center gap-1 overflow-x-auto scrollbar-thin">
+        {items.map(({ id, label }, i) => (
+          <button
+            key={id}
+            onClick={() => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" })}
+            className={cn(
+              "relative shrink-0 px-4 py-3.5 text-[11px] font-mono tracking-[0.18em] uppercase transition-colors whitespace-nowrap",
+              active === id ? "text-violet-200" : "text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <span className="text-[9px] text-muted-foreground/50 mr-1.5">{String(i + 1).padStart(2, "0")}</span>
+            {label}
+            {active === id && (
+              <motion.span
+                layoutId="gx-section-nav-underline"
+                className="absolute bottom-0 left-3 right-3 h-[2px] bg-gradient-to-r from-violet-500 to-cyan-400 rounded-full"
+                transition={{ type: "spring", stiffness: 380, damping: 32 }}
+              />
+            )}
+          </button>
+        ))}
+      </div>
+    </div>
   )
 }
 
@@ -386,7 +493,7 @@ export function CourseDetailView() {
     return (
       <div className="relative min-h-screen">
         <div className="absolute inset-0 bg-mesh opacity-40 pointer-events-none" />
-        <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-8 space-y-6">
+        <div className="relative z-10 mx-auto max-w-[1400px] px-4 sm:px-8 lg:px-10 py-6 lg:py-8 space-y-6">
           <Skeleton className="h-[500px] w-full rounded-3xl" />
           <Skeleton className="h-24 w-full rounded-2xl" />
           <div className="grid lg:grid-cols-3 gap-6">
@@ -487,12 +594,14 @@ export function CourseDetailView() {
       {/* Atmospheric background */}
       <div className="absolute inset-0 bg-mesh opacity-40 pointer-events-none" />
       <div className="absolute inset-0 bg-grid opacity-15 pointer-events-none" />
+      <ScrollProgress />
 
       <div className="relative z-10">
         {/* ====================================================
             1. HERO — cinematic course introduction (8/4 split)
             ==================================================== */}
         <section className="relative overflow-hidden">
+          {/* Cinematic backdrop */}
           <div className="absolute inset-0">
             <img
               src={getCourseImage(course)}
@@ -502,8 +611,31 @@ export function CourseDetailView() {
             <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/80 to-background" />
             <div className="absolute inset-0 bg-grid opacity-10" />
           </div>
-          <div className="absolute top-1/3 -right-40 w-[600px] h-[600px] bg-violet-600/10 blur-[140px] rounded-full" />
-          <div className="absolute top-1/2 -left-40 w-[500px] h-[500px] bg-cyan-600/5 blur-[140px] rounded-full" />
+          <motion.div
+            aria-hidden
+            className="absolute top-1/4 -right-40 w-[600px] h-[600px] bg-violet-600/15 blur-[140px] rounded-full"
+            animate={{ x: [0, -60, 0], y: [0, 40, 0] }}
+            transition={{ duration: 18, repeat: Infinity, ease: "easeInOut" }}
+          />
+          <motion.div
+            aria-hidden
+            className="absolute top-1/2 -left-40 w-[500px] h-[500px] bg-cyan-500/10 blur-[140px] rounded-full"
+            animate={{ x: [0, 70, 0], y: [0, -30, 0] }}
+            transition={{ duration: 22, repeat: Infinity, ease: "easeInOut" }}
+          />
+          <motion.div
+            aria-hidden
+            className="absolute bottom-0 left-1/3 w-[420px] h-[420px] bg-fuchsia-600/10 blur-[130px] rounded-full"
+            animate={{ x: [0, 40, 0], y: [0, -50, 0] }}
+            transition={{ duration: 26, repeat: Infinity, ease: "easeInOut" }}
+          />
+          {/* Scanline sweep */}
+          <motion.div
+            aria-hidden
+            className="absolute inset-x-0 h-24 bg-gradient-to-b from-transparent via-violet-400/[0.05] to-transparent pointer-events-none"
+            animate={{ top: ["-12%", "112%"] }}
+            transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+          />
 
           {/* Ghost shortName — giant outline text */}
           <div
@@ -513,20 +645,28 @@ export function CourseDetailView() {
             {course.shortName}
           </div>
 
-          <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 lg:py-6 lg:py-8">
+          <div className="relative z-10 mx-auto max-w-[1400px] px-4 sm:px-8 lg:px-10 py-10 lg:py-14">
             {/* Back to catalog */}
-            <button
+            <motion.button
+              initial={{ opacity: 0, x: -12 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5 }}
               onClick={() => navigate({ name: "catalog" })}
-              className="group inline-flex items-center gap-2 text-xs font-mono text-muted-foreground hover:text-violet-300 transition-colors tracking-[0.2em] mb-6"
+              className="group inline-flex items-center gap-2 text-xs font-mono text-muted-foreground hover:text-violet-300 transition-colors tracking-[0.2em] mb-8"
             >
               <ChevronLeft className="h-3.5 w-3.5 transition-transform group-hover:-translate-x-1" />
               <span className="uppercase">Back to Catalog</span>
-            </button>
+            </motion.button>
 
-            <div className="grid lg:grid-cols-12 gap-6 items-start">
+            <div className="grid lg:grid-cols-12 gap-8 lg:gap-12 items-start">
               {/* Hero text — col 8 */}
-              <div className="lg:col-span-8">
-                <div className="flex items-center gap-2 mb-6 flex-wrap">
+              <motion.div
+                className="lg:col-span-7 xl:col-span-8"
+                initial="hidden"
+                animate="show"
+                variants={{ hidden: {}, show: { transition: { staggerChildren: 0.09, delayChildren: 0.1 } } }}
+              >
+                <motion.div variants={HERO_ITEM} className="flex items-center gap-2 mb-6 flex-wrap">
                   <Badge variant="outline" className={cn("text-[10px] font-mono tracking-[0.3em] uppercase", LEVEL_COLORS[course.level])}>
                     {course.level}
                   </Badge>
@@ -543,23 +683,47 @@ export function CourseDetailView() {
                       <CheckCircle2 className="h-2.5 w-2.5 mr-1" /> ENROLLED
                     </Badge>
                   )}
-                </div>
+                </motion.div>
 
-                <p className="text-[10px] font-mono text-violet-300 tracking-[0.3em] mb-4">
+                <motion.p variants={HERO_ITEM} className="text-[10px] font-mono text-violet-300 tracking-[0.3em] mb-4">
                   GUARDIANX · {course.shortName}
-                </p>
+                </motion.p>
 
-                <h1 className="text-[clamp(2.5rem,6vw,5.5rem)] font-bold leading-[0.92] tracking-[-0.04em] text-balance mb-6">
+                <motion.h1
+                  variants={HERO_ITEM}
+                  className="text-[clamp(2.5rem,5.5vw,5.25rem)] font-bold leading-[0.94] tracking-[-0.04em] text-balance mb-6"
+                >
                   {course.title}
-                </h1>
+                </motion.h1>
 
-                <p className="text-lg lg:text-xl text-muted-foreground max-w-2xl leading-relaxed text-balance">
+                <motion.p variants={HERO_ITEM} className="text-lg lg:text-xl text-muted-foreground max-w-2xl leading-relaxed text-balance">
                   {course.description}
-                </p>
+                </motion.p>
+
+                {/* Meta chips — live-animated key numbers */}
+                <motion.div variants={HERO_ITEM} className="mt-7 flex items-center gap-2.5 flex-wrap">
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/25 bg-amber-400/5 px-3.5 py-1.5 text-xs font-medium text-amber-200">
+                    <Star className="h-3.5 w-3.5 text-amber-300 fill-amber-300" />
+                    {course.rating != null ? <AnimatedNumber value={Number(course.rating)} decimals={1} /> : "—"}
+                    <span className="text-amber-200/50">/ 5</span>
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-violet-400/25 bg-violet-400/5 px-3.5 py-1.5 text-xs font-medium text-violet-200">
+                    <Users className="h-3.5 w-3.5 text-violet-300" />
+                    <AnimatedNumber value={course.studentsCount ?? 0} suffix=" learners" />
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-cyan-400/25 bg-cyan-400/5 px-3.5 py-1.5 text-xs font-medium text-cyan-200">
+                    <Clock className="h-3.5 w-3.5 text-cyan-300" />
+                    {course.durationHours ?? 0}h content
+                  </span>
+                  <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-400/25 bg-emerald-400/5 px-3.5 py-1.5 text-xs font-medium text-emerald-200">
+                    <BookOpen className="h-3.5 w-3.5 text-emerald-300" />
+                    {courseModules.length} modules · {totalLessons} lessons
+                  </span>
+                </motion.div>
 
                 {/* Instructor info inline */}
-                <div className="mt-5 flex items-center gap-3">
-                  <Avatar className="h-10 w-10 border border-violet-500/30">
+                <motion.div variants={HERO_ITEM} className="mt-6 flex items-center gap-3">
+                  <Avatar className="h-11 w-11 border border-violet-500/30 ring-2 ring-violet-500/10">
                     <AvatarFallback className="bg-violet-500/10 text-violet-300 text-xs font-mono">
                       {(course.instructor?.name ?? "GuardianX Faculty").split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
                     </AvatarFallback>
@@ -571,13 +735,20 @@ export function CourseDetailView() {
                       {course.instructor?.title && <span className="text-muted-foreground font-normal"> · {course.instructor.title}</span>}
                     </p>
                   </div>
-                </div>
-              </div>
+                </motion.div>
+              </motion.div>
 
               {/* Hero right column — enroll / progress card */}
-              <div className="lg:col-span-4" ref={enrollCardRef}>
-                <Card className="relative overflow-hidden border-border/60 bg-card/50 backdrop-blur-xl p-6">
-                  <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-violet-500/50 to-transparent" />
+              <motion.div
+                className="lg:col-span-5 xl:col-span-4"
+                initial={{ opacity: 0, y: 30 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.75, delay: 0.4, ease: [0.22, 1, 0.36, 1] }}
+                ref={enrollCardRef}
+              >
+                <Card className="relative overflow-hidden border-violet-500/20 bg-card/60 backdrop-blur-xl p-6 shadow-[0_0_80px_-24px_rgba(139,92,246,0.45)] transition-shadow duration-500 hover:shadow-[0_0_110px_-20px_rgba(139,92,246,0.6)]">
+                  <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-violet-500/60 to-transparent" />
+                  <div className="absolute -top-16 -right-16 w-40 h-40 bg-violet-500/10 blur-3xl rounded-full pointer-events-none" />
 
                   {/* Text prerequisites — real, admin-authored (Course Studio) */}
                   {prerequisiteTexts.length > 0 && (
@@ -686,10 +857,15 @@ export function CourseDetailView() {
                     </div>
                   )}
                 </Card>
-              </div>
+              </motion.div>
             </div>
           </div>
         </section>
+
+        {/* ====================================================
+            1b. STICKY SECTION NAV — scroll-spy anchor bar
+            ==================================================== */}
+        <StickySectionNav items={SECTION_NAV_ITEMS} />
 
         {/* ====================================================
             2. STATS HERO BAR — 4 animated stat tiles with count-up
@@ -697,44 +873,50 @@ export function CourseDetailView() {
         <StatsHeroBar course={course} />
 
         {/* ====================================================
-            3. METADATA STRIP — 7-column grid (existing)
+            3. METADATA STRIP — animated 7-column grid
             ==================================================== */}
         <section className="border-y border-border/60 bg-background/40 backdrop-blur">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
-            <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 lg:gap-4">
-              {[
-                { label: "CATEGORY", value: course.category, icon: Layers },
-                { label: "LEVEL", value: course.level, icon: Target },
-                { label: "DURATION", value: `${course.durationHours ?? 0}h`, icon: Clock },
-                { label: "RATING", value: course.rating != null ? Number(course.rating).toFixed(1) : "—", icon: Star },
-                { label: "STUDENTS", value: (course.studentsCount ?? 0).toLocaleString(), icon: Users },
-                { label: "MODULES", value: courseModules.length, icon: BookOpen },
-                { label: "LESSONS", value: totalLessons, icon: FileText },
-              ].map((m, i) => (
-                <div key={m.label} className="group rounded-xl border border-border/40 bg-card/40 p-3 lg:p-4 hover:border-violet-500/30 transition-all">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="text-[9px] font-mono text-muted-foreground/50 tracking-[0.2em]">
-                      {String(i + 1).padStart(2, "0")}
-                    </span>
-                    <m.icon className="h-3 w-3 text-violet-300/70" />
+          <div className="mx-auto max-w-[1400px] px-4 sm:px-8 lg:px-10 py-6 lg:py-8">
+            <Reveal>
+              <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3 lg:gap-4">
+                {[
+                  { label: "CATEGORY", icon: Layers, value: course.category },
+                  { label: "LEVEL", icon: Target, value: course.level },
+                  { label: "DURATION", icon: Clock, value: <AnimatedNumber value={course.durationHours ?? 0} suffix="h" /> },
+                  { label: "RATING", icon: Star, value: course.rating != null ? <AnimatedNumber value={Number(course.rating)} decimals={1} /> : "—" },
+                  { label: "STUDENTS", icon: Users, value: <AnimatedNumber value={course.studentsCount ?? 0} /> },
+                  { label: "MODULES", icon: BookOpen, value: courseModules.length },
+                  { label: "LESSONS", icon: FileText, value: <AnimatedNumber value={totalLessons} /> },
+                ].map((m, i) => (
+                  <div key={m.label} className="group rounded-xl border border-border/40 bg-card/40 p-3 lg:p-4 hover:border-violet-500/40 hover:bg-card/60 hover:-translate-y-0.5 transition-all duration-300">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="text-[9px] font-mono text-muted-foreground/50 tracking-[0.2em]">
+                        {String(i + 1).padStart(2, "0")}
+                      </span>
+                      <m.icon className="h-3 w-3 text-violet-300/70 group-hover:text-violet-300 transition-colors" />
+                    </div>
+                    <div className="text-lg lg:text-2xl font-bold tabular-nums">{m.value}</div>
+                    <div className="text-[10px] font-mono text-muted-foreground tracking-[0.2em] mt-0.5">{m.label}</div>
                   </div>
-                  <div className="text-lg lg:text-2xl font-bold tabular-nums">{m.value}</div>
-                  <div className="text-[10px] font-mono text-muted-foreground tracking-[0.2em] mt-0.5">{m.label}</div>
-                </div>
-              ))}
-            </div>
+                ))}
+              </div>
+            </Reveal>
           </div>
         </section>
 
         {/* ====================================================
             4. WHAT YOU'LL ACHIEVE — visual achievement cards
             ==================================================== */}
-        <AchievementCollection course={course} outcomes={outcomes} whatYouWillLearn={whatYouWillLearn} toolsCovered={toolsCovered} careerOutcomes={careerOutcomes} />
+        <div id="gx-overview" className="scroll-mt-14">
+          <AchievementCollection course={course} outcomes={outcomes} whatYouWillLearn={whatYouWillLearn} toolsCovered={toolsCovered} careerOutcomes={careerOutcomes} />
+        </div>
 
         {/* ====================================================
             5. ANIMATED SKILL PROGRESSION CHART (Before vs After)
             ==================================================== */}
-        <SkillProgressionChart tags={course.tags} />
+        <div id="gx-skills" className="scroll-mt-14">
+          <SkillProgressionChart tags={course.tags} />
+        </div>
 
         {/* ====================================================
             6. CAREER PATH INTEGRATION
@@ -744,14 +926,16 @@ export function CourseDetailView() {
         {/* ====================================================
             7. INTERACTIVE CURRICULUM TIMELINE
             ==================================================== */}
-        <CurriculumTimeline
-          course={course}
-          isEnrolled={isEnrolled}
-          lessonProgress={lessonProgress}
-          goLesson={goLesson}
-          totalLessons={totalLessons}
-          completedLessons={completedLessons}
-        />
+        <div id="gx-curriculum" className="scroll-mt-14">
+          <CurriculumTimeline
+            course={course}
+            isEnrolled={isEnrolled}
+            lessonProgress={lessonProgress}
+            goLesson={goLesson}
+            totalLessons={totalLessons}
+            completedLessons={completedLessons}
+          />
+        </div>
 
         {/* ====================================================
             8. IS THIS COURSE RIGHT FOR YOU?
@@ -781,7 +965,9 @@ export function CourseDetailView() {
         {/* ====================================================
             13. INSTRUCTOR SPOTLIGHT CARD
             ==================================================== */}
-        <InstructorSpotlight instructor={course.instructor} navigate={navigate} />
+        <div id="gx-instructor" className="scroll-mt-14">
+          <InstructorSpotlight instructor={course.instructor} navigate={navigate} />
+        </div>
 
         {/* ====================================================
             14. CERTIFICATION EXAM BLUEPRINT
@@ -806,12 +992,14 @@ export function CourseDetailView() {
         {/* ====================================================
             17. SKILLS YOU'LL EARN (TAG CLOUD)
             ==================================================== */}
-        <SkillsTagCloud tags={course.tags} modules={course.modules} />
+        <SkillsTagCloud tags={course.tags} modules={courseModules} />
 
         {/* ====================================================
             REVIEWS — kept from existing implementation
             ==================================================== */}
-        <ReviewsSection courseId={course.id} isEnrolled={isEnrolled} />
+        <div id="gx-reviews" className="scroll-mt-14">
+          <ReviewsSection courseId={course.id} isEnrolled={isEnrolled} />
+        </div>
 
         {/* ====================================================
             18. RELATED COURSES CAROUSEL
@@ -828,9 +1016,10 @@ export function CourseDetailView() {
           <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/80 to-background" />
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[500px] bg-violet-600/10 blur-[140px] rounded-full" />
 
-          <div className="relative z-10 mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center">
-            <p className="text-[10px] font-mono text-violet-300 tracking-[0.3em] mb-6">READY?</p>
-            <h2 className="text-[clamp(2.5rem,6vw,5rem)] font-bold leading-[0.92] tracking-[-0.04em] text-balance mb-6">
+          <Reveal>
+            <div className="relative z-10 mx-auto max-w-4xl px-4 sm:px-6 lg:px-8 text-center">
+              <p className="text-[10px] font-mono text-violet-300 tracking-[0.3em] mb-6">READY?</p>
+              <h2 className="text-[clamp(2.5rem,6vw,5rem)] font-bold leading-[0.92] tracking-[-0.04em] text-balance mb-6">
               {isEnrolled ? (
                 <>Continue your <span className="text-gradient-premium">journey.</span></>
               ) : (
@@ -917,7 +1106,8 @@ export function CourseDetailView() {
                 <Linkedin className="h-3 w-3 mr-1.5" /> LinkedIn
               </Button>
             </div>
-          </div>
+            </div>
+          </Reveal>
         </section>
       </div>
 
@@ -1193,7 +1383,7 @@ function StatsHeroBar({ course }: { course: any }) {
 
   return (
     <section className="relative -mt-2 pb-6 lg:pb-8">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1400px] px-4 sm:px-8 lg:px-10">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
           {stats.map((s, i) => (
             <motion.div
@@ -1259,7 +1449,7 @@ function AchievementCollection({
   if (whatYouWillLearn.length > 0) {
     return (
       <section className="py-8 lg:py-10 border-t border-border/60">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-[1400px] px-4 sm:px-8 lg:px-10">
           <div className="max-w-2xl mb-6">
             <SectionLabel index="01" className="text-violet-300">OUTCOMES</SectionLabel>
             <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance">
@@ -1364,7 +1554,7 @@ function AchievementCollection({
 
   return (
     <section className="py-8 lg:py-10 border-t border-border/60">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1400px] px-4 sm:px-8 lg:px-10">
         <div className="max-w-2xl mb-6">
           <SectionLabel index="01" className="text-violet-300">OUTCOMES</SectionLabel>
           <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance">
@@ -1416,7 +1606,7 @@ function SkillProgressionChart({ tags }: { tags?: string | null }) {
   if (skills.length === 0) {
     return (
       <section className="py-8 lg:py-10 border-t border-border/60">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-[1400px] px-4 sm:px-8 lg:px-10">
           <SectionLabel index="02" className="text-emerald-300">SKILL PROGRESSION</SectionLabel>
           <p className="text-muted-foreground">Skill progression data available after enrollment.</p>
         </div>
@@ -1435,7 +1625,7 @@ function SkillProgressionChart({ tags }: { tags?: string | null }) {
   return (
     <section className="py-8 lg:py-10 border-t border-border/60 relative overflow-hidden">
       <div className="absolute top-0 right-0 w-[500px] h-[400px] bg-emerald-600/5 blur-[120px] rounded-full" />
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
+      <div className="mx-auto max-w-[1400px] px-4 sm:px-8 lg:px-10 relative">
         <div className="max-w-2xl mb-6">
           <SectionLabel index="02" className="text-emerald-300">SKILL PROGRESSION</SectionLabel>
           <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance">
@@ -1551,7 +1741,7 @@ function CareerPathSection({
   return (
     <section className="py-8 lg:py-10 border-t border-border/60 relative overflow-hidden">
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-violet-600/5 blur-[120px] rounded-full" />
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
+      <div className="mx-auto max-w-[1400px] px-4 sm:px-8 lg:px-10 relative">
         <div className="max-w-2xl mb-6">
           <SectionLabel index="03" className="text-cyan-300">CAREER PATH</SectionLabel>
           <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance">
@@ -1669,7 +1859,7 @@ function CurriculumTimeline({
   const courseModules: any[] = Array.isArray(course.modules) ? course.modules : []
   return (
     <section className="py-8 lg:py-10 border-t border-border/60 relative">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1400px] px-4 sm:px-8 lg:px-10">
         <div className="flex items-end justify-between mb-6 flex-wrap gap-6">
           <div>
             <SectionLabel index="04" className="text-violet-300">CURRICULUM TIMELINE</SectionLabel>
@@ -1853,7 +2043,7 @@ function FitChecklist({ level, category, whoShouldAttend }: { level: string; cat
 
   return (
     <section className="py-8 lg:py-10 border-t border-border/60">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1400px] px-4 sm:px-8 lg:px-10">
         <div className="max-w-2xl mb-6">
           <SectionLabel index="05" className="text-amber-300">FIT CHECK</SectionLabel>
           <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance">
@@ -1938,7 +2128,7 @@ function DifficultyMeter({ durationHours, modules }: { durationHours: number; mo
   return (
     <section className="py-8 lg:py-10 border-t border-border/60 relative overflow-hidden">
       <div className="absolute top-0 right-0 w-[500px] h-[400px] bg-amber-600/5 blur-[120px] rounded-full" />
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
+      <div className="mx-auto max-w-[1400px] px-4 sm:px-8 lg:px-10 relative">
         <div className="max-w-2xl mb-6">
           <SectionLabel index="06" className="text-amber-300">INTENSITY METER</SectionLabel>
           <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance">
@@ -2026,7 +2216,7 @@ function StudentProjectsShowcase({ labs, category }: { labs: any[]; category: st
   return (
     <section className="py-8 lg:py-10 border-t border-border/60 relative overflow-hidden">
       <div className="absolute top-0 left-0 w-[500px] h-[400px] bg-cyan-600/5 blur-[120px] rounded-full" />
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
+      <div className="mx-auto max-w-[1400px] px-4 sm:px-8 lg:px-10 relative">
         <div className="max-w-2xl mb-6">
           <SectionLabel index="07" className="text-cyan-300">STUDENT PROJECTS</SectionLabel>
           <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance">
@@ -2099,7 +2289,7 @@ function LabIntegrationPreview({
     <section className="py-8 lg:py-10 border-t border-border/60 relative overflow-hidden">
       <div className="absolute inset-0 bg-grid opacity-8" />
       <div className="absolute top-0 right-0 w-[500px] h-[400px] bg-violet-600/5 blur-[120px] rounded-full" />
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
+      <div className="mx-auto max-w-[1400px] px-4 sm:px-8 lg:px-10 relative">
         <div className="max-w-2xl mb-6">
           <SectionLabel index="08" className="text-violet-300">LAB INTEGRATION</SectionLabel>
           <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance">
@@ -2206,7 +2396,7 @@ function BatchSchedulePreview({
     <section className="py-8 lg:py-10 border-t border-border/60 relative overflow-hidden">
       <div className="absolute inset-0 bg-grid opacity-8" />
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-violet-600/5 blur-[120px] rounded-full" />
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
+      <div className="mx-auto max-w-[1400px] px-4 sm:px-8 lg:px-10 relative">
         <div className="max-w-2xl mb-6">
           <SectionLabel index="09" className="text-violet-300">LIVE BATCH SCHEDULE</SectionLabel>
           <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance">
@@ -2393,7 +2583,7 @@ function InstructorSpotlight({ instructor, navigate }: { instructor: any; naviga
   return (
     <section className="py-8 lg:py-10 border-t border-border/60 relative overflow-hidden">
       <div className="absolute top-0 right-0 w-[500px] h-[400px] bg-cyan-600/5 blur-[120px] rounded-full" />
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
+      <div className="mx-auto max-w-[1400px] px-4 sm:px-8 lg:px-10 relative">
         <SectionLabel index="10" className="text-cyan-300">INSTRUCTOR SPOTLIGHT</SectionLabel>
         <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance mb-6">
           Learn from a
@@ -2552,7 +2742,7 @@ function CertExamBlueprint({ course }: { course: any }) {
   return (
     <section className="py-8 lg:py-10 border-t border-border/60 relative overflow-hidden">
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-amber-600/5 blur-[120px] rounded-full" />
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
+      <div className="mx-auto max-w-[1400px] px-4 sm:px-8 lg:px-10 relative">
         <div className="max-w-2xl mb-6">
           <SectionLabel index="11" className="text-amber-300">EXAM BLUEPRINT</SectionLabel>
           <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance">
@@ -2686,7 +2876,7 @@ function PrerequisitesGraph({
   return (
     <section className="py-8 lg:py-10 border-t border-border/60 relative overflow-hidden">
       <div className="absolute top-0 left-0 w-[500px] h-[400px] bg-violet-600/5 blur-[120px] rounded-full" />
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
+      <div className="mx-auto max-w-[1400px] px-4 sm:px-8 lg:px-10 relative">
         <div className="max-w-2xl mb-6">
           <SectionLabel index="12" className="text-violet-300">PATH GRAPH</SectionLabel>
           <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance">
@@ -2833,7 +3023,7 @@ function ActivityFeed({ courseId }: { courseId: string }) {
 
   return (
     <section className="py-8 lg:py-10 border-t border-border/60">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1400px] px-4 sm:px-8 lg:px-10">
         <div className="grid lg:grid-cols-12 gap-10">
           {/* Left — heading + stats */}
           <div className="lg:col-span-4">
@@ -2962,7 +3152,7 @@ function SkillsTagCloud({ tags, modules }: { tags?: string | null; modules: any[
   return (
     <section className="py-8 lg:py-10 border-t border-border/60 relative overflow-hidden">
       <div className="absolute top-0 right-0 w-[500px] h-[400px] bg-cyan-600/5 blur-[120px] rounded-full" />
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
+      <div className="mx-auto max-w-[1400px] px-4 sm:px-8 lg:px-10 relative">
         <div className="max-w-2xl mb-6">
           <SectionLabel index="14" className="text-cyan-300">SKILLS YOU&apos;LL EARN</SectionLabel>
           <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance">
@@ -3049,7 +3239,7 @@ function RelatedCoursesCarousel({
   return (
     <section className="py-8 lg:py-10 border-t border-border/60 relative overflow-hidden">
       <div className="absolute top-0 left-0 w-[500px] h-[400px] bg-violet-600/5 blur-[120px] rounded-full" />
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 relative">
+      <div className="mx-auto max-w-[1400px] px-4 sm:px-8 lg:px-10 relative">
         <div className="flex items-end justify-between mb-6 flex-wrap gap-4">
           <div className="max-w-2xl">
             <SectionLabel index="15" className="text-violet-300">RELATED COURSES</SectionLabel>
@@ -3175,7 +3365,7 @@ function FloatingEnrollCTA({
           className="fixed bottom-0 left-0 right-0 z-50 border-t border-border/60 bg-background/85 backdrop-blur-xl"
         >
           <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-violet-500/40 to-transparent" />
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-3">
+          <div className="mx-auto max-w-[1400px] px-4 sm:px-8 lg:px-10 py-3">
             <div className="flex items-center gap-4">
               {/* Course identity */}
               <div className="hidden sm:flex items-center gap-3 min-w-0 flex-1">
@@ -3277,7 +3467,7 @@ function ReviewsSection({ courseId, isEnrolled }: { courseId: string; isEnrolled
 
   return (
     <section className="py-8 lg:py-10 border-t border-border/60">
-      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1400px] px-4 sm:px-8 lg:px-10">
         <SectionLabel index="16" className="text-amber-300">REVIEWS</SectionLabel>
         <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance mb-6">
           Student
