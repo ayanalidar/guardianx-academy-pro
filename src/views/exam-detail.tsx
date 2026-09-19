@@ -358,7 +358,11 @@ function ExamDetailPhase({
 }) {
   const { navigate } = useAppStore()
   const uc = exam.userContext
-  const canStart = uc.attemptsRemaining > 0 && !uc.hasInProgress
+  // NOTE: do NOT exclude hasInProgress here — when an attempt is in
+  // progress this same button becomes "Resume Attempt", and the start API
+  // resumes it (resumed:true). The old `!uc.hasInProgress` clause disabled
+  // the resume button forever, locking students out of interrupted exams.
+  const canStart = uc.attemptsRemaining > 0
   const certs = exam.certification
 
   return (
@@ -931,10 +935,118 @@ function ExamRunner({ startData, onSubmit, onExit }: ExamRunnerProps) {
   const ss = remainingSec % 60
   const timePct = (remainingMs / (durationSec * 1000)) * 100
 
-  /* ---------- Proctoring: tab switch + window blur + fullscreen ---------- */
-  const addProctorFlag = React.useCallback((flag: any) => {
-    setProctorFlags((prev) => [...prev, flag])
-  }, [])
+  /* ---------- Proctoring: live violation ingest ----------
+   * Every violation is (a) kept in local state for the submit payload and
+   * (b) streamed IMMEDIATELY to /api/exams/[id]/proctor-log which appends
+   * it to the server-side ProctoringSession and voids the attempt when the
+   * incident threshold is crossed. Previously flags lived only in React
+   * state and were flushed once at submit — any crash, tab close or failed
+   * submit silently lost ALL violations.
+   */
+  const queueRef = React.useRef<{ eventType: string; detail?: string }[]>([])
+  const flushingRef = React.useRef(false)
+  const [serverIncidents, setServerIncidents] = React.useState(0)
+  const [serverVoided, setServerVoided] = React.useState<{ reason: string } | null>(null)
+
+  const flushProctorQueue = React.useCallback(async () => {
+    if (flushingRef.current) return
+    flushingRef.current = true
+    try {
+      while (queueRef.current.length > 0) {
+        const next = queueRef.current[0]
+        const res = await api<{ ok?: boolean; voided?: boolean; voidReason?: string; incidentCount?: number }>(
+          `/api/exams/${startData.exam.id}/proctor-log`,
+          {
+            method: "POST",
+            body: JSON.stringify({ attemptId: startData.attempt.id, ...next }),
+          },
+        )
+        queueRef.current.shift()
+        if (res?.voided) {
+          setServerVoided({ reason: res.voidReason || "Attempt voided due to proctoring violations." })
+        } else if (typeof res?.incidentCount === "number") {
+          setServerIncidents(res.incidentCount)
+        }
+      }
+    } catch {
+      // Network hiccup — leave the event at the head of the queue and retry
+      // on the next tick. Never let proctoring ingest break the exam.
+    } finally {
+      flushingRef.current = false
+    }
+  }, [startData.exam.id, startData.attempt.id])
+
+  // Retry the queue periodically + flush what we can when the page is
+  // hidden/closed (sendBeacon keeps the tab-close case covered).
+  React.useEffect(() => {
+    const t = setInterval(() => void flushProctorQueue(), 4000)
+    const pagehide = () => {
+      if (queueRef.current.length === 0) return
+      // Batch beacon to the counter endpoint, which accepts a flags array.
+      const body = JSON.stringify({
+        flags: queueRef.current.map((e) => ({
+          type: e.eventType,
+          timestamp: Date.now(),
+          detail: e.detail,
+        })),
+      })
+      navigator.sendBeacon?.(
+        `/api/proctoring/${startData.attempt.id}`,
+        new Blob([body], { type: "application/json" }),
+      )
+      queueRef.current = []
+    }
+    window.addEventListener("pagehide", pagehide)
+    return () => {
+      clearInterval(t)
+      window.removeEventListener("pagehide", pagehide)
+    }
+  }, [flushProctorQueue, startData.attempt.id])
+
+  /** Record a violation locally AND enqueue it for server ingest. */
+  const addProctorFlag = React.useCallback(
+    (flag: { type: string; detail?: string }) => {
+      setProctorFlags((prev) => [
+        ...prev,
+        { type: flag.type, timestamp: Date.now(), detail: flag.detail },
+      ])
+      queueRef.current.push({ eventType: flag.type, detail: flag.detail })
+      void flushProctorQueue()
+    },
+    [flushProctorQueue],
+  )
+
+  // Server decided the attempt is voided → end the exam immediately.
+  React.useEffect(() => {
+    if (serverVoided) {
+      toast.error(serverVoided.reason)
+      onSubmit({
+        ...({} as SubmitResponse),
+        attempt: {
+          id: startData.attempt.id,
+          status: "voided",
+          score: 0,
+          totalQuestions: questions.length,
+          correctAnswers: 0,
+          timeSpent: Math.floor((Date.now() - startedAt) / 1000),
+          submittedAt: new Date().toISOString(),
+          passed: false,
+        },
+        exam: {
+          id: startData.exam.id,
+          title: startData.exam.title,
+          passingScore: startData.exam.passingScore,
+          duration: startData.exam.duration,
+          certificationId: null,
+          certificationName: null,
+        },
+        grading: { totalEarnedPoints: 0, totalPossiblePoints: 0, domainBreakdown: [] },
+        answers: [],
+        credential: null,
+      })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [serverVoided])
 
   /* ---------- Submit ---------- */
   const submitMutation = useMutation({
@@ -977,6 +1089,25 @@ function ExamRunner({ startData, onSubmit, onExit }: ExamRunnerProps) {
     submitMutation.mutate(payload)
   }
 
+  // "Exit & Void" — actually void the attempt server-side (previously the
+  // dialog promised voiding but just navigated away, leaving the attempt
+  // in-progress and discarding all recorded violations).
+  const [voiding, setVoiding] = React.useState(false)
+  const handleExitVoid = async () => {
+    setVoiding(true)
+    try {
+      await api(`/api/exams/${startData.exam.id}/proctor-log`, {
+        method: "POST",
+        body: JSON.stringify({ attemptId: startData.attempt.id, action: "void", reason: "Exited via Exit & Void" }),
+      })
+      toast.info("Your attempt has been voided.")
+    } catch {
+      toast.error("Could not void the attempt on the server — abandoning anyway.")
+    }
+    setVoiding(false)
+    onExit()
+  }
+
   // Auto-submit when time runs out
   React.useEffect(() => {
     if (remainingSec <= 0 && !showSubmitDialog) {
@@ -991,8 +1122,6 @@ function ExamRunner({ startData, onSubmit, onExit }: ExamRunnerProps) {
         setTabSwitches((n) => n + 1)
         addProctorFlag({
           type: "tab_switch",
-          timestamp: Date.now(),
-          severity: "high",
           detail: "Tab/window lost focus during exam",
         })
         toast.error("Proctoring flag: tab switch detected.")
@@ -1002,8 +1131,6 @@ function ExamRunner({ startData, onSubmit, onExit }: ExamRunnerProps) {
       setWindowBlurs((n) => n + 1)
       addProctorFlag({
         type: "window_blur",
-        timestamp: Date.now(),
-        severity: "medium",
         detail: "Window blur event",
       })
     }
@@ -1013,20 +1140,63 @@ function ExamRunner({ startData, onSubmit, onExit }: ExamRunnerProps) {
       if (!fs) {
         addProctorFlag({
           type: "fullscreen_exit",
-          timestamp: Date.now(),
-          severity: "high",
           detail: "Exited fullscreen mode during exam",
         })
         toast.error("Proctoring flag: you exited fullscreen.")
       }
     }
+    // Copy / paste / cut — the classic answer-sharing vectors. The live
+    // runner previously had NO detectors for these, so violations the
+    // student performed were never recorded anywhere.
+    const handleCopy = (e: Event) => {
+      e.preventDefault()
+      addProctorFlag({ type: "copy", detail: "Copy attempt blocked during exam" })
+      toast.warning("Proctoring flag: copy is disabled during the exam.")
+    }
+    const handlePaste = (e: Event) => {
+      e.preventDefault()
+      addProctorFlag({ type: "paste", detail: "Paste attempt blocked during exam" })
+      toast.warning("Proctoring flag: paste is disabled during the exam.")
+    }
+    const handleContextMenu = (e: Event) => {
+      e.preventDefault()
+      addProctorFlag({ type: "right_click", detail: "Right-click blocked during exam" })
+    }
+    // Devtools + clipboard shortcuts. Alt+Tab is reported by the OS as a
+    // blur, which the window_blur handler above already covers.
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const k = e.key.toLowerCase()
+      const isDevtools =
+        e.key === "F12" ||
+        (e.ctrlKey && e.shiftKey && ["i", "j", "c"].includes(k))
+      const isClipboard =
+        e.ctrlKey && ["c", "v", "a", "s", "p"].includes(k)
+      if (isDevtools) {
+        e.preventDefault()
+        addProctorFlag({ type: "devtools_attempt", detail: `DevTools shortcut blocked (${e.key})` })
+        toast.warning("Proctoring flag: developer tools are disabled during the exam.")
+      } else if (isClipboard) {
+        e.preventDefault()
+        addProctorFlag({ type: "keyboard_violation", detail: `Blocked shortcut: ${e.ctrlKey ? "Ctrl+" : ""}${e.key.toUpperCase()}` })
+      }
+    }
     document.addEventListener("visibilitychange", handleVisibility)
     window.addEventListener("blur", handleBlur)
     document.addEventListener("fullscreenchange", handleFullscreenChange)
+    document.addEventListener("copy", handleCopy)
+    document.addEventListener("paste", handlePaste)
+    document.addEventListener("cut", handleCopy)
+    document.addEventListener("contextmenu", handleContextMenu)
+    document.addEventListener("keydown", handleKeyDown, true)
     return () => {
       document.removeEventListener("visibilitychange", handleVisibility)
       window.removeEventListener("blur", handleBlur)
       document.removeEventListener("fullscreenchange", handleFullscreenChange)
+      document.removeEventListener("copy", handleCopy)
+      document.removeEventListener("paste", handlePaste)
+      document.removeEventListener("cut", handleCopy)
+      document.removeEventListener("contextmenu", handleContextMenu)
+      document.removeEventListener("keydown", handleKeyDown, true)
     }
   }, [addProctorFlag])
 
@@ -1036,18 +1206,19 @@ function ExamRunner({ startData, onSubmit, onExit }: ExamRunnerProps) {
       containerRef.current.requestFullscreen?.().then(() => {
         setIsFullscreen(true)
       }).catch(() => {
-        // User denied - keep going but flag
+        // User denied - keep going but flag (mapped to the ingest route's
+        // valid "fullscreen_exit" type; "fullscreen_denied" is not an
+        // accepted eventType server-side).
         addProctorFlag({
-          type: "fullscreen_denied",
-          timestamp: Date.now(),
-          severity: "high",
+          type: "fullscreen_exit",
           detail: "User did not enter fullscreen at start",
         })
       })
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  /* ---------- Periodic proctoring reports ---------- */
+  /* ---------- Periodic proctoring reports (counters heartbeat) ---------- */
   React.useEffect(() => {
     const t = setInterval(async () => {
       try {
@@ -1427,9 +1598,11 @@ function ExamRunner({ startData, onSubmit, onExit }: ExamRunnerProps) {
         </Card>
       </div>
 
-      {/* Submit dialog */}
+      {/* Submit dialog — portalled INTO the fullscreen container: browsers
+          render the fullscreen element in the top layer, so a body-level
+          dialog would be invisible/unclickable during the exam. */}
       <Dialog open={showSubmitDialog} onOpenChange={setShowSubmitDialog}>
-        <DialogContent>
+        <DialogContent container={containerRef.current}>
           <DialogHeader>
             <DialogTitle>Submit exam?</DialogTitle>
             <DialogDescription>
@@ -1453,8 +1626,8 @@ function ExamRunner({ startData, onSubmit, onExit }: ExamRunnerProps) {
             </div>
             <div className="flex items-center justify-between">
               <span className="text-muted-foreground">Proctoring incidents</span>
-              <span className={cn("font-mono font-semibold", tabSwitches + windowBlurs > 0 ? "text-rose-300" : "text-emerald-300")}>
-                {tabSwitches + windowBlurs}
+              <span className={cn("font-mono font-semibold", serverIncidents + tabSwitches + windowBlurs > 0 ? "text-rose-300" : "text-emerald-300")}>
+                {Math.max(serverIncidents, tabSwitches + windowBlurs)}
               </span>
             </div>
             <div className="flex items-center justify-between">
@@ -1489,9 +1662,9 @@ function ExamRunner({ startData, onSubmit, onExit }: ExamRunnerProps) {
         </DialogContent>
       </Dialog>
 
-      {/* Exit dialog */}
+      {/* Exit dialog — same fullscreen portal container as the submit dialog */}
       <Dialog open={showExitDialog} onOpenChange={setShowExitDialog}>
-        <DialogContent>
+        <DialogContent container={containerRef.current}>
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <AlertTriangle className="h-4 w-4 text-amber-300" />
@@ -1506,8 +1679,12 @@ function ExamRunner({ startData, onSubmit, onExit }: ExamRunnerProps) {
             <Button variant="ghost" onClick={() => setShowExitDialog(false)}>
               Cancel
             </Button>
-            <Button variant="destructive" onClick={onExit}>
-              <X className="h-4 w-4 mr-1" />
+            <Button variant="destructive" onClick={handleExitVoid} disabled={voiding}>
+              {voiding ? (
+                <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+              ) : (
+                <X className="h-4 w-4 mr-1" />
+              )}
               Exit & Void
             </Button>
           </DialogFooter>
@@ -1569,7 +1746,21 @@ function ExamResults({
   const score = result.attempt.score
   const total = result.attempt.totalQuestions
   const correct = result.attempt.correctAnswers
+  const voided = result.attempt.status === "voided"
   const [showReview, setShowReview] = React.useState(false)
+
+  // Proctoring report — read back what the server recorded during the
+  // attempt so the student sees the same log an administrator would.
+  const { data: proctorData } = useQuery<{
+    proctoring: { incidentCount: number; flags: { type: string; timestamp?: number; detail?: string }[] }
+  }>({
+    queryKey: ["proctoring", result.attempt.id],
+    queryFn: () => api(`/api/proctoring/${result.attempt.id}`),
+    retry: false,
+    staleTime: 60_000,
+  })
+  const proctorFlagsList = proctorData?.proctoring?.flags ?? []
+  const incidentCount = proctorData?.proctoring?.incidentCount ?? proctorFlagsList.length
 
   return (
     <div className="p-4 sm:p-6 max-w-4xl mx-auto">
@@ -1598,12 +1789,14 @@ function ExamResults({
         </motion.div>
 
         <h1 className="text-3xl sm:text-4xl font-bold tracking-tight">
-          {passed ? "Certified!" : "Not Quite There"}
+          {voided ? "Attempt Voided" : passed ? "Certified!" : "Not Quite There"}
         </h1>
         <p className="mt-2 text-sm text-muted-foreground">
-          {passed
-            ? `You've earned the ${result.exam.certificationName ?? "GuardianX certification"}.`
-            : `You scored ${score}% - passing score is ${result.exam.passingScore}%. Review and try again.`}
+          {voided
+            ? "This attempt was voided due to proctoring violations or a voluntary exit. It is not scored."
+            : passed
+              ? `You've earned the ${result.exam.certificationName ?? "GuardianX certification"}.`
+              : `You scored ${score}% - passing score is ${result.exam.passingScore}%. Review and try again.`}
         </p>
 
         <div className="mt-6 grid grid-cols-3 gap-3 max-w-lg mx-auto">
@@ -1629,6 +1822,47 @@ function ExamResults({
           </div>
         </div>
       </motion.div>
+
+      {/* Proctoring summary — server-side record of every violation */}
+      <Card className={cn("mt-5 p-6 border", incidentCount > 0 ? "border-rose-500/30 bg-rose-500/5" : "border-emerald-500/30 bg-emerald-500/5")}>
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-sm font-semibold flex items-center gap-2">
+            <ShieldCheck className={cn("h-4 w-4", incidentCount > 0 ? "text-rose-300" : "text-emerald-300")} />
+            Proctoring Report
+          </h2>
+          <Badge
+            variant="outline"
+            className={cn(
+              "text-[10px] font-mono",
+              incidentCount > 0 ? "text-rose-300 border-rose-500/40" : "text-emerald-300 border-emerald-500/40",
+            )}
+          >
+            {incidentCount} INCIDENT{incidentCount === 1 ? "" : "S"}
+          </Badge>
+        </div>
+        {proctorFlagsList.length === 0 ? (
+          <p className="text-xs text-muted-foreground">No violations were recorded during this attempt.</p>
+        ) : (
+          <div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+            {proctorFlagsList.slice().reverse().map((f, i) => (
+              <div key={i} className="flex items-center gap-2 text-xs rounded-md border border-border/50 bg-card/40 px-2.5 py-1.5">
+                <span className={cn(
+                  "font-mono text-[10px] uppercase tracking-wider shrink-0",
+                  f.type === "tab_switch" || f.type === "fullscreen_exit" ? "text-rose-300" : "text-amber-300",
+                )}>
+                  {f.type.replace(/_/g, " ")}
+                </span>
+                <span className="text-muted-foreground truncate">{f.detail || ""}</span>
+                {f.timestamp && (
+                  <span className="ml-auto text-[10px] text-muted-foreground/60 font-mono shrink-0">
+                    {new Date(f.timestamp).toLocaleTimeString()}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </Card>
 
       {/* Credential */}
       {result.credential && (

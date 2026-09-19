@@ -19,6 +19,8 @@ export const runtime = "nodejs"
  * server-side voiding never happened.
  *
  * Body: { attemptId: string, eventType: string, detail?: string }
+ *       { attemptId: string, action: "void", reason?: string }  — explicit
+ *       void from the runner's "Exit & Void" path.
  * Resp: { ok: true, incidentCount }  or  { voided: true, voidReason }
  */
 
@@ -49,9 +51,45 @@ export const POST = withErrorHandler(async (req: NextRequest, { params }: { para
     attemptId?: string
     eventType?: string
     detail?: string
+    action?: string
+    reason?: string
   }>(req, { maxBytes: 16 * 1024 })
   if (error) return error
-  if (!data?.attemptId || !data?.eventType) {
+  if (!data?.attemptId) {
+    return NextResponse.json({ error: "attemptId is required" }, { status: 400 })
+  }
+
+  // ----- Explicit void ("Exit & Void" button) -----
+  if (data.action === "void") {
+    const voidAttempt = await db.examAttempt.findUnique({
+      where: { id: data.attemptId },
+      select: { id: true, examId: true, userId: true, status: true },
+    })
+    if (!voidAttempt || voidAttempt.examId !== examId) {
+      return NextResponse.json({ error: "Attempt not found" }, { status: 404 })
+    }
+    if (voidAttempt.userId !== currentUser.id) {
+      return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+    }
+    if (voidAttempt.status === "in-progress") {
+      await db.examAttempt.update({
+        where: { id: voidAttempt.id },
+        data: { status: "voided", submittedAt: new Date() },
+      })
+      // Log the voluntary exit as a flag for the proctoring report.
+      const ps = await db.proctoringSession.findUnique({ where: { examAttemptId: voidAttempt.id } })
+      if (ps) {
+        const flags = appendFlag(ps.flags, "tab_switch", data.reason || "Attempt voided by student (Exit & Void)")
+        await db.proctoringSession.update({
+          where: { id: ps.id },
+          data: { flags: JSON.stringify(flags), incidentCount: { increment: 1 } },
+        })
+      }
+    }
+    return NextResponse.json({ ok: true, voided: true, voidReason: "Attempt voided by student." })
+  }
+
+  if (!data?.eventType) {
     return NextResponse.json({ error: "attemptId and eventType are required" }, { status: 400 })
   }
 

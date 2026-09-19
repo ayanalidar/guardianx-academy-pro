@@ -7,7 +7,7 @@ import {
   Brain,
   FileText, School, Building, Landmark, ShieldCheck, Award, GraduationCap,
   ExternalLink,
-  TrendingUp, Mail, Menu, ChevronDown, LogIn,
+  TrendingUp, Mail, Menu, ChevronDown, LogIn, LayoutDashboard,
   CalendarCheck, Terminal, Shield, FileBadge, Users,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -246,6 +246,31 @@ export function PublicHeader() {
   const [hidden, setHidden] = React.useState(false)
   const [openMenuId, setOpenMenuId] = React.useState<string | null>(null)
   const [mobileOpen, setMobileOpen] = React.useState(false)
+  // Session awareness: without this, a LOGGED-IN user browsing public
+  // "website" pages saw a bare "Login" button and concluded they had been
+  // signed out. We fetch the session once and re-check when auth screens
+  // signal a change (guardianx-session-changed).
+  const [sessionUser, setSessionUser] = React.useState<{ name?: string; role?: string } | null>(null)
+  React.useEffect(() => {
+    let cancelled = false
+    const check = () => {
+      fetch("/api/auth/session", { credentials: "include" })
+        .then((r) => r.json())
+        .then((d) => { if (!cancelled) setSessionUser(d?.user ?? null) })
+        .catch(() => { if (!cancelled) setSessionUser(null) })
+    }
+    check()
+    window.addEventListener("guardianx-session-changed", check)
+    return () => { cancelled = true; window.removeEventListener("guardianx-session-changed", check) }
+  }, [])
+
+  const dashboardView: View = sessionUser?.role === "ADMIN"
+    ? { name: "admin" }
+    : sessionUser?.role === "INSTRUCTOR"
+      ? { name: "instructor" }
+      : sessionUser?.role === "SCHOOL_ADMIN"
+        ? { name: "school" }
+        : { name: "dashboard" }
   const { scrollY } = useScroll()
   const lastScroll = React.useRef(0)
   const closeTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null)
@@ -446,14 +471,25 @@ export function PublicHeader() {
 
         {/* ===== Right actions ===== */}
         <div className="flex items-center gap-2 shrink-0">
-          <a
-            href="/login"
-            onClick={(e) => handleLinkClick(e, { name: "login" })}
-            className="hidden sm:inline-flex items-center justify-center gap-1 rounded-md bg-violet-600 hover:bg-violet-500 btn-premium h-8 px-4 text-xs font-medium text-primary-foreground transition-colors"
-          >
-            <LogIn className="h-3 w-3 mr-1" />
-            <span>Login</span>
-          </a>
+          {sessionUser ? (
+            <a
+              href={viewToPath(dashboardView)}
+              onClick={(e) => handleLinkClick(e, dashboardView)}
+              className="hidden sm:inline-flex items-center justify-center gap-1 rounded-md bg-violet-600 hover:bg-violet-500 btn-premium h-8 px-4 text-xs font-medium text-primary-foreground transition-colors"
+            >
+              <LayoutDashboard className="h-3 w-3 mr-1" />
+              <span>Dashboard</span>
+            </a>
+          ) : (
+            <a
+              href="/login"
+              onClick={(e) => handleLinkClick(e, { name: "login" })}
+              className="hidden sm:inline-flex items-center justify-center gap-1 rounded-md bg-violet-600 hover:bg-violet-500 btn-premium h-8 px-4 text-xs font-medium text-primary-foreground transition-colors"
+            >
+              <LogIn className="h-3 w-3 mr-1" />
+              <span>Login</span>
+            </a>
+          )}
 
           {/* Mobile hamburger → Sheet */}
           <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
@@ -526,14 +562,25 @@ export function PublicHeader() {
               </div>
 
               <div className="border-t border-border/60 p-4 flex flex-col gap-2">
-                <a
-                  href="/login"
-                  onClick={(e) => handleLinkClick(e, { name: "login" })}
-                  className="w-full h-10 inline-flex items-center justify-center gap-2 rounded-md bg-violet-600 hover:bg-violet-500 btn-premium text-sm font-medium text-primary-foreground transition-colors"
-                >
-                  <LogIn className="h-4 w-4 mr-2" />
-                  Login
-                </a>
+                {sessionUser ? (
+                  <a
+                    href={viewToPath(dashboardView)}
+                    onClick={(e) => handleLinkClick(e, dashboardView)}
+                    className="w-full h-10 inline-flex items-center justify-center gap-2 rounded-md bg-violet-600 hover:bg-violet-500 btn-premium text-sm font-medium text-primary-foreground transition-colors"
+                  >
+                    <LayoutDashboard className="h-4 w-4 mr-2" />
+                    Go to Dashboard
+                  </a>
+                ) : (
+                  <a
+                    href="/login"
+                    onClick={(e) => handleLinkClick(e, { name: "login" })}
+                    className="w-full h-10 inline-flex items-center justify-center gap-2 rounded-md bg-violet-600 hover:bg-violet-500 btn-premium text-sm font-medium text-primary-foreground transition-colors"
+                  >
+                    <LogIn className="h-4 w-4 mr-2" />
+                    Login
+                  </a>
+                )}
                 <p className="text-[10px] text-muted-foreground text-center">
                   © {new Date().getFullYear()} GuardianX Academy
                 </p>

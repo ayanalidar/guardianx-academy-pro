@@ -14,7 +14,7 @@
 
 import * as React from "react"
 import { motion } from "framer-motion"
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query"
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RTooltip,
   RadarChart, Radar, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Cell,
@@ -52,6 +52,7 @@ import {
 interface CourseListItem {
   id: string; slug: string; title: string; shortName: string
   description: string; category: string; level: string; durationHours: number
+  price: number
   rating: number; studentsCount: number; color: string; thumbnail: string | null
   tags: string; certBody: string
   instructor: { id: string; name: string; title: string | null }
@@ -274,6 +275,18 @@ export function DashboardView() {
     retry: false,
   })
 
+  // Recommended courses — shown on the dashboard when the student has no
+  // active courses (fresh accounts previously saw bare empty states and
+  // reported "courses don't show").
+  const { data: recommendedData, isLoading: recommendedLoading } = useQuery<{ courses: CourseListItem[] }>({
+    queryKey: ["courses", "dashboard-recommended"],
+    queryFn: async () => {
+      try { return await api(`/api/courses?status=not-started&userId=${user?.id ?? ""}`) } catch { return { courses: [] } }
+    },
+    enabled: !!user?.id,
+    retry: false,
+  })
+
   const { data: achievementsData, isLoading: achievementsLoading } = useQuery<{
     achievements: AchievementItem[]
     earnedCount: number
@@ -406,6 +419,8 @@ export function DashboardView() {
               <ContinueLearning
                 courses={enrolledCourses.slice(0, 3)}
                 loading={coursesLoading}
+                recommended={(recommendedData?.courses ?? []).slice(0, 3)}
+                recommendedLoading={recommendedLoading}
               />
             </ScrollReveal>
 
@@ -416,6 +431,13 @@ export function DashboardView() {
                 loading={labsLoading}
               />
             </ScrollReveal>
+
+            {/* DAILY OBJECTIVE — moved from the right column: the left rail
+                was much shorter than the right one on student accounts,
+                leaving a large blank region under the labs panel. */}
+            <ScrollReveal delay={0.15}>
+              <DailyObjective labsSolvedToday={0} />
+            </ScrollReveal>
           </div>
 
           {/* RIGHT COLUMN */}
@@ -423,11 +445,6 @@ export function DashboardView() {
             {/* REFER & EARN */}
             <ScrollReveal>
               <ReferEarnPanel />
-            </ScrollReveal>
-
-            {/* DAILY OBJECTIVE */}
-            <ScrollReveal>
-              <DailyObjective labsSolvedToday={0} />
             </ScrollReveal>
 
             {/* ACHIEVEMENTS */}
@@ -703,12 +720,40 @@ function CurrentMission({
    ============================================================ */
 
 function ContinueLearning({
-  courses, loading,
+  courses, loading, recommended = [], recommendedLoading = false,
 }: {
   courses: CourseListItem[]
   loading: boolean
+  recommended?: CourseListItem[]
+  recommendedLoading?: boolean
 }) {
   const { navigate } = useAppStore()
+  const queryClient = useQueryClient()
+
+  // One-click enroll from the dashboard. Paid courses 402 → route to the
+  // course page where the checkout flow lives.
+  const enrollMutation = useMutation({
+    mutationFn: (courseId: string) =>
+      api(`/api/courses/${courseId}/enroll`, { method: "POST" }).catch((err: any) => {
+        if (err?.status === 402 || err?.body?.checkoutRequired) {
+          throw Object.assign(new Error("__checkout__"), { checkout: true })
+        }
+        throw err
+      }),
+    onSuccess: (_data, courseId) => {
+      toast.success("Enrolled! The course is now in your Continue Learning list.")
+      queryClient.invalidateQueries({ queryKey: ["courses"] })
+      queryClient.invalidateQueries({ queryKey: ["me"] })
+    },
+    onError: (err: any, courseId: string) => {
+      if (err?.checkout) {
+        // Paid course → continue on the course detail page (checkout flow).
+        navigate({ name: "course", courseId })
+        return
+      }
+      toast.error(err?.message || "Enrollment failed")
+    },
+  })
 
   return (
     <section aria-label="Continue learning">
@@ -727,14 +772,74 @@ function ContinueLearning({
           ))}
         </div>
       ) : courses.length === 0 ? (
-        <EmptyState
-          title="No Courses In Progress"
-          description="You haven't started any courses yet. Browse the catalog and enroll to begin your training."
-          ctaLabel="Browse Catalog"
-          onCta={() => navigate({ name: "catalog" })}
-          icon={BookOpen}
-          accent="cyan"
-        />
+        recommendedLoading ? (
+          <div className="grid sm:grid-cols-3 gap-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <Skeleton key={i} className="h-[150px] rounded-xl" />
+            ))}
+          </div>
+        ) : recommended.length > 0 ? (
+          <div className="space-y-3">
+            <div className="rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-3 flex items-center gap-2">
+              <Sparkles className="h-3.5 w-3.5 text-cyan-300 shrink-0" />
+              <p className="text-xs text-cyan-200/90">
+                You haven't enrolled yet — pick a course below to start your training.
+              </p>
+            </div>
+            <div className="grid sm:grid-cols-3 gap-3">
+              {recommended.map((c) => (
+                <div
+                  key={c.id}
+                  className="group card-premium relative flex flex-col rounded-xl p-4 cursor-pointer"
+                  onClick={() => navigate({ name: "course", courseId: c.id })}
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="rounded-md bg-violet-500/10 border border-violet-500/20 px-2 py-0.5 font-mono text-[10px] font-bold text-violet-200">
+                      {c.shortName}
+                    </span>
+                    <Badge variant="outline" className="text-[9px] font-mono uppercase text-cyan-300 border-cyan-500/30">
+                      {c.level}
+                    </Badge>
+                  </div>
+                  <h3 className="text-sm font-semibold leading-snug line-clamp-2 group-hover:text-cyan-200 transition-colors">
+                    {c.title}
+                  </h3>
+                  <p className="mt-1 text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+                    {c.category} · {c.lessonCount} lessons · {c.durationHours}h
+                  </p>
+                  <div className="mt-auto pt-3">
+                    {c.price > 0 ? (
+                      <Button size="sm" variant="outline" className="w-full h-8 text-xs border-cyan-500/40 text-cyan-200 hover:bg-cyan-500/10">
+                        ₹{c.price.toLocaleString("en-IN")} · Enroll
+                      </Button>
+                    ) : (
+                      <Button
+                        size="sm"
+                        className="w-full h-8 text-xs btn-premium bg-cyan-600 hover:bg-cyan-500"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          enrollMutation.mutate(c.id)
+                        }}
+                        disabled={enrollMutation.isPending}
+                      >
+                        {enrollMutation.isPending ? "Enrolling…" : "Enroll Free"}
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : (
+          <EmptyState
+            title="No Courses In Progress"
+            description="You haven't started any courses yet. Browse the catalog and enroll to begin your training."
+            ctaLabel="Browse Catalog"
+            onCta={() => navigate({ name: "catalog" })}
+            icon={BookOpen}
+            accent="cyan"
+          />
+        )
       ) : (
         <div className="grid gap-3">
           {courses.map((c) => {
@@ -2081,8 +2186,12 @@ function QuickWidgets({ userId, navigate }: { userId?: string; navigate: any }) 
 
   if (upcomingBatches.length === 0 && recommended.length === 0) return null
 
+  // When only one of the two widgets has data, let it span the full row
+  // instead of leaving an empty half-width column of dead space.
+  const bothPresent = upcomingBatches.length > 0 && recommended.length > 0
+
   return (
-    <div className="grid sm:grid-cols-2 gap-4">
+    <div className={cn("grid gap-4", bothPresent ? "sm:grid-cols-2" : "grid-cols-1")}>
       {/* Upcoming batches */}
       {upcomingBatches.length > 0 && (
         <Card className="p-4 space-y-3">

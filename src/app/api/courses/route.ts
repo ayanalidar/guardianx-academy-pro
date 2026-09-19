@@ -13,18 +13,31 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
   const userIdParam = searchParams.get("userId")
 
   const currentUser = await getCurrentUser()
-  const userId = userIdParam || currentUser?.id
+  // Session user is the source of truth: a stale client-supplied userId
+  // (or a forged one — IDOR) must not be able to read someone else's
+  // enrollments. The param remains a fallback for anonymous callers.
+  const userId = currentUser?.id || userIdParam
 
-  const where: any = { published: true }
+  // Enrolled students must ALWAYS see their own courses, even if an admin
+  // later unpublishes the course (published:true alone hid it from the
+  // dashboard and broke "my courses").
+  const where: any = enrolledOnly
+    ? { OR: [{ published: true }, { enrollments: { some: { userId: userId || "__none__" } } }] }
+    : { published: true }
   if (category && category !== "All") where.category = category
   if (level && level !== "All") where.level = level
   if (vertical && vertical !== "all") where.vertical = vertical
   if (q) {
-    where.OR = [
-      { title: { contains: q } },
-      { shortName: { contains: q } },
-      { description: { contains: q } },
-      { tags: { contains: q } },
+    // AND-merged so we never clobber the enrolled/published OR above.
+    where.AND = [
+      {
+        OR: [
+          { title: { contains: q } },
+          { shortName: { contains: q } },
+          { description: { contains: q } },
+          { tags: { contains: q } },
+        ],
+      },
     ]
   }
 

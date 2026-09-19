@@ -502,6 +502,55 @@ function OverviewTab() {
           </div>
         </ScrollReveal>
       </div>
+
+      {/* Quick actions — one-tap access to the most-used admin areas. Fills
+          the empty band at the bottom of the Overview tab with useful nav
+          instead of dead space. */}
+      <QuickActions />
+    </div>
+  )
+}
+
+/* ============================================================
+   1b. QUICK ACTIONS - shortcut grid to standalone admin views
+   ============================================================ */
+const QUICK_ACTIONS: { label: string; description: string; icon: any; view: string; tone: string }[] = [
+  { label: "Revenue Analytics", description: "Payments, orders & revenue trends", icon: DollarSign, view: "admin-revenue", tone: "text-amber-300 bg-amber-500/10" },
+  { label: "Lead CRM", description: "Pipeline of inbound learner leads", icon: UserCog, view: "admin-lead-crm", tone: "text-violet-300 bg-violet-500/10" },
+  { label: "Bulk Certificates", description: "Issue certificates in bulk", icon: Award, view: "admin-cert-bulk", tone: "text-emerald-300 bg-emerald-500/10" },
+  { label: "Student Progress", description: "Cohort-level progress reports", icon: GraduationCap, view: "admin-student-progress", tone: "text-cyan-300 bg-cyan-500/10" },
+  { label: "Audit Logs", description: "Every admin action, tracked", icon: ShieldAlert, view: "admin-audit-log", tone: "text-rose-300 bg-rose-500/10" },
+  { label: "Platform Health", description: "Uptime, errors & API latency", icon: Server, view: "admin-platform-health", tone: "text-sky-300 bg-sky-500/10" },
+]
+
+function QuickActions() {
+  const { navigate } = useAppStore()
+  return (
+    <div>
+      <div className="flex items-center gap-3 mb-4">
+        <Zap className="h-4 w-4 text-amber-400" />
+        <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Quick Actions</h3>
+      </div>
+      <Stagger className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4" staggerChildren={0.05}>
+        {QUICK_ACTIONS.map((a) => (
+          <StaggerItem key={a.label}>
+            <button
+              type="button"
+              onClick={() => navigate({ name: a.view as any })}
+              className="w-full text-left rounded-2xl border border-border/60 bg-card/30 p-5 group hover:border-amber-500/40 hover:bg-card/50 transition-colors"
+            >
+              <div className="flex items-start justify-between mb-3">
+                <div className={cn("inline-flex p-2 rounded-lg", a.tone)}>
+                  <a.icon className="h-5 w-5" />
+                </div>
+                <ArrowUpRight className="h-4 w-4 text-muted-foreground/50 group-hover:text-amber-400 group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-all" />
+              </div>
+              <div className="font-semibold text-sm">{a.label}</div>
+              <div className="text-xs text-muted-foreground mt-0.5">{a.description}</div>
+            </button>
+          </StaggerItem>
+        ))}
+      </Stagger>
     </div>
   )
 }

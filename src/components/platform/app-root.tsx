@@ -66,13 +66,27 @@ export function AppRoot({ initialView }: { initialView?: View }) {
   // already have one — that is exactly the post-login flow (signIn() sets
   // the cookie, then auth-screen calls navigate()). Logged-in taps no
   // longer pay a serverless roundtrip per navigation.
+  // NOTE: the refetch is FORCED when we have no session yet — the 5s
+  // throttle previously swallowed the post-login refetch (login → navigate
+  // happened within 5s of the mount fetch), leaving `session` null and
+  // bouncing the fresh-logged-in user back to the auth/home screens.
   React.useEffect(() => {
     const handler = () => {
       forceRender((v: number) => v + 1)
-      fetchSession()
+      if (!sessionRef.current) fetchSession(true)
+      else fetchSession()
     }
     window.addEventListener("guardianx-navigate", handler)
     return () => window.removeEventListener("guardianx-navigate", handler)
+  }, [fetchSession])
+
+  // Cross-component session signal: auth screens dispatch this right after
+  // signIn() resolves so the shell refetches immediately (belt-and-braces
+  // with the forced navigate refetch above).
+  React.useEffect(() => {
+    const handler = () => fetchSession(true)
+    window.addEventListener("guardianx-session-changed", handler)
+    return () => window.removeEventListener("guardianx-session-changed", handler)
   }, [fetchSession])
 
   // Hydrate the view from the URL after mount. Handles three cases:

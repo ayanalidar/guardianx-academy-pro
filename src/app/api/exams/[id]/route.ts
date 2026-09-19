@@ -64,7 +64,9 @@ export async function GET(
     return NextResponse.json({ error: "Exam not found." }, { status: 404 })
   }
 
-  // Also fetch the user's attempt history for this exam (for eligibility display)
+  // Also fetch the user's attempt history for this exam (for eligibility
+  // display). proctorFlags is included so the UI can badge flagged/voided
+  // attempts instead of violations being invisible forever.
   const attempts = await db.examAttempt.findMany({
     where: { userId: user.id, examId: exam.id },
     select: {
@@ -73,6 +75,7 @@ export async function GET(
       score: true,
       createdAt: true,
       submittedAt: true,
+      proctorFlags: true,
     },
     orderBy: { createdAt: "desc" },
   })

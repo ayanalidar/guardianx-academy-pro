@@ -50,12 +50,21 @@ function DialogContent({
   className,
   children,
   showCloseButton = true,
+  container,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean
+  /**
+   * Optional portal container. Needed when the host page (e.g. the exam
+   * runner) is presented via the Fullscreen API: browsers render the
+   * fullscreen element in the "top layer", so dialogs portalled to
+   * document.body would be INVISIBLE/unclickable behind it. Pass the
+   * fullscreened element to render the dialog inside the top layer.
+   */
+  container?: HTMLElement | null
 }) {
   return (
-    <DialogPortal data-slot="dialog-portal">
+    <DialogPortal data-slot="dialog-portal" container={container ?? undefined}>
       <DialogOverlay />
       <DialogPrimitive.Content
         data-slot="dialog-content"

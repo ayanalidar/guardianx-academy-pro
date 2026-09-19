@@ -19,6 +19,24 @@ export function Providers({ children }: { children: React.ReactNode }) {
         },
       })
   )
+
+  // Global session-change hook: when an auth screen signs a user in/out it
+  // dispatches "guardianx-session-changed". Without this, the [me] query
+  // keeps serving the PRE-LOGIN `{ user: null }` response (cached by the
+  // login page, fresh for 30s, window-focus refetch disabled) for the
+  // lifetime of the SPA session — dashboards then render "Operator" with
+  // zero courses and every `enabled: !!user?.id` query stays disabled.
+  React.useEffect(() => {
+    const handler = () => {
+      queryClient.invalidateQueries({ queryKey: ["me"] })
+      queryClient.invalidateQueries({ queryKey: ["courses"] })
+      queryClient.invalidateQueries({ queryKey: ["achievements"] })
+      queryClient.invalidateQueries({ queryKey: ["leaderboard"] })
+    }
+    window.addEventListener("guardianx-session-changed", handler)
+    return () => window.removeEventListener("guardianx-session-changed", handler)
+  }, [queryClient])
+
   return (
     <SessionProvider session={null} refetchInterval={0} basePath="/api/auth">
       <ThemeProvider

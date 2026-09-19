@@ -2,7 +2,6 @@
 
 import * as React from "react"
 import { signIn } from "next-auth/react"
-import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import {
   Shield, Terminal, Zap, Lock, Mail, User, GraduationCap, ChevronRight,
@@ -49,7 +48,8 @@ const STATS = [
 ]
 
 export function AuthScreen() {
-  const router = useRouter()
+  // (next/navigation router is intentionally unused — navigation is SPA-side
+  //  via the app store; see the session-changed note in handleLogin)
   const { navigate, pendingView, setPendingView } = useAppStore()
   const [loading, setLoading] = React.useState(false)
   const [showPass, setShowPass] = React.useState(false)
@@ -245,7 +245,13 @@ export function AuthScreen() {
       return
     }
     toast.success("Welcome back, Guardian!")
-    router.refresh()
+    // Tell the shell the session cookie just changed, then route. NOTE:
+    // router.refresh() was removed — it re-rendered the server bridge page
+    // mid-navigation and remounted AppRoot with a stale initialView, which
+    // bounced freshly-logged-in users back to home/login ("keeps logging
+    // me off"). The shell now refetches the session via the
+    // guardianx-session-changed event + forced navigate refetch.
+    window.dispatchEvent(new CustomEvent("guardianx-session-changed"))
     setTimeout(routeByRole, 200)
   }
 
@@ -264,7 +270,7 @@ export function AuthScreen() {
       return
     }
     toast.success("Welcome to your School Portal!")
-    router.refresh()
+    window.dispatchEvent(new CustomEvent("guardianx-session-changed"))
     setTimeout(routeByRole, 200)
   }
 
@@ -290,7 +296,7 @@ export function AuthScreen() {
       setLoading(false)
       if (res?.error) throw new Error(res.error)
       toast.success("Account created! Welcome to GuardianX.")
-      router.refresh()
+      window.dispatchEvent(new CustomEvent("guardianx-session-changed"))
       setTimeout(routeByRole, 200)
     } catch (err: any) {
       setLoading(false)
@@ -307,7 +313,7 @@ export function AuthScreen() {
       return
     }
     toast.success("Welcome back, Guardian!")
-    router.refresh()
+    window.dispatchEvent(new CustomEvent("guardianx-session-changed"))
     setTimeout(routeByRole, 200)
   }
 
