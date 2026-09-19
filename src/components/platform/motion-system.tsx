@@ -33,6 +33,7 @@ export function ScrollReveal({
   return (
     <motion.div
       ref={ref}
+      data-gx-reveal=""
       initial={{ opacity: 0, y }}
       animate={isInView ? { opacity: 1, y: 0 } : {}}
       transition={{ duration: 0.5, delay, ease: EASE }}
@@ -70,6 +71,7 @@ export function ClipReveal({
   return (
     <motion.div
       ref={ref}
+      data-gx-reveal=""
       initial={{ clipPath: clipPaths[direction] }}
       animate={isInView ? { clipPath: "inset(0% 0% 0% 0%)" } : {}}
       transition={{ duration: 1.2, delay, ease: EASE }}
@@ -103,6 +105,7 @@ export function TextReveal({
   return (
     <motion.span
       ref={ref}
+      data-gx-reveal=""
       initial="hidden"
       animate={isInView ? "visible" : "hidden"}
       variants={{
@@ -114,6 +117,7 @@ export function TextReveal({
       {words.map((word, i) => (
         <motion.span
           key={i}
+          data-gx-reveal=""
           variants={{
             hidden: { opacity: 0, y: "0.4em", filter: "blur(6px)" },
             visible: {
@@ -408,6 +412,7 @@ export function FadeIn({
 }) {
   return (
     <motion.div
+      data-gx-reveal=""
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       transition={{ duration, delay, ease: EASE }}
@@ -436,6 +441,7 @@ export function ScaleReveal({
   return (
     <motion.div
       ref={ref}
+      data-gx-reveal=""
       initial={{ opacity: 0, scale: 0.9 }}
       animate={isInView ? { opacity: 1, scale: 1 } : {}}
       transition={{ duration: 1, delay, ease: EASE }}
@@ -464,6 +470,7 @@ export function BlurReveal({
   return (
     <motion.div
       ref={ref}
+      data-gx-reveal=""
       initial={{ opacity: 0, filter: "blur(20px)" }}
       animate={isInView ? { opacity: 1, filter: "blur(0px)" } : {}}
       transition={{ duration: 1.2, delay, ease: EASE }}

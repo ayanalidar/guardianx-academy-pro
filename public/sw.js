@@ -1,16 +1,20 @@
 /* ============================================================
    GuardianX Academy — Service Worker
-   - Pre-caches the app shell
    - Network-first for navigation requests (fresh UI when online)
-   - Cache-first for static assets
+   - Cache-first for immutable static assets
    - Offline fallback to cached shell
    ============================================================ */
 
-// v2: cache purge — old v1 runtime caches held stale assets across deploys.
-// Bump this version on every shell-affecting change so clients self-refresh.
-const VERSION = "guardianx-sw-v2";
+// v3: fixed ghost-build bug. v2 cached EVERY navigation response under the
+// cache key "/" and served that stale HTML for any route whenever the
+// network hiccupped (deploys, restarts) — clients silently ran old builds
+// with old bugs. v3 caches each page under its own URL, only caches OK
+// responses, and times out slow navigations before falling back.
+// Bump VERSION on every shell-affecting change so clients self-refresh.
+const VERSION = "guardianx-sw-v3";
 const SHELL_CACHE = `${VERSION}-shell`;
 const RUNTIME_CACHE = `${VERSION}-runtime`;
+const NAV_TIMEOUT_MS = 8000;
 
 const APP_SHELL = [
   "/",
@@ -30,7 +34,7 @@ self.addEventListener("install", (event) => {
   );
 });
 
-// Activate: clean up old caches
+// Activate: clean up old caches (purges v1/v2 caches on existing clients)
 self.addEventListener("activate", (event) => {
   event.waitUntil(
     caches
@@ -61,6 +65,14 @@ function isSameOrigin(url) {
   return url.origin === self.location.origin;
 }
 
+// Helper: fetch with a hard timeout so a hanging origin falls back fast
+// instead of leaving the user on a blank screen for 30+ seconds.
+function fetchWithTimeout(request, ms) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), ms);
+  return fetch(request, { signal: ctrl.signal }).finally(() => clearTimeout(timer));
+}
+
 self.addEventListener("fetch", (event) => {
   const { request } = event;
   if (request.method !== "GET") return;
@@ -72,19 +84,27 @@ self.addEventListener("fetch", (event) => {
   if (url.pathname.startsWith("/_next/data")) return;
   if (url.pathname.startsWith("/api/")) return;
 
-  // 1) Navigation requests — network-first, fall back to cached shell
+  // 1) Navigation requests — network-first, fall back to cached copy of
+  //    THIS page, then the cached shell, then the offline body.
   if (isNavigation(request) && isSameOrigin(url)) {
     event.respondWith(
       (async () => {
         try {
-          const fresh = await fetch(request);
-          const cache = await caches.open(RUNTIME_CACHE);
-          cache.put("/", fresh.clone()).catch(() => undefined);
+          const fresh = await fetchWithTimeout(request, NAV_TIMEOUT_MS);
+          // Only cache genuinely good HTML, under the page's OWN URL —
+          // never poison "/" with a different page's HTML.
+          if (fresh && fresh.ok && fresh.type === "basic") {
+            const cache = await caches.open(RUNTIME_CACHE);
+            cache.put(request, fresh.clone()).catch(() => undefined);
+          }
           return fresh;
         } catch (err) {
-          const cache = await caches.open(SHELL_CACHE);
+          const runtime = await caches.open(RUNTIME_CACHE);
+          const shell = await caches.open(SHELL_CACHE);
           const cached =
-            (await cache.match(request)) || (await cache.match("/"));
+            (await runtime.match(request)) ||
+            (await shell.match(request)) ||
+            (await shell.match("/"));
           if (cached) return cached;
           return new Response(
             offlineBody(),
@@ -96,7 +116,8 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // 2) Static assets (same origin) — cache-first, then network (and cache)
+  // 2) Static assets (same origin) — cache-first, then network (and cache).
+  //    _next/static assets are content-hashed so caching them is safe.
   if (isSameOrigin(url)) {
     event.respondWith(
       (async () => {
@@ -104,7 +125,7 @@ self.addEventListener("fetch", (event) => {
         if (cached) return cached;
         try {
           const fresh = await fetch(request);
-          if (fresh && fresh.status === 200 && fresh.type === "basic") {
+          if (fresh && fresh.ok && fresh.type === "basic") {
             const cache = await caches.open(RUNTIME_CACHE);
             cache.put(request, fresh.clone()).catch(() => undefined);
           }

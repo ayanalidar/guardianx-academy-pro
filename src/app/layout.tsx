@@ -5,6 +5,88 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { Providers } from "@/components/providers/providers";
 import { ServiceWorkerRegister } from "@/components/providers/service-worker-register";
+import { HydrationFlag } from "@/components/platform/hydration-flag";
+
+/**
+ * Client recovery scripts, inlined in <head> so they run before React.
+ *
+ * 1. Chunk-error auto-reload — if a /_next/static script/stylesheet fails to
+ *    load (typical after a deploy when the browser holds a stale HTML shell),
+ *    reload ONCE to fetch the fresh build. Guarded by sessionStorage so we
+ *    never reload-loop; the guard self-clears after 20s of healthy load.
+ *
+ * 2. Reveal rescue timer — if hydration has not completed ~2.5s after DOM
+ *    ready, add `gx-reveal-rescue` to <html>. Combined with the failsafe CSS
+ *    in globals.css this forces all scroll-reveal content visible, so a
+ *    broken/partial hydration can NEVER leave pages permanently blank.
+ */
+const CLIENT_RECOVERY_SCRIPT = `
+(function () {
+  try {
+    var KEY = "gx_chunk_reload";
+    function chunky(msg, src) {
+      if (src && /\\/_next\\/static/.test(src)) return true;
+      msg = msg || "";
+      return /ChunkLoadError|Loading chunk|Failed to fetch dynamically imported|error loading dynamically imported/i.test(msg);
+    }
+    function reloadOnce() {
+      try {
+        if (sessionStorage.getItem(KEY)) return;
+        sessionStorage.setItem(KEY, String(Date.now()));
+      } catch (_) { return; }
+      location.reload();
+    }
+    window.addEventListener("error", function (e) {
+      var t = e && e.target;
+      if (t && (t.tagName === "SCRIPT" || t.tagName === "LINK") && t.src && /\\/_next\\/static/.test(t.src)) { reloadOnce(); return; }
+      if (chunky(e && e.message)) reloadOnce();
+    }, true);
+    window.addEventListener("unhandledrejection", function (e) {
+      var r = e && e.reason;
+      var m = r && (r.message || String(r)) || "";
+      if (chunky(m)) reloadOnce();
+    });
+    setTimeout(function () {
+      try { sessionStorage.removeItem(KEY); } catch (_) {}
+    }, 20000);
+    var armRescue = function () {
+      setTimeout(function () {
+        if (document.documentElement.classList.contains("gx-hydrated")) return;
+        document.documentElement.classList.add("gx-reveal-rescue");
+        forceVisible();
+        setTimeout(forceVisible, 4000);
+      }, 2500);
+    };
+    /* Last-resort sweep: reveal anything still hidden by inline/computed
+       styles (covers CSSOM-set opacity that attribute selectors cannot see).
+       Runs ONLY in rescue mode — a broken browser must never hide content. */
+    var forceVisible = function () {
+      try {
+        var els = document.querySelectorAll("body *");
+        for (var i = 0; i < els.length; i++) {
+          var el = els[i];
+          if (el.closest && el.closest('[aria-hidden="true"]')) continue;
+          var cs = window.getComputedStyle(el);
+          if (!cs || cs.display === "none" || cs.visibility === "hidden") continue;
+          if (parseFloat(cs.opacity) < 0.05) {
+            el.style.setProperty("opacity", "1", "important");
+            el.style.setProperty("transform", "none", "important");
+            el.style.setProperty("filter", "none", "important");
+            if ((cs.clipPath || "").indexOf("inset") === 0) {
+              el.style.setProperty("clip-path", "inset(0% 0% 0% 0%)", "important");
+            }
+          }
+        }
+      } catch (_) {}
+    };
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", armRescue);
+    } else {
+      armRescue();
+    }
+  } catch (_) {}
+})();
+`;
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -207,6 +289,8 @@ export default function RootLayout({
             }),
           }}
         />
+        {/* Client recovery: chunk-error reload + reveal rescue (see above) */}
+        <script dangerouslySetInnerHTML={{ __html: CLIENT_RECOVERY_SCRIPT }} />
         {/* JSON-LD: WebSite with Search Action */}
         <script
           type="application/ld+json"
@@ -278,6 +362,7 @@ export default function RootLayout({
         >
           Skip to main content
         </a>
+        <HydrationFlag />
         <Providers>{children}</Providers>
         <ServiceWorkerRegister />
         <Toaster />

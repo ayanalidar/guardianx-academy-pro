@@ -946,3 +946,59 @@ a {
     animation: none !important;
   }
 }
+
+/* ============================================================
+   CONTENT VISIBILITY FAILSAFE  (never-blank guarantee)
+   ------------------------------------------------------------
+   Scroll-reveal components keep content at opacity:0 until JS
+   (IntersectionObserver) reveals it. If hydration fails in a
+   browser - stale chunks, mid-hydration crash, blocked JS -
+   that content would stay INVISIBLE FOREVER: pages look empty
+   even though the server rendered everything (the "no courses"
+   class of bug). Two nets, armed only when React is NOT alive:
+
+   - html.gx-reveal-rescue  : set by the inline <head> recovery
+     script when hydration has not completed ~2.5s after DOM
+     ready. Forces every reveal target visible permanently.
+   - html:not(.gx-hydrated) : pure-CSS net (works even when NO
+     js runs at all). Disarms itself the moment HydrationFlag
+     adds .gx-hydrated in a healthy browser.
+
+   Healthy browsers: both nets disarm within ~1s -> full
+   framer-motion animations play as designed.
+   ============================================================ */
+@keyframes gx-reveal-failsafe {
+  /* NOTE: no !important here - keyframe declarations with !important are
+     INVALID and dropped entirely. Animation values already outrank normal
+     author declarations (including inline styles) in the cascade. */
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+    clip-path: inset(0% 0% 0% 0%);
+  }
+}
+
+/* Net 1: rescue armed by inline script (broken / slow hydration) */
+html.gx-reveal-rescue [data-gx-reveal],
+html.gx-reveal-rescue [style*="opacity:0"],
+html.gx-reveal-rescue [style*="opacity: 0"] {
+  animation: gx-reveal-failsafe 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Net 2: pure CSS, covers the "no JS at all" case */
+html:not(.gx-hydrated) [data-gx-reveal] {
+  animation: gx-reveal-failsafe 0.01s linear 3s forwards;
+}
+html:not(.gx-hydrated) [style*="opacity:0"],
+html:not(.gx-hydrated) [style*="opacity: 0"] {
+  animation: gx-reveal-failsafe 0.01s linear 3s forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html.gx-reveal-rescue [data-gx-reveal],
+  html.gx-reveal-rescue [style*="opacity:0"],
+  html.gx-reveal-rescue [style*="opacity: 0"] {
+    animation-duration: 0.01s;
+  }
+}
