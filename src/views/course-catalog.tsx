@@ -16,8 +16,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { EmptyState } from "@/components/platform/empty-state"
 import {
   Search, Star, Clock, BookOpen, Users, Shield, Bookmark, BookmarkCheck,
-  ArrowRight, Layers, Sparkles, FlaskConical, GraduationCap, Tag,
-  Gauge, PlayCircle, CheckCircle2, Award,
+  ArrowRight, Layers, Sparkles, FlaskConical, GraduationCap,
+  PlayCircle, Award,
   Swords, ShieldCheck, Cloud, Scale, LayoutGrid, List, X,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -148,8 +148,6 @@ export function CourseCatalogView() {
   })
 
   const courses = data?.courses ?? []
-  const featured = courses[0]
-  const rest = courses.slice(1)
 
   /* ---- compare (up to 3) ---- */
   const toggleCompare = React.useCallback((id: string) => {
@@ -189,7 +187,7 @@ export function CourseCatalogView() {
   const avgRatingSuffix = getSuffix("avg_rating", "/5")
 
   return (
-    <div className="relative min-h-screen pt-2 lg:pt-4">
+    <div className="relative min-h-screen overflow-x-clip pt-2 lg:pt-4">
       {/* Atmospheric background */}
       <div className="absolute inset-0 bg-mesh opacity-50 pointer-events-none" />
       <div className="absolute top-0 right-0 w-[600px] h-[400px] bg-violet-600/5 blur-[120px] rounded-full pointer-events-none" />
@@ -414,13 +412,11 @@ export function CourseCatalogView() {
                 </span>
               </div>
             )}
-            {/* Featured course - large immersive card */}
-            {featured && (
-              <FeaturedCourse course={featured} />
-            )}
+            {/* Course spotlight — animated infinite loop carousel */}
+            {courses.length > 0 && <CourseSpotlightLoop courses={courses} />}
 
-            {/* Rest — grid or list view */}
-            {rest.length > 0 && (
+            {/* All courses — grid or list view */}
+            {courses.length > 0 && (
               <div className="mt-8 lg:mt-10">
                 <div className="flex items-center justify-between mb-6 gap-3">
                   <div>
@@ -428,7 +424,7 @@ export function CourseCatalogView() {
                     <h2 className="text-2xl lg:text-3xl font-bold tracking-tight">Explore the catalog</h2>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-xs text-muted-foreground font-mono hidden sm:inline">{rest.length} TRACKS</span>
+                    <span className="text-xs text-muted-foreground font-mono hidden sm:inline">{courses.length} TRACKS</span>
                     {/* view toggle */}
                     <div
                       role="group"
@@ -465,7 +461,7 @@ export function CourseCatalogView() {
 
                 {viewMode === "grid" ? (
                   <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {rest.map((course, i) => (
+                    {courses.map((course, i) => (
                       <CourseCard
                         key={course.id}
                         course={course}
@@ -478,7 +474,7 @@ export function CourseCatalogView() {
                   </div>
                 ) : (
                   <div className="space-y-3">
-                    {rest.map((course) => (
+                    {courses.map((course) => (
                       <CourseListRow
                         key={course.id}
                         course={course}
@@ -656,155 +652,160 @@ function FilterChip({ label, onClear }: { label: string; onClear: () => void }) 
 }
 
 /* ============================================================
-   FeaturedCourse - large immersive featured card
+   CourseSpotlightLoop - animated infinite loop carousel.
+   Auto-scrolling marquee of compact course cards. The track is
+   duplicated and translated -50% (keyframe `scroll`), so the wrap
+   point is seamless; per-item spacing uses padding-right (not
+   flex gap) so every item occupies a uniform slot width. Pauses
+   on hover and under prefers-reduced-motion; falls back to a
+   static grid when there are too few courses to loop cleanly.
    ============================================================ */
-function FeaturedCourse({ course }: { course: CourseItem }) {
+function CourseSpotlightLoop({ courses }: { courses: CourseItem[] }) {
+  const loop = courses.slice(0, 10)
+
+  if (loop.length === 0) return null
+
+  // Too few courses to loop convincingly — static grid instead.
+  if (loop.length <= 4) {
+    return (
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        {loop.map((course, i) => (
+          <SpotlightCard key={course.id} course={course} index={i + 1} />
+        ))}
+      </div>
+    )
+  }
+
+  const track = [...loop, ...loop]
+
+  return (
+    <div>
+      <div className="flex items-end justify-between mb-4 gap-3">
+        <div>
+          <p className="text-[10px] font-mono text-violet-400 tracking-[0.25em] mb-2 flex items-center gap-2">
+            <span className="h-1.5 w-1.5 rounded-full bg-violet-400 pulse-dot" />
+            COURSE SPOTLIGHT
+          </p>
+          <h2 className="text-2xl lg:text-3xl font-bold tracking-tight">Trending now</h2>
+        </div>
+        <span className="hidden sm:inline-flex items-center gap-1.5 text-[10px] font-mono text-muted-foreground/60 tracking-wider">
+          <span className="h-1 w-1 rounded-full bg-muted-foreground/40" />
+          HOVER TO PAUSE
+        </span>
+      </div>
+
+      <div className="group/spotlight relative -mx-4 sm:mx-0">
+        {/* Edge fades */}
+        <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-14 sm:w-24 bg-gradient-to-r from-background to-transparent" />
+        <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-14 sm:w-24 bg-gradient-to-l from-background to-transparent" />
+
+        <ScrollReveal>
+          <div className="overflow-hidden py-2">
+            <div className="flex w-max transform-gpu animate-[scroll_55s_linear_infinite] group-hover/spotlight:[animation-play-state:paused] motion-reduce:[animation-play-state:paused]">
+              {track.map((course, i) => (
+                <div key={`${course.id}-${i}`} className="w-[280px] sm:w-[320px] shrink-0 pr-5">
+                  <SpotlightCard course={course} index={(i % loop.length) + 1} />
+                </div>
+              ))}
+            </div>
+          </div>
+        </ScrollReveal>
+      </div>
+    </div>
+  )
+}
+
+/* ============================================================
+   SpotlightCard - compact card used inside the loop carousel.
+   Fixed-height composition (45% visual / 55% body) with
+   line-clamps everywhere so cards can never overflow their slot.
+   ============================================================ */
+function SpotlightCard({ course, index }: { course: CourseItem; index: number }) {
   const { navigate } = useAppStore()
-  const { isBookmarked, toggle: toggleBookmark, isAuthenticated } = useBookmarks()
   const image = getCourseImage(course)
   const levelStyle = LEVEL_STYLES[course.level] || LEVEL_STYLES.Intermediate
 
   return (
-    <ScrollReveal>
-      <div
-        className="relative overflow-hidden rounded-3xl border border-border/60 bg-card shadow-lg cursor-pointer group"
-        onClick={() => navigate({ name: "course", courseId: course.id })}
-      >
-        {/* Top: real course image */}
-        <div className="relative aspect-[21/9] lg:aspect-[21/8] overflow-hidden">
-          <img
-            src={image}
-            alt={course.title}
-            className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-card via-card/60 to-card/10" />
+    <button
+      type="button"
+      onClick={() => navigate({ name: "course", courseId: course.id })}
+      className="group relative block w-full h-[400px] text-left rounded-2xl border border-border/60 bg-card overflow-hidden cursor-pointer transition-all duration-500 hover:border-violet-500/40 hover:shadow-[0_20px_60px_-20px_oklch(0.6_0.2_295_/_0.3)] hover:-translate-y-1"
+      aria-label={course.title}
+    >
+      {/* Visual */}
+      <div className="relative h-[45%] overflow-hidden">
+        <img
+          src={image}
+          alt={course.title}
+          className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-card via-card/30 to-transparent" />
 
-          {/* Top bar */}
-          <div className="absolute top-4 left-4 right-4 lg:top-6 lg:left-6 lg:right-6 flex items-center justify-between">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-[10px] font-mono text-violet-300 tracking-[0.25em] px-2 py-1 rounded border border-violet-500/30 bg-violet-500/10 backdrop-blur-sm">
-                ★ FEATURED
-              </span>
-              <span className={cn("text-[10px] font-mono px-2 py-1 rounded border backdrop-blur-sm", levelStyle.badge)}>
-                {course.level.toUpperCase()}
-              </span>
-              <span className="text-[10px] font-mono text-muted-foreground px-2 py-1 rounded border border-border/60 bg-card/80 backdrop-blur-sm tracking-wider">
-                {course.category}
-              </span>
-            </div>
-            {isAuthenticated && (
-              <button
-                onClick={(e) => { e.stopPropagation(); toggleBookmark(course.id) }}
-                className="h-9 w-9 rounded-lg border border-border/60 bg-card/80 backdrop-blur flex items-center justify-center hover:bg-violet-500/15 hover:border-violet-500/40 transition-colors"
-                aria-label="Toggle bookmark"
-              >
-                {isBookmarked(course.id) ? <BookmarkCheck className="h-4 w-4 text-violet-300" /> : <Bookmark className="h-4 w-4 text-muted-foreground" />}
-              </button>
-            )}
-          </div>
-
-          {/* Course short name overlay - oversized */}
-          <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-            <motion.div
-              whileHover={{ scale: 1.04 }}
-              transition={{ type: "spring", stiffness: 200, damping: 20 }}
-              className="text-[clamp(3rem,11vw,9rem)] font-bold font-mono text-gradient-premium opacity-90"
-            >
-              {course.shortName}
-            </motion.div>
-          </div>
-
-          {/* Bottom content overlay */}
-          <div className="absolute bottom-0 left-0 right-0 p-5 lg:p-10 bg-gradient-to-t from-card via-card/85 to-transparent">
-            <div className="grid lg:grid-cols-12 gap-6 items-end">
-              <div className="lg:col-span-8">
-                {course.certBody && (
-                  <div className="flex items-center gap-2 mb-2">
-                    <Award className="h-3.5 w-3.5 text-amber-300" />
-                    <span className="text-[10px] text-amber-200 font-mono tracking-[0.2em]">{course.certBody.toUpperCase()}</span>
-                  </div>
-                )}
-                <h2 className="text-2xl lg:text-5xl font-bold tracking-[-0.03em] mb-3 text-balance leading-tight">
-                  {course.title}
-                </h2>
-                <p className="text-sm lg:text-base text-muted-foreground max-w-2xl leading-relaxed line-clamp-2">
-                  {course.description}
-                </p>
-              </div>
-              <div className="lg:col-span-4 flex lg:justify-end">
-                <MagneticButton strength={0.3}>
-                  <Button
-                    className="bg-violet-600 hover:bg-violet-500 btn-premium px-6 py-4"
-                    onClick={(e) => { e.stopPropagation(); navigate({ name: "course", courseId: course.id }); }}
-                  >
-                    {course.enrollment ? "Continue Learning" : "Enroll Now"}
-                    <ArrowRight className="h-4 w-4 ml-2" />
-                  </Button>
-                </MagneticButton>
-              </div>
-            </div>
-          </div>
+        {/* Top: index + level */}
+        <div className="absolute top-3 left-3 right-3 flex items-center justify-between">
+          <span className="text-[9px] font-mono text-muted-foreground tracking-[0.2em] px-2 py-0.5 rounded border border-border/60 bg-card/80 backdrop-blur-sm">
+            {String(index).padStart(2, "0")}
+          </span>
+          <span className={cn("text-[9px] font-mono px-2 py-0.5 rounded border backdrop-blur-sm", levelStyle.badge)}>
+            {course.level.toUpperCase()}
+          </span>
         </div>
 
-        {/* Metadata strip - solid bg-card */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 p-5 lg:p-6 border-t border-border/40">
-          {[
-            { label: "Category", value: course.category, icon: Layers },
-            { label: "Difficulty", value: course.level, icon: Gauge },
-            { label: "Duration", value: `${course.durationHours ?? 0}h`, icon: Clock },
-            { label: "Rating", value: `★ ${course.rating ?? "—"}`, icon: Star },
-            { label: "Students", value: (course.studentsCount ?? 0).toLocaleString(), icon: Users },
-            { label: "Instructor", value: course.instructor?.name ?? "GuardianX Faculty", icon: Shield },
-          ].map((m) => (
-            <div key={m.label} className="min-w-0">
-              <div className="text-[9px] text-muted-foreground/70 uppercase tracking-wider mb-1 flex items-center gap-1">
-                <m.icon className="h-3 w-3 shrink-0" /> {m.label}
-              </div>
-              <div className="text-sm font-medium truncate">{m.value}</div>
-            </div>
-          ))}
+        {/* Bottom: short name + price */}
+        <div className="absolute bottom-3 left-3 right-3 flex items-center justify-between gap-2">
+          <span className="inline-flex items-center px-2.5 py-1 rounded-md bg-card/90 backdrop-blur-sm border border-border/60 text-xs font-mono font-bold text-violet-200">
+            {course.shortName}
+          </span>
+          <span className={cn(
+            "inline-flex items-center px-2.5 py-1 rounded-md backdrop-blur-sm border text-xs font-mono font-semibold",
+            course.price && course.price > 0
+              ? "bg-amber-500/15 border-amber-500/40 text-amber-200"
+              : "bg-emerald-500/15 border-emerald-500/40 text-emerald-200"
+          )}>
+            {course.price && course.price > 0 ? `₹${course.price.toLocaleString("en-IN")}` : "FREE"}
+          </span>
         </div>
-
-        {/* Modules + lessons + price strip */}
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-px bg-border/40 border-t border-border/40">
-          <FeaturedMeta icon={BookOpen} label="Modules" value={course.moduleCount} />
-          <FeaturedMeta icon={Layers} label="Lessons" value={course.lessonCount} />
-          <FeaturedMeta icon={CheckCircle2} label="Cert" value={course.certBody ? "Included" : "Self"} />
-          <FeaturedMeta
-            icon={Tag}
-            label="Price"
-            value={course.price && course.price > 0 ? `₹${course.price.toLocaleString("en-IN")}` : "Free"}
-            highlight
-          />
-        </div>
-
-        {/* Progress bar if enrolled */}
-        {course.enrollment && (
-          <div className="p-5 lg:p-6 border-t border-border/40 bg-background/40">
-            <div className="flex items-center justify-between text-[10px] mb-2 font-mono">
-              <span className="text-muted-foreground tracking-[0.2em]">YOUR PROGRESS</span>
-              <span className="text-violet-300">{course.enrollment.progress}%</span>
-            </div>
-            <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-              <div className="h-full bg-violet-500 rounded-full progress-active" style={{ width: `${course.enrollment.progress}%` }} />
-            </div>
-          </div>
-        )}
       </div>
-    </ScrollReveal>
-  )
-}
 
-function FeaturedMeta({
-  icon: Icon, label, value, highlight,
-}: { icon: typeof BookOpen; label: string; value: string | number; highlight?: boolean }) {
-  return (
-    <div className={cn("p-4 lg:p-5 bg-card", highlight && "bg-violet-500/5")}>
-      <div className="text-[9px] text-muted-foreground/70 uppercase tracking-wider mb-1 flex items-center gap-1">
-        <Icon className={cn("h-3 w-3", highlight && "text-violet-300")} /> {label}
+      {/* Body */}
+      <div className="p-4 flex flex-col h-[55%]">
+        <div className="flex items-center gap-2 mb-1.5 flex-wrap">
+          <Badge variant="outline" className="text-[9px] font-mono border-violet-500/30 text-violet-300 bg-violet-500/5">
+            {course.category}
+          </Badge>
+          {course.certBody && (
+            <span className="inline-flex items-center gap-1 text-[9px] font-mono text-amber-200/80">
+              <Award className="h-3 w-3" /> {course.certBody}
+            </span>
+          )}
+        </div>
+
+        <h3 className="font-semibold text-sm mb-1.5 group-hover:text-violet-200 transition-colors line-clamp-2 leading-snug min-h-[2.5rem]">
+          {course.title}
+        </h3>
+        <p className="text-[11px] text-muted-foreground line-clamp-2 mb-3 leading-relaxed">
+          {course.description}
+        </p>
+
+        <div className="mt-auto space-y-2.5">
+          <div className="flex items-center gap-3 text-[10px] font-mono text-muted-foreground tracking-wider">
+            <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {course.durationHours ?? 0}h</span>
+            <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {(course.studentsCount ?? 0).toLocaleString()}</span>
+            <span className="flex items-center gap-1 text-amber-300">
+              <Star className="h-3 w-3 fill-amber-300/40 text-amber-300" />
+              {course.rating != null ? Number(course.rating).toFixed(1) : "—"}
+            </span>
+          </div>
+
+          <div className="flex items-center justify-between pt-2.5 border-t border-border/40">
+            <span className="text-[11px] text-muted-foreground truncate">{course.instructor?.name ?? "GuardianX Faculty"}</span>
+            <span className="flex items-center gap-1 text-[11px] text-violet-300 font-mono group-hover:gap-2 transition-all shrink-0">
+              View <ArrowRight className="h-3 w-3" />
+            </span>
+          </div>
+        </div>
       </div>
-      <div className={cn("text-sm font-semibold tabular-nums", highlight && "text-violet-200")}>{value}</div>
-    </div>
+    </button>
   )
 }
 
