@@ -161,11 +161,45 @@ function matchProtectedPrefix(
   return null
 }
 
+/**
+ * Cache-control policy (why this lives in middleware):
+ *
+ * Next.js serves statically prerendered pages with
+ * `Cache-Control: s-maxage=31536000` (one year, shared caches). Behind our
+ * preview edge-gateway that is poison: the FIRST visit gets cached and every
+ * later visitor — on every device — keeps receiving that same stale build
+ * for a year, which is exactly the "no courses on any browser" incident.
+ *
+ * Policy:
+ *  - HTML documents, API JSON, sw.js, RSC payloads: `private, no-cache,
+ *    no-store` — always revalidate against the origin.
+ *  - /_next/static/* and /_next/image: untouched — they are content-hashed
+ *    and safe to cache immutably (Next sets `public, max-age=31536000,
+ *    immutable`).
+ */
+const IMMUTABLE_PREFIXES = ["/_next/static/", "/_next/image"]
+
+const NO_STORE = "private, no-cache, no-store, max-age=0, must-revalidate"
+
+/** Stamp no-store unless the response already carries an explicit policy. */
+function withFreshnessHeaders(res: NextResponse): NextResponse {
+  if (!res.headers.has("Cache-Control")) {
+    res.headers.set("Cache-Control", NO_STORE)
+  }
+  return res
+}
+
 export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
 
-  // Only gate /api/* routes. Pages are gated client-side by the SPA shell.
-  if (!pathname.startsWith("/api/")) return NextResponse.next()
+  // Content-hashed assets keep their immutable caching (belt for the matcher).
+  if (IMMUTABLE_PREFIXES.some((p) => pathname.startsWith(p))) {
+    return NextResponse.next()
+  }
+
+  // Pages and files (sw.js, icons, …): pass through with fresh headers.
+  // Pages are gated client-side by the SPA shell.
+  if (!pathname.startsWith("/api/")) return withFreshnessHeaders(NextResponse.next())
 
   const protectedMatch = matchProtectedPrefix(pathname)
   if (!protectedMatch) {
@@ -174,19 +208,21 @@ export function middleware(req: NextRequest) {
     // (We intentionally don't 401 here to avoid breaking routes we forgot to
     // classify. The route handler is the source of truth for fine-grained
     // auth.)
-    return NextResponse.next()
+    return withFreshnessHeaders(NextResponse.next())
   }
 
   // Allow CORS preflight through.
-  if (req.method === "OPTIONS") return NextResponse.next()
+  if (req.method === "OPTIONS") return withFreshnessHeaders(NextResponse.next())
 
   const [, required] = protectedMatch
   const token = getSessionCookie(req)
 
   if (!token) {
-    return NextResponse.json(
-      { error: "Unauthorized — no session" },
-      { status: 401 }
+    return withFreshnessHeaders(
+      NextResponse.json(
+        { error: "Unauthorized — no session" },
+        { status: 401 }
+      )
     )
   }
 
@@ -202,10 +238,13 @@ export function middleware(req: NextRequest) {
   // secret and a decode library. (You could wire that up if you want
   // middleware-level RBAC, but it's a non-trivial perf hit per request.)
 
-  return NextResponse.next()
+  return withFreshnessHeaders(NextResponse.next())
 }
 
 export const config = {
-  // Run middleware on /api/* only. Static assets and pages bypass it.
-  matcher: ["/api/:path*"],
+  // Run on everything EXCEPT immutable content-hashed assets (those keep
+  // Next's year-long caching). Pages, API, sw.js, RSC payloads all pass
+  // through so HTML/API never get pinned by shared caches (see the
+  // cache-control policy note above middleware()).
+  matcher: ["/((?!_next/static|_next/image).*)"],
 }
