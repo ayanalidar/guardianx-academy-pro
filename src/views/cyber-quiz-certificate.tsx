@@ -183,19 +183,19 @@ export function CyberQuizCertificateView() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5, delay: 0.15 }}
           ref={certRef}
-          className="relative aspect-[1.414/1] w-full max-w-4xl mx-auto rounded-2xl overflow-hidden bg-gradient-to-br from-[#0d0d18] via-[#13132a] to-[#0a0a14] border-2 border-violet-500/30 shadow-2xl shadow-violet-500/20"
+          className="relative aspect-[1.414/1] w-full max-w-4xl mx-auto rounded-2xl overflow-hidden gx-aurora border border-white/15 shadow-2xl shadow-violet-500/20"
         >
           {/* Inner border */}
-          <div className="absolute inset-3 rounded-xl border border-violet-500/20" />
-          {/* Corner flourishes */}
-          <div className="absolute top-6 left-6 w-16 h-16 border-t-2 border-l-2 border-violet-400/40 rounded-tl-xl" />
-          <div className="absolute top-6 right-6 w-16 h-16 border-t-2 border-r-2 border-violet-400/40 rounded-tr-xl" />
-          <div className="absolute bottom-6 left-6 w-16 h-16 border-b-2 border-l-2 border-violet-400/40 rounded-bl-xl" />
-          <div className="absolute bottom-6 right-6 w-16 h-16 border-b-2 border-r-2 border-violet-400/40 rounded-br-xl" />
+          <div className="absolute inset-3 rounded-xl border border-white/15" />
+          {/* Corner light accents */}
+          <div className="absolute top-6 left-6 w-16 h-16 border-t-2 border-l-2 border-violet-400/50 rounded-tl-xl" />
+          <div className="absolute top-6 right-6 w-16 h-16 border-t-2 border-r-2 border-violet-400/50 rounded-tr-xl" />
+          <div className="absolute bottom-6 left-6 w-16 h-16 border-b-2 border-l-2 border-violet-400/50 rounded-bl-xl" />
+          <div className="absolute bottom-6 right-6 w-16 h-16 border-b-2 border-r-2 border-violet-400/50 rounded-br-xl" />
 
           {/* Glow blobs */}
-          <div className="absolute top-0 left-1/4 w-[300px] h-[200px] bg-violet-600/10 blur-[80px] rounded-full pointer-events-none" />
-          <div className="absolute bottom-0 right-1/4 w-[300px] h-[200px] bg-cyan-500/8 blur-[80px] rounded-full pointer-events-none" />
+          <div className="absolute -top-16 left-1/4 w-[340px] h-[220px] bg-violet-600/20 blur-[90px] rounded-full pointer-events-none" />
+          <div className="absolute -bottom-16 right-1/4 w-[340px] h-[220px] bg-cyan-500/15 blur-[90px] rounded-full pointer-events-none" />
 
           {/* Content */}
           <div className="relative h-full flex flex-col items-center justify-center text-center px-12 py-10">
@@ -224,41 +224,43 @@ export function CyberQuizCertificateView() {
             </p>
 
             {/* "This certifies that" */}
-            <p className="text-xs text-muted-foreground mb-3">
+            <p className="text-xs text-slate-400 mb-3">
               This is to certify that
             </p>
 
-            {/* Candidate name */}
-            <div className="text-3xl lg:text-5xl font-bold mb-2 bg-gradient-to-r from-white via-violet-100 to-cyan-200 bg-clip-text text-transparent">
-              {cert.candidateName}
+            {/* Candidate name — glass hero panel */}
+            <div className="gx-glass px-10 py-5 mb-3">
+              <div className="text-3xl lg:text-5xl font-bold bg-gradient-to-r from-white via-violet-100 to-cyan-200 bg-clip-text text-transparent">
+                {cert.candidateName}
+              </div>
             </div>
 
             <div className="h-px w-64 bg-gradient-to-r from-transparent via-violet-400/40 to-transparent mb-4" />
 
             {/* "has successfully completed..." */}
-            <p className="text-xs text-muted-foreground max-w-md leading-relaxed mb-6">
+            <p className="text-xs text-slate-300 max-w-md leading-relaxed mb-6">
               has successfully completed the Cyber Security Foundation awareness quiz
-              with a score of <span className="font-semibold text-foreground">{cert.score}/{cert.totalQuestions}</span> ({cert.percentage}%)
+              with a score of <span className="font-semibold text-white">{cert.score}/{cert.totalQuestions}</span> ({cert.percentage}%)
               across 8 cyber security domains.
             </p>
 
             {/* Bottom row: date + credential ID + signature */}
             <div className="flex items-end justify-between w-full max-w-2xl mt-auto">
               <div className="text-left">
-                <div className="text-[8px] font-mono text-muted-foreground tracking-[0.2em] uppercase mb-1">Issue date</div>
-                <div className="text-xs font-semibold">{issueDate}</div>
+                <div className="text-[8px] font-mono text-slate-400 tracking-[0.2em] uppercase mb-1">Issue date</div>
+                <div className="text-xs font-semibold text-slate-100">{issueDate}</div>
               </div>
               <div className="text-center">
-                {/* Verification seal */}
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full border-2 border-violet-400/40 bg-violet-500/5 mb-1">
-                  <ShieldCheck className="h-7 w-7 text-violet-400" />
+                {/* Gold verification seal */}
+                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-[#ffe9a8] via-[#f5c451] to-[#c8901c] shadow-lg shadow-amber-500/30 mb-1">
+                  <ShieldCheck className="h-7 w-7 text-[#5a3c05]" />
                 </div>
-                <div className="text-[8px] font-mono text-muted-foreground tracking-[0.2em] uppercase">
+                <div className="text-[8px] font-mono text-slate-400 tracking-[0.2em] uppercase">
                   Verified
                 </div>
               </div>
               <div className="text-right">
-                <div className="text-[8px] font-mono text-muted-foreground tracking-[0.2em] uppercase mb-1">Credential ID</div>
+                <div className="text-[8px] font-mono text-slate-400 tracking-[0.2em] uppercase mb-1">Credential ID</div>
                 <div className="text-xs font-mono font-semibold text-violet-300">{cert.credentialId}</div>
               </div>
             </div>

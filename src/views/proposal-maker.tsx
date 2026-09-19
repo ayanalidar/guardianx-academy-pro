@@ -801,13 +801,13 @@ export function ProposalMakerView() {
 
           {/* === LIVE PREVIEW (right side, slide panels) === */}
           <div className="lg:col-span-7">
-            <div className="rounded-2xl overflow-hidden card-premium" id="proposal-preview">
+            <div className="rounded-2xl overflow-hidden gx-aurora" id="proposal-preview">
               {/* Slide 1: Cover */}
               <Slide id={1} title="Cover">
-                <div className="relative bg-gradient-to-br from-violet-950/80 via-zinc-950 to-zinc-950 p-8 sm:p-12 min-h-[480px] flex flex-col justify-center overflow-hidden">
-                  <div className="absolute inset-0 opacity-[0.08]" style={{ backgroundImage: "linear-gradient(to right, white 1px, transparent 1px), linear-gradient(to bottom, white 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
-                  <div className="absolute -top-20 -right-10 w-72 h-72 rounded-full bg-violet-600/20 blur-3xl pointer-events-none" />
-                  <div className="absolute -bottom-20 -left-10 w-72 h-72 rounded-full bg-cyan-600/15 blur-3xl pointer-events-none" />
+                <div className="relative p-8 sm:p-12 min-h-[480px] flex flex-col justify-center overflow-hidden">
+                  <div className="absolute -top-24 -right-10 w-80 h-80 rounded-full bg-violet-600/25 blur-[90px] pointer-events-none" />
+                  <div className="absolute -bottom-24 -left-14 w-80 h-80 rounded-full bg-cyan-600/15 blur-[90px] pointer-events-none" />
+                  <div className="absolute top-1/4 left-1/3 w-48 h-48 rounded-full bg-fuchsia-500/10 blur-[70px] pointer-events-none" />
                   <div className="relative">
                     <div className="flex items-center gap-4 mb-8">
                       <div className="relative">
@@ -823,9 +823,9 @@ export function ProposalMakerView() {
                     <h2 className="text-2xl sm:text-4xl font-bold tracking-tight leading-tight text-gradient-premium">{proposalTitle}</h2>
                     <p className="text-sm text-violet-200/80 mt-3">Prepared for {institutionName || "your institution"}</p>
                     <div className="grid grid-cols-3 gap-3 mt-8">
-                      <div className="bg-white/5 border border-white/10 rounded-lg p-3"><p className="text-[10px] text-violet-200/60 uppercase">Proposal #</p><p className="font-mono text-xs">{proposalNumber}</p></div>
-                      <div className="bg-white/5 border border-white/10 rounded-lg p-3"><p className="text-[10px] text-violet-200/60 uppercase">Date</p><p className="text-xs">{new Date(proposalDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</p></div>
-                      <div className="bg-white/5 border border-white/10 rounded-lg p-3"><p className="text-[10px] text-violet-200/60 uppercase">Valid Until</p><p className="text-xs">{new Date(validUntil).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</p></div>
+                      <div className="gx-glass p-3"><p className="text-[10px] text-slate-400 uppercase">Proposal #</p><p className="font-mono text-xs text-slate-100">{proposalNumber}</p></div>
+                      <div className="gx-glass p-3"><p className="text-[10px] text-slate-400 uppercase">Date</p><p className="text-xs text-slate-100">{new Date(proposalDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</p></div>
+                      <div className="gx-glass p-3"><p className="text-[10px] text-slate-400 uppercase">Valid Until</p><p className="text-xs text-slate-100">{new Date(validUntil).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</p></div>
                     </div>
                   </div>
                 </div>
@@ -833,14 +833,14 @@ export function ProposalMakerView() {
 
               {/* Slide 2: Executive Summary */}
               <Slide id={2} title="Executive Summary">
-                <div className="p-6 sm:p-10 bg-card/30">
+                <div className="p-6 sm:p-10">
                   <h3 className="text-xl sm:text-2xl font-bold mb-4 text-gradient-premium">Executive Summary</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed mb-6">{executiveSummary}</p>
+                  <p className="text-sm text-slate-300 leading-relaxed mb-6">{executiveSummary}</p>
                   <div className="grid sm:grid-cols-2 gap-3">
                     {valueProps.filter((v) => v.trim()).map((vp, i) => (
-                      <div key={i} className="flex items-start gap-2 rounded-lg border border-border/40 bg-card/40 p-3">
-                        <CheckCircle2 className="h-4 w-4 text-violet-400 mt-0.5 shrink-0" />
-                        <span className="text-sm">{vp}</span>
+                      <div key={i} className="flex items-start gap-2 gx-glass p-3">
+                        <CheckCircle2 className="h-4 w-4 text-violet-300 mt-0.5 shrink-0" />
+                        <span className="text-sm text-slate-100">{vp}</span>
                       </div>
                     ))}
                   </div>
@@ -849,23 +849,23 @@ export function ProposalMakerView() {
 
               {/* Slide 3: About GuardianX */}
               <Slide id={3} title="About GuardianX">
-                <div className="p-6 sm:p-10 bg-card/30">
+                <div className="p-6 sm:p-10">
                   <h3 className="text-xl sm:text-2xl font-bold mb-2 text-gradient-premium">About GuardianX</h3>
-                  <p className="text-sm text-muted-foreground leading-relaxed mb-6">{missionStatement}</p>
+                  <p className="text-sm text-slate-300 leading-relaxed mb-6">{missionStatement}</p>
                   <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
                     {keyStats.map((s, i) => (
-                      <div key={i} className="rounded-lg border border-border/40 bg-card/40 p-4 text-center">
+                      <div key={i} className="gx-glass p-4 text-center">
                         <s.icon className="h-5 w-5 mx-auto text-violet-300 mb-1" />
                         <div className="text-xl font-bold text-gradient-premium">{s.value}</div>
-                        <div className="text-[10px] text-muted-foreground uppercase tracking-wider">{s.label}</div>
+                        <div className="text-[10px] text-slate-400 uppercase tracking-wider">{s.label}</div>
                       </div>
                     ))}
                   </div>
-                  <div className="flex items-center gap-3 rounded-lg border border-violet-500/20 bg-violet-500/5 p-4">
+                  <div className="flex items-center gap-3 gx-glass p-4">
                     <img src="/guardianx-logo-v2.png" alt="GuardianX" className="w-12 h-12 object-contain" style={{ filter: "drop-shadow(0 0 8px rgba(167,139,250,0.4))" }} />
                     <div>
-                      <p className="text-sm font-semibold">Trusted cybersecurity training partner</p>
-                      <p className="text-xs text-muted-foreground">Built around real OSS tools - Kali Linux, Nmap, Burp Suite, Metasploit, Docker, Hashcat</p>
+                      <p className="text-sm font-semibold text-slate-100">Trusted cybersecurity training partner</p>
+                      <p className="text-xs text-slate-400">Built around real OSS tools - Kali Linux, Nmap, Burp Suite, Metasploit, Docker, Hashcat</p>
                     </div>
                   </div>
                 </div>
@@ -873,16 +873,16 @@ export function ProposalMakerView() {
 
               {/* Slide 4: Why Choose GuardianX */}
               <Slide id={4} title="Why Choose Us">
-                <div className="p-6 sm:p-10 bg-card/30">
+                <div className="p-6 sm:p-10">
                   <h3 className="text-xl sm:text-2xl font-bold mb-6 text-gradient-premium">Why Choose GuardianX?</h3>
                   <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
                     {WHY_CHOOSE_US.map((w, i) => (
-                      <div key={i} className="rounded-lg border border-border/40 bg-card/40 p-4">
+                      <div key={i} className="gx-glass p-4">
                         <div className={cn("inline-flex p-2 rounded-lg mb-2", w.bg)}>
                           <w.icon className={cn("h-4 w-4", w.color)} />
                         </div>
-                        <h4 className="font-semibold text-sm mb-1">{w.title}</h4>
-                        <p className="text-xs text-muted-foreground">{w.desc}</p>
+                        <h4 className="font-semibold text-sm mb-1 text-slate-100">{w.title}</h4>
+                        <p className="text-xs text-slate-400">{w.desc}</p>
                       </div>
                     ))}
                   </div>
@@ -891,7 +891,7 @@ export function ProposalMakerView() {
 
               {/* Slide 5: Our Offerings (tabbed) */}
               <Slide id={5} title="Our Offerings">
-                <div className="p-6 sm:p-10 bg-card/30">
+                <div className="p-6 sm:p-10">
                   <h3 className="text-xl sm:text-2xl font-bold mb-6 text-gradient-premium">Our Offerings</h3>
                   <Tabs defaultValue={institutionType} className="w-full">
                     <TabsList className="grid w-full grid-cols-3 mb-4">
@@ -908,28 +908,28 @@ export function ProposalMakerView() {
                             <h4 className="font-semibold">{data.label}</h4>
                           </div>
                           <div className="grid sm:grid-cols-2 gap-3">
-                            <div className="rounded-lg border border-border/40 bg-card/40 p-3">
+                            <div className="gx-glass p-3">
                               <p className="text-[10px] font-bold uppercase tracking-wider text-violet-300 mb-2">Offerings</p>
                               <ul className="space-y-1">
                                 {data.offerings.map((o, i) => (
-                                  <li key={i} className="text-xs flex items-start gap-1.5"><CheckCircle2 className="h-3 w-3 text-violet-400 mt-0.5 shrink-0" />{o}</li>
+                                  <li key={i} className="text-xs text-slate-200 flex items-start gap-1.5"><CheckCircle2 className="h-3 w-3 text-violet-400 mt-0.5 shrink-0" />{o}</li>
                                 ))}
                               </ul>
                             </div>
-                            <div className="rounded-lg border border-border/40 bg-card/40 p-3">
+                            <div className="gx-glass p-3">
                               <p className="text-[10px] font-bold uppercase tracking-wider text-cyan-300 mb-2">Features</p>
                               <ul className="space-y-1">
                                 {data.features.map((f, i) => (
-                                  <li key={i} className="text-xs flex items-start gap-1.5"><Zap className="h-3 w-3 text-cyan-400 mt-0.5 shrink-0" />{f}</li>
+                                  <li key={i} className="text-xs text-slate-200 flex items-start gap-1.5"><Zap className="h-3 w-3 text-cyan-400 mt-0.5 shrink-0" />{f}</li>
                                 ))}
                               </ul>
                             </div>
                           </div>
-                          <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3">
+                          <div className="gx-glass p-3 border-emerald-400/25">
                             <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-300 mb-2">Benefits to Institution</p>
                             <div className="grid sm:grid-cols-2 gap-2">
                               {data.benefits.map((b, i) => (
-                                <span key={i} className="text-xs">{b}</span>
+                                <span key={i} className="text-xs text-slate-200">{b}</span>
                               ))}
                             </div>
                           </div>
@@ -942,21 +942,21 @@ export function ProposalMakerView() {
 
               {/* Slide 6: Training Methodology */}
               <Slide id={6} title="Methodology">
-                <div className="p-6 sm:p-10 bg-card/30">
+                <div className="p-6 sm:p-10">
                   <h3 className="text-xl sm:text-2xl font-bold mb-6 text-gradient-premium">Training Methodology</h3>
-                  <p className="text-sm text-muted-foreground mb-6">A 7-step structured approach that combines theory with hands-on practice.</p>
+                  <p className="text-sm text-slate-300 mb-6">A 7-step structured approach that combines theory with hands-on practice.</p>
                   <div className="relative">
                     {/* Connecting line (desktop) */}
                     <div className="hidden lg:block absolute top-6 left-6 right-6 h-0.5 bg-gradient-to-r from-violet-500/40 via-cyan-500/40 to-rose-500/40" />
                     <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
                       {METHODOLOGY_STEPS.map((s, i) => (
                         <div key={i} className="relative flex flex-col items-center text-center">
-                          <div className="size-12 rounded-full bg-card border-2 border-violet-500/40 flex items-center justify-center mb-2 relative z-10">
+                          <div className="size-12 rounded-full gx-glass flex items-center justify-center mb-2 relative z-10">
                             <s.icon className="h-5 w-5 text-violet-300" />
                           </div>
                           <span className="text-[10px] font-bold text-violet-300 mb-0.5">{String(s.step).padStart(2, "0")}</span>
-                          <p className="text-xs font-semibold">{s.title}</p>
-                          <p className="text-[10px] text-muted-foreground hidden sm:block">{s.desc}</p>
+                          <p className="text-xs font-semibold text-slate-100">{s.title}</p>
+                          <p className="text-[10px] text-slate-400 hidden sm:block">{s.desc}</p>
                         </div>
                       ))}
                     </div>
@@ -966,21 +966,21 @@ export function ProposalMakerView() {
 
               {/* Slide 7: Curriculum */}
               <Slide id={7} title="Curriculum">
-                <div className="p-6 sm:p-10 bg-card/30">
+                <div className="p-6 sm:p-10">
                   <h3 className="text-xl sm:text-2xl font-bold mb-6 text-gradient-premium">Program Curriculum</h3>
                   <div className="space-y-3">
                     {modules.map((m, i) => (
-                      <div key={m.id} className="rounded-lg border border-border/40 bg-card/40 p-4">
+                      <div key={m.id} className="gx-glass p-4">
                         <div className="flex items-center justify-between mb-1 flex-wrap gap-2">
                           <div className="flex items-center gap-2">
-                            <span className="inline-flex items-center justify-center size-6 rounded-md bg-violet-600 text-white text-xs font-bold">{i + 1}</span>
-                            <h4 className="font-semibold text-sm">{m.title || "Module"}</h4>
+                            <span className="inline-flex items-center justify-center size-6 rounded-md bg-gradient-to-br from-violet-500 to-fuchsia-600 text-white text-xs font-bold">{i + 1}</span>
+                            <h4 className="font-semibold text-sm text-slate-100">{m.title || "Module"}</h4>
                           </div>
                           <Badge variant="outline" className="text-[9px] font-mono">{m.duration}</Badge>
                         </div>
-                        {m.description && <p className="text-xs text-muted-foreground ml-8">{m.description}</p>}
+                        {m.description && <p className="text-xs text-slate-400 ml-8">{m.description}</p>}
                         {m.deliverables && (
-                          <p className="text-[10px] text-cyan-300/80 ml-8 mt-1 flex items-center gap-1">
+                          <p className="text-[10px] text-cyan-300 ml-8 mt-1 flex items-center gap-1">
                             <ClipboardList className="h-3 w-3" /> Deliverables: {m.deliverables}
                           </p>
                         )}
@@ -992,28 +992,28 @@ export function ProposalMakerView() {
 
               {/* Slide 8: Benefits to Institution */}
               <Slide id={8} title="Benefits">
-                <div className="p-6 sm:p-10 bg-card/30">
+                <div className="p-6 sm:p-10">
                   <h3 className="text-xl sm:text-2xl font-bold mb-6 text-gradient-premium">Benefits to Institution</h3>
                   <div className="grid sm:grid-cols-3 gap-4">
-                    <div className="rounded-lg border border-cyan-500/20 bg-cyan-500/5 p-4">
+                    <div className="gx-glass p-4">
                       <div className="inline-flex p-2 rounded-lg bg-cyan-500/10 mb-2"><Users className="h-4 w-4 text-cyan-300" /></div>
-                      <h4 className="font-semibold text-sm mb-2">For Students</h4>
+                      <h4 className="font-semibold text-sm mb-2 text-slate-100">For Students</h4>
                       <ul className="space-y-1.5">
-                        {studentBenefits.map((b, i) => <li key={i} className="text-xs flex items-start gap-1.5"><CheckCircle2 className="h-3 w-3 text-cyan-400 mt-0.5 shrink-0" />{b}</li>)}
+                        {studentBenefits.map((b, i) => <li key={i} className="text-xs text-slate-200 flex items-start gap-1.5"><CheckCircle2 className="h-3 w-3 text-cyan-400 mt-0.5 shrink-0" />{b}</li>)}
                       </ul>
                     </div>
-                    <div className="rounded-lg border border-violet-500/20 bg-violet-500/5 p-4">
+                    <div className="gx-glass p-4">
                       <div className="inline-flex p-2 rounded-lg bg-violet-500/10 mb-2"><Building2 className="h-4 w-4 text-violet-300" /></div>
-                      <h4 className="font-semibold text-sm mb-2">For Institution</h4>
+                      <h4 className="font-semibold text-sm mb-2 text-slate-100">For Institution</h4>
                       <ul className="space-y-1.5">
-                        {institutionBenefits.map((b, i) => <li key={i} className="text-xs flex items-start gap-1.5"><CheckCircle2 className="h-3 w-3 text-violet-400 mt-0.5 shrink-0" />{b}</li>)}
+                        {institutionBenefits.map((b, i) => <li key={i} className="text-xs text-slate-200 flex items-start gap-1.5"><CheckCircle2 className="h-3 w-3 text-violet-400 mt-0.5 shrink-0" />{b}</li>)}
                       </ul>
                     </div>
-                    <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-4">
+                    <div className="gx-glass p-4">
                       <div className="inline-flex p-2 rounded-lg bg-amber-500/10 mb-2"><BookOpen className="h-4 w-4 text-amber-300" /></div>
-                      <h4 className="font-semibold text-sm mb-2">For Faculty</h4>
+                      <h4 className="font-semibold text-sm mb-2 text-slate-100">For Faculty</h4>
                       <ul className="space-y-1.5">
-                        {facultyBenefits.map((b, i) => <li key={i} className="text-xs flex items-start gap-1.5"><CheckCircle2 className="h-3 w-3 text-amber-400 mt-0.5 shrink-0" />{b}</li>)}
+                        {facultyBenefits.map((b, i) => <li key={i} className="text-xs text-slate-200 flex items-start gap-1.5"><CheckCircle2 className="h-3 w-3 text-amber-400 mt-0.5 shrink-0" />{b}</li>)}
                       </ul>
                     </div>
                   </div>
@@ -1022,32 +1022,32 @@ export function ProposalMakerView() {
 
               {/* Slide 9: Pricing */}
               <Slide id={9} title="Pricing">
-                <div className="p-6 sm:p-10 bg-card/30">
-                  <h3 className="text-xl sm:text-2xl font-bold mb-6 text-gradient-premium">Revenue Model & Pricing</h3>
+                <div className="p-6 sm:p-10">
+                  <h3 className="text-xl sm:text-2xl font-bold mb-6 text-gradient-premium">Revenue Model &amp; Pricing</h3>
                   <div className="grid sm:grid-cols-2 gap-4">
-                    <div>
+                    <div className="gx-glass p-4">
                       <table className="w-full text-sm">
                         <tbody>
-                          <tr className="border-b border-border/40"><td className="py-2 text-muted-foreground">Training ({studentCount} students × {fmt(perStudentPrice)})</td><td className="py-2 text-right font-medium tabular-nums">{fmt(studentTotal)}</td></tr>
-                          <tr className="border-b border-border/40"><td className="py-2 text-muted-foreground">Cyber Lab Access (31 labs, {programDuration})</td><td className="py-2 text-right font-medium tabular-nums">{fmt(labAccessFee)}</td></tr>
-                          <tr className="border-b border-border/40"><td className="py-2 text-muted-foreground">Instructor & Material Fee</td><td className="py-2 text-right font-medium tabular-nums">{fmt(instructorFee)}</td></tr>
-                          {discountRate > 0 && <tr className="border-b border-border/40"><td className="py-2 text-muted-foreground">Discount ({discountRate}%)</td><td className="py-2 text-right text-rose-300 tabular-nums">−{fmt(discountAmount)}</td></tr>}
-                          <tr className="border-t-2 border-border"><td className="py-3 font-bold">Total Investment</td><td className="py-3 text-right font-bold text-lg text-gradient-premium tabular-nums">{fmt(total)}</td></tr>
+                          <tr className="border-b border-white/10"><td className="py-2 text-slate-400">Training ({studentCount} students × {fmt(perStudentPrice)})</td><td className="py-2 text-right font-medium text-slate-100 tabular-nums">{fmt(studentTotal)}</td></tr>
+                          <tr className="border-b border-white/10"><td className="py-2 text-slate-400">Cyber Lab Access (31 labs, {programDuration})</td><td className="py-2 text-right font-medium text-slate-100 tabular-nums">{fmt(labAccessFee)}</td></tr>
+                          <tr className="border-b border-white/10"><td className="py-2 text-slate-400">Instructor &amp; Material Fee</td><td className="py-2 text-right font-medium text-slate-100 tabular-nums">{fmt(instructorFee)}</td></tr>
+                          {discountRate > 0 && <tr className="border-b border-white/10"><td className="py-2 text-slate-400">Discount ({discountRate}%)</td><td className="py-2 text-right text-rose-300 tabular-nums">−{fmt(discountAmount)}</td></tr>}
+                          <tr className="border-t-2 border-white/25"><td className="py-3 font-bold text-slate-100">Total Investment</td><td className="py-3 text-right font-bold text-lg text-gradient-premium tabular-nums">{fmt(total)}</td></tr>
                         </tbody>
                       </table>
                     </div>
                     <div className="space-y-3">
-                      <div className="rounded-lg border border-violet-500/20 bg-violet-500/5 p-3">
+                      <div className="gx-glass p-3">
                         <p className="text-[10px] font-bold uppercase tracking-wider text-violet-300 mb-1">Revenue Share</p>
-                        <p className="text-sm">{revenueShare}% of training revenue shared with institution for cohorts above 50 students</p>
+                        <p className="text-sm text-slate-200">{revenueShare}% of training revenue shared with institution for cohorts above 50 students</p>
                       </div>
-                      <div className="rounded-lg border border-cyan-500/20 bg-cyan-500/5 p-3">
+                      <div className="gx-glass p-3">
                         <p className="text-[10px] font-bold uppercase tracking-wider text-cyan-300 mb-1">ROI for Institution</p>
-                        <p className="text-sm">Estimated {fmt(Math.round(total * 3 / studentCount))} value per student in industry certifications + placement premium</p>
+                        <p className="text-sm text-slate-200">Estimated {fmt(Math.round(total * 3 / studentCount))} value per student in industry certifications + placement premium</p>
                       </div>
-                      <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3">
+                      <div className="gx-glass p-3">
                         <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-300 mb-1">Custom Pricing</p>
-                        <p className="text-sm">Volume discounts available for cohorts above 100 students. Contact us for a tailored quote.</p>
+                        <p className="text-sm text-slate-200">Volume discounts available for cohorts above 100 students. Contact us for a tailored quote.</p>
                       </div>
                     </div>
                   </div>
@@ -1056,23 +1056,23 @@ export function ProposalMakerView() {
 
               {/* Slide 10: Partnership Models */}
               <Slide id={10} title="Partnership Models">
-                <div className="p-6 sm:p-10 bg-card/30">
+                <div className="p-6 sm:p-10">
                   <h3 className="text-xl sm:text-2xl font-bold mb-6 text-gradient-premium">Partnership Models</h3>
                   <div className="grid sm:grid-cols-3 gap-4">
                     {PARTNERSHIP_MODELS.map((model, i) => (
-                      <div key={i} className={cn("relative rounded-lg border p-4", model.popular ? "border-cyan-500/40 bg-cyan-500/5" : "border-border/40 bg-card/40")}>
+                      <div key={i} className={cn("relative gx-glass p-4", model.popular && "border-cyan-400/40")}>
                         {model.popular && (
-                          <Badge className="absolute -top-2 right-2 bg-cyan-500 text-white text-[9px]">POPULAR</Badge>
+                          <Badge className="absolute -top-2 right-2 bg-gradient-to-r from-cyan-500 to-violet-500 text-white text-[9px] border-0">POPULAR</Badge>
                         )}
                         <div className={cn("inline-flex p-2 rounded-lg mb-2", model.bg)}>
                           <model.icon className={cn("h-4 w-4", model.color)} />
                         </div>
-                        <h4 className="font-semibold text-sm mb-1">{model.name}</h4>
+                        <h4 className="font-semibold text-sm mb-1 text-slate-100">{model.name}</h4>
                         <p className="text-lg font-bold text-gradient-premium">{model.price}</p>
-                        <p className="text-[10px] text-muted-foreground mb-3">{model.priceNote}</p>
+                        <p className="text-[10px] text-slate-400 mb-3">{model.priceNote}</p>
                         <ul className="space-y-1">
                           {model.features.map((f, j) => (
-                            <li key={j} className="text-xs flex items-start gap-1.5"><CheckCircle2 className="h-3 w-3 text-violet-400 mt-0.5 shrink-0" />{f}</li>
+                            <li key={j} className="text-xs text-slate-200 flex items-start gap-1.5"><CheckCircle2 className="h-3 w-3 text-violet-400 mt-0.5 shrink-0" />{f}</li>
                           ))}
                         </ul>
                       </div>
@@ -1083,7 +1083,7 @@ export function ProposalMakerView() {
 
               {/* Slide 11: Implementation Timeline */}
               <Slide id={11} title="Timeline">
-                <div className="p-6 sm:p-10 bg-card/30">
+                <div className="p-6 sm:p-10">
                   <h3 className="text-xl sm:text-2xl font-bold mb-6 text-gradient-premium">Implementation Timeline</h3>
                   <div className="relative">
                     {/* Vertical line */}
@@ -1091,18 +1091,18 @@ export function ProposalMakerView() {
                     <div className="space-y-4">
                       {TIMELINE_PHASES.map((p, i) => (
                         <div key={i} className="relative pl-12">
-                          <div className={cn("absolute left-0 size-10 rounded-full border-2 border-border/60 flex items-center justify-center", p.bg)}>
+                          <div className={cn("absolute left-0 size-10 rounded-full gx-glass flex items-center justify-center", p.bg)}>
                             <p.icon className={cn("h-4 w-4", p.color)} />
                           </div>
-                          <div className="rounded-lg border border-border/40 bg-card/40 p-3">
+                          <div className="gx-glass p-3">
                             <div className="flex items-center justify-between mb-1 flex-wrap gap-1">
                               <div className="flex items-center gap-2">
                                 <Badge variant="outline" className="text-[9px] font-mono">{p.phase}</Badge>
-                                <span className="text-[10px] text-muted-foreground">{p.weeks}</span>
+                                <span className="text-[10px] text-slate-400">{p.weeks}</span>
                               </div>
-                              <h4 className="font-semibold text-sm">{p.title}</h4>
+                              <h4 className="font-semibold text-sm text-slate-100">{p.title}</h4>
                             </div>
-                            <p className="text-xs text-muted-foreground">{p.desc}</p>
+                            <p className="text-xs text-slate-400">{p.desc}</p>
                           </div>
                         </div>
                       ))}
@@ -1113,36 +1113,36 @@ export function ProposalMakerView() {
 
               {/* Slide 12: Terms & Conditions */}
               <Slide id={12} title="Terms">
-                <div className="p-6 sm:p-10 bg-card/30">
-                  <h3 className="text-xl sm:text-2xl font-bold mb-6 text-gradient-premium">Terms & Conditions</h3>
-                  <div className="rounded-lg border border-border/40 bg-card/40 p-4">
-                    <p className="text-xs text-muted-foreground whitespace-pre-line leading-relaxed">{termsText}</p>
+                <div className="p-6 sm:p-10">
+                  <h3 className="text-xl sm:text-2xl font-bold mb-6 text-gradient-premium">Terms &amp; Conditions</h3>
+                  <div className="gx-glass p-4">
+                    <p className="text-xs text-slate-300 whitespace-pre-line leading-relaxed">{termsText}</p>
                   </div>
                 </div>
               </Slide>
 
               {/* Slide 13: Contact & Next Steps */}
               <Slide id={13} title="Contact">
-                <div className="relative bg-gradient-to-br from-violet-950/80 via-zinc-950 to-zinc-950 p-8 sm:p-12 overflow-hidden">
-                  <div className="absolute inset-0 opacity-[0.08]" style={{ backgroundImage: "linear-gradient(to right, white 1px, transparent 1px), linear-gradient(to bottom, white 1px, transparent 1px)", backgroundSize: "32px 32px" }} />
-                  <div className="absolute -top-20 -right-10 w-72 h-72 rounded-full bg-violet-600/20 blur-3xl pointer-events-none" />
+                <div className="relative p-8 sm:p-12 overflow-hidden">
+                  <div className="absolute -top-24 -right-10 w-80 h-80 rounded-full bg-violet-600/25 blur-[90px] pointer-events-none" />
+                  <div className="absolute -bottom-24 -left-14 w-80 h-80 rounded-full bg-cyan-600/15 blur-[90px] pointer-events-none" />
                   <div className="relative">
                     <Badge className="bg-cyan-500/20 text-cyan-200 border border-cyan-500/40 mb-3">CONTACT & NEXT STEPS</Badge>
                     <h3 className="text-2xl sm:text-3xl font-bold mb-6 text-gradient-premium">Ready to Partner?</h3>
                     <div className="grid sm:grid-cols-2 gap-6 mb-8">
-                      <div>
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-violet-200/60 mb-2">GuardianX Academy</p>
+                      <div className="gx-glass p-4">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-cyan-300 mb-2">GuardianX Academy</p>
                         <div className="space-y-1.5 text-sm">
-                          <div className="flex items-center gap-2 text-violet-100/90"><Mail className="h-3.5 w-3.5" /> academy@guardianx.in</div>
-                          <div className="flex items-center gap-2 text-violet-100/90"><Mail className="h-3.5 w-3.5" /> academy@guardianx.cloud</div>
-                          <div className="flex items-center gap-2 text-violet-100/90"><Phone className="h-3.5 w-3.5" /> +91 80 4567 8901</div>
-                          <div className="flex items-center gap-2 text-violet-100/90"><Globe className="h-3.5 w-3.5" /> academy.guardianx.cloud</div>
-                          <div className="flex items-center gap-2 text-violet-100/90"><Building2 className="h-3.5 w-3.5" /> Nooripora, Baramulla, Kashmir · Noida, Gautam Buddha Nagar</div>
+                          <div className="flex items-center gap-2 text-slate-100"><Mail className="h-3.5 w-3.5 text-violet-300" /> academy@guardianx.in</div>
+                          <div className="flex items-center gap-2 text-slate-100"><Mail className="h-3.5 w-3.5 text-violet-300" /> academy@guardianx.cloud</div>
+                          <div className="flex items-center gap-2 text-slate-100"><Phone className="h-3.5 w-3.5 text-violet-300" /> +91 80 4567 8901</div>
+                          <div className="flex items-center gap-2 text-slate-100"><Globe className="h-3.5 w-3.5 text-violet-300" /> academy.guardianx.cloud</div>
+                          <div className="flex items-center gap-2 text-slate-100"><Building2 className="h-3.5 w-3.5 text-violet-300" /> Nooripora, Baramulla, Kashmir · Noida, Gautam Buddha Nagar</div>
                         </div>
                       </div>
-                      <div>
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-violet-200/60 mb-2">Next Steps</p>
-                        <ol className="space-y-1.5 text-sm list-decimal list-inside text-violet-100/90">
+                      <div className="gx-glass p-4">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-cyan-300 mb-2">Next Steps</p>
+                        <ol className="space-y-1.5 text-sm list-decimal list-inside text-slate-100">
                           <li>Review proposal with stakeholders</li>
                           <li>Schedule a discovery call</li>
                           <li>Sign MoU (template provided)</li>
@@ -1161,14 +1161,14 @@ export function ProposalMakerView() {
                     {/* Signature areas */}
                     <div className="grid sm:grid-cols-2 gap-6 mt-10 pt-6 border-t border-white/10">
                       <div>
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-violet-200/60 mb-2">For GuardianX Academy</p>
-                        <div className="h-12 border-b border-dashed border-white/20" />
-                        <p className="text-xs mt-1">Authorized Signatory</p>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">For GuardianX Academy</p>
+                        <div className="h-12 border-b border-dashed border-white/25" />
+                        <p className="text-xs mt-1 text-slate-200">Authorized Signatory</p>
                       </div>
                       <div>
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-violet-200/60 mb-2">For {institutionName || "Institution"}</p>
-                        <div className="h-12 border-b border-dashed border-white/20" />
-                        <p className="text-xs mt-1">{contactName || "Authorized Signatory"}</p>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">For {institutionName || "Institution"}</p>
+                        <div className="h-12 border-b border-dashed border-white/25" />
+                        <p className="text-xs mt-1 text-slate-200">{contactName || "Authorized Signatory"}</p>
                       </div>
                     </div>
                   </div>
@@ -1176,13 +1176,13 @@ export function ProposalMakerView() {
               </Slide>
 
               {/* Footer */}
-              <div className="border-t border-border/40 px-6 sm:px-8 py-4 bg-gradient-to-r from-violet-950/40 via-zinc-950/40 to-cyan-950/40">
+              <div className="border-t border-white/10 px-6 sm:px-8 py-4 bg-white/[0.03]">
                 <div className="flex items-center justify-between flex-wrap gap-3">
                   <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground"><ShieldCheck className="h-3.5 w-3.5 text-violet-400" /> Verified Training Provider</div>
-                    <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground"><Award className="h-3.5 w-3.5 text-violet-400" /> ISO-Aligned Curriculum</div>
+                    <div className="flex items-center gap-1.5 text-[10px] text-slate-400"><ShieldCheck className="h-3.5 w-3.5 text-violet-400" /> Verified Training Provider</div>
+                    <div className="flex items-center gap-1.5 text-[10px] text-slate-400"><Award className="h-3.5 w-3.5 text-violet-400" /> ISO-Aligned Curriculum</div>
                   </div>
-                  <div className="text-[10px] text-muted-foreground font-mono">academy.guardianx.cloud · {proposalNumber}</div>
+                  <div className="text-[10px] text-slate-400 font-mono">academy.guardianx.cloud · {proposalNumber}</div>
                 </div>
               </div>
             </div>

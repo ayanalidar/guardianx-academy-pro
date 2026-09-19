@@ -7,11 +7,11 @@
  * zoom/print DPI, the document fills the full A4 portrait page.
  *
  * TWO THEMES:
- *  - "dark"  — the cyber "screen style": full-page deep-violet/near-black
- *              gradient, holographic violet-fuchsia-cyan accent bars, faint
- *              grid overlay, radial glow orbs, HUD corner brackets, neon
- *              frames. Mirrors the on-screen Invoice Generator look. Best
- *              for sharing/emailing (heavy for physical printing).
+ *  - "dark"  — the aurora glass "screen style": full-page deep indigo/violet
+ *              aurora gradient, frosted glass panels (translucent white fills
+ *              with hairline borders), cyan-violet-fuchsia accent bars, soft
+ *              radial glow orbs. Mirrors the on-screen Invoice Generator look.
+ *              Best for sharing/emailing (heavy for physical printing).
  *  - "light" — print-friendly white paper invoice (ink-safe).
  *
  * Runs in the browser (QR data-URL passed in) and in Node (qrPngDataUrl:
@@ -119,22 +119,22 @@ const C_BASE: Palette = {
 }
 
 const C_DARK: Palette = {
-  headerLeft: [46, 16, 101], // violet-950
-  headerRight: [12, 10, 22],
+  headerLeft: [48, 32, 102], // deep indigo
+  headerRight: [20, 14, 44],
   accentA: [139, 92, 246], // violet-500 (brighter on dark)
   accentB: [232, 121, 249], // fuchsia-400
   accentC: [34, 211, 238], // cyan-400
-  violetDark: [91, 33, 182], // violet-800 total pill
-  violet: [167, 139, 250], // violet-400 labels
-  violetSoft: [196, 181, 253],
-  ink: [244, 244, 245], // zinc-100 body text
-  sub: [161, 161, 170], // zinc-400
-  faint: [113, 113, 122], // zinc-500
-  line: [39, 39, 42], // zinc-800 card borders
-  rowLine: [46, 42, 56],
-  zebra: [26, 20, 40], // deep violet row tint
-  violetTint: [46, 16, 101], // avatar fill
-  avatarBorder: [124, 58, 237], // violet-600 ring
+  violetDark: [70, 44, 140], // violet panel tint
+  violet: [178, 156, 255], // labels — brighter for contrast on glass
+  violetSoft: [210, 196, 255],
+  ink: [248, 250, 252], // near-white body text
+  sub: [199, 206, 220], // slate-300-ish
+  faint: [150, 159, 178],
+  line: [58, 50, 84], // violet-gray hairline
+  rowLine: [64, 56, 92],
+  zebra: [38, 28, 66], // deep violet row tint
+  violetTint: [52, 32, 104], // avatar fill
+  avatarBorder: [139, 92, 246], // violet-500 ring
   white: [255, 255, 255],
   rose: [251, 113, 133], // rose-400
 }
@@ -331,11 +331,11 @@ function withOpacity(pdf: jsPDF, opacity: number, fn: () => void) {
   pdf.restoreGraphicsState()
 }
 
-/** Full-page vertical gradient — deep violet top fading to near-black. */
+/** Full-page vertical aurora gradient — indigo → violet → deep navy. */
 function paintPageBg(pdf: jsPDF, pw: number, ph = 297) {
-  const top: RGB = [24, 15, 41] // violet-950 tint
-  const mid: RGB = [13, 11, 20]
-  const bottom: RGB = [9, 8, 13]
+  const top: RGB = [34, 24, 72] // indigo glow
+  const mid: RGB = [23, 16, 50] // violet night
+  const bottom: RGB = [11, 12, 28] // deep navy
   const steps = 44
   const sh = ph / steps
   for (let i = 0; i < steps; i++) {
@@ -344,16 +344,6 @@ function paintPageBg(pdf: jsPDF, pw: number, ph = 297) {
     pdf.setFillColor(c[0], c[1], c[2])
     pdf.rect(0, i * sh, pw, sh + 0.3, "F")
   }
-}
-
-/** Faint blueprint grid inside a region (mirrors the on-screen header overlay). */
-function drawGrid(pdf: jsPDF, x: number, y: number, w: number, h: number, step = 9, opacity = 0.05) {
-  withOpacity(pdf, opacity, () => {
-    pdf.setDrawColor(255, 255, 255)
-    pdf.setLineWidth(0.08)
-    for (let gx = x + step; gx < x + w; gx += step) pdf.line(gx, y, gx, y + h)
-    for (let gy = y + step; gy < y + h; gy += step) pdf.line(x, gy, x + w, gy)
-  })
 }
 
 /** Radial glow orb approximated with layered opaque-disc rings. */
@@ -368,14 +358,17 @@ function drawOrb(pdf: jsPDF, cx: number, cy: number, r: number, color: RGB, ring
   }
 }
 
-/** HUD corner brackets — terminal-style L marks. */
-function drawBracket(pdf: jsPDF, x: number, y: number, s: number, color: RGB, dir: "tl" | "tr" | "bl" | "br") {
-  pdf.setDrawColor(color[0], color[1], color[2])
-  pdf.setLineWidth(0.55)
-  const dx = dir === "tl" || dir === "bl" ? 1 : -1
-  const dy = dir === "tl" || dir === "tr" ? 1 : -1
-  pdf.line(x, y, x + dx * s, y)
-  pdf.line(x, y, x, y + dy * s)
+/** Frosted glass panel — translucent white fill + hairline light border. */
+function glassPanel(pdf: jsPDF, x: number, y: number, w: number, h: number, r = 3) {
+  withOpacity(pdf, 0.055, () => {
+    pdf.setFillColor(255, 255, 255)
+    pdf.roundedRect(x, y, w, h, r, r, "F")
+  })
+  withOpacity(pdf, 0.16, () => {
+    pdf.setDrawColor(255, 255, 255)
+    pdf.setLineWidth(0.25)
+    pdf.roundedRect(x, y, w, h, r, r, "S")
+  })
 }
 
 // ---------------------------------------------------------------------------
@@ -431,7 +424,10 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
     if (footerMarked) return
     const pageNo = pdf.getNumberOfPages()
     if (DARK) {
-      drawGrid(pdf, 0, 284.2, PW, 12.8, 8, 0.035)
+      withOpacity(pdf, 0.04, () => {
+        pdf.setFillColor(255, 255, 255)
+        pdf.rect(0, 284.2, PW, 12.8, "F")
+      })
       gradientBand3(pdf, 0, 285.5, PW, 0.7, C.accentA, C.accentB, C.accentC, 72)
     } else {
       pdf.setDrawColor(C.line[0], C.line[1], C.line[2])
@@ -465,8 +461,12 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
   }
 
   function drawTableHeader(y: number) {
-    pdf.setFillColor(C.violetDark[0], C.violetDark[1], C.violetDark[2])
-    pdf.rect(ML, y, CW, 8, "F")
+    if (DARK) {
+      glassPanel(pdf, ML, y, CW, 8, 2)
+    } else {
+      pdf.setFillColor(C.violetDark[0], C.violetDark[1], C.violetDark[2])
+      pdf.rect(ML, y, CW, 8, "F")
+    }
     setFont(pdf, "bold", 7.4, C.white)
     pdf.text("ITEM", 26, y + 5.2, { charSpace: 0.4 })
     pdf.text("QTY", 123, y + 5.2, { align: "center" })
@@ -481,9 +481,10 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
   // =========================================================================
   if (DARK) {
     paintPageBg(pdf, PW)
-    drawOrb(pdf, 196, 5, 30, C.accentA, 8, 0.05)
-    drawOrb(pdf, 2, 54, 24, C.accentB, 7, 0.045)
-    drawOrb(pdf, 208, 250, 26, C.accentC, 7, 0.04)
+    drawOrb(pdf, 196, 5, 30, C.accentA, 8, 0.06)
+    drawOrb(pdf, 2, 54, 24, C.accentC, 7, 0.05)
+    drawOrb(pdf, 208, 250, 26, C.accentB, 7, 0.045)
+    drawOrb(pdf, 105, 140, 34, C.accentA, 6, 0.028)
   }
 
   // =========================================================================
@@ -491,14 +492,14 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
   // =========================================================================
   gradientBand(pdf, 0, 0, PW, 42, C.headerLeft, C.headerRight, 56)
   if (DARK) {
-    // holographic frame: top bar + hairline under the band + blueprint grid
+    // glass edge: top aurora bar + hairline under the band
     gradientBand3(pdf, 0, 0, PW, 2.4, C.accentA, C.accentB, C.accentC, 72)
-    drawGrid(pdf, 0, 2.4, PW, 39.6, 9, 0.05)
     gradientBand3(pdf, 0, 42, PW, 1.1, C.accentA, C.accentB, C.accentC, 72)
-    drawBracket(pdf, ML - 2, 49.5, 3.6, C.accentC, "tl")
-    drawBracket(pdf, MR + 2, 49.5, 3.6, C.accentC, "tr")
-    drawBracket(pdf, ML - 2, 279.5, 3.6, C.accentC, "bl")
-    drawBracket(pdf, MR + 2, 279.5, 3.6, C.accentC, "br")
+    // soft glass sheen over the band
+    withOpacity(pdf, 0.05, () => {
+      pdf.setFillColor(255, 255, 255)
+      pdf.rect(0, 2.4, PW, 39.6, "F")
+    })
   } else {
     gradientBand3(pdf, 0, 42, PW, 2.2, C.accentA, C.accentB, C.accentC, 72)
   }
@@ -670,8 +671,15 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
       y = drawTableHeader(newContentPage())
     }
     if (idx % 2 === 1) {
-      pdf.setFillColor(C.zebra[0], C.zebra[1], C.zebra[2])
-      pdf.rect(ML, y, CW, rowH, "F")
+      if (DARK) {
+        withOpacity(pdf, 0.035, () => {
+          pdf.setFillColor(255, 255, 255)
+          pdf.rect(ML, y, CW, rowH, "F")
+        })
+      } else {
+        pdf.setFillColor(C.zebra[0], C.zebra[1], C.zebra[2])
+        pdf.rect(ML, y, CW, rowH, "F")
+      }
     }
 
     // item tag
@@ -724,17 +732,23 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
   if (data.roundingAdjustment !== 0)
     totalsRows.push({ label: "Rounding", value: signed(data.roundingAdjustment) })
 
-  // left: UPI card
+  // left: UPI card (frosted glass; QR sits on a white patch for scannability)
   let leftBottom = y
   if (data.upiId && opts.qrPngDataUrl && total > 0) {
     const cardH = 34
-    pdf.setFillColor(255, 255, 255)
-    pdf.setDrawColor(DARK ? C.accentA[0] : C.line[0], DARK ? C.accentA[1] : C.line[1], DARK ? C.accentA[2] : C.line[2])
-    pdf.setLineWidth(DARK ? 0.4 : 0.25)
-    pdf.roundedRect(ML, y, 88, cardH, 2.4, 2.4, "FD")
+    if (DARK) {
+      glassPanel(pdf, ML, y, 88, cardH, 2.4)
+    } else {
+      pdf.setFillColor(255, 255, 255)
+      pdf.setDrawColor(C.line[0], C.line[1], C.line[2])
+      pdf.setLineWidth(0.25)
+      pdf.roundedRect(ML, y, 88, cardH, 2.4, 2.4, "FD")
+    }
     setFont(pdf, "bold", 7.2, C.violet)
     pdf.text("SCAN TO PAY · UPI", ML + 4, y + 6, { charSpace: 0.5 })
     const qrSize = 24
+    pdf.setFillColor(255, 255, 255)
+    pdf.roundedRect(ML + 3.2, y + 7.7, qrSize + 1.6, qrSize + 1.6, 1.4, 1.4, "F")
     pdf.addImage(opts.qrPngDataUrl, "PNG", ML + 4, y + 8.5, qrSize, qrSize)
     let qy = y + 12.5
     setFont(pdf, "reg", 7.4, C.sub)
@@ -763,15 +777,14 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
     pdf.text(safe(row.value), MR, ty + 4.4, { align: "right" })
     ty += 6
   }
-  // total pill (dark: neon-framed gradient-trimmed pill)
-  pdf.setFillColor(C.violetDark[0], C.violetDark[1], C.violetDark[2])
-  pdf.roundedRect(108, ty + 1, MR - 108, 12, 2.4, 2.4, "F")
+  // total pill (dark: frosted glass card with gradient trims)
   if (DARK) {
+    glassPanel(pdf, 108, ty + 1, MR - 108, 12, 2.4)
     gradientBand3(pdf, 108, ty + 0.2, MR - 108, 0.7, C.accentA, C.accentB, C.accentC, 48)
     gradientBand3(pdf, 108, ty + 13.1, MR - 108, 0.7, C.accentC, C.accentB, C.accentA, 48)
-    pdf.setDrawColor(C.accentA[0], C.accentA[1], C.accentA[2])
-    pdf.setLineWidth(0.35)
-    pdf.roundedRect(108, ty + 1, MR - 108, 12, 2.4, 2.4, "S")
+  } else {
+    pdf.setFillColor(C.violetDark[0], C.violetDark[1], C.violetDark[2])
+    pdf.roundedRect(108, ty + 1, MR - 108, 12, 2.4, 2.4, "F")
   }
   setFont(pdf, "bold", 8.4, C.white)
   pdf.text("TOTAL", 113, ty + 8.6, { charSpace: 0.7 })

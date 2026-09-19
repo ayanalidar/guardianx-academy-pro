@@ -412,6 +412,44 @@
   opacity: 1;
 }
 
+/* ============================================================
+   Aurora Glass — GuardianX document design system
+   (invoice / proposal / certificate). Frosted panels floating
+   on a deep aurora backdrop. No grids, no HUD noise — pure
+   glass with high-contrast typography.
+   ============================================================ */
+.gx-aurora {
+  background:
+    radial-gradient(1100px 480px at 88% -12%, oklch(0.55 0.23 293 / 0.30), transparent 60%),
+    radial-gradient(900px 460px at -12% 28%, oklch(0.72 0.14 220 / 0.15), transparent 55%),
+    radial-gradient(760px 420px at 55% 115%, oklch(0.6 0.22 330 / 0.12), transparent 55%),
+    linear-gradient(165deg, #1a1140 0%, #150e30 42%, #0c0d20 100%);
+}
+.gx-glass {
+  position: relative;
+  background: linear-gradient(to bottom, oklch(1 0 0 / 7%), oklch(1 0 0 / 3.5%));
+  border: 1px solid oklch(1 0 0 / 12%);
+  backdrop-filter: blur(16px) saturate(1.4);
+  -webkit-backdrop-filter: blur(16px) saturate(1.4);
+  border-radius: 14px;
+  box-shadow: 0 10px 34px -12px oklch(0 0 0 / 0.45), inset 0 1px 0 oklch(1 0 0 / 9%);
+}
+.gx-glass-soft {
+  background: oklch(1 0 0 / 4.5%);
+  border: 1px solid oklch(1 0 0 / 9%);
+  backdrop-filter: blur(10px) saturate(1.25);
+  -webkit-backdrop-filter: blur(10px) saturate(1.25);
+  border-radius: 12px;
+}
+/* small uppercase section label used inside aurora documents */
+.gx-label {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  color: oklch(0.85 0.1 215);
+}
+
 /* Card hover glow — cursor-responsive */
 .card-glow {
   position: relative;

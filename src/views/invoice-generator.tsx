@@ -912,26 +912,18 @@ export function InvoiceGeneratorView() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4 }}
               id="invoice-preview"
-              className="rounded-2xl overflow-hidden card-premium"
+              className="rounded-2xl overflow-hidden gx-aurora"
             >
-              {/* Holographic header with animated gradient border */}
+              {/* Aurora glass header */}
               <div className="relative">
-                {/* Animated gradient border (top accent) */}
-                <div className="h-1 w-full bg-gradient-to-r from-violet-600 via-fuchsia-500 to-cyan-500 animate-pulse" />
+                {/* Slim accent edge (static — no pulse, keeps it premium) */}
+                <div className="h-1 w-full bg-gradient-to-r from-cyan-400 via-violet-500 to-fuchsia-500" />
                 {/* Header */}
-                <div className="relative bg-gradient-to-br from-violet-950/80 via-zinc-950 to-zinc-950 p-6 sm:p-8 overflow-hidden">
-                  {/* Grid pattern overlay */}
-                  <div
-                    className="absolute inset-0 opacity-[0.08]"
-                    style={{
-                      backgroundImage:
-                        "linear-gradient(to right, white 1px, transparent 1px), linear-gradient(to bottom, white 1px, transparent 1px)",
-                      backgroundSize: "32px 32px",
-                    }}
-                  />
-                  {/* Glow orbs */}
-                  <div className="absolute -top-20 -right-10 w-60 h-60 rounded-full bg-violet-600/20 blur-3xl pointer-events-none" />
-                  <div className="absolute -bottom-20 -left-10 w-60 h-60 rounded-full bg-fuchsia-600/15 blur-3xl pointer-events-none" />
+                <div className="relative p-6 sm:p-8 overflow-hidden">
+                  {/* Aurora glow orbs */}
+                  <div className="absolute -top-24 -right-10 w-72 h-72 rounded-full bg-violet-600/25 blur-[90px] pointer-events-none" />
+                  <div className="absolute -bottom-24 -left-14 w-72 h-72 rounded-full bg-cyan-500/15 blur-[90px] pointer-events-none" />
+                  <div className="absolute top-1/3 left-1/2 w-40 h-40 rounded-full bg-fuchsia-500/10 blur-[70px] pointer-events-none" />
                   <div className="relative flex items-start justify-between flex-wrap gap-4">
                     {/* Company branding - particle logo + tagline */}
                     <div className="flex items-center gap-4">
@@ -946,17 +938,17 @@ export function InvoiceGeneratorView() {
                       </div>
                       <div>
                         <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-gradient-premium">GuardianX Academy</h1>
-                        <p className="text-[11px] text-violet-200/80 mt-0.5">Cybersecurity Training & Certification</p>
-                        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-[10px] text-violet-200/70">
-                          <span className="flex items-center gap-1"><Mail className="h-3 w-3" /> academy@guardianx.in</span>
-                          <span className="flex items-center gap-1"><Mail className="h-3 w-3" /> academy@guardianx.cloud</span>
-                          <span className="flex items-center gap-1"><MapPin className="h-3 w-3" /> Nooripora, Baramulla, Kashmir 193401 &amp; Gautam Buddha Nagar, Noida 201301</span>
+                        <p className="text-[11px] text-violet-200/90 mt-0.5">Cybersecurity Training & Certification</p>
+                        <div className="flex flex-wrap items-center gap-1.5 mt-2.5 text-[10px] text-slate-200">
+                          <span className="gx-glass-soft inline-flex items-center gap-1 px-2 py-0.5"><Mail className="h-3 w-3 text-cyan-300" /> academy@guardianx.in</span>
+                          <span className="gx-glass-soft inline-flex items-center gap-1 px-2 py-0.5"><Mail className="h-3 w-3 text-cyan-300" /> academy@guardianx.cloud</span>
+                          <span className="gx-glass-soft inline-flex items-center gap-1 px-2 py-0.5"><MapPin className="h-3 w-3 text-cyan-300" /> Nooripora, Baramulla, Kashmir 193401 &amp; Gautam Buddha Nagar, Noida 201301</span>
                         </div>
                       </div>
                     </div>
                     <div className="text-right">
                       <div className="text-2xl sm:text-3xl font-bold tracking-tight text-gradient-premium">INVOICE</div>
-                      <div className="text-[11px] text-violet-200/80 font-mono mt-1">{invoiceNumber}</div>
+                      <div className="text-[11px] text-violet-200/90 font-mono mt-1">{invoiceNumber}</div>
                       {/* Status badge */}
                       <div className="mt-2">
                         {(() => {
@@ -974,92 +966,95 @@ export function InvoiceGeneratorView() {
                 </div>
               </div>
 
-              {/* Bill To + Dates */}
-              <div className="grid sm:grid-cols-2 gap-6 p-6 sm:p-8 border-b border-border/40 bg-card/40">
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-3">Bill To</p>
+              {/* Bill To + Dates — frosted panels */}
+              <div className="grid sm:grid-cols-2 gap-4 p-6 sm:p-8 pt-2">
+                <div className="gx-glass p-5">
+                  <p className="gx-label mb-3">Bill To</p>
                   <div className="flex items-start gap-3">
                     {/* Client avatar circle */}
                     <div className="size-10 rounded-full bg-gradient-to-br from-cyan-500/30 to-violet-500/30 border border-border/60 flex items-center justify-center text-sm font-bold text-cyan-100 shrink-0">
                       {(clientName || clientOrg || "?").charAt(0).toUpperCase()}
                     </div>
                     <div>
-                      <p className="font-semibold text-foreground">{clientName || "Client Name"}</p>
-                      {clientOrg && <p className="text-sm text-muted-foreground">{clientOrg}</p>}
+                      <p className="font-semibold text-slate-100">{clientName || "Client Name"}</p>
+                      {clientOrg && <p className="text-sm text-slate-400">{clientOrg}</p>}
                       {clientEmail && (
-                        <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
-                          <Mail className="h-3 w-3" /> {clientEmail}
+                        <p className="text-xs text-slate-300 mt-1 flex items-center gap-1">
+                          <Mail className="h-3 w-3 text-violet-300" /> {clientEmail}
                         </p>
                       )}
                       {clientPhone && (
-                        <p className="text-xs text-muted-foreground flex items-center gap-1">
-                          <Phone className="h-3 w-3" /> {clientPhone}
+                        <p className="text-xs text-slate-300 flex items-center gap-1">
+                          <Phone className="h-3 w-3 text-violet-300" /> {clientPhone}
                         </p>
                       )}
-                      {clientAddress && <p className="text-xs text-muted-foreground mt-1 whitespace-pre-line">{clientAddress}</p>}
+                      {clientAddress && <p className="text-xs text-slate-400 mt-1 whitespace-pre-line">{clientAddress}</p>}
                     </div>
                   </div>
                 </div>
-                <div className="sm:text-right">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-3">Invoice Details</p>
+                <div className="gx-glass p-5 sm:text-right">
+                  <p className="gx-label mb-3">Invoice Details</p>
                   <div className="space-y-1.5 text-sm">
                     <div className="flex sm:justify-end items-center gap-2">
-                      <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
-                      <span className="text-muted-foreground">Issue:</span>
-                      <span className="font-medium">{new Date(issueDate).toLocaleDateString(cur.locale, { day: "numeric", month: "short", year: "numeric" })}</span>
+                      <Calendar className="h-3.5 w-3.5 text-cyan-300" />
+                      <span className="text-slate-400">Issue:</span>
+                      <span className="font-medium text-slate-100">{new Date(issueDate).toLocaleDateString(cur.locale, { day: "numeric", month: "short", year: "numeric" })}</span>
                     </div>
                     <div className="flex sm:justify-end items-center gap-2">
-                      <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
-                      <span className="text-muted-foreground">Due:</span>
-                      <span className="font-medium">{new Date(dueDate).toLocaleDateString(cur.locale, { day: "numeric", month: "short", year: "numeric" })}</span>
+                      <Calendar className="h-3.5 w-3.5 text-cyan-300" />
+                      <span className="text-slate-400">Due:</span>
+                      <span className="font-medium text-slate-100">{new Date(dueDate).toLocaleDateString(cur.locale, { day: "numeric", month: "short", year: "numeric" })}</span>
                     </div>
                     <div className="flex sm:justify-end items-center gap-2">
-                      <Hash className="h-3.5 w-3.5 text-muted-foreground" />
-                      <span className="text-muted-foreground">Currency:</span>
-                      <span className="font-medium">{cur.symbol} {currency}</span>
+                      <Hash className="h-3.5 w-3.5 text-cyan-300" />
+                      <span className="text-slate-400">Currency:</span>
+                      <span className="font-medium text-slate-100">{cur.symbol} {currency}</span>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {/* Line items table */}
-              <div className="p-6 sm:p-8">
+              {/* Line items table — frosted panel */}
+              <div className="px-6 sm:px-8 pb-2">
+                <div className="gx-glass p-4 sm:p-5">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b border-border/60">
-                      <th className="text-left py-2.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Item</th>
-                      <th className="text-center py-2.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground w-16">Qty</th>
-                      <th className="text-right py-2.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground w-28">Unit Price</th>
-                      <th className="text-right py-2.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground w-28">Amount</th>
+                    <tr className="border-b border-white/15">
+                      <th className="text-left py-2.5 text-[10px] font-bold uppercase tracking-wider text-cyan-300/90">Item</th>
+                      <th className="text-center py-2.5 text-[10px] font-bold uppercase tracking-wider text-cyan-300/90 w-16">Qty</th>
+                      <th className="text-right py-2.5 text-[10px] font-bold uppercase tracking-wider text-cyan-300/90 w-28">Unit Price</th>
+                      <th className="text-right py-2.5 text-[10px] font-bold uppercase tracking-wider text-cyan-300/90 w-28">Amount</th>
                     </tr>
                   </thead>
                   <tbody>
                     {items.map((item) => {
                       const cfg = ITEM_ICON_CONFIG[item.icon]
                       return (
-                        <tr key={item.id} className="border-b border-border/30">
+                        <tr key={item.id} className="border-b border-white/5 last:border-0">
                           <td className="py-3">
                             <div className="flex items-center gap-3">
-                              <div className={cn("inline-flex p-1.5 rounded-md border border-border/40", cfg.bg)}>
+                              <div className={cn("inline-flex p-1.5 rounded-md border border-white/15", cfg.bg)}>
                                 <cfg.icon className={cn("h-3.5 w-3.5", cfg.color)} />
                               </div>
-                              <span className="text-sm text-foreground">{item.description || "-"}</span>
+                              <span className="text-sm text-slate-100">{item.description || "-"}</span>
                             </div>
                           </td>
-                          <td className="py-3 text-center text-sm text-muted-foreground tabular-nums">{item.quantity}</td>
-                          <td className="py-3 text-right text-sm text-muted-foreground tabular-nums">{formatMoney(item.unitPrice)}</td>
-                          <td className="py-3 text-right text-sm font-medium text-foreground tabular-nums">{formatMoney(item.quantity * item.unitPrice)}</td>
+                          <td className="py-3 text-center text-sm text-slate-300 tabular-nums">{item.quantity}</td>
+                          <td className="py-3 text-right text-sm text-slate-300 tabular-nums">{formatMoney(item.unitPrice)}</td>
+                          <td className="py-3 text-right text-sm font-medium text-slate-100 tabular-nums">{formatMoney(item.quantity * item.unitPrice)}</td>
                         </tr>
                       )
                     })}
                   </tbody>
                 </table>
+                </div>
+              </div>
 
                 {/* Totals + QR */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 px-6 sm:px-8">
                   {/* Payment QR — real UPI QR code with invoice amount */}
                   <div className="order-2 sm:order-1">
-                    <div className="rounded-xl border border-border/60 bg-card/40 p-4">
+                    <div className="gx-glass p-4">
                       <div className="flex items-start gap-3">
                         <div id="upi-qr-holder" className="size-20 sm:size-24 rounded-lg bg-white p-2 flex items-center justify-center shrink-0">
                           {total > 0 && upiId ? (
@@ -1074,118 +1069,121 @@ export function InvoiceGeneratorView() {
                           )}
                         </div>
                         <div className="text-xs space-y-1">
-                          <p className="font-semibold text-foreground flex items-center gap-1.5">
+                          <p className="font-semibold text-slate-100 flex items-center gap-1.5">
                             <QrCode className="h-3.5 w-3.5 text-violet-300" /> Scan to Pay (UPI)
                           </p>
-                          <p className="text-muted-foreground">UPI ID: <span className="font-mono text-foreground">{upiId}</span></p>
-                          <p className="text-muted-foreground">Amount: <span className="font-mono text-foreground">{formatMoney(total)}</span></p>
-                          <p className="text-muted-foreground">Account: <span className="font-mono text-foreground">{accountNumber}</span></p>
-                          <p className="text-muted-foreground">IFSC: <span className="font-mono text-foreground">{ifscCode}</span></p>
+                          <p className="text-slate-400">UPI ID: <span className="font-mono text-slate-100">{upiId}</span></p>
+                          <p className="text-slate-400">Amount: <span className="font-mono text-slate-100">{formatMoney(total)}</span></p>
+                          <p className="text-slate-400">Account: <span className="font-mono text-slate-100">{accountNumber}</span></p>
+                          <p className="text-slate-400">IFSC: <span className="font-mono text-slate-100">{ifscCode}</span></p>
                         </div>
                       </div>
                     </div>
                   </div>
 
                   {/* Totals */}
-                  <div className="order-1 sm:order-2 sm:ml-auto w-full sm:w-72 space-y-2">
+                  <div className="order-1 sm:order-2 sm:ml-auto w-full sm:w-72">
+                    <div className="gx-glass p-5 space-y-2">
                     <div className="flex justify-between text-sm">
-                      <span className="text-muted-foreground">Subtotal</span>
-                      <span className="font-medium tabular-nums">{formatMoney(subtotal)}</span>
+                      <span className="text-slate-400">Subtotal</span>
+                      <span className="font-medium text-slate-100 tabular-nums">{formatMoney(subtotal)}</span>
                     </div>
                     {discountRate > 0 && (
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Discount ({discountRate}%)</span>
+                        <span className="text-slate-400">Discount ({discountRate}%)</span>
                         <span className="text-rose-300 tabular-nums">−{formatMoney(discountAmount)}</span>
                       </div>
                     )}
                     {gstSplit && currency === "INR" ? (
                       <>
                         <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">CGST ({taxRate / 2}%)</span>
-                          <span className="font-medium tabular-nums">{formatMoney(cgstAmount)}</span>
+                          <span className="text-slate-400">CGST ({taxRate / 2}%)</span>
+                          <span className="font-medium text-slate-100 tabular-nums">{formatMoney(cgstAmount)}</span>
                         </div>
                         <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">SGST ({taxRate / 2}%)</span>
-                          <span className="font-medium tabular-nums">{formatMoney(sgstAmount)}</span>
+                          <span className="text-slate-400">SGST ({taxRate / 2}%)</span>
+                          <span className="font-medium text-slate-100 tabular-nums">{formatMoney(sgstAmount)}</span>
                         </div>
                       </>
                     ) : (
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">{taxRate > 0 ? `Tax (${taxRate}%)` : "Tax"}</span>
-                        <span className="font-medium tabular-nums">{formatMoney(taxAmount)}</span>
+                        <span className="text-slate-400">{taxRate > 0 ? `Tax (${taxRate}%)` : "Tax"}</span>
+                        <span className="font-medium text-slate-100 tabular-nums">{formatMoney(taxAmount)}</span>
                       </div>
                     )}
                     {roundingAdjustment !== 0 && (
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Rounding</span>
-                        <span className="font-medium tabular-nums">{formatMoney(roundingAdjustment)}</span>
+                        <span className="text-slate-400">Rounding</span>
+                        <span className="font-medium text-slate-100 tabular-nums">{formatMoney(roundingAdjustment)}</span>
                       </div>
                     )}
-                    <div className="border-t border-border/60 pt-2 flex justify-between items-center">
-                      <span className="font-bold text-foreground">Total</span>
+                    <div className="border-t border-white/15 pt-2 flex justify-between items-center">
+                      <span className="font-bold text-slate-100">Total</span>
                       <span className="font-bold text-lg text-gradient-premium tabular-nums">{formatMoney(total)}</span>
                     </div>
-                    <div className="text-right text-[10px] text-muted-foreground">
+                    <div className="text-right text-[10px] text-slate-500">
                       {currency === "INR" ? "GST included as applicable" : "Taxes as applicable"}
+                    </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              {/* Bank details + Signature */}
-              <div className="grid sm:grid-cols-2 gap-6 px-6 sm:px-8 py-6 border-t border-border/40 bg-card/30">
-                <div>
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
+              {/* Bank details + Signature — frosted panels */}
+              <div className="grid sm:grid-cols-2 gap-4 px-6 sm:px-8 pb-4">
+                <div className="gx-glass p-5">
+                  <p className="gx-label mb-2 flex items-center gap-1.5">
                     <Landmark className="h-3.5 w-3.5 text-emerald-300" /> Bank Details
                   </p>
                   <div className="text-xs space-y-1">
-                    <div className="flex gap-2"><span className="text-muted-foreground w-24">Bank:</span><span className="font-medium">{bankName}</span></div>
-                    <div className="flex gap-2"><span className="text-muted-foreground w-24">Account Name:</span><span className="font-medium">{accountName}</span></div>
-                    <div className="flex gap-2"><span className="text-muted-foreground w-24">Account No:</span><span className="font-mono">{accountNumber}</span></div>
-                    <div className="flex gap-2"><span className="text-muted-foreground w-24">IFSC:</span><span className="font-mono">{ifscCode}</span></div>
-                    <div className="flex gap-2"><span className="text-muted-foreground w-24">UPI:</span><span className="font-mono">{upiId}</span></div>
+                    <div className="flex gap-2"><span className="text-slate-400 w-24">Bank:</span><span className="font-medium text-slate-100">{bankName}</span></div>
+                    <div className="flex gap-2"><span className="text-slate-400 w-24">Account Name:</span><span className="font-medium text-slate-100">{accountName}</span></div>
+                    <div className="flex gap-2"><span className="text-slate-400 w-24">Account No:</span><span className="font-mono text-slate-100">{accountNumber}</span></div>
+                    <div className="flex gap-2"><span className="text-slate-400 w-24">IFSC:</span><span className="font-mono text-slate-100">{ifscCode}</span></div>
+                    <div className="flex gap-2"><span className="text-slate-400 w-24">UPI:</span><span className="font-mono text-slate-100">{upiId}</span></div>
                   </div>
                 </div>
-                <div className="sm:text-right">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5 sm:justify-end">
+                <div className="gx-glass p-5 sm:text-right">
+                  <p className="gx-label mb-2 flex items-center gap-1.5 sm:justify-end">
                     <Signature className="h-3.5 w-3.5 text-violet-300" /> Authorized Signatory
                   </p>
-                  <div className="sm:ml-auto mt-3 mb-2 h-12 w-48 rounded border-b-2 border-dashed border-border/60 flex items-end justify-center pb-1">
-                    <span className="text-[10px] text-muted-foreground italic">For GuardianX Academy</span>
+                  <div className="sm:ml-auto mt-3 mb-2 h-12 w-48 rounded border-b-2 border-dashed border-white/25 flex items-end justify-center pb-1">
+                    <span className="text-[10px] text-slate-400 italic">For GuardianX Academy</span>
                   </div>
-                  <p className="text-xs font-medium">Authorized Signatory</p>
-                  <p className="text-[10px] text-muted-foreground">GuardianX Academy · academy@guardianx.in</p>
+                  <p className="text-xs font-medium text-slate-100">Authorized Signatory</p>
+                  <p className="text-[10px] text-slate-400">GuardianX Academy · academy@guardianx.in</p>
                 </div>
               </div>
 
               {/* Notes & Terms */}
-              <div className="px-6 sm:px-8 pb-6 grid sm:grid-cols-2 gap-6">
+              {(notes || terms) && (
+              <div className="px-6 sm:px-8 pb-6 grid sm:grid-cols-2 gap-4">
                 {notes && (
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Notes</p>
-                    <p className="text-xs text-muted-foreground whitespace-pre-line leading-relaxed">{notes}</p>
+                  <div className="gx-glass-soft p-4">
+                    <p className="gx-label mb-1">Notes</p>
+                    <p className="text-xs text-slate-300 whitespace-pre-line leading-relaxed">{notes}</p>
                   </div>
                 )}
                 {terms && (
-                  <div>
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground mb-1">Terms & Conditions</p>
-                    <p className="text-xs text-muted-foreground whitespace-pre-line leading-relaxed">{terms}</p>
+                  <div className="gx-glass-soft p-4">
+                    <p className="gx-label mb-1">Terms &amp; Conditions</p>
+                    <p className="text-xs text-slate-300 whitespace-pre-line leading-relaxed">{terms}</p>
                   </div>
                 )}
               </div>
+              )}
 
               {/* Footer with trust indicators */}
-              <div className="border-t border-border/40 px-6 sm:px-8 py-4 bg-gradient-to-r from-violet-950/40 via-zinc-950/40 to-cyan-950/40">
+              <div className="border-t border-white/10 px-6 sm:px-8 py-4 bg-white/[0.03]">
                 <div className="flex items-center justify-between flex-wrap gap-3">
                   <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                    <div className="flex items-center gap-1.5 text-[10px] text-slate-400">
                       <Shield className="h-3.5 w-3.5 text-violet-400" /> Verified Training Provider
                     </div>
-                    <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                    <div className="flex items-center gap-1.5 text-[10px] text-slate-400">
                       <Award className="h-3.5 w-3.5 text-violet-400" /> ISO-Aligned Curriculum
                     </div>
                   </div>
-                  <div className="text-[10px] text-muted-foreground font-mono">
+                  <div className="text-[10px] text-slate-400 font-mono">
                     academy.guardianx.cloud
                   </div>
                 </div>

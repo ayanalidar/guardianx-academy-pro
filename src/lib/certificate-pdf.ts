@@ -35,16 +35,16 @@ function buildCertificateHTML(cert: any): string {
   const issuedDate = new Date(cert.issuedAt).toLocaleDateString("en-US", {
     year: "numeric", month: "long", day: "numeric",
   })
-  const colorMap: Record<string, { primary: string; light: string; dark: string }> = {
-    emerald: { primary: "#10b981", light: "#064e3b", dark: "#022c22" },
-    cyan: { primary: "#06b6d4", light: "#164e63", dark: "#083344" },
-    teal: { primary: "#14b8a6", light: "#134e4a", dark: "#042f2e" },
-    red: { primary: "#ef4444", light: "#7f1d1d", dark: "#450a0a" },
-    violet: { primary: "#8b5cf6", light: "#4c1d95", dark: "#2e1065" },
-    amber: { primary: "#f59e0b", light: "#78350f", dark: "#451a03" },
-    orange: { primary: "#f97316", light: "#7c2d12", dark: "#431407" },
+  const colorMap: Record<string, { primary: string; glow: string }> = {
+    emerald: { primary: "#34d399", glow: "rgba(52,211,153,0.20)" },
+    cyan: { primary: "#22d3ee", glow: "rgba(34,211,238,0.20)" },
+    teal: { primary: "#2dd4bf", glow: "rgba(45,212,191,0.20)" },
+    red: { primary: "#fb7185", glow: "rgba(251,113,133,0.20)" },
+    violet: { primary: "#a78bfa", glow: "rgba(167,139,250,0.22)" },
+    amber: { primary: "#fbbf24", glow: "rgba(251,191,36,0.20)" },
+    orange: { primary: "#fb923c", glow: "rgba(251,146,60,0.20)" },
   }
-  const c = colorMap[cert.course.color] ?? colorMap.emerald
+  const c = colorMap[cert.course.color] ?? colorMap.cyan
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -58,250 +58,201 @@ function buildCertificateHTML(cert: any): string {
   html, body {
     width: 100%; height: 100%;
     font-family: 'Inter', -apple-system, sans-serif;
-    background: #0a0a0a;
+    background: #0b0c1d;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
+  /* ============ AURORA GLASS CERTIFICATE ============ */
   .cert {
     width: 1100px; height: 850px;
     margin: 0 auto;
     position: relative;
-    background:
-      radial-gradient(ellipse at top, ${c.light}33 0%, transparent 60%),
-      radial-gradient(ellipse at bottom right, ${c.light}22 0%, transparent 50%),
-      linear-gradient(135deg, #0a0f0d 0%, #0d1b16 50%, #0a0f0d 100%);
-    color: #e8f5ee;
+    color: #f4f6ff;
     overflow: hidden;
+    background:
+      radial-gradient(900px 520px at 88% -12%, ${c.glow}, transparent 62%),
+      radial-gradient(760px 480px at -8% 42%, rgba(34,211,238,0.14), transparent 58%),
+      radial-gradient(680px 420px at 55% 118%, rgba(217,70,239,0.13), transparent 58%),
+      linear-gradient(158deg, #1c1244 0%, #150e30 46%, #0b0c1d 100%);
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    padding: 60px;
+    padding: 56px;
   }
-  /* Grid background */
-  .cert::before {
-    content: '';
-    position: absolute; inset: 0;
-    background-image:
-      linear-gradient(to right, ${c.primary}11 1px, transparent 1px),
-      linear-gradient(to bottom, ${c.primary}11 1px, transparent 1px);
-    background-size: 40px 40px;
-    opacity: 0.5;
-    pointer-events: none;
-  }
-  /* Decorative border */
-  .cert::after {
-    content: '';
-    position: absolute;
-    top: 24px; left: 24px; right: 24px; bottom: 24px;
-    border: 2px solid ${c.primary}44;
-    border-radius: 12px;
-    pointer-events: none;
-  }
-  .border-inner {
-    position: absolute;
-    top: 32px; left: 32px; right: 32px; bottom: 32px;
-    border: 1px solid ${c.primary}22;
-    border-radius: 8px;
-    pointer-events: none;
-  }
-  /* Corner decorations */
-  .corner {
-    position: absolute;
-    width: 60px; height: 60px;
-    border-color: ${c.primary};
-  }
-  .corner.tl { top: 24px; left: 24px; border-top: 3px solid; border-left: 3px solid; border-radius: 12px 0 0 0; }
-  .corner.tr { top: 24px; right: 24px; border-top: 3px solid; border-right: 3px solid; border-radius: 0 12px 0 0; }
-  .corner.bl { bottom: 24px; left: 24px; border-bottom: 3px solid; border-left: 3px solid; border-radius: 0 0 0 12px; }
-  .corner.br { bottom: 24px; right: 24px; border-bottom: 3px solid; border-right: 3px solid; border-radius: 0 0 12px 0; }
+  /* soft aurora blobs (no grid — pure glass) */
+  .blob { position: absolute; border-radius: 50%; filter: blur(70px); pointer-events: none; }
+  .blob.b1 { top: -140px; right: -60px; width: 420px; height: 420px; background: ${c.glow}; opacity: .8; }
+  .blob.b2 { bottom: -160px; left: -80px; width: 460px; height: 460px; background: rgba(34,211,238,0.14); }
+  .blob.b3 { top: 40%; left: 42%; width: 260px; height: 260px; background: rgba(217,70,239,0.12); }
 
-  .header {
-    text-align: center;
-    margin-bottom: 8px;
-    position: relative;
-    z-index: 2;
+  /* double frame: outer hairline + inner tinted */
+  .frame-outer {
+    position: absolute; inset: 26px;
+    border: 1.5px solid rgba(255,255,255,0.14);
+    border-radius: 20px;
+    pointer-events: none;
   }
-  .logo {
-    display: inline-flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 20px;
+  .frame-inner {
+    position: absolute; inset: 36px;
+    border: 1px solid ${c.primary}4d;
+    border-radius: 14px;
+    pointer-events: none;
   }
-  .logo-shield {
-    width: 48px; height: 48px;
-    display: flex; align-items: center; justify-content: center;
-  }
-  .logo-text {
-    font-size: 28px; font-weight: 800;
-    letter-spacing: -0.02em;
-    color: #e8f5ee;
-  }
+  /* corner light accents */
+  .corner { position: absolute; width: 74px; height: 74px; pointer-events: none; }
+  .corner.tl { top: 26px; left: 26px; border-top: 2.5px solid ${c.primary}; border-left: 2.5px solid; border-radius: 20px 0 0 0; }
+  .corner.tr { top: 26px; right: 26px; border-top: 2.5px solid ${c.primary}; border-right: 2.5px solid; border-radius: 0 20px 0 0; }
+  .corner.bl { bottom: 26px; left: 26px; border-bottom: 2.5px solid ${c.primary}; border-left: 2.5px solid; border-radius: 0 0 0 20px; }
+  .corner.br { bottom: 26px; right: 26px; border-bottom: 2.5px solid ${c.primary}; border-right: 2.5px solid; border-radius: 0 0 20px 0; }
+
+  .header { text-align: center; position: relative; z-index: 2; }
+  .logo { display: inline-flex; align-items: center; gap: 14px; margin-bottom: 22px; }
+  .logo-shield { width: 54px; height: 54px; display: flex; align-items: center; justify-content: center; }
+  .logo-text { font-size: 30px; font-weight: 800; letter-spacing: -0.02em; color: #ffffff; }
   .logo-text span { color: ${c.primary}; }
   .logo-sub {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 9px; letter-spacing: 0.3em;
-    color: #6b7d75; margin-top: 2px;
+    font-size: 9px; letter-spacing: 0.34em;
+    color: rgba(226,232,255,0.66); margin-top: 3px;
   }
   .cert-label {
     font-family: 'JetBrains Mono', monospace;
-    font-size: 11px; letter-spacing: 0.4em;
+    font-size: 11px; letter-spacing: 0.42em;
     color: ${c.primary};
     text-transform: uppercase;
-    margin-bottom: 12px;
-  }
-  .cert-title {
-    font-size: 42px; font-weight: 800;
-    letter-spacing: -0.02em;
-    background: linear-gradient(135deg, #e8f5ee, ${c.primary});
-    -webkit-background-clip: text;
-    background-clip: text;
-    -webkit-text-fill-color: transparent;
-    margin-bottom: 8px;
-  }
-  .cert-subtitle {
-    font-size: 14px; color: #8a9d94;
-    margin-bottom: 32px;
+    margin-bottom: 10px;
   }
 
-  .body {
+  /* glass panel holding the recipient + course — the hero of the design */
+  .glass-hero {
+    position: relative; z-index: 2;
     text-align: center;
-    position: relative;
-    z-index: 2;
-    width: 100%;
+    background: linear-gradient(to bottom, rgba(255,255,255,0.075), rgba(255,255,255,0.035));
+    border: 1px solid rgba(255,255,255,0.13);
+    border-radius: 22px;
+    padding: 34px 70px 30px;
+    margin: 6px 0 26px;
+    backdrop-filter: blur(18px) saturate(1.35);
+    -webkit-backdrop-filter: blur(18px) saturate(1.35);
+    box-shadow: 0 24px 70px rgba(3, 5, 18, 0.45), inset 0 1px 0 rgba(255,255,255,0.12);
   }
   .presented-to {
-    font-size: 12px; color: #6b7d75;
-    text-transform: uppercase; letter-spacing: 0.2em;
-    margin-bottom: 8px;
+    font-size: 11px; color: rgba(226,232,255,0.66);
+    text-transform: uppercase; letter-spacing: 0.24em;
+    margin-bottom: 10px;
   }
   .student-name {
-    font-size: 36px; font-weight: 700;
-    color: #e8f5ee;
-    margin-bottom: 24px;
-    letter-spacing: -0.01em;
+    font-size: 44px; font-weight: 800;
+    color: #ffffff;
+    letter-spacing: -0.015em;
+    line-height: 1.08;
   }
   .student-name::after {
     content: '';
     display: block;
-    width: 200px; height: 2px;
+    width: 220px; height: 2.5px; border-radius: 2px;
     background: linear-gradient(90deg, transparent, ${c.primary}, transparent);
-    margin: 12px auto 0;
+    margin: 14px auto 0;
   }
   .course-label {
-    font-size: 12px; color: #6b7d75;
-    text-transform: uppercase; letter-spacing: 0.2em;
-    margin-bottom: 8px;
+    font-size: 11px; color: rgba(226,232,255,0.66);
+    text-transform: uppercase; letter-spacing: 0.24em;
+    margin: 22px 0 8px;
   }
   .course-name {
-    font-size: 22px; font-weight: 600;
+    font-size: 24px; font-weight: 700;
     color: ${c.primary};
-    margin-bottom: 4px;
+    margin-bottom: 6px;
   }
-  .course-meta {
-    font-size: 13px; color: #8a9d94;
-    margin-bottom: 32px;
-  }
+  .course-meta { font-size: 13px; color: rgba(226,232,255,0.78); }
 
   .footer {
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
     width: 100%;
-    max-width: 700px;
-    margin-top: 20px;
-    position: relative;
-    z-index: 2;
+    max-width: 860px;
+    position: relative; z-index: 2;
+    gap: 18px;
   }
   .sig-block {
     text-align: center;
-    min-width: 200px;
+    min-width: 210px;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.11);
+    border-radius: 14px;
+    padding: 14px 18px 12px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
   }
-  .sig-line {
-    width: 100%; height: 1px;
-    background: ${c.primary}66;
-    margin-bottom: 8px;
-  }
-  .sig-label {
-    font-size: 10px; color: #6b7d75;
-    text-transform: uppercase; letter-spacing: 0.15em;
-  }
-  .sig-name {
-    font-size: 14px; font-weight: 600;
-    color: #e8f5ee; margin-bottom: 2px;
-  }
-  .sig-title {
-    font-size: 10px; color: #8a9d94;
-  }
+  .sig-name { font-size: 14px; font-weight: 600; color: #ffffff; }
+  .sig-title { font-size: 10px; color: rgba(226,232,255,0.72); margin-bottom: 10px; }
+  .sig-line { width: 100%; height: 1px; background: linear-gradient(90deg, transparent, ${c.primary}99, transparent); margin-bottom: 7px; }
+  .sig-label { font-size: 9px; color: rgba(226,232,255,0.6); text-transform: uppercase; letter-spacing: 0.18em; }
 
   .cert-id-block {
     text-align: center;
     font-family: 'JetBrains Mono', monospace;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.11);
+    border-radius: 14px;
+    padding: 14px 22px 12px;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
   }
-  .cert-id-label {
-    font-size: 9px; color: #6b7d75;
-    text-transform: uppercase; letter-spacing: 0.2em;
-    margin-bottom: 4px;
-  }
-  .cert-id {
-    font-size: 12px; color: ${c.primary};
-    font-weight: 500;
-  }
-  .cert-date {
-    font-size: 11px; color: #8a9d94;
-    margin-top: 8px;
-  }
-  .cert-score {
-    font-size: 11px; color: #8a9d94;
-  }
+  .cert-id-label { font-size: 9px; color: rgba(226,232,255,0.6); text-transform: uppercase; letter-spacing: 0.22em; margin-bottom: 4px; }
+  .cert-id { font-size: 12px; color: ${c.primary}; font-weight: 500; }
+  .cert-date { font-size: 11px; color: rgba(226,232,255,0.78); margin-top: 7px; }
+  .cert-score { font-size: 11px; color: rgba(226,232,255,0.78); margin-top: 2px; }
 
-  .badge {
+  /* gold official seal */
+  .seal {
     position: absolute;
-    top: 80px; right: 80px;
-    width: 90px; height: 90px;
+    top: 64px; right: 72px;
+    width: 108px; height: 108px;
     border-radius: 50%;
-    border: 2px solid ${c.primary}44;
+    background: radial-gradient(circle at 32% 28%, #ffe9a8 0%, #f5c451 38%, #c8901c 78%, #9a6a10 100%);
+    box-shadow: 0 10px 34px rgba(245, 196, 81, 0.35), inset 0 2px 6px rgba(255,255,255,0.5), inset 0 -4px 10px rgba(122,84,10,0.55);
     display: flex; align-items: center; justify-content: center;
-    background: radial-gradient(circle, ${c.primary}22, transparent);
     z-index: 2;
   }
-  .badge-inner {
-    width: 70px; height: 70px;
+  .seal-ring {
+    width: 86px; height: 86px;
     border-radius: 50%;
-    border: 1px solid ${c.primary}33;
+    border: 1.5px dashed rgba(90, 60, 5, 0.55);
     display: flex; flex-direction: column;
     align-items: center; justify-content: center;
-    color: ${c.primary};
+    color: #5a3c05;
   }
-  .badge-check {
-    font-size: 24px; line-height: 1;
-  }
-  .badge-text {
-    font-size: 7px; font-weight: 700;
-    letter-spacing: 0.1em;
-    margin-top: 2px;
-  }
+  .seal-star { font-size: 22px; line-height: 1; }
+  .seal-text { font-size: 6.6px; font-weight: 800; letter-spacing: 0.14em; margin-top: 3px; }
 </style>
 </head>
 <body>
 <div class="cert">
-  <div class="border-inner"></div>
+  <div class="blob b1"></div>
+  <div class="blob b2"></div>
+  <div class="blob b3"></div>
+  <div class="frame-outer"></div>
+  <div class="frame-inner"></div>
   <div class="corner tl"></div>
   <div class="corner tr"></div>
   <div class="corner bl"></div>
   <div class="corner br"></div>
 
-  <div class="badge">
-    <div class="badge-inner">
-      <div class="badge-check">✓</div>
-      <div class="badge-text">VERIFIED</div>
+  <div class="seal">
+    <div class="seal-ring">
+      <div class="seal-star">&#9733;</div>
+      <div class="seal-text">OFFICIAL SEAL</div>
+      <div class="seal-text">GUARDIANX</div>
     </div>
   </div>
 
   <div class="header">
     <div class="logo">
       <div class="logo-shield">
-        <svg width="48" height="48" viewBox="0 0 100 100" fill="none">
+        <svg width="54" height="54" viewBox="0 0 100 100" fill="none">
           <path d="M50 8 L84 22 V52 C84 72 68 88 50 94 C32 88 16 72 16 52 V22 Z" stroke="${c.primary}" stroke-width="4" fill="none"/>
           <path d="M36 50 L45 59 L66 38" stroke="${c.primary}" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
         </svg>
@@ -312,10 +263,10 @@ function buildCertificateHTML(cert: any): string {
       </div>
     </div>
     <div class="cert-label">Certificate of Completion</div>
-    <div class="cert-title">This is to certify that</div>
   </div>
 
-  <div class="body">
+  <div class="glass-hero">
+    <div class="presented-to">This is to certify that</div>
     <div class="student-name">${escapeHtml(cert.user.name)}</div>
     <div class="course-label">has successfully completed</div>
     <div class="course-name">${escapeHtml(cert.course.title)}</div>
@@ -326,7 +277,7 @@ function buildCertificateHTML(cert: any): string {
     <div class="sig-block">
       <div class="sig-name">${escapeHtml(cert.course.instructor.name)}</div>
       <div class="sig-title">${escapeHtml(cert.course.instructor.title || "Instructor")}</div>
-      <div class="sig-line" style="margin-top:12px"></div>
+      <div class="sig-line"></div>
       <div class="sig-label">Instructor</div>
     </div>
     <div class="cert-id-block">
@@ -338,7 +289,7 @@ function buildCertificateHTML(cert: any): string {
     <div class="sig-block">
       <div class="sig-name">GuardianX</div>
       <div class="sig-title">Cyber Security Academy</div>
-      <div class="sig-line" style="margin-top:12px"></div>
+      <div class="sig-line"></div>
       <div class="sig-label">Platform</div>
     </div>
   </div>
