@@ -24,7 +24,11 @@ export default function ResetPage() {
       <script dangerouslySetInnerHTML={{ __html: RESET_INLINE_SCRIPT }} />
       <script
         dangerouslySetInnerHTML={{
-          __html: `setTimeout(function(){try{location.replace("/courses?t="+Date.now())}catch(e){location.href="/courses"}},1200)`,
+          // Land on /diag?go=1 (a never-cached standalone page): it verifies the
+          // delivered build matches origin and auto-continues to the catalog
+          // ONLY when everything is healthy — instead of blindly bouncing into
+          // a /courses URL the preview gateway may still serve from a stale pin.
+          __html: `setTimeout(function(){try{location.replace("/diag?go=1&t="+Date.now())}catch(e){location.href="/diag"}},1200)`,
         }}
       />
       <div className="w-full max-w-md rounded-2xl border border-violet-500/20 bg-slate-900/60 p-8 text-center">
@@ -37,7 +41,8 @@ export default function ResetPage() {
         <h1 className="text-lg font-semibold">Resetting offline data…</h1>
         <p className="mt-2 text-sm text-slate-400 leading-relaxed">
           Clearing cached pages, service workers, and stored snapshots.
-          You&apos;ll be taken back to the course catalog automatically in a moment.
+          Next you&apos;ll see a quick health check that confirms your browser
+          is on the current build before opening the catalog.
         </p>
         <Link
           href="/courses"

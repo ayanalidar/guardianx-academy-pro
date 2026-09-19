@@ -202,12 +202,22 @@ export function AdminCoursesView() {
     },
   })
 
-  const { data: instructorData } = useQuery<{ instructors: InstructorOption[] }>({
+  const {
+    data: instructorData,
+    isError: instructorsError,
+    refetch: refetchInstructors,
+  } = useQuery<{ instructors: InstructorOption[] }>({
     queryKey: ["admin-instructors-mini"],
     staleTime: 5 * 60_000,
+    retry: 2,
     queryFn: async () => {
       const res = await fetch("/api/admin/instructors")
-      if (!res.ok) return { instructors: [] }
+      if (!res.ok) {
+        // A 401/500 must NOT silently degrade to an empty dropdown — an empty
+        // list dead-ends course creation with "Instructor is required" and no
+        // hint why. Throw so the query error state can show the banner below.
+        throw new Error(`Instructor list failed (HTTP ${res.status})`)
+      }
       const j = await res.json()
       const list: InstructorOption[] = (j.instructors ?? []).map((i: any) => ({
         id: i.id,
@@ -388,6 +398,25 @@ export function AdminCoursesView() {
             </Button>
           </div>
         </FadeInRow>
+
+        {/* Instructor-load failure banner: course creation is impossible
+            without the dropdown, so never let that failure be silent. */}
+        {instructorsError && (
+          <FadeInRow>
+            <div className="flex flex-wrap items-center gap-3 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm">
+              <span className="text-red-300 font-medium">
+                Instructor list failed to load — course creation is blocked until it loads.
+              </span>
+              <button
+                type="button"
+                onClick={() => refetchInstructors()}
+                className="rounded-md border border-red-500/40 bg-red-500/15 px-3 py-1 text-xs font-semibold text-red-100 hover:bg-red-500/25 transition-colors"
+              >
+                Retry
+              </button>
+            </div>
+          </FadeInRow>
+        )}
 
         {/* Stats strip */}
         <FadeInRow>
