@@ -440,7 +440,7 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
       gradientBand3(pdf, ML, 285.5, 42, 0.9, C.accentA, C.accentB, C.accentC, 24)
     }
     setFont(pdf, "reg", 7, C.faint)
-    pdf.text(safe("GuardianX Academy  ·  academy@guardianx.in  ·  Bengaluru, India"), ML, 289.4)
+    pdf.text(safe("GuardianX Academy  ·  Nooripora, Baramulla, Kashmir 193401  ·  Gautam Buddha Nagar, Noida 201301"), ML, 289.4)
     pdf.text(safe(`Page ${pageNo} of {total_pages_count_string}`), MR, 289.4, { align: "right" })
     footerMarked = true
   }
@@ -545,7 +545,8 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
   setFont(pdf, "med", 8, C.violetSoft)
   pdf.text(safe("Cybersecurity Training & Certification"), brandX, 18.6)
   setFont(pdf, "reg", 7.2, [161, 140, 250])
-  pdf.text(safe("academy@guardianx.in   ·   academy@guardianx.cloud   ·   Bengaluru, India"), brandX, 23.6)
+  pdf.text(safe("academy@guardianx.in   ·   academy@guardianx.cloud"), brandX, 23.6)
+  pdf.text(safe("Nooripora, Baramulla, Kashmir 193401   ·   Gautam Buddha Nagar, Noida 201301"), brandX, 27.6)
 
   // right: INVOICE + number + status badge
   setFont(pdf, "bold", 19.5, C.white)

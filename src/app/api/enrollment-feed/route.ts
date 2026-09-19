@@ -17,8 +17,8 @@ export const runtime = "nodejs"
  */
 
 const FALLBACK_CITIES = [
-  "Bengaluru", "Mumbai", "Delhi", "Hyderabad", "Pune",
-  "Chennai", "Kolkata", "Ahmedabad", "Jaipur", "Kochi",
+  "Srinagar", "Baramulla", "Noida", "Delhi", "Mumbai",
+  "Hyderabad", "Pune", "Jaipur", "Kochi", "Chandigarh",
 ]
 
 function timeAgo(iso: string): string {

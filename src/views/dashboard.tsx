@@ -240,27 +240,29 @@ export function DashboardView() {
 
   const { data: meData, isLoading: meLoading } = useQuery<MeData>({
     queryKey: ["me"],
-    queryFn: async () => {
-      try { return await api("/api/me") } catch { return { activities: [] } }
-    },
+    queryFn: () => api("/api/me"),
+    // Re-sync the user on every dashboard mount — a stale pre-login
+    // `{ user: null }` cached by the login page must never survive here.
+    staleTime: 0,
+    refetchOnMount: "always",
     retry: false,
   })
 
-  const { data: coursesData, isLoading: coursesLoading } = useQuery<{ courses: CourseListItem[] }>({
+  const { data: coursesData, isLoading: coursesLoading, isError: coursesError, refetch: refetchCourses } = useQuery<{ courses: CourseListItem[] }>({
     queryKey: ["courses", "dashboard-enrolled"],
-    queryFn: async () => {
-      try { return await api(`/api/courses?enrolled=true&userId=${user?.id ?? ""}&status=in-progress`) } catch { return { courses: [] } }
-    },
+    // No catch-swallowing: a transient failure used to be silently cached
+    // as `{ courses: [] }` — the "dashboard shows no courses" bug. Now a
+    // failure retries and, if it still fails, renders a visible retry
+    // banner instead of a silent empty state.
+    queryFn: () => api(`/api/courses?enrolled=true&userId=${user?.id ?? ""}&status=in-progress`),
     enabled: !!user?.id,
-    retry: false,
+    retry: 2,
   })
 
   const { data: labsData, isLoading: labsLoading } = useQuery<{ labs: LabListItem[] }>({
     queryKey: ["labs", "dashboard"],
-    queryFn: async () => {
-      try { return await api("/api/labs") } catch { return { labs: [] } }
-    },
-    retry: false,
+    queryFn: () => api("/api/labs"),
+    retry: 1,
   })
 
   const { data: leaderboardData, isLoading: leaderboardLoading } = useQuery<{
@@ -269,22 +271,18 @@ export function DashboardView() {
     totalUsers: number
   }>({
     queryKey: ["leaderboard", "dashboard"],
-    queryFn: async () => {
-      try { return await api("/api/leaderboard") } catch { return { topUsers: [], currentUser: null, totalUsers: 0 } }
-    },
-    retry: false,
+    queryFn: () => api("/api/leaderboard"),
+    retry: 1,
   })
 
   // Recommended courses — shown on the dashboard when the student has no
   // active courses (fresh accounts previously saw bare empty states and
   // reported "courses don't show").
-  const { data: recommendedData, isLoading: recommendedLoading } = useQuery<{ courses: CourseListItem[] }>({
+  const { data: recommendedData, isLoading: recommendedLoading, isError: recommendedError, refetch: refetchRecommended } = useQuery<{ courses: CourseListItem[] }>({
     queryKey: ["courses", "dashboard-recommended"],
-    queryFn: async () => {
-      try { return await api(`/api/courses?status=not-started&userId=${user?.id ?? ""}`) } catch { return { courses: [] } }
-    },
+    queryFn: () => api(`/api/courses?status=not-started&userId=${user?.id ?? ""}`),
     enabled: !!user?.id,
-    retry: false,
+    retry: 2,
   })
 
   const { data: achievementsData, isLoading: achievementsLoading } = useQuery<{
@@ -293,11 +291,9 @@ export function DashboardView() {
     totalCount: number
   }>({
     queryKey: ["achievements", "dashboard"],
-    queryFn: async () => {
-      try { return await api("/api/achievements") } catch { return { achievements: [], earnedCount: 0, totalCount: 0 } }
-    },
+    queryFn: () => api("/api/achievements"),
     enabled: !!user?.id,
-    retry: false,
+    retry: 1,
   })
 
   const activities = meData?.activities ?? []
@@ -413,6 +409,24 @@ export function DashboardView() {
                 loading={labsLoading}
               />
             </ScrollReveal>
+
+            {/* CONNECTION RETRY BANNER — course data failed to load after
+                retries. Never render a silent empty dashboard when the
+                API is temporarily unreachable (e.g. server restart). */}
+            {(coursesError || recommendedError) && (
+              <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3">
+                <div className="flex items-center gap-2 text-sm text-amber-200">
+                  <span className="inline-block h-2 w-2 rounded-full bg-amber-400 animate-pulse" />
+                  Couldn&apos;t load your courses — the connection was interrupted.
+                </div>
+                <button
+                  onClick={() => { refetchCourses(); refetchRecommended() }}
+                  className="rounded-lg border border-amber-400/40 bg-amber-500/20 px-3 py-1.5 text-xs font-semibold text-amber-100 hover:bg-amber-500/30 transition-colors"
+                >
+                  Retry now
+                </button>
+              </div>
+            )}
 
             {/* CONTINUE LEARNING */}
             <ScrollReveal delay={0.05}>

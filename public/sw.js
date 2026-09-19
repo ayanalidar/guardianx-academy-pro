@@ -6,7 +6,9 @@
    - Offline fallback to cached shell
    ============================================================ */
 
-const VERSION = "guardianx-sw-v1";
+// v2: cache purge — old v1 runtime caches held stale assets across deploys.
+// Bump this version on every shell-affecting change so clients self-refresh.
+const VERSION = "guardianx-sw-v2";
 const SHELL_CACHE = `${VERSION}-shell`;
 const RUNTIME_CACHE = `${VERSION}-runtime`;
 

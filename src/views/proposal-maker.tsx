@@ -1137,7 +1137,7 @@ export function ProposalMakerView() {
                           <div className="flex items-center gap-2 text-violet-100/90"><Mail className="h-3.5 w-3.5" /> academy@guardianx.cloud</div>
                           <div className="flex items-center gap-2 text-violet-100/90"><Phone className="h-3.5 w-3.5" /> +91 80 4567 8901</div>
                           <div className="flex items-center gap-2 text-violet-100/90"><Globe className="h-3.5 w-3.5" /> academy.guardianx.cloud</div>
-                          <div className="flex items-center gap-2 text-violet-100/90"><Building2 className="h-3.5 w-3.5" /> Bengaluru, India</div>
+                          <div className="flex items-center gap-2 text-violet-100/90"><Building2 className="h-3.5 w-3.5" /> Nooripora, Baramulla, Kashmir · Noida, Gautam Buddha Nagar</div>
                         </div>
                       </div>
                       <div>

@@ -196,7 +196,9 @@ export function AppRoot({ initialView }: { initialView?: View }) {
     if (PUBLIC_VIEWS.has(view.name)) {
       return (
         <PublicPageShell>
-          <ViewRouter />
+          <ErrorBoundary>
+            <ViewRouter />
+          </ErrorBoundary>
         </PublicPageShell>
       )
     }
@@ -227,7 +229,9 @@ export function AppRoot({ initialView }: { initialView?: View }) {
   if (PUBLIC_VIEWS.has(view.name) && view.name !== "home") {
     return (
       <PublicPageShell>
-        <ViewRouter />
+        <ErrorBoundary>
+          <ViewRouter />
+        </ErrorBoundary>
       </PublicPageShell>
     )
   }
@@ -236,7 +240,9 @@ export function AppRoot({ initialView }: { initialView?: View }) {
   if (session && view.name === "home") {
     return (
       <AppShell>
-        <ViewRouter />
+        <ErrorBoundary>
+          <ViewRouter />
+        </ErrorBoundary>
       </AppShell>
     )
   }

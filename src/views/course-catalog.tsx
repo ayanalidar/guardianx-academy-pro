@@ -121,7 +121,7 @@ export function CourseCatalogView() {
   const heroTitle = getContent(cmsData, "hero", "title", "Find your")
   const heroTitleAccent = getContent(cmsData, "hero", "titleAccent", "path.")
 
-  const { data, isLoading } = useQuery<{ courses: CourseItem[] }>({
+  const { data, isLoading, isError, refetch } = useQuery<{ courses: CourseItem[] }>({
     queryKey: ["courses", q, category, level, status],
     queryFn: () => {
       const params = new URLSearchParams()
@@ -131,6 +131,7 @@ export function CourseCatalogView() {
       if (status !== "all") params.set("status", status)
       return api(`/api/courses?${params.toString()}`)
     },
+    retry: 2,
   })
 
   const courses = data?.courses ?? []
@@ -359,6 +360,15 @@ export function CourseCatalogView() {
               {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-[26rem] rounded-2xl" />)}
             </div>
           </div>
+        ) : isError ? (
+          <EmptyState
+            icon={BookOpen}
+            title="Couldn't load the catalog"
+            description="The connection to the course library was interrupted. This is usually temporary — retry and the catalog will come back."
+            actionLabel="Retry"
+            onAction={() => refetch()}
+            className="py-16"
+          />
         ) : courses.length === 0 ? (
           <EmptyState
             icon={BookOpen}

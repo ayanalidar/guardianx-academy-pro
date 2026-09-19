@@ -193,6 +193,11 @@ export function pathToView(pathWithSearch: string): View | null {
   if (parts[0] === "catalog" && !parts[1]) return { name: "catalog" }
   // /partners (legacy) → institutions
   if (parts[0] === "partners" && !parts[1]) return { name: "institutions" }
+  // Legacy "my learning" URL variants people type by hand — the canonical
+  // path is /learning, but these must resolve (not 404) for robustness.
+  if (parts.length === 1 && (parts[0] === "my-learning" || parts[0] === "my-courses")) {
+    return { name: "learning" }
+  }
 
   // Cyber quiz sub-routes:
   if (parts[0] === "cyber-quiz") {

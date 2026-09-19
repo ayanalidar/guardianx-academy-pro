@@ -149,7 +149,7 @@ const FAQS = [
     a: "Yes. Every cohort starts with a scoping call where we map your stack (cloud provider, languages, frameworks, existing security tooling) and threat model. We then build a curriculum around your real environment — not generic examples. Custom modules typically take 1-2 weeks to prepare.",
   },
   {
-    q: "Do you offer on-site training outside Bengaluru?",
+    q: "Do you offer on-site training outside Kashmir and Noida?",
     a: "Yes. We deliver on-site anywhere in India (travel + accommodation billed at cost) and across APAC (Singapore, Dubai, Jakarta, etc.). For teams outside these regions, we run virtual or hybrid cohorts via Zoom + our cyber range.",
   },
   {
@@ -413,7 +413,7 @@ export function CorporateTrainingView() {
           </div>
 
           <p className="text-[11px] text-muted-foreground mt-4">
-            * Pricing shown is indicative. Final quote is shared after the scoping call. Travel + accommodation billed at cost for on-site engagements outside Bengaluru.
+            * Pricing shown is indicative. Final quote is shared after the scoping call. Travel + accommodation billed at cost for on-site engagements outside Kashmir and Noida.
           </p>
         </motion.div>
         </div>

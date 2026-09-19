@@ -651,7 +651,7 @@ const GLOBAL_FOOTER: ContentItem[] = [
     value: [
       { icon: "Mail", value: "hello@guardianx.io" },
       { icon: "Phone", value: "+91 80 4567 8900" },
-      { icon: "MapPin", value: "Bengaluru, India" },
+      { icon: "MapPin", value: "Nooripora, Baramulla, Kashmir 193401 & Gautam Buddha Nagar, Noida 201301" },
     ]
   },
   {

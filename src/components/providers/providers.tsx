@@ -6,6 +6,7 @@ import { ThemeProvider } from "@/components/providers/theme-provider"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
 import { GamificationToaster } from "@/components/providers/gamification-toaster"
 import { ServiceWorkerRegister } from "@/components/providers/service-worker-register"
+import { VersionWatch } from "@/components/platform/version-watch"
 
 export function Providers({ children }: { children: React.ReactNode }) {
   const [queryClient] = React.useState(
@@ -13,8 +14,15 @@ export function Providers({ children }: { children: React.ReactNode }) {
       new QueryClient({
         defaultOptions: {
           queries: {
-            staleTime: 30 * 1000,
-            refetchOnWindowFocus: false,
+            // Self-healing defaults: data is fresh for 15s, then refetched
+            // on remount/window focus/reconnect. refetchOnWindowFocus was
+            // previously disabled, which let a stale response (e.g. a
+            // pre-login `{ user: null }` or a transient failure) stick for
+            // the lifetime of the SPA — the "courses don't show" bug.
+            staleTime: 15 * 1000,
+            retry: 1,
+            refetchOnWindowFocus: true,
+            refetchOnReconnect: true,
           },
         },
       })
@@ -50,6 +58,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
           {children}
           <GamificationToaster />
           <ServiceWorkerRegister />
+          <VersionWatch />
         </QueryClientProvider>
       </ThemeProvider>
     </SessionProvider>

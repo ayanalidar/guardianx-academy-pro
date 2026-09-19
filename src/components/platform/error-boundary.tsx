@@ -63,6 +63,16 @@ export class ErrorBoundary extends React.Component<
               >
                 Try Again
               </button>
+              <button
+                onClick={() => {
+                  // Full reload — also dismisses any stale service-worker
+                  // state so the next load is guaranteed fresh.
+                  window.location.reload()
+                }}
+                className="px-4 py-2 rounded-lg border border-border text-sm font-medium hover:bg-accent transition-colors"
+              >
+                Reload App
+              </button>
             </div>
           </div>
         </div>

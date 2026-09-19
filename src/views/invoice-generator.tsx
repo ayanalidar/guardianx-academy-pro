@@ -950,7 +950,7 @@ export function InvoiceGeneratorView() {
                         <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-[10px] text-violet-200/70">
                           <span className="flex items-center gap-1"><Mail className="h-3 w-3" /> academy@guardianx.in</span>
                           <span className="flex items-center gap-1"><Mail className="h-3 w-3" /> academy@guardianx.cloud</span>
-                          <span className="flex items-center gap-1"><MapPin className="h-3 w-3" /> Bengaluru, India</span>
+                          <span className="flex items-center gap-1"><MapPin className="h-3 w-3" /> Nooripora, Baramulla, Kashmir 193401 &amp; Gautam Buddha Nagar, Noida 201301</span>
                         </div>
                       </div>
                     </div>

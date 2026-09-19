@@ -52,7 +52,7 @@ export function PublicFooter() {
     [
       { icon: "Mail", value: "academy@guardianx.in" },
       { icon: "Phone", value: "+91 80 1234 5678" },
-      { icon: "MapPin", value: "Bengaluru, India" },
+      { icon: "MapPin", value: "Nooripora, Baramulla, Kashmir 193401 & Gautam Buddha Nagar, Noida 201301" },
     ],
   )
   const socialLinks = getContentArray<{ icon: string; label: string; href: string }>(
