@@ -33,6 +33,39 @@ async function readBuildId(): Promise<string | null> {
   return cachedBuildId
 }
 
+/**
+ * Host-level self-healing state, written every cycle by watchdog v3
+ * (scripts/watchdog.py). Surfaced here so /status and anyone can see the
+ * platform is being actively supervised — probe results, repairs, sweep.
+ * Missing/stale file simply means the watchdog is not running (or was
+ * wiped); it must NEVER break the health response itself.
+ */
+async function readWatchdog(): Promise<Record<string, any> | null> {
+  try {
+    const raw = await fs.readFile("/home/z/my-project/watchdog-status.json", "utf8")
+    const w = JSON.parse(raw)
+    const ageSec = Math.max(0, Math.round(Date.now() / 1000 - (w.ts ?? 0)))
+    const probes = (w.probes ?? {}) as Record<string, { ok?: boolean }>
+    const probeEntries = Object.entries(probes)
+    return {
+      version: w.version ?? null,
+      running: ageSec < 180,
+      ageSec,
+      startIso: w.startIso ?? null,
+      cycle: w.cycle ?? 0,
+      healthy: w.healthy ?? null,
+      backoffSec: w.backoffSec ?? null,
+      probesTotal: probeEntries.length,
+      probesOk: probeEntries.filter(([, r]) => r?.ok).length,
+      sweep: w.sweep ?? null,
+      repairs: w.repairs ?? null,
+      lastAction: Array.isArray(w.actions) && w.actions.length ? w.actions[w.actions.length - 1] : null,
+    }
+  } catch {
+    return null
+  }
+}
+
 export async function GET() {
   const payload: Record<string, any> = {
     ok: true,
@@ -57,6 +90,8 @@ export async function GET() {
     payload.ok = false
     payload.db = { ok: false, error: String(e?.message ?? e).slice(0, 200) }
   }
+
+  payload.watchdog = await readWatchdog()
 
   return NextResponse.json(payload, { headers: { "Cache-Control": "no-store" } })
 }
