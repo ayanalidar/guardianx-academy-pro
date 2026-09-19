@@ -265,6 +265,14 @@ export function PublicFooter() {
             <a href="/terms" className="hover:text-violet-300 transition-colors">Terms</a>
             <span className="opacity-30">·</span>
             <a href="/contact" className="hover:text-violet-300 transition-colors">Security</a>
+            <span className="opacity-30">·</span>
+            <a
+              href="/reset"
+              title="Clear cached pages, service workers, and stored snapshots — fixes stale views"
+              className="hover:text-violet-300 transition-colors"
+            >
+              Reset offline data
+            </a>
           </div>
         </div>
       </div>

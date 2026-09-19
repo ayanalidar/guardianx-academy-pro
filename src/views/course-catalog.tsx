@@ -26,6 +26,7 @@ import {
 } from "@/components/platform/motion-system"
 import { usePageContent, getContent } from "@/lib/use-content"
 import { saveCatalog, readCatalog, catalogCacheKey } from "@/lib/catalog-cache"
+import { resetOfflineData } from "@/lib/client-reset"
 
 interface CourseItem {
   id: string; slug: string; title: string; shortName: string; description: string
@@ -371,14 +372,26 @@ export function CourseCatalogView() {
             </div>
           </div>
         ) : isError && courses.length === 0 ? (
-          <EmptyState
-            icon={BookOpen}
-            title="Couldn't load the catalog"
-            description="The connection to the course library was interrupted. This is usually temporary — retry and the catalog will come back."
-            actionLabel="Retry"
-            onAction={() => refetch()}
-            className="py-16"
-          />
+          <div className="py-16 flex flex-col items-center">
+            <EmptyState
+              icon={BookOpen}
+              title="Couldn't load the catalog"
+              description="The connection to the course library was interrupted. This is usually temporary — retry and the catalog will come back."
+              actionLabel="Retry"
+              onAction={() => refetch()}
+              className="border-0 bg-transparent"
+            />
+            {/* Escape hatch: if retries keep failing, the browser may be
+                holding a stale cached build. One click clears every service
+                worker, cache bucket, and stored snapshot, then reloads. */}
+            <button
+              type="button"
+              onClick={() => { void resetOfflineData().then(() => window.location.reload()) }}
+              className="mt-2 text-xs text-muted-foreground underline underline-offset-4 hover:text-violet-300 transition-colors"
+            >
+              Still stuck? Reset offline data &amp; reload
+            </button>
+          </div>
         ) : courses.length === 0 ? (
           <EmptyState
             icon={BookOpen}
