@@ -198,10 +198,11 @@ export function CourseDetailView() {
   const enrollCardRef = React.useRef<HTMLDivElement>(null)
   const [showFloatingCta, setShowFloatingCta] = React.useState(false)
 
-  const { data, isLoading } = useQuery<CourseDetail>({
+  const { data, isLoading, isError, refetch } = useQuery<CourseDetail>({
     queryKey: ["course", courseId],
     queryFn: () => api(`/api/courses/${courseId}`),
     enabled: !!courseId,
+    retry: 1,
   })
 
   const enrollMutation = useMutation({
@@ -397,8 +398,38 @@ export function CourseDetailView() {
     )
   }
 
+  // Hard failure (both schema tiers exhausted, network down, etc.) — show a
+  // real error state instead of a blank page.
+  if (isError) {
+    return (
+      <div className="relative min-h-screen">
+        <div className="absolute inset-0 bg-mesh opacity-40 pointer-events-none" />
+        <div className="relative z-10 mx-auto max-w-2xl px-4 py-24">
+          <Card className="border-amber-500/30 bg-card/60 backdrop-blur-xl p-10 text-center">
+            <AlertTriangle className="h-12 w-12 text-amber-400 mx-auto mb-4" />
+            <h1 className="text-2xl font-bold tracking-tight mb-2">Course couldn&rsquo;t load</h1>
+            <p className="text-sm text-muted-foreground mb-8 max-w-md mx-auto leading-relaxed">
+              The server returned an error while fetching this course. If this persists, the platform database may still be syncing — the catalog itself remains available.
+            </p>
+            <div className="flex items-center justify-center gap-3 flex-wrap">
+              <Button className="btn-premium bg-violet-600 hover:bg-violet-500 text-violet-50 border border-violet-500/30" onClick={() => refetch()}>
+                Try again <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
+              </Button>
+              <Button variant="outline" className="border-border/60" onClick={() => navigate({ name: "catalog" })}>
+                <ChevronLeft className="h-3.5 w-3.5 mr-1.5" /> Back to catalog
+              </Button>
+            </div>
+          </Card>
+        </div>
+      </div>
+    )
+  }
+
   if (!data) return null
   const { course, enrollment, lessonProgress, progressPct, totalLessons, completedLessons } = data
+  // Degraded payloads (schema-drift fallback) can lack modules — every
+  // dereference below must use this normalized array, never course.modules.
+  const courseModules: any[] = Array.isArray(course.modules) ? course.modules : []
   const isEnrolled = !!enrollment
 
   const goLesson = (lessonId: string, isPreview?: boolean) => {
@@ -530,14 +561,14 @@ export function CourseDetailView() {
                 <div className="mt-5 flex items-center gap-3">
                   <Avatar className="h-10 w-10 border border-violet-500/30">
                     <AvatarFallback className="bg-violet-500/10 text-violet-300 text-xs font-mono">
-                      {course.instructor.name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
+                      {(course.instructor?.name ?? "GuardianX Faculty").split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)}
                     </AvatarFallback>
                   </Avatar>
                   <div>
                     <p className="text-[10px] font-mono text-muted-foreground tracking-[0.2em]">INSTRUCTOR</p>
                     <p className="text-sm font-medium">
-                      {course.instructor.name}
-                      {course.instructor.title && <span className="text-muted-foreground font-normal"> · {course.instructor.title}</span>}
+                      {course.instructor?.name ?? "GuardianX Faculty"}
+                      {course.instructor?.title && <span className="text-muted-foreground font-normal"> · {course.instructor.title}</span>}
                     </p>
                   </div>
                 </div>
@@ -591,7 +622,7 @@ export function CourseDetailView() {
                         <Button
                           className="w-full btn-premium bg-violet-600 hover:bg-violet-500 text-violet-50 border border-violet-500/30"
                           onClick={() => {
-                            for (const m of course.modules) {
+                            for (const m of courseModules) {
                               for (const l of m.lessons) {
                                 if (!lessonProgress[l.id]?.completed) {
                                   goLesson(l.id, l.preview)
@@ -599,7 +630,7 @@ export function CourseDetailView() {
                                 }
                               }
                             }
-                            goLesson(course.modules[0]?.lessons[0]?.id)
+                            goLesson(courseModules[0]?.lessons[0]?.id)
                           }}
                         >
                           <PlayCircle className="h-4 w-4 mr-1.5" /> {progressPct > 0 ? "Continue Learning" : "Start Learning"}
@@ -674,10 +705,10 @@ export function CourseDetailView() {
               {[
                 { label: "CATEGORY", value: course.category, icon: Layers },
                 { label: "LEVEL", value: course.level, icon: Target },
-                { label: "DURATION", value: `${course.durationHours}h`, icon: Clock },
-                { label: "RATING", value: course.rating.toFixed(1), icon: Star },
-                { label: "STUDENTS", value: course.studentsCount.toLocaleString(), icon: Users },
-                { label: "MODULES", value: course.modules.length, icon: BookOpen },
+                { label: "DURATION", value: `${course.durationHours ?? 0}h`, icon: Clock },
+                { label: "RATING", value: course.rating != null ? Number(course.rating).toFixed(1) : "—", icon: Star },
+                { label: "STUDENTS", value: (course.studentsCount ?? 0).toLocaleString(), icon: Users },
+                { label: "MODULES", value: courseModules.length, icon: BookOpen },
                 { label: "LESSONS", value: totalLessons, icon: FileText },
               ].map((m, i) => (
                 <div key={m.label} className="group rounded-xl border border-border/40 bg-card/40 p-3 lg:p-4 hover:border-violet-500/30 transition-all">
@@ -730,7 +761,7 @@ export function CourseDetailView() {
         {/* ====================================================
             9. COURSE DIFFICULTY METER
             ==================================================== */}
-        <DifficultyMeter durationHours={course.durationHours} modules={course.modules} />
+        <DifficultyMeter durationHours={course.durationHours} modules={courseModules} />
 
         {/* ====================================================
             10. REAL STUDENT PROJECTS SHOWCASE
@@ -817,7 +848,7 @@ export function CourseDetailView() {
                   size="lg"
                   className="btn-premium bg-violet-600 hover:bg-violet-500 text-violet-50 border border-violet-500/30 h-12 px-8 text-base"
                   onClick={() => {
-                    for (const m of course.modules) {
+                    for (const m of courseModules) {
                       for (const l of m.lessons) {
                         if (!lessonProgress[l.id]?.completed) {
                           goLesson(l.id, l.preview)
@@ -825,7 +856,7 @@ export function CourseDetailView() {
                         }
                       }
                     }
-                    goLesson(course.modules[0]?.lessons[0]?.id)
+                    goLesson(courseModules[0]?.lessons[0]?.id)
                   }}
                 >
                   <PlayCircle className="h-5 w-5 mr-2" /> Continue Learning
@@ -898,7 +929,7 @@ export function CourseDetailView() {
         isEnrolled={isEnrolled}
         onEnroll={handleEnroll}
         onContinue={() => {
-          for (const m of course.modules) {
+          for (const m of courseModules) {
             for (const l of m.lessons) {
               if (!lessonProgress[l.id]?.completed) {
                 goLesson(l.id, l.preview)
@@ -906,7 +937,7 @@ export function CourseDetailView() {
               }
             }
           }
-          goLesson(course.modules[0]?.lessons[0]?.id)
+          goLesson(courseModules[0]?.lessons[0]?.id)
         }}
         isEnrolling={enrollMutation.isPending}
         visible={showFloatingCta && !isEnrolled}
@@ -1634,6 +1665,8 @@ function CurriculumTimeline({
   totalLessons: number
   completedLessons: number
 }) {
+  // Degraded payloads can lack modules — normalize locally.
+  const courseModules: any[] = Array.isArray(course.modules) ? course.modules : []
   return (
     <section className="py-8 lg:py-10 border-t border-border/60 relative">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -1647,7 +1680,7 @@ function CurriculumTimeline({
           </div>
           <div className="flex items-center gap-6 text-xs font-mono text-muted-foreground">
             <div>
-              <span className="text-violet-300 font-bold text-lg">{course.modules.length}</span> MODULES
+              <span className="text-violet-300 font-bold text-lg">{courseModules.length}</span> MODULES
             </div>
             <div className="h-8 w-px bg-border" />
             <div>
@@ -1669,8 +1702,8 @@ function CurriculumTimeline({
           {/* Vertical line — desktop only */}
           <div className="hidden lg:block absolute left-[26px] top-2 bottom-2 w-px bg-gradient-to-b from-violet-500/40 via-border/40 to-transparent" />
 
-          <Accordion type="multiple" defaultValue={[course.modules[0]?.id]} className="space-y-4 lg:pl-0">
-            {course.modules.map((m: any, mi: number) => {
+          <Accordion type="multiple" defaultValue={[courseModules[0]?.id]} className="space-y-4 lg:pl-0">
+            {courseModules.map((m: any, mi: number) => {
               const moduleDone = m.lessons.filter((l: any) => lessonProgress[l.id]?.completed).length
               const modulePct = m.lessons.length > 0 ? (moduleDone / m.lessons.length) * 100 : 0
               const moduleMins = m.lessons.reduce((acc: number, l: any) => acc + (l.durationMin || 0), 0)
@@ -2336,6 +2369,8 @@ interface InstructorDetail {
   courses?: { id: string; title: string; level: string; category: string; enrolledCount: number }[]
 }
 function InstructorSpotlight({ instructor, navigate }: { instructor: any; navigate: any }) {
+  // Degraded course payloads (schema-drift fallback) may carry no instructor.
+  if (!instructor) return null
   // Fetch full instructor profile (includes expertise, certifications, yearsExperience)
   const { data, isLoading } = useQuery<{ instructor: InstructorDetail | null }>({
     queryKey: ["instructor-profile", instructor?.id],
@@ -3078,7 +3113,7 @@ function RelatedCoursesCarousel({
                       </div>
                       <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-0.5 rounded-full bg-background/80 backdrop-blur border border-border/40">
                         <Star className="h-3 w-3 text-amber-400 fill-amber-400" />
-                        <span className="text-[10px] font-mono tabular-nums">{c.rating.toFixed(1)}</span>
+                        <span className="text-[10px] font-mono tabular-nums">{c.rating != null ? Number(c.rating).toFixed(1) : "—"}</span>
                       </div>
                     </div>
                     {/* Body */}
@@ -3086,11 +3121,11 @@ function RelatedCoursesCarousel({
                       <p className="text-[10px] font-mono text-violet-300 tracking-[0.2em] mb-2">{c.shortName}</p>
                       <h3 className="font-semibold text-sm mb-2 line-clamp-2 group-hover:text-violet-200 transition-colors min-h-[2.5rem]">{c.title}</h3>
                       <div className="flex items-center gap-3 text-[10px] font-mono text-muted-foreground tracking-wider mb-3">
-                        <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {c.durationHours}h</span>
-                        <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {c.studentsCount.toLocaleString()}</span>
+                        <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {c.durationHours ?? 0}h</span>
+                        <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {(c.studentsCount ?? 0).toLocaleString()}</span>
                       </div>
                       <div className="flex items-center justify-between pt-3 border-t border-border/40">
-                        <span className="text-xs text-muted-foreground truncate">{c.instructor.name}</span>
+                        <span className="text-xs text-muted-foreground truncate">{c.instructor?.name ?? "GuardianX Faculty"}</span>
                         <span className="flex items-center gap-1 text-xs text-violet-300 font-mono group-hover:gap-2 transition-all">
                           View <ArrowRight className="h-3 w-3" />
                         </span>

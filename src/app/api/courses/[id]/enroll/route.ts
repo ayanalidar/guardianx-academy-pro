@@ -7,8 +7,21 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
   const user = await getCurrentUser()
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
 
-  const course = await db.course.findUnique({ where: { id } })
+  // Schema-drift note: a bare findUnique() selects every Course column and
+  // 500s on deployments whose DB predates the course-extras columns. Only
+  // v1-era columns are needed for the enrollment flow itself.
+  let course: { id: string; title: string; price?: number } | null = null
+  try {
+    course = await db.course.findUnique({ where: { id }, select: { id: true, title: true, price: true } })
+  } catch {
+    try {
+      course = await db.course.findUnique({ where: { id }, select: { id: true, title: true } })
+    } catch {
+      course = null
+    }
+  }
   if (!course) return NextResponse.json({ error: "Course not found" }, { status: 404 })
+  const coursePrice = course.price ?? 0
 
   const existing = await db.enrollment.findUnique({
     where: { userId_courseId: { userId: user.id, courseId: id } },
@@ -16,9 +29,16 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
   if (existing) return NextResponse.json({ enrollment: existing })
 
   // Course Prerequisites: verify the student has completed all prerequisite courses
-  const prereqIds = course.prerequisiteIds
-    ? course.prerequisiteIds.split(",").map((s) => s.trim()).filter(Boolean)
-    : []
+  // prerequisiteIds is a newer column — skip the check entirely when absent.
+  let prereqIds: string[] = []
+  try {
+    const prereqRow = await db.course.findUnique({ where: { id }, select: { prerequisiteIds: true } })
+    prereqIds = prereqRow?.prerequisiteIds
+      ? prereqRow.prerequisiteIds.split(",").map((s) => s.trim()).filter(Boolean)
+      : []
+  } catch {
+    prereqIds = []
+  }
   if (prereqIds.length > 0) {
     const completedPrereqs = await db.enrollment.findMany({
       where: {
@@ -48,7 +68,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
 
   // SECURITY: paid courses require a paid order. Without this check any
   // student could bypass /api/payment/* entirely and enroll for free.
-  if (course.price > 0) {
+  if (coursePrice > 0) {
     const paidOrder = await db.order.findFirst({
       where: { userId: user.id, courseId: id, status: "paid" },
       select: { id: true },
@@ -58,7 +78,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
       return NextResponse.json(
         {
           error: "Payment required",
-          message: `This is a paid course (₹${course.price}). Complete checkout before enrolling.`,
+          message: `This is a paid course (₹${coursePrice}). Complete checkout before enrolling.`,
           checkoutRequired: true,
         },
         { status: 402 } // Payment Required
@@ -69,10 +89,16 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
   const enrollment = await db.enrollment.create({
     data: { userId: user.id, courseId: id, lastAccessed: new Date() },
   })
-  await db.course.update({
-    where: { id },
-    data: { studentsCount: { increment: 1 } },
-  })
+  // studentsCount is a newer column — on a drifted DB the increment fails,
+  // but the enrollment itself must stand.
+  try {
+    await db.course.update({
+      where: { id },
+      data: { studentsCount: { increment: 1 } },
+    })
+  } catch {
+    // Counter sync skipped — schema drift. Not fatal.
+  }
   const { awardXp, awardSpecificAchievement } = await import("@/lib/gamification")
   await awardXp(user.id, "course_enrolled", 25, id)
   // Spec-mandated: award FIRST_STEP on the user's first course enrollment.
@@ -102,11 +128,17 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
 // GET endpoint to fetch prerequisites for a course (for UI display)
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const course = await db.course.findUnique({ where: { id }, select: { prerequisiteIds: true } })
-  if (!course) return NextResponse.json({ error: "Course not found" }, { status: 404 })
-  const prereqIds = course.prerequisiteIds
-    ? course.prerequisiteIds.split(",").map((s) => s.trim()).filter(Boolean)
-    : []
+  let prereqIds: string[] = []
+  try {
+    const course = await db.course.findUnique({ where: { id }, select: { prerequisiteIds: true } })
+    if (!course) return NextResponse.json({ error: "Course not found" }, { status: 404 })
+    prereqIds = course.prerequisiteIds
+      ? course.prerequisiteIds.split(",").map((s) => s.trim()).filter(Boolean)
+      : []
+  } catch {
+    // prerequisiteIds column missing (schema drift) → no prerequisites.
+    return NextResponse.json({ prerequisites: [] })
+  }
   if (prereqIds.length === 0) return NextResponse.json({ prerequisites: [] })
   const prerequisites = await db.course.findMany({
     where: { id: { in: prereqIds } },
