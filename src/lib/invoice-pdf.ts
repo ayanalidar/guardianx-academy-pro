@@ -4,9 +4,15 @@
  * in the middle of a landscape page).
  *
  * Everything is drawn with jsPDF primitives: text stays razor-sharp at any
- * zoom/print DPI, the document fills the full A4 portrait page, and the
- * layout is a proper print invoice (light theme, brand header, zebra table,
- * totals pill, UPI QR, bank details, signature, notes/terms, footer).
+ * zoom/print DPI, the document fills the full A4 portrait page.
+ *
+ * TWO THEMES:
+ *  - "dark"  — the cyber "screen style": full-page deep-violet/near-black
+ *              gradient, holographic violet-fuchsia-cyan accent bars, faint
+ *              grid overlay, radial glow orbs, HUD corner brackets, neon
+ *              frames. Mirrors the on-screen Invoice Generator look. Best
+ *              for sharing/emailing (heavy for physical printing).
+ *  - "light" — print-friendly white paper invoice (ink-safe).
  *
  * Runs in the browser (QR data-URL passed in) and in Node (qrPngDataUrl:
  * null) for visual verification scripts.
@@ -57,33 +63,80 @@ export interface InvoicePdfOptions {
   qrPngDataUrl?: string | null
   /** PNG data-URL of the GuardianX shield logo (browser passes one; Node scripts may read the file directly). */
   logoPngDataUrl?: string | null
+  /** "dark" = cyber screen style, "light" = print-friendly paper style. */
+  theme?: InvoiceTheme
   /** Injectable font loader — browser uses fetch(), Node scripts use fs. */
   loadFontFile?: (path: string) => Promise<ArrayBuffer>
 }
 
+export type InvoiceTheme = "light" | "dark"
+
 // ---------------------------------------------------------------------------
-// palette
+// palettes
 // ---------------------------------------------------------------------------
 type RGB = [number, number, number]
 
-const C = {
-  headerLeft: [40, 20, 74] as RGB, // #28144A
-  headerRight: [16, 10, 30] as RGB, // #100A1E
-  accentA: [124, 58, 237] as RGB, // violet-600
-  accentB: [217, 70, 239] as RGB, // fuchsia-500
-  accentC: [34, 211, 238] as RGB, // cyan-400
-  violetDark: [46, 16, 101] as RGB, // #2E1065 table header / total pill
-  violet: [124, 58, 237] as RGB,
-  violetSoft: [196, 181, 253] as RGB, // #C4B5FD
-  ink: [24, 24, 27] as RGB, // zinc-900
-  sub: [82, 82, 91] as RGB, // zinc-600
-  faint: [113, 113, 122] as RGB, // zinc-500
-  line: [228, 228, 231] as RGB, // zinc-200
-  zebra: [250, 249, 255] as RGB,
-  violetTint: [245, 243, 255] as RGB,
-  white: [255, 255, 255] as RGB,
-  rose: [225, 29, 72] as RGB,
-  emerald: [5, 150, 105] as RGB,
+type Palette = {
+  headerLeft: RGB
+  headerRight: RGB
+  accentA: RGB
+  accentB: RGB
+  accentC: RGB
+  violetDark: RGB
+  violet: RGB
+  violetSoft: RGB
+  ink: RGB
+  sub: RGB
+  faint: RGB
+  line: RGB
+  rowLine: RGB
+  zebra: RGB
+  violetTint: RGB
+  avatarBorder: RGB
+  white: RGB
+  rose: RGB
+}
+
+const C_BASE: Palette = {
+  headerLeft: [40, 20, 74], // #28144A
+  headerRight: [16, 10, 30], // #100A1E
+  accentA: [124, 58, 237], // violet-600
+  accentB: [217, 70, 239], // fuchsia-500
+  accentC: [34, 211, 238], // cyan-400
+  violetDark: [46, 16, 101], // #2E1065 table header / total pill
+  violet: [124, 58, 237],
+  violetSoft: [196, 181, 253], // #C4B5FD
+  ink: [24, 24, 27], // zinc-900
+  sub: [82, 82, 91], // zinc-600
+  faint: [113, 113, 122], // zinc-500
+  line: [228, 228, 231], // zinc-200
+  rowLine: [238, 240, 244],
+  zebra: [250, 249, 255],
+  violetTint: [245, 243, 255],
+  avatarBorder: [221, 214, 254], // violet-200
+  white: [255, 255, 255],
+  rose: [225, 29, 72],
+}
+
+const C_DARK: Palette = {
+  headerLeft: [46, 16, 101], // violet-950
+  headerRight: [12, 10, 22],
+  accentA: [139, 92, 246], // violet-500 (brighter on dark)
+  accentB: [232, 121, 249], // fuchsia-400
+  accentC: [34, 211, 238], // cyan-400
+  violetDark: [91, 33, 182], // violet-800 total pill
+  violet: [167, 139, 250], // violet-400 labels
+  violetSoft: [196, 181, 253],
+  ink: [244, 244, 245], // zinc-100 body text
+  sub: [161, 161, 170], // zinc-400
+  faint: [113, 113, 122], // zinc-500
+  line: [39, 39, 42], // zinc-800 card borders
+  rowLine: [46, 42, 56],
+  zebra: [26, 20, 40], // deep violet row tint
+  violetTint: [46, 16, 101], // avatar fill
+  avatarBorder: [124, 58, 237], // violet-600 ring
+  white: [255, 255, 255],
+  rose: [251, 113, 133], // rose-400
 }
 
 const STATUS_COLOR: Record<InvoiceStatus, RGB> = {
@@ -93,11 +146,27 @@ const STATUS_COLOR: Record<InvoiceStatus, RGB> = {
   Overdue: [244, 63, 94],
 }
 
+// brighter variants that stay legible as watermark/glow on the dark page
+const STATUS_COLOR_DARK: Record<InvoiceStatus, RGB> = {
+  Draft: [161, 161, 170],
+  Sent: [34, 211, 238],
+  Paid: [52, 211, 153],
+  Overdue: [251, 113, 133],
+}
+
 const ITEM_TAG: Record<string, { letter: string; color: RGB; tint: RGB }> = {
   training: { letter: "T", color: [124, 58, 237], tint: [245, 243, 255] },
   lab: { letter: "L", color: [8, 145, 178], tint: [236, 254, 255] },
   cert: { letter: "C", color: [217, 119, 6], tint: [255, 251, 235] },
   workshop: { letter: "W", color: [5, 150, 105], tint: [236, 253, 245] },
+}
+
+// neon tags for the dark theme: bright glyph on a deep tinted chip
+const ITEM_TAG_DARK: Record<string, { letter: string; color: RGB; tint: RGB }> = {
+  training: { letter: "T", color: [196, 181, 253], tint: [53, 33, 92] },
+  lab: { letter: "L", color: [103, 232, 249], tint: [21, 47, 56] },
+  cert: { letter: "C", color: [252, 211, 77], tint: [56, 42, 15] },
+  workshop: { letter: "W", color: [110, 231, 183], tint: [13, 46, 38] },
 }
 
 // ---------------------------------------------------------------------------
@@ -251,6 +320,65 @@ function setFont(pdf: jsPDF, kind: "reg" | "med" | "bold", size: number, color: 
 }
 
 // ---------------------------------------------------------------------------
+// cyber ornaments (dark theme only)
+// ---------------------------------------------------------------------------
+const GStateCtor = (pdf: jsPDF) => (pdf as any).GState as new (s: { opacity: number }) => any
+
+function withOpacity(pdf: jsPDF, opacity: number, fn: () => void) {
+  pdf.saveGraphicsState()
+  pdf.setGState(new (GStateCtor(pdf))({ opacity }))
+  fn()
+  pdf.restoreGraphicsState()
+}
+
+/** Full-page vertical gradient — deep violet top fading to near-black. */
+function paintPageBg(pdf: jsPDF, pw: number, ph = 297) {
+  const top: RGB = [24, 15, 41] // violet-950 tint
+  const mid: RGB = [13, 11, 20]
+  const bottom: RGB = [9, 8, 13]
+  const steps = 44
+  const sh = ph / steps
+  for (let i = 0; i < steps; i++) {
+    const t = i / (steps - 1)
+    const c = t < 0.35 ? lerp(top, mid, t / 0.35) : lerp(mid, bottom, (t - 0.35) / 0.65)
+    pdf.setFillColor(c[0], c[1], c[2])
+    pdf.rect(0, i * sh, pw, sh + 0.3, "F")
+  }
+}
+
+/** Faint blueprint grid inside a region (mirrors the on-screen header overlay). */
+function drawGrid(pdf: jsPDF, x: number, y: number, w: number, h: number, step = 9, opacity = 0.05) {
+  withOpacity(pdf, opacity, () => {
+    pdf.setDrawColor(255, 255, 255)
+    pdf.setLineWidth(0.08)
+    for (let gx = x + step; gx < x + w; gx += step) pdf.line(gx, y, gx, y + h)
+    for (let gy = y + step; gy < y + h; gy += step) pdf.line(x, gy, x + w, gy)
+  })
+}
+
+/** Radial glow orb approximated with layered opaque-disc rings. */
+function drawOrb(pdf: jsPDF, cx: number, cy: number, r: number, color: RGB, rings = 7, maxOpacity = 0.055) {
+  for (let i = rings; i >= 1; i--) {
+    const t = i / rings
+    const op = maxOpacity * (1.15 - t)
+    withOpacity(pdf, op, () => {
+      pdf.setFillColor(color[0], color[1], color[2])
+      pdf.circle(cx, cy, r * t, "F")
+    })
+  }
+}
+
+/** HUD corner brackets — terminal-style L marks. */
+function drawBracket(pdf: jsPDF, x: number, y: number, s: number, color: RGB, dir: "tl" | "tr" | "bl" | "br") {
+  pdf.setDrawColor(color[0], color[1], color[2])
+  pdf.setLineWidth(0.55)
+  const dx = dir === "tl" || dir === "bl" ? 1 : -1
+  const dy = dir === "tl" || dir === "tr" ? 1 : -1
+  pdf.line(x, y, x + dx * s, y)
+  pdf.line(x, y, x, y + dy * s)
+}
+
+// ---------------------------------------------------------------------------
 // main builder
 // ---------------------------------------------------------------------------
 export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOptions = {}): Promise<jsPDF> {
@@ -287,15 +415,30 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
 
   const safe = (s: string) => (rupeeFallback ? s.replace(/₹/g, "Rs. ") : s)
 
+  // ---- theme ---------------------------------------------------------------
+  const theme: InvoiceTheme = opts.theme ?? "dark"
+  const DARK = theme === "dark"
+  const C = DARK ? C_DARK : C_BASE
+  const TAGS = DARK ? ITEM_TAG_DARK : ITEM_TAG
+  const ST = (s: InvoiceStatus) => (DARK ? STATUS_COLOR_DARK : STATUS_COLOR)[s]
+  const accentTick = (x: number, y: number, w = 13) => {
+    gradientBand3(pdf, x, y, w, 0.7, C.accentA, C.accentB, C.accentC, 16)
+  }
+
   let footerMarked = false
 
   function drawFooter() {
     if (footerMarked) return
     const pageNo = pdf.getNumberOfPages()
-    pdf.setDrawColor(C.line[0], C.line[1], C.line[2])
-    pdf.setLineWidth(0.2)
-    pdf.line(ML, 285.5, MR, 285.5)
-    gradientBand3(pdf, ML, 285.5, 42, 0.9, C.accentA, C.accentB, C.accentC, 24)
+    if (DARK) {
+      drawGrid(pdf, 0, 284.2, PW, 12.8, 8, 0.035)
+      gradientBand3(pdf, 0, 285.5, PW, 0.7, C.accentA, C.accentB, C.accentC, 72)
+    } else {
+      pdf.setDrawColor(C.line[0], C.line[1], C.line[2])
+      pdf.setLineWidth(0.2)
+      pdf.line(ML, 285.5, MR, 285.5)
+      gradientBand3(pdf, ML, 285.5, 42, 0.9, C.accentA, C.accentB, C.accentC, 24)
+    }
     setFont(pdf, "reg", 7, C.faint)
     pdf.text(safe("GuardianX Academy  ·  academy@guardianx.in  ·  Bengaluru, India"), ML, 289.4)
     pdf.text(safe(`Page ${pageNo} of {total_pages_count_string}`), MR, 289.4, { align: "right" })
@@ -306,6 +449,11 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
     drawFooter()
     footerMarked = false
     pdf.addPage()
+    if (DARK) {
+      paintPageBg(pdf, PW)
+      drawOrb(pdf, 202, 18, 22, C.accentA, 7, 0.05)
+      gradientBand3(pdf, 0, 0, PW, 1.6, C.accentA, C.accentB, C.accentC, 64)
+    }
     // slim continuation band
     gradientBand(pdf, 0, 0, PW, 16, C.headerLeft, C.headerRight, 32)
     gradientBand3(pdf, 0, 16, PW, 1.4, C.accentA, C.accentB, C.accentC, 48)
@@ -324,14 +472,36 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
     pdf.text("QTY", 123, y + 5.2, { align: "center" })
     pdf.text("UNIT PRICE", 162, y + 5.2, { align: "right" })
     pdf.text("AMOUNT", MR, y + 5.2, { align: "right" })
+    if (DARK) gradientBand3(pdf, ML, y + 8, CW, 0.6, C.accentA, C.accentB, C.accentC, 60)
     return y + 8
+  }
+
+  // =========================================================================
+  // PAGE CANVAS — the cyber screen background (dark theme only)
+  // =========================================================================
+  if (DARK) {
+    paintPageBg(pdf, PW)
+    drawOrb(pdf, 196, 5, 30, C.accentA, 8, 0.05)
+    drawOrb(pdf, 2, 54, 24, C.accentB, 7, 0.045)
+    drawOrb(pdf, 208, 250, 26, C.accentC, 7, 0.04)
   }
 
   // =========================================================================
   // HEADER BAND (full-bleed dark gradient)
   // =========================================================================
   gradientBand(pdf, 0, 0, PW, 42, C.headerLeft, C.headerRight, 56)
-  gradientBand3(pdf, 0, 42, PW, 2.2, C.accentA, C.accentB, C.accentC, 72)
+  if (DARK) {
+    // holographic frame: top bar + hairline under the band + blueprint grid
+    gradientBand3(pdf, 0, 0, PW, 2.4, C.accentA, C.accentB, C.accentC, 72)
+    drawGrid(pdf, 0, 2.4, PW, 39.6, 9, 0.05)
+    gradientBand3(pdf, 0, 42, PW, 1.1, C.accentA, C.accentB, C.accentC, 72)
+    drawBracket(pdf, ML - 2, 49.5, 3.6, C.accentC, "tl")
+    drawBracket(pdf, MR + 2, 49.5, 3.6, C.accentC, "tr")
+    drawBracket(pdf, ML - 2, 279.5, 3.6, C.accentC, "bl")
+    drawBracket(pdf, MR + 2, 279.5, 3.6, C.accentC, "br")
+  } else {
+    gradientBand3(pdf, 0, 42, PW, 2.2, C.accentA, C.accentB, C.accentC, 72)
+  }
 
   // logo — real GuardianX shield on a violet glow chip (mirrors the on-screen
   // header); falls back to the drawn GX badge if the image is unavailable.
@@ -383,13 +553,19 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
   setFont(pdf, "med", 9, C.violetSoft)
   pdf.text(safe(data.number || "—"), MR, 18.8, { align: "right" })
 
-  const stColor = STATUS_COLOR[data.status] ?? STATUS_COLOR.Draft
+  const stColor = ST(data.status)
   setFont(pdf, "bold", 7.4, C.white)
   const badgeW = pdf.getTextWidth(data.status.toUpperCase()) + 7 // mm + padding
   const badgeH = 5.6
   const badgeX = MR - badgeW
   pdf.setFillColor(stColor[0], stColor[1], stColor[2])
   pdf.roundedRect(badgeX, 21.6, badgeW, badgeH, 2.8, 2.8, "F")
+  if (DARK) {
+    const ring = lerp(stColor, C.white, 0.45)
+    pdf.setDrawColor(ring[0], ring[1], ring[2])
+    pdf.setLineWidth(0.3)
+    pdf.roundedRect(badgeX, 21.6, badgeW, badgeH, 2.8, 2.8, "S")
+  }
   pdf.text(data.status.toUpperCase(), badgeX + badgeW / 2, 25.35, { align: "center", charSpace: 0.5 })
 
   // =========================================================================
@@ -397,9 +573,9 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
   // =========================================================================
   if (data.status === "Paid" || data.status === "Overdue") {
     pdf.saveGraphicsState()
-    const g = new (pdf as any).GState({ opacity: 0.07 })
+    const g = new (pdf as any).GState({ opacity: DARK ? 0.1 : 0.07 })
     pdf.setGState(g)
-    const wc = STATUS_COLOR[data.status]
+    const wc = ST(data.status)
     pdf.setTextColor(wc[0], wc[1], wc[2])
     pdf.setFontSize(64)
     pdf.setFont("Inter", "bold")
@@ -415,12 +591,16 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
   setFont(pdf, "bold", 7.4, C.violet)
   pdf.text("BILL TO", ML, y, { charSpace: 0.7 })
   pdf.text("INVOICE DETAILS", MR, y, { align: "right", charSpace: 0.7 })
+  if (DARK) {
+    accentTick(ML, y + 1.8, 11)
+    accentTick(MR - 11, y + 1.8, 11)
+  }
 
   y += 6.5
   // client block
   const initial = (data.clientName || data.clientOrg || "?").charAt(0).toUpperCase()
   pdf.setFillColor(C.violetTint[0], C.violetTint[1], C.violetTint[2])
-  pdf.setDrawColor(221, 214, 254)
+  pdf.setDrawColor(C.avatarBorder[0], C.avatarBorder[1], C.avatarBorder[2])
   pdf.setLineWidth(0.25)
   pdf.circle(ML + 4.6, y + 3.6, 4.6, "FD")
   setFont(pdf, "bold", 9.5, C.violet)
@@ -494,9 +674,9 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
     }
 
     // item tag
-    const tag = ITEM_TAG[item.icon ?? "training"] ?? ITEM_TAG.training
+    const tag = TAGS[item.icon ?? "training"] ?? TAGS.training
     pdf.setFillColor(tag.tint[0], tag.tint[1], tag.tint[2])
-    pdf.setDrawColor(228, 228, 231)
+    pdf.setDrawColor(C.line[0], C.line[1], C.line[2])
     pdf.setLineWidth(0.2)
     pdf.roundedRect(ML + 0.6, y + (rowH - 7) / 2, 7, 7, 1.6, 1.6, "FD")
     setFont(pdf, "bold", 7.6, tag.color)
@@ -514,7 +694,7 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
     pdf.text(sym(item.quantity * item.unitPrice), MR, y + 5.6, { align: "right" })
 
     y += rowH
-    pdf.setDrawColor(238, 240, 244)
+    pdf.setDrawColor(C.rowLine[0], C.rowLine[1], C.rowLine[2])
     pdf.setLineWidth(0.15)
     pdf.line(ML, y, MR, y)
   })
@@ -548,8 +728,8 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
   if (data.upiId && opts.qrPngDataUrl && total > 0) {
     const cardH = 34
     pdf.setFillColor(255, 255, 255)
-    pdf.setDrawColor(C.line[0], C.line[1], C.line[2])
-    pdf.setLineWidth(0.25)
+    pdf.setDrawColor(DARK ? C.accentA[0] : C.line[0], DARK ? C.accentA[1] : C.line[1], DARK ? C.accentA[2] : C.line[2])
+    pdf.setLineWidth(DARK ? 0.4 : 0.25)
     pdf.roundedRect(ML, y, 88, cardH, 2.4, 2.4, "FD")
     setFont(pdf, "bold", 7.2, C.violet)
     pdf.text("SCAN TO PAY · UPI", ML + 4, y + 6, { charSpace: 0.5 })
@@ -582,9 +762,16 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
     pdf.text(safe(row.value), MR, ty + 4.4, { align: "right" })
     ty += 6
   }
-  // total pill
+  // total pill (dark: neon-framed gradient-trimmed pill)
   pdf.setFillColor(C.violetDark[0], C.violetDark[1], C.violetDark[2])
   pdf.roundedRect(108, ty + 1, MR - 108, 12, 2.4, 2.4, "F")
+  if (DARK) {
+    gradientBand3(pdf, 108, ty + 0.2, MR - 108, 0.7, C.accentA, C.accentB, C.accentC, 48)
+    gradientBand3(pdf, 108, ty + 13.1, MR - 108, 0.7, C.accentC, C.accentB, C.accentA, 48)
+    pdf.setDrawColor(C.accentA[0], C.accentA[1], C.accentA[2])
+    pdf.setLineWidth(0.35)
+    pdf.roundedRect(108, ty + 1, MR - 108, 12, 2.4, 2.4, "S")
+  }
   setFont(pdf, "bold", 8.4, C.white)
   pdf.text("TOTAL", 113, ty + 8.6, { charSpace: 0.7 })
   setFont(pdf, "bold", 13.5, C.white)
@@ -617,6 +804,7 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
   if (bankRows.length) {
     setFont(pdf, "bold", 7.4, C.violet)
     pdf.text("BANK DETAILS", ML, y, { charSpace: 0.7 })
+    if (DARK) accentTick(ML, y + 1.8, 11)
     let by = y + 5.4
     for (const [label, value] of bankRows) {
       setFont(pdf, "reg", 8, C.faint)
@@ -656,6 +844,7 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
     if (data.notes) {
       setFont(pdf, "bold", 7.4, C.violet)
       pdf.text("NOTES", ML, notesTermsTop, { charSpace: 0.7 })
+      if (DARK) accentTick(ML, notesTermsTop + 1.8, 11)
       setFont(pdf, "reg", 7.4, C.sub)
       const lines = pdf.splitTextToSize(safe(data.notes), colW).slice(0, Math.max(2, Math.floor(spaceFor)))
       pdf.text(lines, ML, notesTermsTop + 5)
@@ -663,6 +852,7 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
     if (data.terms) {
       setFont(pdf, "bold", 7.4, C.violet)
       pdf.text("TERMS & CONDITIONS", 106, notesTermsTop, { charSpace: 0.7 })
+      if (DARK) accentTick(106, notesTermsTop + 1.8, 11)
       setFont(pdf, "reg", 7.4, C.sub)
       const lines = pdf.splitTextToSize(safe(data.terms), 90).slice(0, Math.max(2, Math.floor(spaceFor)))
       pdf.text(lines, 106, notesTermsTop + 5)

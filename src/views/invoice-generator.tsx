@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { QRCodeSVG } from "qrcode.react"
-import type { InvoicePdfData } from "@/lib/invoice-pdf"
+import type { InvoicePdfData, InvoiceTheme } from "@/lib/invoice-pdf"
 import { motion, AnimatePresence } from "framer-motion"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useAppStore } from "@/store/app-store"
@@ -103,6 +103,9 @@ export function InvoiceGeneratorView() {
     return d.toISOString().split("T")[0]
   })
   const [status, setStatus] = React.useState<InvoiceStatus>("Draft")
+  // PDF style: "dark" = cyber screen look (holographic, for sharing),
+  // "light" = ink-friendly print version. Applies to both export buttons.
+  const [pdfTheme, setPdfTheme] = React.useState<InvoiceTheme>("dark")
 
   // Client info
   const [clientName, setClientName] = React.useState("")
@@ -318,15 +321,15 @@ export function InvoiceGeneratorView() {
   async function generateInvoicePdf() {
     const { buildInvoicePdf } = await import("@/lib/invoice-pdf")
     const [qrPngDataUrl, logoPngDataUrl] = await Promise.all([buildQrPng(), buildLogoPng()])
-    return buildInvoicePdf(collectPdfData(), { qrPngDataUrl, logoPngDataUrl })
+    return buildInvoicePdf(collectPdfData(), { qrPngDataUrl, logoPngDataUrl, theme: pdfTheme })
   }
 
   async function handleGeneratePdf() {
     try {
-      toast.info("Generating A4 PDF…")
+      toast.info(`Generating ${pdfTheme === "dark" ? "cyber screen-style" : "print-style"} A4 PDF…`)
       const pdf = await generateInvoicePdf()
       pdf.save(`${invoiceNumber || "invoice"}.pdf`)
-      toast.success("A4 PDF downloaded — vector quality, print-ready")
+      toast.success(`A4 PDF downloaded — ${pdfTheme === "dark" ? "cyber dark" : "print light"} theme, vector quality`)
     } catch (err: any) {
       console.error("[invoice-pdf]", err)
       toast.error(err?.message || "Failed to generate PDF")
@@ -524,6 +527,35 @@ export function InvoiceGeneratorView() {
               )}
               {editingInvoiceId ? "Update" : "Save"}
             </Button>
+            <div
+              className="flex items-center rounded-lg border border-zinc-700/60 overflow-hidden h-8"
+              role="group"
+              aria-label="PDF style"
+              title={pdfTheme === "dark" ? "Cyber screen style — great for sharing (heavy on ink)" : "Print style — ink-friendly white paper"}
+            >
+              <button
+                type="button"
+                onClick={() => setPdfTheme("dark")}
+                aria-pressed={pdfTheme === "dark"}
+                className={cn(
+                  "flex items-center gap-1 px-2.5 h-full text-xs font-medium transition-colors",
+                  pdfTheme === "dark" ? "bg-violet-600/30 text-violet-200" : "text-zinc-400 hover:text-zinc-200"
+                )}
+              >
+                <Sparkles className="h-3.5 w-3.5" /> Screen
+              </button>
+              <button
+                type="button"
+                onClick={() => setPdfTheme("light")}
+                aria-pressed={pdfTheme === "light"}
+                className={cn(
+                  "flex items-center gap-1 px-2.5 h-full text-xs font-medium transition-colors border-l border-zinc-700/60",
+                  pdfTheme === "light" ? "bg-violet-600/30 text-violet-200" : "text-zinc-400 hover:text-zinc-200"
+                )}
+              >
+                <Printer className="h-3.5 w-3.5" /> Print
+              </button>
+            </div>
             <Button size="sm" onClick={handleGeneratePdf} className="bg-violet-600 hover:bg-violet-500 btn-premium">
               <Printer className="h-3.5 w-3.5 mr-1.5" /> Generate PDF
             </Button>
