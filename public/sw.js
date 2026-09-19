@@ -10,11 +10,18 @@
 // network hiccupped (deploys, restarts) — clients silently ran old builds
 // with old bugs. v3 caches each page under its own URL, only caches OK
 // responses, and times out slow navigations before falling back.
-// Bump VERSION on every shell-affecting change so clients self-refresh.
-const VERSION = "guardianx-sw-v3";
+// v4: added stale-while-offline fallback for the two public catalog APIs
+// (/api/courses, /api/platform-stats) — a network blip now serves the last
+// good JSON instead of blanking the catalog. Bump VERSION on every
+// shell-affecting change so clients self-refresh.
+const VERSION = "guardianx-sw-v4";
 const SHELL_CACHE = `${VERSION}-shell`;
 const RUNTIME_CACHE = `${VERSION}-runtime`;
+const API_CACHE = `${VERSION}-api`;
 const NAV_TIMEOUT_MS = 8000;
+
+// Public, same-shape-for-everyone GET endpoints safe to serve stale.
+const API_FALLBACKS = ["/api/courses", "/api/platform-stats"];
 
 const APP_SHELL = [
   "/",
@@ -79,10 +86,35 @@ self.addEventListener("fetch", (event) => {
 
   const url = new URL(request.url);
 
-  // Skip Next.js HMR, dev, and internal endpoints entirely
+  // Skip Next.js HMR, dev, and internal endpoints entirely — except a
+  // small whitelist of public catalog APIs that get a stale-safe fallback.
   if (url.pathname.startsWith("/_next/webpack-hmr")) return;
   if (url.pathname.startsWith("/_next/data")) return;
-  if (url.pathname.startsWith("/api/")) return;
+  if (url.pathname.startsWith("/api/")) {
+    const isFallbackable = request.method === "GET" &&
+      API_FALLBACKS.some((p) => url.pathname === p || url.pathname.startsWith(p + "/"));
+    if (!isFallbackable) return;
+    event.respondWith(
+      (async () => {
+        try {
+          const fresh = await fetchWithTimeout(request, 5000);
+          if (fresh && fresh.ok) {
+            const cache = await caches.open(API_CACHE);
+            cache.put(request, fresh.clone()).catch(() => undefined);
+          }
+          return fresh;
+        } catch (err) {
+          const cached = await caches.match(request);
+          if (cached) return cached;
+          return new Response(JSON.stringify({ error: "Connection interrupted" }), {
+            status: 503,
+            headers: { "Content-Type": "application/json" },
+          });
+        }
+      })()
+    );
+    return;
+  }
 
   // 1) Navigation requests — network-first, fall back to cached copy of
   //    THIS page, then the cached shell, then the offline body.

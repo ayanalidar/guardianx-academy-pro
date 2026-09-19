@@ -20,7 +20,16 @@ export function Providers({ children }: { children: React.ReactNode }) {
             // pre-login `{ user: null }` or a transient failure) stick for
             // the lifetime of the SPA — the "courses don't show" bug.
             staleTime: 15 * 1000,
-            retry: 1,
+            // Smart retry: never retry client errors (4xx are real answers,
+            // e.g. 402 checkout-required); retry network/5xx failures up to
+            // 2 more times with exponential backoff so a momentary blip or
+            // a watchdog repair window never surfaces an error screen.
+            retry: (failureCount, error) => {
+              const status = (error as { status?: number })?.status
+              if (status && status >= 400 && status < 500) return false
+              return failureCount < 2
+            },
+            retryDelay: (attempt) => Math.min(1000 * 2 ** attempt, 4000),
             refetchOnWindowFocus: true,
             refetchOnReconnect: true,
           },

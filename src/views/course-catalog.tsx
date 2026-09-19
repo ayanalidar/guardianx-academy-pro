@@ -25,6 +25,7 @@ import {
   ScrollReveal, TextReveal, Stagger, StaggerItem, CursorGlow, MagneticButton, Counter,
 } from "@/components/platform/motion-system"
 import { usePageContent, getContent } from "@/lib/use-content"
+import { saveCatalog, readCatalog, catalogCacheKey } from "@/lib/catalog-cache"
 
 interface CourseItem {
   id: string; slug: string; title: string; shortName: string; description: string
@@ -121,17 +122,26 @@ export function CourseCatalogView() {
   const heroTitle = getContent(cmsData, "hero", "title", "Find your")
   const heroTitleAccent = getContent(cmsData, "hero", "titleAccent", "path.")
 
+  const catalogCacheId = catalogCacheKey(["courses", q, category, level, status])
   const { data, isLoading, isError, refetch } = useQuery<{ courses: CourseItem[] }>({
     queryKey: ["courses", q, category, level, status],
-    queryFn: () => {
+    queryFn: async () => {
       const params = new URLSearchParams()
       if (q) params.set("q", q)
       if (category !== "All") params.set("category", category)
       if (level !== "All") params.set("level", level)
       if (status !== "all") params.set("status", status)
-      return api(`/api/courses?${params.toString()}`)
+      const res = await api<{ courses: CourseItem[] }>(`/api/courses?${params.toString()}`)
+      // Snapshot every good response so a later network blip can never
+      // blank the catalog (see lib/catalog-cache.ts).
+      saveCatalog(catalogCacheId, res)
+      return res
     },
-    retry: 2,
+    // Instant paint from the last good snapshot while the fresh fetch runs.
+    placeholderData: () => readCatalog<{ courses: CourseItem[] }>(catalogCacheId) ?? undefined,
+    // If the network dies, keep polling every 5s until it returns — the
+    // user never has to press Retry.
+    refetchInterval: (query) => (query.state.error ? 5000 : false),
   })
 
   const courses = data?.courses ?? []
@@ -360,7 +370,7 @@ export function CourseCatalogView() {
               {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-[26rem] rounded-2xl" />)}
             </div>
           </div>
-        ) : isError ? (
+        ) : isError && courses.length === 0 ? (
           <EmptyState
             icon={BookOpen}
             title="Couldn't load the catalog"
@@ -380,6 +390,15 @@ export function CourseCatalogView() {
           />
         ) : (
           <>
+            {/* Connection blip banner — catalog shown from the local snapshot */}
+            {isError && (
+              <div className="mb-6 flex items-center gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
+                <Shield className="h-4 w-4 shrink-0" />
+                <span>
+                  Connection interrupted — showing your last saved catalog. Retrying automatically every few seconds.
+                </span>
+              </div>
+            )}
             {/* Featured course - large immersive card */}
             {featured && (
               <FeaturedCourse course={featured} />
