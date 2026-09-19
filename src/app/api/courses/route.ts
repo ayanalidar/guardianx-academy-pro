@@ -81,20 +81,63 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
     })
   } catch {
     degraded = true
-    courses = await db.course.findMany({
-      where,
-      orderBy: { createdAt: "desc" },
-      select: {
-        id: true,
-        slug: true,
-        title: true,
-        shortName: true,
-        description: true,
-        category: true,
-        level: true,
-        price: true,
-      },
-    })
+    // Tier 2 — SCHEMA-DISCOVERY fallback. Ask the database which Course
+    // columns actually exist, select only those (plus conditional relations
+    // and ordering), so any historical schema version renders with maximum
+    // data instead of crashing or rendering a stub list.
+    let cols = new Set<string>()
+    try {
+      const rows = await db.$queryRaw<{ column_name: string }[]>`
+        SELECT column_name FROM information_schema.columns WHERE table_name = 'Course'`
+      cols = new Set(rows.map((r) => r.column_name))
+    } catch {
+      // information_schema unavailable → tier 3 covers it.
+    }
+
+    const safeWhere: any = {}
+    if (cols.has("published")) safeWhere.published = true
+    if (category && category !== "All" && cols.has("category")) safeWhere.category = category
+    if (level && level !== "All" && cols.has("level")) safeWhere.level = level
+    // NOTE: q-search intentionally skipped in degraded mode — the columns it
+    // needs may not exist, and a working unfiltered list beats a 500.
+
+    const WANTED = [
+      "id", "slug", "title", "shortName", "description", "longDescription",
+      "category", "level", "durationHours", "price", "rating",
+      "studentsCount", "color", "thumbnail", "tags", "certBody", "createdAt",
+    ]
+    const select: Record<string, true> = {
+      // v1-era columns — present in every schema version this project had.
+      id: true, slug: true, title: true, description: true,
+      category: true, level: true, price: true,
+    }
+    for (const k of WANTED) if (cols.has(k)) select[k] = true
+
+    const include: Record<string, any> = {}
+    if (cols.has("instructorId")) {
+      include.instructor = { select: { id: true, name: true, title: true, avatar: true } }
+    }
+
+    try {
+      const tier2: any = {
+        where: safeWhere,
+        select,
+        orderBy: cols.has("studentsCount")
+          ? { studentsCount: "desc" }
+          : { createdAt: "desc" },
+      }
+      if (Object.keys(include).length) tier2.include = include
+      courses = await db.course.findMany(tier2)
+    } catch {
+      // Tier 3 — bare minimum, guaranteed columns only. No filters.
+      courses = await db.course.findMany({
+        select: {
+          id: true, slug: true, title: true, description: true,
+          category: true, level: true, price: true,
+        },
+        orderBy: { createdAt: "desc" },
+      })
+    }
   }
 
   const result = courses.map((c) => {

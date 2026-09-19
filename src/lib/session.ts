@@ -4,6 +4,39 @@ import { getAuthOptions } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { captureServerError } from "@/lib/sentry-report"
 
+/**
+ * Env-driven admin bootstrap (Vercel-friendly).
+ *
+ * Add to the deployment's environment variables:
+ *   ADMIN_EMAILS = admin@academy.guardianx.cloud, other@domain
+ *
+ * The first time a listed account signs in (or any session check runs for
+ * it), its role is upgraded to SUPER_ADMIN — full platform privileges —
+ * and the change PERSISTS in the database. Idempotent: the write only
+ * happens while the role is still below SUPER_ADMIN, so it costs nothing
+ * on every other request. Removing the env var later does NOT demote
+ * the account (by design — promotion is a one-way bootstrap).
+ */
+const BOOTSTRAP_ADMIN_EMAILS = (process.env.ADMIN_EMAILS || "")
+  .split(",")
+  .map((e) => e.trim().toLowerCase())
+  .filter(Boolean)
+
+const USER_SELECT = {
+  id: true,
+  email: true,
+  name: true,
+  role: true,
+  avatar: true,
+  title: true,
+  bio: true,
+  schoolId: true,
+  xp: true,
+  level: true,
+  streak: true,
+  lastActiveDate: true,
+} as const
+
 export async function getCurrentUser() {
   // Dynamic options: same DB-backed provider config as the auth route handler.
   // The secret is identical (requireSecret("NEXTAUTH_SECRET")) so JWT decoding
@@ -11,10 +44,28 @@ export async function getCurrentUser() {
   // does not need.
   const session = await getServerSession(await getAuthOptions())
   if (!session?.user) return null
-  const user = await db.user.findUnique({
+  let user = await db.user.findUnique({
     where: { id: (session.user as any).id },
-    select: { id: true, email: true, name: true, role: true, avatar: true, title: true, bio: true, schoolId: true, xp: true, level: true, streak: true, lastActiveDate: true },
+    select: USER_SELECT,
   })
+  if (
+    user &&
+    BOOTSTRAP_ADMIN_EMAILS.length > 0 &&
+    user.role !== "SUPER_ADMIN" &&
+    BOOTSTRAP_ADMIN_EMAILS.includes((user.email ?? "").toLowerCase())
+  ) {
+    try {
+      user = await db.user.update({
+        where: { id: user.id },
+        data: { role: "SUPER_ADMIN" },
+        select: USER_SELECT,
+      })
+      captureServerError(`ADMIN_EMAILS bootstrap: promoted ${user.email} to SUPER_ADMIN`)
+    } catch {
+      // Promotion failure must never break the session read (e.g. schema
+      // drift on a stale remote DB). The next session read retries.
+    }
+  }
   return user
 }
 

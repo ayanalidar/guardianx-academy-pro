@@ -30,10 +30,12 @@ import { resetOfflineData } from "@/lib/client-reset"
 
 interface CourseItem {
   id: string; slug: string; title: string; shortName: string; description: string
-  category: string; level: string; durationHours: number; rating: number
+  category: string; level: string; durationHours: number; rating: number | null
   studentsCount: number; color: string; thumbnail: string | null
-  tags: string; certBody: string; price: number
-  instructor: { id: string; name: string; title: string | null; avatar?: string | null }
+  tags: string; certBody: string | null; price: number
+  // Degraded catalog responses (schema drift on older databases) omit the
+  // instructor relation — every render must tolerate null (see ?? fallbacks).
+  instructor: { id: string; name: string; title: string | null; avatar?: string | null } | null
   lessonCount: number; moduleCount: number
   enrollment?: { progress: number; completed: boolean; lastAccessed: string | null; enrolledAt: string } | null
 }
@@ -574,14 +576,14 @@ export function CourseCatalogView() {
                   {([
                     ["Category", (c: CourseItem) => c.category],
                     ["Level", (c: CourseItem) => c.level],
-                    ["Duration", (c: CourseItem) => `${c.durationHours} hours`],
-                    ["Modules", (c: CourseItem) => String(c.moduleCount)],
-                    ["Lessons", (c: CourseItem) => String(c.lessonCount)],
-                    ["Rating", (c: CourseItem) => `★ ${c.rating} / 5`],
-                    ["Students", (c: CourseItem) => c.studentsCount.toLocaleString()],
+                    ["Duration", (c: CourseItem) => `${c.durationHours ?? 0} hours`],
+                    ["Modules", (c: CourseItem) => String(c.moduleCount ?? 0)],
+                    ["Lessons", (c: CourseItem) => String(c.lessonCount ?? 0)],
+                    ["Rating", (c: CourseItem) => `★ ${c.rating ?? "—"} / 5`],
+                    ["Students", (c: CourseItem) => (c.studentsCount ?? 0).toLocaleString()],
                     ["Certification", (c: CourseItem) => c.certBody || "Self-paced"],
                     ["Price", (c: CourseItem) => (c.price > 0 ? `₹${c.price.toLocaleString("en-IN")}` : "FREE")],
-                    ["Instructor", (c: CourseItem) => c.instructor.name],
+                    ["Instructor", (c: CourseItem) => c.instructor?.name ?? "GuardianX Faculty"],
                   ] as Array<[string, (c: CourseItem) => string]>).map(([label, get]) => (
                     <tr key={label} className="odd:bg-muted/20">
                       <td className="p-2 text-[10px] font-mono uppercase tracking-wider text-muted-foreground border-b border-border/30">{label}</td>
@@ -749,10 +751,10 @@ function FeaturedCourse({ course }: { course: CourseItem }) {
           {[
             { label: "Category", value: course.category, icon: Layers },
             { label: "Difficulty", value: course.level, icon: Gauge },
-            { label: "Duration", value: `${course.durationHours}h`, icon: Clock },
-            { label: "Rating", value: `★ ${course.rating}`, icon: Star },
-            { label: "Students", value: course.studentsCount.toLocaleString(), icon: Users },
-            { label: "Instructor", value: course.instructor.name, icon: Shield },
+            { label: "Duration", value: `${course.durationHours ?? 0}h`, icon: Clock },
+            { label: "Rating", value: `★ ${course.rating ?? "—"}`, icon: Star },
+            { label: "Students", value: (course.studentsCount ?? 0).toLocaleString(), icon: Users },
+            { label: "Instructor", value: course.instructor?.name ?? "GuardianX Faculty", icon: Shield },
           ].map((m) => (
             <div key={m.label} className="min-w-0">
               <div className="text-[9px] text-muted-foreground/70 uppercase tracking-wider mb-1 flex items-center gap-1">
@@ -910,7 +912,7 @@ function CourseCard({
             </div>
             <div className="min-w-0">
               <div className="text-[10px] text-muted-foreground/70 uppercase tracking-wider">Instructor</div>
-              <div className="text-xs font-medium truncate">{course.instructor.name}</div>
+              <div className="text-xs font-medium truncate">{course.instructor?.name ?? "GuardianX Faculty"}</div>
             </div>
           </div>
 
@@ -918,19 +920,19 @@ function CourseCard({
           <div className="grid grid-cols-3 gap-2 mb-4">
             <MiniStat icon={BookOpen} label="Modules" value={course.moduleCount} />
             <MiniStat icon={Layers} label="Lessons" value={course.lessonCount} />
-            <MiniStat icon={Clock} label="Hours" value={course.durationHours} />
+            <MiniStat icon={Clock} label="Hours" value={course.durationHours ?? 0} />
           </div>
 
           {/* Rating + students row */}
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-1.5">
               <Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400/40" />
-              <span className="text-xs font-semibold tabular-nums">{course.rating}</span>
+              <span className="text-xs font-semibold tabular-nums">{course.rating ?? "—"}</span>
               <span className="text-[10px] text-muted-foreground">/5</span>
             </div>
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
               <Users className="h-3.5 w-3.5" />
-              <span className="tabular-nums">{course.studentsCount.toLocaleString()}</span>
+              <span className="tabular-nums">{(course.studentsCount ?? 0).toLocaleString()}</span>
               <span className="text-[10px]">students</span>
             </div>
             {isAuthenticated && (
@@ -1040,10 +1042,10 @@ function CourseListRow({
         </div>
         <h3 className="text-sm font-semibold truncate group-hover:text-violet-200 transition-colors">{course.title}</h3>
         <div className="flex items-center gap-3 mt-1 text-[10px] font-mono text-muted-foreground flex-wrap">
-          <span className="flex items-center gap-1"><Clock className="size-3" aria-hidden />{course.durationHours}h</span>
-          <span className="flex items-center gap-1"><BookOpen className="size-3" aria-hidden />{course.lessonCount} lessons</span>
-          <span className="flex items-center gap-1"><Star className="size-3 text-amber-400" aria-hidden />{course.rating}</span>
-          <span className="hidden md:inline">{course.instructor.name}</span>
+          <span className="flex items-center gap-1"><Clock className="size-3" aria-hidden />{course.durationHours ?? 0}h</span>
+          <span className="flex items-center gap-1"><BookOpen className="size-3" aria-hidden />{course.lessonCount ?? 0} lessons</span>
+          <span className="flex items-center gap-1"><Star className="size-3 text-amber-400" aria-hidden />{course.rating ?? "—"}</span>
+          <span className="hidden md:inline">{course.instructor?.name ?? "GuardianX Faculty"}</span>
         </div>
       </div>
 
