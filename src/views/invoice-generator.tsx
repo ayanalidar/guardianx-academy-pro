@@ -912,8 +912,11 @@ export function InvoiceGeneratorView() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4 }}
               id="invoice-preview"
-              className="rounded-2xl overflow-hidden gx-aurora"
+              className="relative rounded-2xl overflow-hidden gx-aurora"
             >
+              {/* Aurora Luxe: watermark shield + corner glows on the paper */}
+              <div className="gx-watermark" aria-hidden />
+              <div className="gx-corner-glows" aria-hidden />
               {/* Aurora glass header */}
               <div className="relative">
                 {/* Slim accent edge (static — no pulse, keeps it premium) */}
@@ -925,19 +928,21 @@ export function InvoiceGeneratorView() {
                   <div className="absolute -bottom-24 -left-14 w-72 h-72 rounded-full bg-cyan-500/15 blur-[90px] pointer-events-none" />
                   <div className="absolute top-1/3 left-1/2 w-40 h-40 rounded-full bg-fuchsia-500/10 blur-[70px] pointer-events-none" />
                   <div className="relative flex items-start justify-between flex-wrap gap-4">
-                    {/* Company branding - particle logo + tagline */}
-                    <div className="flex items-center gap-4">
-                      <div className="relative">
-                        <div className="absolute inset-0 rounded-xl bg-violet-500/30 blur-lg" />
-                        <img
-                          src="/guardianx-logo-v2.png"
-                          alt="GuardianX Academy"
-                          className="relative w-14 h-14 sm:w-16 sm:h-16 object-contain"
-                          style={{ filter: "drop-shadow(0 0 12px rgba(167,139,250,0.5))" }}
-                        />
+                    {/* Company branding - hero logo badge + tagline */}
+                    <div className="flex items-center gap-5">
+                      <div className="relative shrink-0">
+                        <div className="absolute inset-0 rounded-2xl bg-violet-500/40 blur-xl" />
+                        <div className="relative rounded-2xl bg-white/5 ring-1 ring-white/20 p-2">
+                          <img
+                            src="/guardianx-logo-v2.png"
+                            alt="GuardianX Academy"
+                            className="relative w-24 h-24 sm:w-28 sm:h-28 object-contain"
+                            style={{ filter: "drop-shadow(0 0 18px rgba(167,139,250,0.6))" }}
+                          />
+                        </div>
                       </div>
                       <div>
-                        <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-gradient-premium">GuardianX Academy</h1>
+                        <h1 className="text-2xl sm:text-3xl font-bold tracking-tight text-gradient-premium">GuardianX Academy</h1>
                         <p className="text-[11px] text-violet-200/90 mt-0.5">Cybersecurity Training & Certification</p>
                         <div className="flex flex-wrap items-center gap-1.5 mt-2.5 text-[10px] text-slate-200">
                           <span className="gx-glass-soft inline-flex items-center gap-1 px-2 py-0.5"><Mail className="h-3 w-3 text-cyan-300" /> academy@guardianx.in</span>
@@ -947,15 +952,15 @@ export function InvoiceGeneratorView() {
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="text-2xl sm:text-3xl font-bold tracking-tight text-gradient-premium">INVOICE</div>
-                      <div className="text-[11px] text-violet-200/90 font-mono mt-1">{invoiceNumber}</div>
-                      {/* Status badge */}
-                      <div className="mt-2">
+                      <div className="text-4xl sm:text-5xl font-bold tracking-[0.14em] text-gradient-premium">INVOICE</div>
+                      <div className="text-sm text-violet-200/90 font-mono mt-1.5">{invoiceNumber}</div>
+                      {/* Status stamp — rubber-stamp treatment */}
+                      <div className="mt-4">
                         {(() => {
                           const StatusIcon = STATUS_CONFIG[status].icon
                           return (
-                            <span className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-semibold border", STATUS_CONFIG[status].bg, STATUS_CONFIG[status].color, STATUS_CONFIG[status].border)}>
-                              <StatusIcon className="h-3 w-3" />
+                            <span className={cn("gx-stamp", STATUS_CONFIG[status].color)}>
+                              <StatusIcon className="h-4 w-4" />
                               {STATUS_CONFIG[status].label}
                             </span>
                           )
@@ -969,7 +974,8 @@ export function InvoiceGeneratorView() {
               {/* Bill To + Dates — frosted panels */}
               <div className="grid sm:grid-cols-2 gap-4 p-6 sm:p-8 pt-2">
                 <div className="gx-glass p-5">
-                  <p className="gx-label mb-3">Bill To</p>
+                  <p className="gx-label">Bill To</p>
+                  <div className="gx-gradient-rule w-16 mb-3" aria-hidden />
                   <div className="flex items-start gap-3">
                     {/* Client avatar circle */}
                     <div className="size-10 rounded-full bg-gradient-to-br from-cyan-500/30 to-violet-500/30 border border-border/60 flex items-center justify-center text-sm font-bold text-cyan-100 shrink-0">
@@ -993,7 +999,8 @@ export function InvoiceGeneratorView() {
                   </div>
                 </div>
                 <div className="gx-glass p-5 sm:text-right">
-                  <p className="gx-label mb-3">Invoice Details</p>
+                  <p className="gx-label">Invoice Details</p>
+                  <div className="gx-gradient-rule w-16 mb-3 sm:ml-auto" aria-hidden />
                   <div className="space-y-1.5 text-sm">
                     <div className="flex sm:justify-end items-center gap-2">
                       <Calendar className="h-3.5 w-3.5 text-cyan-300" />
@@ -1019,11 +1026,11 @@ export function InvoiceGeneratorView() {
                 <div className="gx-glass p-4 sm:p-5">
                 <table className="w-full">
                   <thead>
-                    <tr className="border-b border-white/15">
-                      <th className="text-left py-2.5 text-[10px] font-bold uppercase tracking-wider text-cyan-300/90">Item</th>
-                      <th className="text-center py-2.5 text-[10px] font-bold uppercase tracking-wider text-cyan-300/90 w-16">Qty</th>
-                      <th className="text-right py-2.5 text-[10px] font-bold uppercase tracking-wider text-cyan-300/90 w-28">Unit Price</th>
-                      <th className="text-right py-2.5 text-[10px] font-bold uppercase tracking-wider text-cyan-300/90 w-28">Amount</th>
+                    <tr className="bg-gradient-to-r from-violet-600/30 via-fuchsia-500/20 to-cyan-400/20">
+                      <th className="text-left py-3 px-3 rounded-l-lg text-[10px] font-bold uppercase tracking-wider text-cyan-200">Item</th>
+                      <th className="text-center py-3 text-[10px] font-bold uppercase tracking-wider text-cyan-200 w-16">Qty</th>
+                      <th className="text-right py-3 text-[10px] font-bold uppercase tracking-wider text-cyan-200 w-28">Unit Price</th>
+                      <th className="text-right py-3 px-3 rounded-r-lg text-[10px] font-bold uppercase tracking-wider text-cyan-200 w-28">Amount</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1117,9 +1124,9 @@ export function InvoiceGeneratorView() {
                         <span className="font-medium text-slate-100 tabular-nums">{formatMoney(roundingAdjustment)}</span>
                       </div>
                     )}
-                    <div className="border-t border-white/15 pt-2 flex justify-between items-center">
-                      <span className="font-bold text-slate-100">Total</span>
-                      <span className="font-bold text-lg text-gradient-premium tabular-nums">{formatMoney(total)}</span>
+                    <div className="border-t border-white/15 pt-3 flex justify-between items-center">
+                      <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-slate-300">Total</span>
+                      <span className="font-bold text-2xl text-gradient-premium tabular-nums">{formatMoney(total)}</span>
                     </div>
                     <div className="text-right text-[10px] text-slate-500">
                       {currency === "INR" ? "GST included as applicable" : "Taxes as applicable"}
@@ -1146,8 +1153,10 @@ export function InvoiceGeneratorView() {
                   <p className="gx-label mb-2 flex items-center gap-1.5 sm:justify-end">
                     <Signature className="h-3.5 w-3.5 text-violet-300" /> Authorized Signatory
                   </p>
-                  <div className="sm:ml-auto mt-3 mb-2 h-12 w-48 rounded border-b-2 border-dashed border-white/25 flex items-end justify-center pb-1">
-                    <span className="text-[10px] text-slate-400 italic">For GuardianX Academy</span>
+                  <div className="sm:ml-auto mt-3 mb-2 w-48 flex flex-col items-center">
+                    <span className="gx-script text-2xl text-violet-200/85 leading-none" aria-hidden>GuardianX</span>
+                    <div className="mt-2 h-px w-full border-b-2 border-dashed border-white/25" />
+                    <span className="text-[10px] text-slate-400 italic mt-1">For GuardianX Academy</span>
                   </div>
                   <p className="text-xs font-medium text-slate-100">Authorized Signatory</p>
                   <p className="text-[10px] text-slate-400">GuardianX Academy · academy@guardianx.in</p>

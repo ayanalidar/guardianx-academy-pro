@@ -467,6 +467,8 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
       pdf.setFillColor(C.violetDark[0], C.violetDark[1], C.violetDark[2])
       pdf.rect(ML, y, CW, 8, "F")
     }
+    // aurora sheen over the header row (both themes) — Luxe table header
+    gradientBand3(pdf, ML, y, CW, 8, C.accentA, C.accentB, C.accentC, DARK ? 30 : 34)
     setFont(pdf, "bold", 7.4, C.white)
     pdf.text("ITEM", 26, y + 5.2, { charSpace: 0.4 })
     pdf.text("QTY", 123, y + 5.2, { align: "center" })
@@ -488,37 +490,45 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
   }
 
   // =========================================================================
-  // HEADER BAND (full-bleed dark gradient)
+  // HEADER BAND (full-bleed aurora hero — 52mm tall, Aurora Luxe)
   // =========================================================================
-  gradientBand(pdf, 0, 0, PW, 42, C.headerLeft, C.headerRight, 56)
+  gradientBand(pdf, 0, 0, PW, 52, C.headerLeft, C.headerRight, 56)
   if (DARK) {
     // glass edge: top aurora bar + hairline under the band
     gradientBand3(pdf, 0, 0, PW, 2.4, C.accentA, C.accentB, C.accentC, 72)
-    gradientBand3(pdf, 0, 42, PW, 1.1, C.accentA, C.accentB, C.accentC, 72)
+    gradientBand3(pdf, 0, 52, PW, 1.1, C.accentA, C.accentB, C.accentC, 72)
     // soft glass sheen over the band
     withOpacity(pdf, 0.05, () => {
       pdf.setFillColor(255, 255, 255)
-      pdf.rect(0, 2.4, PW, 39.6, "F")
+      pdf.rect(0, 2.4, PW, 49.6, "F")
     })
   } else {
-    gradientBand3(pdf, 0, 42, PW, 2.2, C.accentA, C.accentB, C.accentC, 72)
+    gradientBand3(pdf, 0, 52, PW, 2.2, C.accentA, C.accentB, C.accentC, 72)
   }
+  // aurora mesh glows INSIDE the band (fuchsia top-right, cyan lower-center)
+  drawOrb(pdf, 178, 9, 17, C.accentB, 6, 0.06)
+  drawOrb(pdf, 96, 45, 14, C.accentC, 5, 0.05)
+  drawOrb(pdf, 205, 40, 12, C.accentA, 5, 0.05)
 
-  // logo — real GuardianX shield on a violet glow chip (mirrors the on-screen
-  // header); falls back to the drawn GX badge if the image is unavailable.
+  // logo — large GuardianX shield on a glowing 40mm badge (Aurora Luxe hero);
+  // falls back to the drawn GX badge if the image is unavailable.
   let logoDrawn = false
   if (opts.logoPngDataUrl) {
     try {
-      // glow chip (app-icon style) behind the shield
+      // glow badge behind the shield — big, app-icon presence
       pdf.saveGraphicsState()
       pdf.setGState(new (pdf as any).GState({ opacity: 0.5 }))
       pdf.setFillColor(C.violetDark[0], C.violetDark[1], C.violetDark[2])
-      pdf.roundedRect(12.5, 6.5, 18, 18, 3.6, 3.6, "F")
-      pdf.setLineWidth(0.25)
+      pdf.roundedRect(12, 7, 40, 40, 6, 6, "F")
+      pdf.setLineWidth(0.4)
       pdf.setDrawColor(C.violet[0], C.violet[1], C.violet[2])
-      pdf.roundedRect(12.5, 6.5, 18, 18, 3.6, 3.6, "S")
+      pdf.roundedRect(12, 7, 40, 40, 6, 6, "S")
+      // inner hairline for a framed, premium edge
+      pdf.setLineWidth(0.2)
+      pdf.setDrawColor(C.violetSoft[0], C.violetSoft[1], C.violetSoft[2])
+      pdf.roundedRect(13.2, 8.2, 37.6, 37.6, 5, 5, "S")
       pdf.restoreGraphicsState()
-      pdf.addImage(opts.logoPngDataUrl, "PNG", 13.5, 7.5, 16, 16)
+      pdf.addImage(opts.logoPngDataUrl, "PNG", 14.5, 9.5, 35, 35)
       logoDrawn = true
     } catch {
       logoDrawn = false
@@ -530,45 +540,48 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
       // with the local gradient colour so the fallback badge sits clean.
       const bg = lerp(C.headerLeft, C.headerRight, 14 / PW)
       pdf.setFillColor(bg[0], bg[1], bg[2])
-      pdf.rect(12.5, 6.5, 18, 18, "F")
+      pdf.rect(12, 7, 40, 40, "F")
     }
     pdf.setFillColor(C.accentA[0], C.accentA[1], C.accentA[2])
-    pdf.roundedRect(ML, 8, 13, 13, 2.6, 2.6, "F")
-    setFont(pdf, "bold", 12, C.white)
-    pdf.text("GX", ML + 6.5, 16.4, { align: "center" })
+    pdf.roundedRect(ML, 12, 30, 30, 5, 5, "F")
+    setFont(pdf, "bold", 26, C.white)
+    pdf.text("GX", ML + 15, 32.5, { align: "center" })
   }
 
-  const brandX = logoDrawn ? 34.5 : 31
+  const brandX = logoDrawn ? 58 : 52
 
   // brand
-  setFont(pdf, "bold", 15.5, C.white)
-  pdf.text("GUARDIANX ACADEMY", brandX, 13.6)
-  setFont(pdf, "med", 8, C.violetSoft)
-  pdf.text(safe("Cybersecurity Training & Certification"), brandX, 18.6)
-  setFont(pdf, "reg", 7.2, [161, 140, 250])
-  pdf.text(safe("academy@guardianx.in   ·   academy@guardianx.cloud"), brandX, 23.6)
-  pdf.text(safe("Nooripora, Baramulla, Kashmir 193401   ·   Gautam Buddha Nagar, Noida 201301"), brandX, 27.6)
+  setFont(pdf, "bold", 17, C.white)
+  pdf.text("GUARDIANX ACADEMY", brandX, 19.5)
+  setFont(pdf, "med", 8.6, C.violetSoft)
+  pdf.text(safe("Cybersecurity Training & Certification"), brandX, 25.5)
+  setFont(pdf, "reg", 7.4, [161, 140, 250])
+  pdf.text(safe("academy@guardianx.in   ·   academy@guardianx.cloud"), brandX, 31)
+  pdf.text(safe("Nooripora, Baramulla, Kashmir 193401   ·   Gautam Buddha Nagar, Noida 201301"), brandX, 35.5)
 
-  // right: INVOICE + number + status badge
-  setFont(pdf, "bold", 19.5, C.white)
-  pdf.text("INVOICE", MR, 13.6, { align: "right" })
-  setFont(pdf, "med", 9, C.violetSoft)
-  pdf.text(safe(data.number || "—"), MR, 18.8, { align: "right" })
+  // right: INVOICE display wordmark + number + status stamp
+  setFont(pdf, "bold", 27, C.white)
+  pdf.text("INVOICE", MR, 21.5, { align: "right", charSpace: 1.2 })
+  setFont(pdf, "med", 11.5, C.violetSoft)
+  pdf.text(safe(data.number || "—"), MR, 28, { align: "right" })
 
   const stColor = ST(data.status)
-  setFont(pdf, "bold", 7.4, C.white)
-  const badgeW = pdf.getTextWidth(data.status.toUpperCase()) + 7 // mm + padding
-  const badgeH = 5.6
+  setFont(pdf, "bold", 8.6, C.white)
+  const badgeW = pdf.getTextWidth(data.status.toUpperCase()) + 12 // mm + stamp padding
+  const badgeH = 7.6
   const badgeX = MR - badgeW
+  // rubber-stamp feel: filled body + contrasting ring + inner hairline
   pdf.setFillColor(stColor[0], stColor[1], stColor[2])
-  pdf.roundedRect(badgeX, 21.6, badgeW, badgeH, 2.8, 2.8, "F")
-  if (DARK) {
-    const ring = lerp(stColor, C.white, 0.45)
-    pdf.setDrawColor(ring[0], ring[1], ring[2])
-    pdf.setLineWidth(0.3)
-    pdf.roundedRect(badgeX, 21.6, badgeW, badgeH, 2.8, 2.8, "S")
-  }
-  pdf.text(data.status.toUpperCase(), badgeX + badgeW / 2, 25.35, { align: "center", charSpace: 0.5 })
+  pdf.roundedRect(badgeX, 32, badgeW, badgeH, 1.6, 1.6, "F")
+  const ring = lerp(stColor, C.white, DARK ? 0.45 : 0.3)
+  pdf.setDrawColor(ring[0], ring[1], ring[2])
+  pdf.setLineWidth(0.45)
+  pdf.roundedRect(badgeX, 32, badgeW, badgeH, 1.6, 1.6, "S")
+  const ring2 = lerp(stColor, C.white, 0.7)
+  pdf.setDrawColor(ring2[0], ring2[1], ring2[2])
+  pdf.setLineWidth(0.2)
+  pdf.roundedRect(badgeX + 0.9, 32.9, badgeW - 1.8, badgeH - 1.8, 1, 1, "S")
+  pdf.text(data.status.toUpperCase(), badgeX + badgeW / 2, 37.6, { align: "center", charSpace: 0.9 })
 
   // =========================================================================
   // watermark for Paid / Overdue
@@ -586,9 +599,23 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
   }
 
   // =========================================================================
-  // BILL TO / INVOICE DETAILS
+  // BILL TO / INVOICE DETAILS — frosted panels (Aurora Luxe)
   // =========================================================================
-  let y = 52
+  let y = 63
+
+  // backdrop panels behind both columns (drawn first, content sits on top)
+  const PANEL_TOP = 58
+  const PANEL_BOTTOM = PANEL_TOP + 43
+  if (DARK) {
+    glassPanel(pdf, ML - 2.5, PANEL_TOP, 91, 43, 3)
+    glassPanel(pdf, 105.5, PANEL_TOP, MR - 103, 27, 3)
+  } else {
+    pdf.setFillColor(C.violetTint[0], C.violetTint[1], C.violetTint[2])
+    pdf.setDrawColor(C.avatarBorder[0], C.avatarBorder[1], C.avatarBorder[2])
+    pdf.setLineWidth(0.25)
+    pdf.roundedRect(ML - 2.5, PANEL_TOP, 91, 43, 3, 3, "FD")
+    pdf.roundedRect(105.5, PANEL_TOP, MR - 103, 27, 3, 3, "FD")
+  }
 
   setFont(pdf, "bold", 7.4, C.violet)
   pdf.text("BILL TO", ML, y, { charSpace: 0.7 })
@@ -647,16 +674,17 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
     ry += 5.6
   }
 
-  y = Math.max(cy, ry) + 3
+  y = Math.max(cy, ry, PANEL_BOTTOM) + 6
   pdf.setDrawColor(C.line[0], C.line[1], C.line[2])
   pdf.setLineWidth(0.2)
   pdf.line(ML, y, MR, y)
+  gradientBand3(pdf, ML, y, 26, 0.7, C.accentA, C.accentB, C.accentC, 40)
   y += 8
 
   // =========================================================================
   // ITEMS TABLE
   // =========================================================================
-  const TABLE_BOTTOM_LIMIT = 225 // leave room for totals+qr on the same page
+  const TABLE_BOTTOM_LIMIT = 228 // leave room for totals+qr on the same page
   y = drawTableHeader(y)
 
   const rowLines = (desc: string) => {
@@ -735,7 +763,7 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
   // left: UPI card (frosted glass; QR sits on a white patch for scannability)
   let leftBottom = y
   if (data.upiId && opts.qrPngDataUrl && total > 0) {
-    const cardH = 34
+    const cardH = 40
     if (DARK) {
       glassPanel(pdf, ML, y, 88, cardH, 2.4)
     } else {
@@ -746,7 +774,7 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
     }
     setFont(pdf, "bold", 7.2, C.violet)
     pdf.text("SCAN TO PAY · UPI", ML + 4, y + 6, { charSpace: 0.5 })
-    const qrSize = 24
+    const qrSize = 27
     pdf.setFillColor(255, 255, 255)
     pdf.roundedRect(ML + 3.2, y + 7.7, qrSize + 1.6, qrSize + 1.6, 1.4, 1.4, "F")
     pdf.addImage(opts.qrPngDataUrl, "PNG", ML + 4, y + 8.5, qrSize, qrSize)
@@ -777,20 +805,22 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
     pdf.text(safe(row.value), MR, ty + 4.4, { align: "right" })
     ty += 6
   }
-  // total pill (dark: frosted glass card with gradient trims)
+  // total pill — oversized hero total (dark: frosted glass, light: solid)
   if (DARK) {
-    glassPanel(pdf, 108, ty + 1, MR - 108, 12, 2.4)
-    gradientBand3(pdf, 108, ty + 0.2, MR - 108, 0.7, C.accentA, C.accentB, C.accentC, 48)
-    gradientBand3(pdf, 108, ty + 13.1, MR - 108, 0.7, C.accentC, C.accentB, C.accentA, 48)
+    glassPanel(pdf, 108, ty + 1, MR - 108, 15, 2.6)
+    gradientBand3(pdf, 108, ty + 0.2, MR - 108, 0.8, C.accentA, C.accentB, C.accentC, 48)
+    gradientBand3(pdf, 108, ty + 16.1, MR - 108, 0.8, C.accentC, C.accentB, C.accentA, 48)
   } else {
     pdf.setFillColor(C.violetDark[0], C.violetDark[1], C.violetDark[2])
-    pdf.roundedRect(108, ty + 1, MR - 108, 12, 2.4, 2.4, "F")
+    pdf.roundedRect(108, ty + 1, MR - 108, 15, 2.6, 2.6, "F")
+    gradientBand3(pdf, 108, ty + 0.4, MR - 108, 0.8, C.accentA, C.accentB, C.accentC, 55)
+    gradientBand3(pdf, 108, ty + 15.9, MR - 108, 0.8, C.accentC, C.accentB, C.accentA, 55)
   }
-  setFont(pdf, "bold", 8.4, C.white)
-  pdf.text("TOTAL", 113, ty + 8.6, { charSpace: 0.7 })
-  setFont(pdf, "bold", 13.5, C.white)
-  pdf.text(safe(sym(total)), MR - 4, ty + 9.2, { align: "right" })
-  ty += 16.5
+  setFont(pdf, "bold", 9, C.white)
+  pdf.text("TOTAL", 113, ty + 9.9, { charSpace: 0.9 })
+  setFont(pdf, "bold", 17, C.white)
+  pdf.text(safe(sym(total)), MR - 4, ty + 10.6, { align: "right" })
+  ty += 19.5
 
   // amount in words under the pill
   setFont(pdf, "reg", 7.4, C.sub)
@@ -803,7 +833,7 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
   // =========================================================================
   // BANK DETAILS + SIGNATURE
   // =========================================================================
-  if (y > 240) {
+  if (y > 244) {
     y = newContentPage() + 4
   }
 
@@ -830,14 +860,27 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
     bankBottom = by
   }
 
-  // signature (right, same band as bank details)
+  // signature (right, same band as bank details) — cursive flourish + line
   const sigY = y + 2
   setFont(pdf, "reg", 7.4, C.faint)
   pdf.text("For GUARDIANX ACADEMY", MR, sigY, { align: "right" })
+  // hand-signed flourish above the line (three bezier strokes, kept clear
+  // of the "For GUARDIANX ACADEMY" text which starts ~33mm left of MR)
+  pdf.setDrawColor(DARK ? 210 : 70, DARK ? 196 : 58, DARK ? 255 : 122)
+  pdf.setLineWidth(0.45)
+  pdf.lines(
+    [
+      [2.6, -1.8, 4, -4.6, 5.6, -1.4],
+      [1.6, 1.9, 3, 3.2, 4.6, 0.5],
+      [1.2, -2, 2.6, -3.6, 4.6, -1],
+    ],
+    MR - 54,
+    sigY + 2.6
+  )
   pdf.setDrawColor(161, 161, 170)
   pdf.setLineWidth(0.3)
   pdf.setLineDashPattern([1, 0.9], 0)
-  pdf.line(MR - 55, sigY + 4.5, MR, sigY + 4.5)
+  pdf.line(MR - 58, sigY + 4.5, MR, sigY + 4.5)
   pdf.setLineDashPattern([], 0)
   setFont(pdf, "bold", 8.8, C.ink)
   pdf.text("Authorized Signatory", MR, sigY + 9.4, { align: "right" })

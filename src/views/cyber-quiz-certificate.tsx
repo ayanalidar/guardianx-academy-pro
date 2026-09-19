@@ -183,92 +183,89 @@ export function CyberQuizCertificateView() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5, delay: 0.15 }}
           ref={certRef}
-          className="relative aspect-[1.414/1] w-full max-w-4xl mx-auto rounded-2xl overflow-hidden gx-aurora border border-white/15 shadow-2xl shadow-violet-500/20"
+          className="gx-doc gx-theme-aurora gx-paper relative aspect-[1.414/1] w-full max-w-4xl mx-auto overflow-hidden rounded-2xl border border-white/15 shadow-2xl shadow-violet-500/20"
+          style={{ backgroundColor: "#0B0716" }}
         >
-          {/* Inner border */}
-          <div className="absolute inset-3 rounded-xl border border-white/15" />
-          {/* Corner light accents */}
-          <div className="absolute top-6 left-6 w-16 h-16 border-t-2 border-l-2 border-violet-400/50 rounded-tl-xl" />
-          <div className="absolute top-6 right-6 w-16 h-16 border-t-2 border-r-2 border-violet-400/50 rounded-tr-xl" />
-          <div className="absolute bottom-6 left-6 w-16 h-16 border-b-2 border-l-2 border-violet-400/50 rounded-bl-xl" />
-          <div className="absolute bottom-6 right-6 w-16 h-16 border-b-2 border-r-2 border-violet-400/50 rounded-br-xl" />
+          {/* Guilloché frame + aurora mesh document surface */}
+          <div className="gx-guilloche absolute inset-0">
+            <div className="gx-guilloche-inner h-full w-full">
+              <div className="gx-aurora-mesh gx-grain relative h-full w-full overflow-hidden">
+                <div className="gx-corner-glows" />
+                <div className="gx-watermark" />
 
-          {/* Glow blobs */}
-          <div className="absolute -top-16 left-1/4 w-[340px] h-[220px] bg-violet-600/20 blur-[90px] rounded-full pointer-events-none" />
-          <div className="absolute -bottom-16 right-1/4 w-[340px] h-[220px] bg-cyan-500/15 blur-[90px] rounded-full pointer-events-none" />
+                {/* Content */}
+                <div className="relative h-full flex flex-col items-center justify-center text-center px-8 sm:px-12 py-8">
+                  {/* Top: brand */}
+                  <div className="flex items-center gap-2.5 mb-4">
+                    <img src="/guardianx-logo-v2.png" alt="GuardianX" className="h-10 w-10 object-contain" style={{ filter: "drop-shadow(0 0 8px rgba(124,58,237,0.5))" }} />
+                    <div className="text-left">
+                      <div className="text-lg font-bold leading-none" style={{ color: "var(--doc-ink)" }}>
+                        Guardian<span style={{ color: "var(--doc-gold)" }}>X</span>
+                      </div>
+                      <div className="text-[8px] font-mono tracking-[0.3em] mt-0.5" style={{ color: "var(--doc-muted)" }}>ACADEMY</div>
+                    </div>
+                  </div>
 
-          {/* Content */}
-          <div className="relative h-full flex flex-col items-center justify-center text-center px-12 py-10">
-            {/* Top: brand */}
-            <div className="flex items-center gap-2.5 mb-6">
-              <img src="/guardianx-logo-v2.png" alt="GuardianX" className="h-10 w-10 object-contain" style={{ filter: "drop-shadow(0 0 8px rgba(124,58,237,0.5))" }} />
-              <div className="text-left">
-                <div className="text-lg font-bold leading-none">
-                  Guardian<span className="text-violet-400">X</span>
+                  {/* Certificate of completion */}
+                  <div className="text-[10px] font-mono tracking-[0.4em] uppercase mb-2" style={{ color: "var(--doc-accent-2)" }}>
+                    · of completion ·
+                  </div>
+
+                  <h2 className="text-2xl lg:text-4xl font-bold tracking-tight mb-1 text-balance">
+                    <span className="text-gradient-premium">Cyber Security Foundation</span>
+                  </h2>
+
+                  <p className="text-[10px] font-mono tracking-[0.25em] uppercase mb-4" style={{ color: "var(--doc-muted)" }}>
+                    {DIFFICULTY_LABELS[cert.difficulty] || cert.difficulty} Level
+                  </p>
+
+                  {/* "This certifies that" */}
+                  <p className="text-xs mb-2" style={{ color: "var(--doc-muted)" }}>
+                    This is to certify that
+                  </p>
+
+                  {/* Candidate name — script hero with gradient rule */}
+                  <div className="gx-script text-3xl lg:text-5xl italic leading-tight" style={{ color: "var(--doc-ink)" }}>
+                    {cert.candidateName}
+                  </div>
+
+                  <hr className="gx-gradient-rule w-64 mt-3 mb-4" />
+
+                  {/* "has successfully completed..." */}
+                  <p className="text-xs max-w-md leading-relaxed mb-5" style={{ color: "var(--doc-muted)" }}>
+                    has successfully completed the Cyber Security Foundation awareness quiz
+                    with a score of <span className="font-semibold text-white">{cert.score}/{cert.totalQuestions}</span> ({cert.percentage}%)
+                    across 8 cyber security domains.
+                  </p>
+
+                  {/* Bottom row: date + credential ID + signature */}
+                  <div className="flex items-end justify-between w-full max-w-2xl mt-auto">
+                    <div className="text-left">
+                      <div className="text-[8px] font-mono tracking-[0.2em] uppercase mb-1" style={{ color: "var(--doc-muted)" }}>Issue date</div>
+                      <div className="text-xs font-semibold" style={{ color: "var(--doc-ink)" }}>{issueDate}</div>
+                    </div>
+                    <div className="text-center">
+                      {/* Gold verification seal with dashed ring */}
+                      <div className="relative inline-flex items-center justify-center mb-1">
+                        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#ffe9a8] via-[#f5c451] to-[#c8901c] shadow-lg shadow-amber-500/30" />
+                        <div className="absolute inset-1.5 rounded-full border border-dashed border-[#5a3c05]/60" />
+                        <ShieldCheck className="absolute h-7 w-7 text-[#5a3c05]" />
+                      </div>
+                      <div className="text-[8px] font-mono tracking-[0.2em] uppercase" style={{ color: "var(--doc-muted)" }}>
+                        Verified
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <div className="text-[8px] font-mono tracking-[0.2em] uppercase mb-1" style={{ color: "var(--doc-muted)" }}>Credential ID</div>
+                      <div className="text-xs font-mono font-semibold" style={{ color: "var(--doc-accent-2)" }}>{cert.credentialId}</div>
+                    </div>
+                  </div>
+
+                  {/* Verification URL at bottom */}
+                  <div className="mt-3 text-[8px] font-mono tracking-wider" style={{ color: "var(--doc-muted)" }}>
+                    Verify at {cert.verificationUrl || `academy.guardianx.cloud/verify?id=${cert.credentialId}`}
+                  </div>
                 </div>
-                <div className="text-[8px] font-mono text-muted-foreground tracking-[0.3em] mt-0.5">ACADEMY</div>
-              </div>
-            </div>
-
-            {/* Certificate of completion */}
-            <div className="text-[10px] font-mono text-violet-300/80 tracking-[0.4em] uppercase mb-3">
-              Certificate of Completion
-            </div>
-
-            <h2 className="text-2xl lg:text-4xl font-bold tracking-tight mb-2 text-balance">
-              <span className="text-gradient-premium">Cyber Security Foundation</span>
-            </h2>
-
-            <p className="text-[10px] text-muted-foreground font-mono tracking-[0.25em] uppercase mb-6">
-              {DIFFICULTY_LABELS[cert.difficulty] || cert.difficulty} Level
-            </p>
-
-            {/* "This certifies that" */}
-            <p className="text-xs text-slate-400 mb-3">
-              This is to certify that
-            </p>
-
-            {/* Candidate name — glass hero panel */}
-            <div className="gx-glass px-10 py-5 mb-3">
-              <div className="text-3xl lg:text-5xl font-bold bg-gradient-to-r from-white via-violet-100 to-cyan-200 bg-clip-text text-transparent">
-                {cert.candidateName}
-              </div>
-            </div>
-
-            <div className="h-px w-64 bg-gradient-to-r from-transparent via-violet-400/40 to-transparent mb-4" />
-
-            {/* "has successfully completed..." */}
-            <p className="text-xs text-slate-300 max-w-md leading-relaxed mb-6">
-              has successfully completed the Cyber Security Foundation awareness quiz
-              with a score of <span className="font-semibold text-white">{cert.score}/{cert.totalQuestions}</span> ({cert.percentage}%)
-              across 8 cyber security domains.
-            </p>
-
-            {/* Bottom row: date + credential ID + signature */}
-            <div className="flex items-end justify-between w-full max-w-2xl mt-auto">
-              <div className="text-left">
-                <div className="text-[8px] font-mono text-slate-400 tracking-[0.2em] uppercase mb-1">Issue date</div>
-                <div className="text-xs font-semibold text-slate-100">{issueDate}</div>
-              </div>
-              <div className="text-center">
-                {/* Gold verification seal */}
-                <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gradient-to-br from-[#ffe9a8] via-[#f5c451] to-[#c8901c] shadow-lg shadow-amber-500/30 mb-1">
-                  <ShieldCheck className="h-7 w-7 text-[#5a3c05]" />
-                </div>
-                <div className="text-[8px] font-mono text-slate-400 tracking-[0.2em] uppercase">
-                  Verified
-                </div>
-              </div>
-              <div className="text-right">
-                <div className="text-[8px] font-mono text-slate-400 tracking-[0.2em] uppercase mb-1">Credential ID</div>
-                <div className="text-xs font-mono font-semibold text-violet-300">{cert.credentialId}</div>
-              </div>
-            </div>
-
-            {/* Verification URL at bottom */}
-            <div className="absolute bottom-4 left-0 right-0 text-center">
-              <div className="text-[8px] font-mono text-muted-foreground/60 tracking-wider">
-                Verify at {cert.verificationUrl || `academy.guardianx.cloud/verify?id=${cert.credentialId}`}
               </div>
             </div>
           </div>

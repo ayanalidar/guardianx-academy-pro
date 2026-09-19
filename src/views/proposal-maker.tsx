@@ -34,7 +34,7 @@ import {
   FileCheck, Handshake, PenLine, Rocket, TrendingUp,
   Video, Microscope, FileQuestion, ClipboardList,
   CalendarClock, Eye, ChevronDown, Briefcase, Star, Zap, Loader2,
-  Save, FolderOpen,
+  Save, FolderOpen, Palette,
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -65,6 +65,34 @@ const SLIDES = [
   { id: 12, name: "Terms", icon: FileCheck },
   { id: 13, name: "Contact", icon: Mail },
 ] as const
+
+// ---------------------------------------------------------------------
+// Aurora Luxe deck theme — shared CSS contract in globals.css (.gx-doc).
+// Every slide root carries .gx-doc + .gx-theme-<docTheme>, so flipping
+// this single value re-skins all 13 slides live (screen + PDF export).
+// ---------------------------------------------------------------------
+type DocTheme = "aurora" | "ivory" | "emerald"
+
+const DOC_THEMES: DocTheme[] = ["aurora", "ivory", "emerald"]
+
+const THEME_LABEL: Record<DocTheme, string> = {
+  aurora: "Midnight Aurora",
+  ivory: "Ivory Gold",
+  emerald: "Emerald Corporate",
+}
+
+const THEME_SWATCH: Record<DocTheme, string> = {
+  aurora: "linear-gradient(135deg, #8b5cf6, #22d3ee)",
+  ivory: "linear-gradient(135deg, #d4af37, #f6eedb)",
+  emerald: "linear-gradient(135deg, #10b981, #2dd4bf)",
+}
+
+// Accent-gradient display text used for prices / chip numbers inside slides
+const ACCENT_TEXT_GRADIENT: React.CSSProperties = {
+  backgroundImage: "linear-gradient(90deg, var(--doc-accent-1), var(--doc-accent-2))",
+  WebkitBackgroundClip: "text",
+  backgroundClip: "text",
+}
 
 const WHY_CHOOSE_US = [
   { icon: ShieldCheck, title: "Expert Instructors", desc: "Certified cybersecurity professionals with 10+ years of industry experience.", color: "text-violet-300", bg: "bg-violet-500/10" },
@@ -188,6 +216,13 @@ const PARTNERSHIP_MODELS = [
   },
 ]
 
+const CLOSING_NEXT_STEPS = [
+  "Review proposal with stakeholders",
+  "Schedule a discovery call",
+  "Sign MoU (template provided)",
+  "Begin implementation (Week 1)",
+]
+
 export function ProposalMakerView() {
   const { navigate } = useAppStore()
   const [exporting, setExporting] = React.useState(false)
@@ -309,6 +344,9 @@ export function ProposalMakerView() {
 
   const [activeSlide, setActiveSlide] = React.useState<number>(1)
 
+  // Aurora Luxe deck theme — applied to every slide root (.gx-doc .gx-theme-*)
+  const [docTheme, setDocTheme] = React.useState<DocTheme>("aurora")
+
   // ------------------------------------------------------------------
   // Saved-proposal persistence (/api/proposals) — the whole deck used
   // to live only in React state and was lost on every refresh.
@@ -423,6 +461,8 @@ export function ProposalMakerView() {
   const total = subtotal - discountAmount
   const currencySymbol = currency === "INR" ? "₹" : "$"
   const fmt = (a: number) => `${currencySymbol}${a.toLocaleString("en-IN")}`
+  const fmtDate = (d: string) =>
+    new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
 
   function addModule() {
     setModules([...modules, { id: String(Date.now()), title: "", description: "", duration: "", deliverables: "" }])
@@ -543,6 +583,29 @@ export function ProposalMakerView() {
             </div>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
+            {/* Aurora Luxe theme switcher — re-skins the whole deck live (maker UI only) */}
+            <div className="flex items-center gap-1 rounded-lg border border-border/60 bg-muted/40 p-1" role="group" aria-label="Deck theme (Aurora Luxe)">
+              <Palette className="h-3.5 w-3.5 text-muted-foreground mx-1 shrink-0" />
+              {DOC_THEMES.map((t) => (
+                <button
+                  key={t}
+                  type="button"
+                  onClick={() => setDocTheme(t)}
+                  aria-pressed={docTheme === t}
+                  title={THEME_LABEL[t]}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-[10px] font-medium transition-colors border",
+                    docTheme === t
+                      ? "bg-cyan-500/20 text-cyan-100 border-cyan-500/40"
+                      : "text-muted-foreground hover:bg-muted/70 border-transparent",
+                  )}
+                >
+                  <span className="size-2.5 rounded-full shrink-0" style={{ background: THEME_SWATCH[t] }} />
+                  <span className="hidden md:inline">{THEME_LABEL[t]}</span>
+                  <span className="md:hidden capitalize">{t}</span>
+                </button>
+              ))}
+            </div>
             {/* Saved proposals — load / save / delete */}
             <Select
               value={proposalId ?? "__NONE__"}
@@ -803,44 +866,70 @@ export function ProposalMakerView() {
           <div className="lg:col-span-7">
             <div className="rounded-2xl overflow-hidden gx-aurora" id="proposal-preview">
               {/* Slide 1: Cover */}
-              <Slide id={1} title="Cover">
-                <div className="relative p-8 sm:p-12 min-h-[480px] flex flex-col justify-center overflow-hidden">
-                  <div className="absolute -top-24 -right-10 w-80 h-80 rounded-full bg-violet-600/25 blur-[90px] pointer-events-none" />
-                  <div className="absolute -bottom-24 -left-14 w-80 h-80 rounded-full bg-cyan-600/15 blur-[90px] pointer-events-none" />
-                  <div className="absolute top-1/4 left-1/3 w-48 h-48 rounded-full bg-fuchsia-500/10 blur-[70px] pointer-events-none" />
-                  <div className="relative">
-                    <div className="flex items-center gap-4 mb-8">
-                      <div className="relative">
-                        <div className="absolute inset-0 rounded-xl bg-violet-500/30 blur-lg" />
-                        <img src="/guardianx-logo-v2.png" alt="GuardianX" className="relative w-14 h-14 sm:w-16 sm:h-16 object-contain" style={{ filter: "drop-shadow(0 0 12px rgba(167,139,250,0.5))" }} />
-                      </div>
-                      <div>
-                        <h1 className="text-xl sm:text-2xl font-bold text-gradient-premium">GuardianX Academy</h1>
-                        <p className="text-[11px] text-violet-200/80">Cybersecurity Training & Certification</p>
-                      </div>
+              <Slide id={1} title="Cover" theme={docTheme} cover>
+                <div className="relative flex flex-col min-h-[560px]">
+                  <div className="flex-1 flex flex-col items-center justify-center text-center px-6 sm:px-16 pt-14 pb-8">
+                    {/* Glowing logo badge */}
+                    <div
+                      className="rounded-3xl bg-white/10 ring-1 ring-white/20 p-5 sm:p-6"
+                      style={{ filter: "drop-shadow(0 0 40px rgba(139,92,246,.55))" }}
+                    >
+                      <img src="/guardianx-logo-v2.png" alt="GuardianX" className="w-28 h-28 sm:w-36 sm:h-36 object-contain" />
                     </div>
-                    <Badge className="bg-cyan-500/20 text-cyan-200 border border-cyan-500/40 mb-3">PARTNERSHIP PROPOSAL</Badge>
-                    <h2 className="text-2xl sm:text-4xl font-bold tracking-tight leading-tight text-gradient-premium">{proposalTitle}</h2>
-                    <p className="text-sm text-violet-200/80 mt-3">Prepared for {institutionName || "your institution"}</p>
-                    <div className="grid grid-cols-3 gap-3 mt-8">
-                      <div className="gx-glass p-3"><p className="text-[10px] text-slate-400 uppercase">Proposal #</p><p className="font-mono text-xs text-slate-100">{proposalNumber}</p></div>
-                      <div className="gx-glass p-3"><p className="text-[10px] text-slate-400 uppercase">Date</p><p className="text-xs text-slate-100">{new Date(proposalDate).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</p></div>
-                      <div className="gx-glass p-3"><p className="text-[10px] text-slate-400 uppercase">Valid Until</p><p className="text-xs text-slate-100">{new Date(validUntil).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}</p></div>
+                    <p className="mt-8 text-[10px] font-mono tracking-[0.4em] uppercase" style={{ color: "var(--doc-accent-2)" }}>
+                      Partnership Proposal
+                    </p>
+                    <h2
+                      className="mt-3 text-4xl sm:text-5xl lg:text-6xl font-bold tracking-tight leading-[1.05] max-w-3xl"
+                      style={{ color: "var(--doc-ink)" }}
+                    >
+                      Prepared for {institutionName || "your institution"}
+                    </h2>
+                    <div className="gx-gradient-rule w-44 mt-6" />
+                    <p className="gx-script mt-5 text-xl sm:text-2xl" style={{ color: "var(--doc-muted)" }}>
+                      GuardianX Academy · Cybersecurity Training &amp; Certification
+                    </p>
+                  </div>
+                  {/* Meta strip */}
+                  <div className="px-6 sm:px-12 pb-10">
+                    <div className="gx-glass-card px-5 sm:px-8 py-4">
+                      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                        <div className="min-w-0">
+                          <p className="text-[9px] font-mono tracking-[0.25em] uppercase" style={{ color: "var(--doc-muted)" }}>Proposal Title</p>
+                          <p className="text-xs sm:text-sm font-semibold truncate" style={{ color: "var(--doc-ink)" }}>{proposalTitle}</p>
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-[9px] font-mono tracking-[0.25em] uppercase" style={{ color: "var(--doc-muted)" }}>Proposal #</p>
+                          <p className="font-mono text-xs sm:text-sm truncate" style={{ color: "var(--doc-ink)" }}>{proposalNumber}</p>
+                        </div>
+                        <div>
+                          <p className="text-[9px] font-mono tracking-[0.25em] uppercase" style={{ color: "var(--doc-muted)" }}>Date</p>
+                          <p className="text-xs sm:text-sm" style={{ color: "var(--doc-ink)" }}>{fmtDate(proposalDate)}</p>
+                        </div>
+                        <div>
+                          <p className="text-[9px] font-mono tracking-[0.25em] uppercase" style={{ color: "var(--doc-muted)" }}>Valid Until</p>
+                          <p className="text-xs sm:text-sm" style={{ color: "var(--doc-ink)" }}>{fmtDate(validUntil)}</p>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
               </Slide>
 
               {/* Slide 2: Executive Summary */}
-              <Slide id={2} title="Executive Summary">
-                <div className="p-6 sm:p-10">
-                  <h3 className="text-xl sm:text-2xl font-bold mb-4 text-gradient-premium">Executive Summary</h3>
-                  <p className="text-sm text-slate-300 leading-relaxed mb-6">{executiveSummary}</p>
-                  <div className="grid sm:grid-cols-2 gap-3">
+              <Slide id={2} title="Executive Summary" theme={docTheme}>
+                <div className="relative p-6 sm:p-10">
+                  <SlideHeading num={2} kicker="Overview" title="Executive Summary" />
+                  <p className="text-sm sm:text-[15px] leading-relaxed max-w-3xl" style={{ color: "var(--doc-ink)" }}>
+                    {executiveSummary}
+                  </p>
+                  <div className="grid sm:grid-cols-2 gap-3 mt-8">
                     {valueProps.filter((v) => v.trim()).map((vp, i) => (
-                      <div key={i} className="flex items-start gap-2 gx-glass p-3">
-                        <CheckCircle2 className="h-4 w-4 text-violet-300 mt-0.5 shrink-0" />
-                        <span className="text-sm text-slate-100">{vp}</span>
+                      <div key={i} className="gx-glass-card flex items-start gap-3 p-4">
+                        <span className="inline-flex items-center justify-center size-9 rounded-xl shrink-0" style={{ backgroundColor: "var(--doc-panel-strong)" }}>
+                          <CheckCircle2 className="size-4" style={{ color: "var(--doc-accent-2)" }} />
+                        </span>
+                        <span className="text-sm leading-snug pt-1" style={{ color: "var(--doc-ink)" }}>{vp}</span>
                       </div>
                     ))}
                   </div>
@@ -848,41 +937,43 @@ export function ProposalMakerView() {
               </Slide>
 
               {/* Slide 3: About GuardianX */}
-              <Slide id={3} title="About GuardianX">
-                <div className="p-6 sm:p-10">
-                  <h3 className="text-xl sm:text-2xl font-bold mb-2 text-gradient-premium">About GuardianX</h3>
-                  <p className="text-sm text-slate-300 leading-relaxed mb-6">{missionStatement}</p>
-                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+              <Slide id={3} title="About GuardianX" theme={docTheme}>
+                <div className="relative p-6 sm:p-10">
+                  <SlideHeading num={3} kicker="Who We Are" title="About GuardianX" />
+                  <p className="text-sm sm:text-[15px] leading-relaxed max-w-3xl" style={{ color: "var(--doc-ink)" }}>{missionStatement}</p>
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-8">
                     {keyStats.map((s, i) => (
-                      <div key={i} className="gx-glass p-4 text-center">
-                        <s.icon className="h-5 w-5 mx-auto text-violet-300 mb-1" />
-                        <div className="text-xl font-bold text-gradient-premium">{s.value}</div>
-                        <div className="text-[10px] text-slate-400 uppercase tracking-wider">{s.label}</div>
+                      <div key={i} className="gx-glass-card p-4">
+                        <span className="inline-flex items-center justify-center size-9 rounded-xl" style={{ backgroundColor: "var(--doc-panel-strong)" }}>
+                          <s.icon className="size-4" style={{ color: "var(--doc-accent-2)" }} />
+                        </span>
+                        <div className="mt-3 text-2xl font-extrabold tabular-nums tracking-tight" style={{ color: "var(--doc-ink)" }}>{s.value}</div>
+                        <div className="text-[10px] font-mono uppercase tracking-[0.18em]" style={{ color: "var(--doc-muted)" }}>{s.label}</div>
                       </div>
                     ))}
                   </div>
-                  <div className="flex items-center gap-3 gx-glass p-4">
-                    <img src="/guardianx-logo-v2.png" alt="GuardianX" className="w-12 h-12 object-contain" style={{ filter: "drop-shadow(0 0 8px rgba(167,139,250,0.4))" }} />
-                    <div>
-                      <p className="text-sm font-semibold text-slate-100">Trusted cybersecurity training partner</p>
-                      <p className="text-xs text-slate-400">Built around real OSS tools - Kali Linux, Nmap, Burp Suite, Metasploit, Docker, Hashcat</p>
+                  <div className="gx-glass-card mt-4 p-4 flex items-center gap-4">
+                    <img src="/guardianx-logo-v2.png" alt="GuardianX" className="w-12 h-12 object-contain shrink-0" style={{ filter: "drop-shadow(0 0 10px rgba(139,92,246,0.45))" }} />
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold" style={{ color: "var(--doc-ink)" }}>Trusted cybersecurity training partner</p>
+                      <p className="text-xs mt-0.5" style={{ color: "var(--doc-muted)" }}>Built around real OSS tools - Kali Linux, Nmap, Burp Suite, Metasploit, Docker, Hashcat</p>
                     </div>
                   </div>
                 </div>
               </Slide>
 
               {/* Slide 4: Why Choose GuardianX */}
-              <Slide id={4} title="Why Choose Us">
-                <div className="p-6 sm:p-10">
-                  <h3 className="text-xl sm:text-2xl font-bold mb-6 text-gradient-premium">Why Choose GuardianX?</h3>
+              <Slide id={4} title="Why Choose Us" theme={docTheme}>
+                <div className="relative p-6 sm:p-10">
+                  <SlideHeading num={4} kicker="Differentiators" title="Why Choose GuardianX?" />
                   <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
                     {WHY_CHOOSE_US.map((w, i) => (
-                      <div key={i} className="gx-glass p-4">
-                        <div className={cn("inline-flex p-2 rounded-lg mb-2", w.bg)}>
-                          <w.icon className={cn("h-4 w-4", w.color)} />
-                        </div>
-                        <h4 className="font-semibold text-sm mb-1 text-slate-100">{w.title}</h4>
-                        <p className="text-xs text-slate-400">{w.desc}</p>
+                      <div key={i} className="gx-glass-card p-4">
+                        <span className="inline-flex items-center justify-center size-9 rounded-xl mb-3" style={{ backgroundColor: "var(--doc-panel-strong)" }}>
+                          <w.icon className="size-4" style={{ color: "var(--doc-accent-2)" }} />
+                        </span>
+                        <h4 className="font-semibold text-sm mb-1" style={{ color: "var(--doc-ink)" }}>{w.title}</h4>
+                        <p className="text-xs leading-relaxed" style={{ color: "var(--doc-muted)" }}>{w.desc}</p>
                       </div>
                     ))}
                   </div>
@@ -890,46 +981,46 @@ export function ProposalMakerView() {
               </Slide>
 
               {/* Slide 5: Our Offerings (tabbed) */}
-              <Slide id={5} title="Our Offerings">
-                <div className="p-6 sm:p-10">
-                  <h3 className="text-xl sm:text-2xl font-bold mb-6 text-gradient-premium">Our Offerings</h3>
+              <Slide id={5} title="Our Offerings" theme={docTheme}>
+                <div className="relative p-6 sm:p-10">
+                  <SlideHeading num={5} kicker="Programs" title="Our Offerings" />
                   <Tabs defaultValue={institutionType} className="w-full">
-                    <TabsList className="grid w-full grid-cols-3 mb-4">
-                      <TabsTrigger value="school" className="text-xs"><GraduationCap className="h-3.5 w-3.5 mr-1" /> Schools</TabsTrigger>
-                      <TabsTrigger value="college" className="text-xs"><BookOpen className="h-3.5 w-3.5 mr-1" /> Colleges</TabsTrigger>
-                      <TabsTrigger value="university" className="text-xs"><Trophy className="h-3.5 w-3.5 mr-1" /> Universities</TabsTrigger>
+                    <TabsList className="grid w-full grid-cols-3 mb-4 bg-[color:var(--doc-panel)] border border-[color:var(--doc-line)]">
+                      <TabsTrigger value="school" className="text-xs data-[state=active]:bg-[color:var(--doc-panel-strong)] data-[state=active]:text-[color:var(--doc-ink)]"><GraduationCap className="h-3.5 w-3.5 mr-1" /> Schools</TabsTrigger>
+                      <TabsTrigger value="college" className="text-xs data-[state=active]:bg-[color:var(--doc-panel-strong)] data-[state=active]:text-[color:var(--doc-ink)]"><BookOpen className="h-3.5 w-3.5 mr-1" /> Colleges</TabsTrigger>
+                      <TabsTrigger value="university" className="text-xs data-[state=active]:bg-[color:var(--doc-panel-strong)] data-[state=active]:text-[color:var(--doc-ink)]"><Trophy className="h-3.5 w-3.5 mr-1" /> Universities</TabsTrigger>
                     </TabsList>
                     {(["school", "college", "university"] as const).map((key) => {
                       const data = OFFERINGS[key]
                       return (
-                        <TabsContent key={key} value={key} className="space-y-4">
-                          <div className="flex items-center gap-2 mb-3">
-                            <data.icon className="h-5 w-5 text-violet-300" />
-                            <h4 className="font-semibold">{data.label}</h4>
+                        <TabsContent key={key} value={key} className="space-y-3">
+                          <div className="flex items-center gap-2">
+                            <data.icon className="h-5 w-5" style={{ color: "var(--doc-accent-2)" }} />
+                            <h4 className="font-semibold text-sm" style={{ color: "var(--doc-ink)" }}>{data.label}</h4>
                           </div>
                           <div className="grid sm:grid-cols-2 gap-3">
-                            <div className="gx-glass p-3">
-                              <p className="text-[10px] font-bold uppercase tracking-wider text-violet-300 mb-2">Offerings</p>
-                              <ul className="space-y-1">
+                            <div className="gx-glass-card p-4">
+                              <p className="text-[10px] font-mono font-bold uppercase tracking-[0.2em] mb-2" style={{ color: "var(--doc-accent-2)" }}>Offerings</p>
+                              <ul className="space-y-1.5">
                                 {data.offerings.map((o, i) => (
-                                  <li key={i} className="text-xs text-slate-200 flex items-start gap-1.5"><CheckCircle2 className="h-3 w-3 text-violet-400 mt-0.5 shrink-0" />{o}</li>
+                                  <li key={i} className="text-xs flex items-start gap-1.5" style={{ color: "var(--doc-ink)" }}><CheckCircle2 className="h-3 w-3 mt-0.5 shrink-0" style={{ color: "var(--doc-accent-2)" }} />{o}</li>
                                 ))}
                               </ul>
                             </div>
-                            <div className="gx-glass p-3">
-                              <p className="text-[10px] font-bold uppercase tracking-wider text-cyan-300 mb-2">Features</p>
-                              <ul className="space-y-1">
+                            <div className="gx-glass-card p-4">
+                              <p className="text-[10px] font-mono font-bold uppercase tracking-[0.2em] mb-2" style={{ color: "var(--doc-accent-3)" }}>Features</p>
+                              <ul className="space-y-1.5">
                                 {data.features.map((f, i) => (
-                                  <li key={i} className="text-xs text-slate-200 flex items-start gap-1.5"><Zap className="h-3 w-3 text-cyan-400 mt-0.5 shrink-0" />{f}</li>
+                                  <li key={i} className="text-xs flex items-start gap-1.5" style={{ color: "var(--doc-ink)" }}><Zap className="h-3 w-3 mt-0.5 shrink-0" style={{ color: "var(--doc-accent-3)" }} />{f}</li>
                                 ))}
                               </ul>
                             </div>
                           </div>
-                          <div className="gx-glass p-3 border-emerald-400/25">
-                            <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-300 mb-2">Benefits to Institution</p>
+                          <div className="gx-glass-card p-4">
+                            <p className="text-[10px] font-mono font-bold uppercase tracking-[0.2em] mb-2" style={{ color: "var(--doc-gold)" }}>Benefits to Institution</p>
                             <div className="grid sm:grid-cols-2 gap-2">
                               {data.benefits.map((b, i) => (
-                                <span key={i} className="text-xs text-slate-200">{b}</span>
+                                <span key={i} className="text-xs flex items-start gap-1.5" style={{ color: "var(--doc-ink)" }}><Award className="h-3 w-3 mt-0.5 shrink-0" style={{ color: "var(--doc-gold)" }} />{b}</span>
                               ))}
                             </div>
                           </div>
@@ -941,22 +1032,25 @@ export function ProposalMakerView() {
               </Slide>
 
               {/* Slide 6: Training Methodology */}
-              <Slide id={6} title="Methodology">
-                <div className="p-6 sm:p-10">
-                  <h3 className="text-xl sm:text-2xl font-bold mb-6 text-gradient-premium">Training Methodology</h3>
-                  <p className="text-sm text-slate-300 mb-6">A 7-step structured approach that combines theory with hands-on practice.</p>
+              <Slide id={6} title="Methodology" theme={docTheme}>
+                <div className="relative p-6 sm:p-10">
+                  <SlideHeading num={6} kicker="Delivery Model" title="Training Methodology" />
+                  <p className="text-sm mb-8" style={{ color: "var(--doc-muted)" }}>A 7-step structured approach that combines theory with hands-on practice.</p>
                   <div className="relative">
-                    {/* Connecting line (desktop) */}
-                    <div className="hidden lg:block absolute top-6 left-6 right-6 h-0.5 bg-gradient-to-r from-violet-500/40 via-cyan-500/40 to-rose-500/40" />
-                    <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
+                    {/* Connecting aurora rule (desktop) */}
+                    <div className="hidden lg:block absolute gx-gradient-rule top-6 left-[7%] right-[7%]" />
+                    <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-4">
                       {METHODOLOGY_STEPS.map((s, i) => (
                         <div key={i} className="relative flex flex-col items-center text-center">
-                          <div className="size-12 rounded-full gx-glass flex items-center justify-center mb-2 relative z-10">
-                            <s.icon className="h-5 w-5 text-violet-300" />
-                          </div>
-                          <span className="text-[10px] font-bold text-violet-300 mb-0.5">{String(s.step).padStart(2, "0")}</span>
-                          <p className="text-xs font-semibold text-slate-100">{s.title}</p>
-                          <p className="text-[10px] text-slate-400 hidden sm:block">{s.desc}</p>
+                          <span
+                            className="relative z-10 size-12 rounded-full flex items-center justify-center border border-[color:var(--doc-line)] bg-[color:var(--doc-panel)] mb-2"
+                            style={{ boxShadow: "0 0 18px -6px var(--doc-accent-2)" }}
+                          >
+                            <s.icon className="h-5 w-5" style={{ color: "var(--doc-accent-2)" }} />
+                          </span>
+                          <span className="text-[10px] font-mono font-bold tracking-widest mb-0.5" style={{ color: "var(--doc-accent-2)" }}>{String(s.step).padStart(2, "0")}</span>
+                          <p className="text-xs font-semibold" style={{ color: "var(--doc-ink)" }}>{s.title}</p>
+                          <p className="text-[10px] hidden sm:block" style={{ color: "var(--doc-muted)" }}>{s.desc}</p>
                         </div>
                       ))}
                     </div>
@@ -965,23 +1059,26 @@ export function ProposalMakerView() {
               </Slide>
 
               {/* Slide 7: Curriculum */}
-              <Slide id={7} title="Curriculum">
-                <div className="p-6 sm:p-10">
-                  <h3 className="text-xl sm:text-2xl font-bold mb-6 text-gradient-premium">Program Curriculum</h3>
+              <Slide id={7} title="Curriculum" theme={docTheme}>
+                <div className="relative p-6 sm:p-10">
+                  <SlideHeading num={7} kicker="Curriculum" title="Program Curriculum" />
                   <div className="space-y-3">
                     {modules.map((m, i) => (
-                      <div key={m.id} className="gx-glass p-4">
+                      <div key={m.id} className="gx-glass-card p-4">
                         <div className="flex items-center justify-between mb-1 flex-wrap gap-2">
-                          <div className="flex items-center gap-2">
-                            <span className="inline-flex items-center justify-center size-6 rounded-md bg-gradient-to-br from-violet-500 to-fuchsia-600 text-white text-xs font-bold">{i + 1}</span>
-                            <h4 className="font-semibold text-sm text-slate-100">{m.title || "Module"}</h4>
+                          <div className="flex items-center gap-2.5">
+                            <span
+                              className="inline-flex items-center justify-center size-7 rounded-lg bg-clip-text text-transparent text-xs font-bold"
+                              style={ACCENT_TEXT_GRADIENT}
+                            >{i + 1}</span>
+                            <h4 className="font-semibold text-sm" style={{ color: "var(--doc-ink)" }}>{m.title || "Module"}</h4>
                           </div>
-                          <Badge variant="outline" className="text-[9px] font-mono">{m.duration}</Badge>
+                          <span className="rounded-full border border-[color:var(--doc-line)] bg-[color:var(--doc-panel)] px-2.5 py-0.5 text-[9px] font-mono" style={{ color: "var(--doc-muted)" }}>{m.duration}</span>
                         </div>
-                        {m.description && <p className="text-xs text-slate-400 ml-8">{m.description}</p>}
+                        {m.description && <p className="text-xs ml-9" style={{ color: "var(--doc-muted)" }}>{m.description}</p>}
                         {m.deliverables && (
-                          <p className="text-[10px] text-cyan-300 ml-8 mt-1 flex items-center gap-1">
-                            <ClipboardList className="h-3 w-3" /> Deliverables: {m.deliverables}
+                          <p className="text-[11px] ml-9 mt-1 flex items-center gap-1" style={{ color: "var(--doc-accent-2)" }}>
+                            <ClipboardList className="h-3 w-3" /> Deliverables: <span style={{ color: "var(--doc-muted)" }}>{m.deliverables}</span>
                           </p>
                         )}
                       </div>
@@ -991,88 +1088,101 @@ export function ProposalMakerView() {
               </Slide>
 
               {/* Slide 8: Benefits to Institution */}
-              <Slide id={8} title="Benefits">
-                <div className="p-6 sm:p-10">
-                  <h3 className="text-xl sm:text-2xl font-bold mb-6 text-gradient-premium">Benefits to Institution</h3>
+              <Slide id={8} title="Benefits" theme={docTheme}>
+                <div className="relative p-6 sm:p-10">
+                  <SlideHeading num={8} kicker="Outcomes" title="Benefits to Institution" />
                   <div className="grid sm:grid-cols-3 gap-4">
-                    <div className="gx-glass p-4">
-                      <div className="inline-flex p-2 rounded-lg bg-cyan-500/10 mb-2"><Users className="h-4 w-4 text-cyan-300" /></div>
-                      <h4 className="font-semibold text-sm mb-2 text-slate-100">For Students</h4>
-                      <ul className="space-y-1.5">
-                        {studentBenefits.map((b, i) => <li key={i} className="text-xs text-slate-200 flex items-start gap-1.5"><CheckCircle2 className="h-3 w-3 text-cyan-400 mt-0.5 shrink-0" />{b}</li>)}
-                      </ul>
-                    </div>
-                    <div className="gx-glass p-4">
-                      <div className="inline-flex p-2 rounded-lg bg-violet-500/10 mb-2"><Building2 className="h-4 w-4 text-violet-300" /></div>
-                      <h4 className="font-semibold text-sm mb-2 text-slate-100">For Institution</h4>
-                      <ul className="space-y-1.5">
-                        {institutionBenefits.map((b, i) => <li key={i} className="text-xs text-slate-200 flex items-start gap-1.5"><CheckCircle2 className="h-3 w-3 text-violet-400 mt-0.5 shrink-0" />{b}</li>)}
-                      </ul>
-                    </div>
-                    <div className="gx-glass p-4">
-                      <div className="inline-flex p-2 rounded-lg bg-amber-500/10 mb-2"><BookOpen className="h-4 w-4 text-amber-300" /></div>
-                      <h4 className="font-semibold text-sm mb-2 text-slate-100">For Faculty</h4>
-                      <ul className="space-y-1.5">
-                        {facultyBenefits.map((b, i) => <li key={i} className="text-xs text-slate-200 flex items-start gap-1.5"><CheckCircle2 className="h-3 w-3 text-amber-400 mt-0.5 shrink-0" />{b}</li>)}
-                      </ul>
-                    </div>
+                    {[
+                      { icon: Users, title: "For Students", items: studentBenefits },
+                      { icon: Building2, title: "For Institution", items: institutionBenefits },
+                      { icon: BookOpen, title: "For Faculty", items: facultyBenefits },
+                    ].map((group, gi) => (
+                      <div key={gi} className="gx-glass-card p-5">
+                        <span className="inline-flex items-center justify-center size-10 rounded-xl mb-3" style={{ backgroundColor: "var(--doc-panel-strong)" }}>
+                          <group.icon className="size-5" style={{ color: "var(--doc-accent-2)" }} />
+                        </span>
+                        <h4 className="font-semibold text-sm mb-3" style={{ color: "var(--doc-ink)" }}>{group.title}</h4>
+                        <ul className="space-y-2">
+                          {group.items.map((b, i) => (
+                            <li key={i} className="text-xs leading-relaxed flex items-start gap-1.5" style={{ color: "var(--doc-ink)" }}>
+                              <CheckCircle2 className="h-3 w-3 mt-0.5 shrink-0" style={{ color: "var(--doc-accent-2)" }} />{b}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </Slide>
 
               {/* Slide 9: Pricing */}
-              <Slide id={9} title="Pricing">
-                <div className="p-6 sm:p-10">
-                  <h3 className="text-xl sm:text-2xl font-bold mb-6 text-gradient-premium">Revenue Model &amp; Pricing</h3>
+              <Slide id={9} title="Pricing" theme={docTheme}>
+                <div className="relative p-6 sm:p-10">
+                  <SlideHeading num={9} kicker="Investment" title="Revenue Model & Pricing" />
                   <div className="grid sm:grid-cols-2 gap-4">
-                    <div className="gx-glass p-4">
+                    <div className="gx-glass-card p-5">
                       <table className="w-full text-sm">
                         <tbody>
-                          <tr className="border-b border-white/10"><td className="py-2 text-slate-400">Training ({studentCount} students × {fmt(perStudentPrice)})</td><td className="py-2 text-right font-medium text-slate-100 tabular-nums">{fmt(studentTotal)}</td></tr>
-                          <tr className="border-b border-white/10"><td className="py-2 text-slate-400">Cyber Lab Access (31 labs, {programDuration})</td><td className="py-2 text-right font-medium text-slate-100 tabular-nums">{fmt(labAccessFee)}</td></tr>
-                          <tr className="border-b border-white/10"><td className="py-2 text-slate-400">Instructor &amp; Material Fee</td><td className="py-2 text-right font-medium text-slate-100 tabular-nums">{fmt(instructorFee)}</td></tr>
-                          {discountRate > 0 && <tr className="border-b border-white/10"><td className="py-2 text-slate-400">Discount ({discountRate}%)</td><td className="py-2 text-right text-rose-300 tabular-nums">−{fmt(discountAmount)}</td></tr>}
-                          <tr className="border-t-2 border-white/25"><td className="py-3 font-bold text-slate-100">Total Investment</td><td className="py-3 text-right font-bold text-lg text-gradient-premium tabular-nums">{fmt(total)}</td></tr>
+                          <tr className="border-b border-[color:var(--doc-line)]"><td className="py-2.5" style={{ color: "var(--doc-muted)" }}>Training ({studentCount} students × {fmt(perStudentPrice)})</td><td className="py-2.5 text-right font-medium tabular-nums" style={{ color: "var(--doc-ink)" }}>{fmt(studentTotal)}</td></tr>
+                          <tr className="border-b border-[color:var(--doc-line)]"><td className="py-2.5" style={{ color: "var(--doc-muted)" }}>Cyber Lab Access (31 labs, {programDuration})</td><td className="py-2.5 text-right font-medium tabular-nums" style={{ color: "var(--doc-ink)" }}>{fmt(labAccessFee)}</td></tr>
+                          <tr className="border-b border-[color:var(--doc-line)]"><td className="py-2.5" style={{ color: "var(--doc-muted)" }}>Instructor &amp; Material Fee</td><td className="py-2.5 text-right font-medium tabular-nums" style={{ color: "var(--doc-ink)" }}>{fmt(instructorFee)}</td></tr>
+                          {discountRate > 0 && <tr className="border-b border-[color:var(--doc-line)]"><td className="py-2.5" style={{ color: "var(--doc-muted)" }}>Discount ({discountRate}%)</td><td className="py-2.5 text-right tabular-nums" style={{ color: "var(--doc-accent-3)" }}>−{fmt(discountAmount)}</td></tr>}
+                          <tr className="border-t-2 border-[color:var(--doc-line)]"><td className="py-3 font-bold" style={{ color: "var(--doc-ink)" }}>Total Investment</td><td className="py-3 text-right"><span className="text-3xl sm:text-4xl font-extrabold tabular-nums tracking-tight bg-clip-text text-transparent" style={ACCENT_TEXT_GRADIENT}>{fmt(total)}</span></td></tr>
                         </tbody>
                       </table>
                     </div>
                     <div className="space-y-3">
-                      <div className="gx-glass p-3">
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-violet-300 mb-1">Revenue Share</p>
-                        <p className="text-sm text-slate-200">{revenueShare}% of training revenue shared with institution for cohorts above 50 students</p>
-                      </div>
-                      <div className="gx-glass p-3">
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-cyan-300 mb-1">ROI for Institution</p>
-                        <p className="text-sm text-slate-200">Estimated {fmt(Math.round(total * 3 / studentCount))} value per student in industry certifications + placement premium</p>
-                      </div>
-                      <div className="gx-glass p-3">
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-300 mb-1">Custom Pricing</p>
-                        <p className="text-sm text-slate-200">Volume discounts available for cohorts above 100 students. Contact us for a tailored quote.</p>
-                      </div>
+                      {[
+                        { icon: Handshake, kicker: "Revenue Share", tone: "var(--doc-accent-2)", body: `${revenueShare}% of training revenue shared with institution for cohorts above 50 students` },
+                        { icon: TrendingUp, kicker: "ROI for Institution", tone: "var(--doc-accent-3)", body: `Estimated ${fmt(Math.round(total * 3 / studentCount))} value per student in industry certifications + placement premium` },
+                        { icon: Sparkles, kicker: "Custom Pricing", tone: "var(--doc-gold)", body: "Volume discounts available for cohorts above 100 students. Contact us for a tailored quote." },
+                      ].map((n, ni) => (
+                        <div key={ni} className="gx-glass-card p-4 flex items-start gap-3">
+                          <span className="inline-flex items-center justify-center size-9 rounded-xl shrink-0" style={{ backgroundColor: "var(--doc-panel-strong)" }}>
+                            <n.icon className="size-4" style={{ color: n.tone }} />
+                          </span>
+                          <div className="min-w-0">
+                            <p className="text-[10px] font-mono font-bold uppercase tracking-[0.2em] mb-1" style={{ color: n.tone }}>{n.kicker}</p>
+                            <p className="text-sm leading-snug" style={{ color: "var(--doc-ink)" }}>{n.body}</p>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </div>
               </Slide>
 
               {/* Slide 10: Partnership Models */}
-              <Slide id={10} title="Partnership Models">
-                <div className="p-6 sm:p-10">
-                  <h3 className="text-xl sm:text-2xl font-bold mb-6 text-gradient-premium">Partnership Models</h3>
-                  <div className="grid sm:grid-cols-3 gap-4">
+              <Slide id={10} title="Partnership Models" theme={docTheme}>
+                <div className="relative p-6 sm:p-10">
+                  <SlideHeading num={10} kicker="Engagement Models" title="Partnership Models" />
+                  <div className="grid sm:grid-cols-3 gap-4 pt-3 items-stretch">
                     {PARTNERSHIP_MODELS.map((model, i) => (
-                      <div key={i} className={cn("relative gx-glass p-4", model.popular && "border-cyan-400/40")}>
+                      <div
+                        key={i}
+                        className={cn("relative gx-glass-card p-5 flex flex-col", model.popular && "ring-2 ring-[color:var(--doc-accent-1)] sm:-translate-y-1")}
+                        style={model.popular ? { boxShadow: "0 12px 50px -12px var(--doc-accent-1)" } : undefined}
+                      >
                         {model.popular && (
-                          <Badge className="absolute -top-2 right-2 bg-gradient-to-r from-cyan-500 to-violet-500 text-white text-[9px] border-0">POPULAR</Badge>
+                          <span
+                            className="absolute -top-3 left-1/2 -translate-x-1/2 inline-flex items-center gap-1 rounded-full px-3 py-1 text-[9px] font-bold tracking-[0.22em] uppercase text-white whitespace-nowrap"
+                            style={{ backgroundColor: "var(--doc-accent-1)" }}
+                          >
+                            <Star className="h-3 w-3" /> Recommended
+                          </span>
                         )}
-                        <div className={cn("inline-flex p-2 rounded-lg mb-2", model.bg)}>
-                          <model.icon className={cn("h-4 w-4", model.color)} />
-                        </div>
-                        <h4 className="font-semibold text-sm mb-1 text-slate-100">{model.name}</h4>
-                        <p className="text-lg font-bold text-gradient-premium">{model.price}</p>
-                        <p className="text-[10px] text-slate-400 mb-3">{model.priceNote}</p>
-                        <ul className="space-y-1">
+                        <span className="inline-flex items-center justify-center size-10 rounded-xl mb-3" style={{ backgroundColor: "var(--doc-panel-strong)" }}>
+                          <model.icon className="size-5" style={{ color: "var(--doc-accent-2)" }} />
+                        </span>
+                        <h4 className="font-semibold text-sm" style={{ color: "var(--doc-ink)" }}>{model.name}</h4>
+                        <p
+                          className="mt-2 text-2xl sm:text-3xl font-extrabold tabular-nums tracking-tight bg-clip-text text-transparent"
+                          style={ACCENT_TEXT_GRADIENT}
+                        >{model.price}</p>
+                        <p className="text-[10px] font-mono uppercase tracking-[0.18em] mt-0.5" style={{ color: "var(--doc-muted)" }}>{model.priceNote}</p>
+                        <ul className="mt-4 pt-4 space-y-1.5 border-t border-[color:var(--doc-line)]">
                           {model.features.map((f, j) => (
-                            <li key={j} className="text-xs text-slate-200 flex items-start gap-1.5"><CheckCircle2 className="h-3 w-3 text-violet-400 mt-0.5 shrink-0" />{f}</li>
+                            <li key={j} className="text-xs flex items-start gap-1.5" style={{ color: "var(--doc-ink)" }}><CheckCircle2 className="h-3 w-3 mt-0.5 shrink-0" style={{ color: "var(--doc-accent-2)" }} />{f}</li>
                           ))}
                         </ul>
                       </div>
@@ -1082,28 +1192,54 @@ export function ProposalMakerView() {
               </Slide>
 
               {/* Slide 11: Implementation Timeline */}
-              <Slide id={11} title="Timeline">
-                <div className="p-6 sm:p-10">
-                  <h3 className="text-xl sm:text-2xl font-bold mb-6 text-gradient-premium">Implementation Timeline</h3>
-                  <div className="relative">
-                    {/* Vertical line */}
-                    <div className="absolute left-5 top-2 bottom-2 w-0.5 bg-gradient-to-b from-violet-500/40 via-cyan-500/40 to-rose-500/40" />
-                    <div className="space-y-4">
+              <Slide id={11} title="Timeline" theme={docTheme}>
+                <div className="relative p-6 sm:p-10">
+                  <SlideHeading num={11} kicker="Roadmap" title="Implementation Timeline" />
+                  {/* Horizontal aurora timeline (sm+) — glowing dots on a gradient rule,
+                      glass phase cards alternating above / below the line */}
+                  <div className="hidden sm:block">
+                    <div className="grid grid-cols-5 gap-x-3">
                       {TIMELINE_PHASES.map((p, i) => (
-                        <div key={i} className="relative pl-12">
-                          <div className={cn("absolute left-0 size-10 rounded-full gx-glass flex items-center justify-center", p.bg)}>
-                            <p.icon className={cn("h-4 w-4", p.color)} />
+                        <div key={p.phase} className="flex items-end justify-center">
+                          {i % 2 === 0 && <TimelinePhaseCard phase={p} />}
+                        </div>
+                      ))}
+                    </div>
+                    <div className="relative my-4">
+                      <div className="gx-gradient-rule absolute left-[10%] right-[10%] top-1/2 -translate-y-1/2" />
+                      <div className="relative grid grid-cols-5 gap-x-3">
+                        {TIMELINE_PHASES.map((p) => (
+                          <div key={p.phase} className="flex justify-center">
+                            <span
+                              className="size-4 rounded-full ring-4 ring-[color:var(--doc-bg-a)]"
+                              style={{ background: "var(--doc-accent-2)", boxShadow: "0 0 16px var(--doc-accent-2)" }}
+                            />
                           </div>
-                          <div className="gx-glass p-3">
-                            <div className="flex items-center justify-between mb-1 flex-wrap gap-1">
-                              <div className="flex items-center gap-2">
-                                <Badge variant="outline" className="text-[9px] font-mono">{p.phase}</Badge>
-                                <span className="text-[10px] text-slate-400">{p.weeks}</span>
-                              </div>
-                              <h4 className="font-semibold text-sm text-slate-100">{p.title}</h4>
-                            </div>
-                            <p className="text-xs text-slate-400">{p.desc}</p>
-                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="grid grid-cols-5 gap-x-3">
+                      {TIMELINE_PHASES.map((p, i) => (
+                        <div key={p.phase} className="flex items-start justify-center">
+                          {i % 2 === 1 && <TimelinePhaseCard phase={p} />}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                  {/* Vertical fallback (mobile) */}
+                  <div className="sm:hidden relative pl-6">
+                    <div
+                      className="absolute left-[7px] top-2 bottom-2 w-0.5 rounded-full"
+                      style={{ background: "linear-gradient(180deg, var(--doc-accent-1), var(--doc-accent-2), transparent)" }}
+                    />
+                    <div className="space-y-3">
+                      {TIMELINE_PHASES.map((p) => (
+                        <div key={p.phase} className="relative">
+                          <span
+                            className="absolute -left-6 top-4 size-4 rounded-full ring-4 ring-[color:var(--doc-bg-a)]"
+                            style={{ background: "var(--doc-accent-2)", boxShadow: "0 0 16px var(--doc-accent-2)" }}
+                          />
+                          <TimelinePhaseCard phase={p} />
                         </div>
                       ))}
                     </div>
@@ -1112,64 +1248,106 @@ export function ProposalMakerView() {
               </Slide>
 
               {/* Slide 12: Terms & Conditions */}
-              <Slide id={12} title="Terms">
-                <div className="p-6 sm:p-10">
-                  <h3 className="text-xl sm:text-2xl font-bold mb-6 text-gradient-premium">Terms &amp; Conditions</h3>
-                  <div className="gx-glass p-4">
-                    <p className="text-xs text-slate-300 whitespace-pre-line leading-relaxed">{termsText}</p>
+              <Slide id={12} title="Terms" theme={docTheme}>
+                <div className="relative p-6 sm:p-10">
+                  <SlideHeading num={12} kicker="Legal" title="Terms & Conditions" />
+                  <div className="gx-glass-card p-5 sm:p-6">
+                    {termsText.split("\n").filter((l) => l.trim()).map((line, i) => (
+                      <p
+                        key={i}
+                        className={cn("text-xs leading-relaxed py-2.5", i > 0 && "border-t border-[color:var(--doc-line)]")}
+                        style={{ color: "var(--doc-muted)" }}
+                      >
+                        {line.trim()}
+                      </p>
+                    ))}
                   </div>
                 </div>
               </Slide>
 
               {/* Slide 13: Contact & Next Steps */}
-              <Slide id={13} title="Contact">
-                <div className="relative p-8 sm:p-12 overflow-hidden">
-                  <div className="absolute -top-24 -right-10 w-80 h-80 rounded-full bg-violet-600/25 blur-[90px] pointer-events-none" />
-                  <div className="absolute -bottom-24 -left-14 w-80 h-80 rounded-full bg-cyan-600/15 blur-[90px] pointer-events-none" />
-                  <div className="relative">
-                    <Badge className="bg-cyan-500/20 text-cyan-200 border border-cyan-500/40 mb-3">CONTACT & NEXT STEPS</Badge>
-                    <h3 className="text-2xl sm:text-3xl font-bold mb-6 text-gradient-premium">Ready to Partner?</h3>
-                    <div className="grid sm:grid-cols-2 gap-6 mb-8">
-                      <div className="gx-glass p-4">
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-cyan-300 mb-2">GuardianX Academy</p>
-                        <div className="space-y-1.5 text-sm">
-                          <div className="flex items-center gap-2 text-slate-100"><Mail className="h-3.5 w-3.5 text-violet-300" /> academy@guardianx.in</div>
-                          <div className="flex items-center gap-2 text-slate-100"><Mail className="h-3.5 w-3.5 text-violet-300" /> academy@guardianx.cloud</div>
-                          <div className="flex items-center gap-2 text-slate-100"><Phone className="h-3.5 w-3.5 text-violet-300" /> +91 80 4567 8901</div>
-                          <div className="flex items-center gap-2 text-slate-100"><Globe className="h-3.5 w-3.5 text-violet-300" /> academy.guardianx.cloud</div>
-                          <div className="flex items-center gap-2 text-slate-100"><Building2 className="h-3.5 w-3.5 text-violet-300" /> Nooripora, Baramulla, Kashmir · Noida, Gautam Buddha Nagar</div>
+              <Slide id={13} title="Contact" theme={docTheme}>
+                <div className="relative p-6 sm:p-10">
+                  <SlideHeading num={13} kicker="Next Steps" title="Ready to Partner?" />
+                  <div className="grid sm:grid-cols-2 gap-4">
+                    <div className="gx-glass-card p-5">
+                      <p className="text-[10px] font-mono font-bold uppercase tracking-[0.2em] mb-3" style={{ color: "var(--doc-accent-2)" }}>GuardianX Academy</p>
+                      <div className="space-y-2 text-sm">
+                        <div className="flex items-center gap-2" style={{ color: "var(--doc-ink)" }}><Mail className="h-3.5 w-3.5 shrink-0" style={{ color: "var(--doc-accent-2)" }} /> academy@guardianx.in</div>
+                        <div className="flex items-center gap-2" style={{ color: "var(--doc-ink)" }}><Mail className="h-3.5 w-3.5 shrink-0" style={{ color: "var(--doc-accent-2)" }} /> academy@guardianx.cloud</div>
+                        <div className="flex items-center gap-2" style={{ color: "var(--doc-ink)" }}><Phone className="h-3.5 w-3.5 shrink-0" style={{ color: "var(--doc-accent-2)" }} /> +91 80 4567 8901</div>
+                        <div className="flex items-center gap-2" style={{ color: "var(--doc-ink)" }}><Globe className="h-3.5 w-3.5 shrink-0" style={{ color: "var(--doc-accent-2)" }} /> academy.guardianx.cloud</div>
+                        <div className="flex items-start gap-2" style={{ color: "var(--doc-ink)" }}><Building2 className="h-3.5 w-3.5 mt-0.5 shrink-0" style={{ color: "var(--doc-accent-2)" }} /> <span>Nooripora, Baramulla, Kashmir · Noida, Gautam Buddha Nagar</span></div>
+                      </div>
+                    </div>
+                    <div className="gx-glass-card p-5">
+                      <p className="text-[10px] font-mono font-bold uppercase tracking-[0.2em] mb-3" style={{ color: "var(--doc-accent-2)" }}>Next Steps</p>
+                      <ol className="space-y-2.5">
+                        {CLOSING_NEXT_STEPS.map((step, i) => (
+                          <li key={i} className="flex items-start gap-2.5 text-sm" style={{ color: "var(--doc-ink)" }}>
+                            <span className="mt-0.5 inline-flex items-center justify-center size-5 rounded-full text-[10px] font-bold shrink-0" style={{ backgroundColor: "var(--doc-panel-strong)", color: "var(--doc-accent-2)" }}>{i + 1}</span>
+                            {step}
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+                  </div>
+                  {/* CTA row (presentational) */}
+                  <div className="mt-6 flex flex-wrap items-center gap-3">
+                    <span
+                      className="inline-flex items-center gap-1.5 rounded-full px-5 py-2 text-xs font-semibold text-white"
+                      style={{ backgroundColor: "var(--doc-accent-1)", boxShadow: "0 8px 24px -8px var(--doc-accent-1)" }}
+                    >
+                      <PenLine className="h-3.5 w-3.5" /> Sign MoU
+                    </span>
+                    <span
+                      className="inline-flex items-center gap-1.5 rounded-full px-5 py-2 text-xs font-semibold border border-[color:var(--doc-line)]"
+                      style={{ color: "var(--doc-ink)", backgroundColor: "var(--doc-panel)" }}
+                    >
+                      <Mail className="h-3.5 w-3.5" style={{ color: "var(--doc-accent-2)" }} /> Schedule a Call
+                    </span>
+                  </div>
+                  {/* Signature block */}
+                  <div className="gx-glass-card mt-6 p-5 sm:p-6">
+                    <div className="grid sm:grid-cols-2 gap-x-10 gap-y-8">
+                      {[
+                        { label: "For GuardianX Academy", signature: "GuardianX Academy", printed: "Authorized Signatory" },
+                        { label: `For ${institutionName || "the Client"}`, signature: contactName, printed: contactName || "Authorized Signatory" },
+                      ].map((col, ci) => (
+                        <div key={ci} className="flex gap-5">
+                          <div className="flex-1 min-w-0">
+                            <p className="text-[9px] font-mono tracking-[0.25em] uppercase mb-3" style={{ color: "var(--doc-muted)" }}>{col.label}</p>
+                            <div className="h-12 flex items-end border-b border-[color:var(--doc-line)] pb-1">
+                              <span className="gx-script text-xl sm:text-2xl leading-none" style={{ color: "var(--doc-ink)" }}>{col.signature || "\u00A0"}</span>
+                            </div>
+                            <div className="mt-2.5 grid grid-cols-3 gap-2">
+                              <div className="min-w-0">
+                                <p className="text-[9px] font-mono uppercase tracking-[0.15em]" style={{ color: "var(--doc-muted)" }}>Name</p>
+                                <p className="text-[11px] truncate" style={{ color: "var(--doc-ink)" }}>{col.printed}</p>
+                              </div>
+                              <div>
+                                <p className="text-[9px] font-mono uppercase tracking-[0.15em]" style={{ color: "var(--doc-muted)" }}>Designation</p>
+                                <p className="text-[11px]" style={{ color: "var(--doc-ink)" }}>Authorized Signatory</p>
+                              </div>
+                              <div>
+                                <p className="text-[9px] font-mono uppercase tracking-[0.15em]" style={{ color: "var(--doc-muted)" }}>Date</p>
+                                <p className="text-[11px]" style={{ color: "var(--doc-ink)" }}>{fmtDate(proposalDate)}</p>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex flex-col justify-end shrink-0">
+                            <div className="h-20 w-20 border-2 border-dashed rounded-lg flex items-center justify-center text-center" style={{ borderColor: "var(--doc-line)" }}>
+                              <span className="text-[8px] font-mono tracking-[0.2em] uppercase leading-relaxed" style={{ color: "var(--doc-muted)" }}>Company<br />Stamp</span>
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                      <div className="gx-glass p-4">
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-cyan-300 mb-2">Next Steps</p>
-                        <ol className="space-y-1.5 text-sm list-decimal list-inside text-slate-100">
-                          <li>Review proposal with stakeholders</li>
-                          <li>Schedule a discovery call</li>
-                          <li>Sign MoU (template provided)</li>
-                          <li>Begin implementation (Week 1)</li>
-                        </ol>
-                      </div>
+                      ))}
                     </div>
-                    <div className="flex flex-wrap items-center gap-3">
-                      <Button className="bg-violet-600 hover:bg-violet-500 btn-premium">
-                        <PenLine className="h-4 w-4 mr-1.5" /> Sign MoU
-                      </Button>
-                      <Button variant="outline" className="border-violet-500/40 text-violet-100 hover:bg-violet-500/10">
-                        <Mail className="h-4 w-4 mr-1.5" /> Schedule a Call
-                      </Button>
-                    </div>
-                    {/* Signature areas */}
-                    <div className="grid sm:grid-cols-2 gap-6 mt-10 pt-6 border-t border-white/10">
-                      <div>
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">For GuardianX Academy</p>
-                        <div className="h-12 border-b border-dashed border-white/25" />
-                        <p className="text-xs mt-1 text-slate-200">Authorized Signatory</p>
-                      </div>
-                      <div>
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-2">For {institutionName || "Institution"}</p>
-                        <div className="h-12 border-b border-dashed border-white/25" />
-                        <p className="text-xs mt-1 text-slate-200">{contactName || "Authorized Signatory"}</p>
-                      </div>
+                    {/* Contact strip */}
+                    <div className="mt-6 pt-4 border-t border-[color:var(--doc-line)] flex flex-wrap items-center justify-between gap-x-6 gap-y-2">
+                      <span className="flex items-center gap-1.5 text-xs" style={{ color: "var(--doc-muted)" }}><Globe className="h-3.5 w-3.5" style={{ color: "var(--doc-accent-2)" }} /> academy.guardianx.cloud</span>
+                      <span className="flex items-center gap-1.5 text-xs" style={{ color: "var(--doc-muted)" }}><Mail className="h-3.5 w-3.5" style={{ color: "var(--doc-accent-2)" }} /> academy@guardianx.in</span>
+                      <span className="flex items-center gap-1.5 text-xs" style={{ color: "var(--doc-muted)" }}><Phone className="h-3.5 w-3.5" style={{ color: "var(--doc-accent-2)" }} /> +91 80 4567 8901</span>
                     </div>
                   </div>
                 </div>
@@ -1232,14 +1410,89 @@ export function ProposalMakerView() {
   )
 }
 
-function Slide({ id, title, children }: { id: number; title: string; children: React.ReactNode }) {
+/**
+ * Slide wrapper.
+ *
+ * The <section> IS the deliverable: it carries the .gx-doc + .gx-theme-* var
+ * contract, the aurora mesh backdrop and the corner glows, and it is the exact
+ * element html2canvas captures in handleExportPDF (id="slide-{id}").
+ * The "SLIDE n/13" maker chrome is rendered OUTSIDE the section (print:hidden)
+ * so exported PDF pages contain only the deck itself.
+ */
+function Slide({
+  id,
+  title,
+  theme,
+  cover = false,
+  children,
+}: {
+  id: number
+  title: string
+  theme: DocTheme
+  cover?: boolean
+  children: React.ReactNode
+}) {
   return (
-    <section id={`slide-${id}`} className="border-b border-border/40 scroll-mt-20">
-      <div className="px-6 sm:px-10 pt-4 pb-1 bg-muted/30 border-b border-border/40 flex items-center gap-2">
+    <>
+      {/* Maker chrome — on-screen navigation aid only, excluded from capture/print */}
+      <div className="print:hidden px-6 sm:px-10 py-2 bg-muted/30 border-b border-border/40 flex items-center gap-2">
         <Badge variant="outline" className="text-[9px] font-mono">SLIDE {id}/13</Badge>
         <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{title}</span>
       </div>
-      {children}
-    </section>
+      <section
+        id={`slide-${id}`}
+        className={cn("gx-doc relative overflow-hidden scroll-mt-20 border-b border-border/40", `gx-theme-${theme}`)}
+        style={{ backgroundColor: "var(--doc-bg-a)" }}
+      >
+        {/* Aurora mesh backdrop — full-bleed on the cover, softened wash on content slides */}
+        <div aria-hidden className={cn("absolute inset-0 gx-aurora-mesh pointer-events-none", cover ? "opacity-100" : "opacity-40")} />
+        {/* Corner aurora glows (dimmer on content slides) */}
+        <div aria-hidden className={cn("gx-corner-glows", cover ? undefined : "opacity-60")} />
+        {cover && <div aria-hidden className="gx-watermark" />}
+        {cover && <div aria-hidden className="gx-grain absolute inset-0 pointer-events-none" />}
+        {children}
+      </section>
+    </>
+  )
+}
+
+/**
+ * Aurora Luxe content-slide heading: numbered glass chip + mono kicker label
+ * + --doc-ink title + gradient hairline rule.
+ */
+function SlideHeading({ num, kicker, title }: { num: number; kicker: string; title: string }) {
+  return (
+    <div className="mb-6">
+      <div className="flex items-center gap-3">
+        <span className="inline-flex items-center justify-center rounded-full border border-[color:var(--doc-line)] bg-[color:var(--doc-panel)] px-3 py-1">
+          <span className="text-[11px] font-mono font-bold tracking-[0.2em] bg-clip-text text-transparent" style={ACCENT_TEXT_GRADIENT}>
+            {String(num).padStart(2, "0")}
+          </span>
+        </span>
+        <span className="text-[10px] font-mono tracking-[0.3em] uppercase" style={{ color: "var(--doc-accent-2)" }}>{kicker}</span>
+      </div>
+      <h3 className="mt-3 text-2xl sm:text-3xl font-bold tracking-tight" style={{ color: "var(--doc-ink)" }}>{title}</h3>
+      <div className="gx-gradient-rule mt-4" />
+    </div>
+  )
+}
+
+/** Glass phase card used by the timeline slide (horizontal + vertical layouts). */
+function TimelinePhaseCard({ phase }: { phase: (typeof TIMELINE_PHASES)[number] }) {
+  return (
+    <div className="gx-glass-card w-full p-3">
+      <div className="flex items-center gap-2">
+        <span className="inline-flex items-center justify-center size-7 rounded-lg shrink-0" style={{ backgroundColor: "var(--doc-panel-strong)" }}>
+          <phase.icon className="size-3.5" style={{ color: "var(--doc-accent-2)" }} />
+        </span>
+        <div className="min-w-0">
+          <p className="text-[8px] font-mono tracking-[0.2em] uppercase" style={{ color: "var(--doc-accent-2)" }}>
+            {phase.phase} · {phase.weeks}
+          </p>
+          <p className="text-[11px] font-semibold leading-tight" style={{ color: "var(--doc-ink)" }}>{phase.title}</p>
+        </div>
+      </div>
+      <p className="text-[10px] leading-snug mt-1.5" style={{ color: "var(--doc-muted)" }}>{phase.desc}</p>
+    </div>
   )
 }

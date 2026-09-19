@@ -457,7 +457,6 @@ function CertificatePreviewModal({
   onDownload: () => void
 }) {
   if (!cert) return null
-  const instructorInitials = cert.course.instructor.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
   const verifyUrl = `${typeof window !== "undefined" ? window.location.origin : ""}/verify/${cert.certificateId}`
 
   return (
@@ -492,119 +491,136 @@ function CertificatePreviewModal({
           </div>
         </div>
 
-        {/* The certificate */}
+        {/* The certificate — Aurora Luxe document (mirrors the PDF design) */}
         <div className="p-4 sm:p-6 lg:p-8 max-h-[70vh] overflow-y-auto">
           <motion.div
             initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-            className="relative aspect-[1.414/1] w-full rounded-lg overflow-hidden border-4 border-double border-amber-500/40 bg-gradient-to-br from-amber-950/20 via-background to-violet-950/15"
+            className="gx-doc gx-theme-aurora gx-paper relative aspect-[1.414/1] w-full"
           >
-            {/* Decorative inner border */}
-            <div className="absolute inset-3 border border-amber-500/20 rounded pointer-events-none" />
-            <div className="absolute inset-4 border border-amber-500/10 rounded pointer-events-none" />
+            {/* Guilloché frame around the document */}
+            <div className="gx-guilloche h-full w-full">
+              <div className="gx-guilloche-inner h-full w-full">
+                <div className="gx-aurora-mesh gx-grain relative h-full w-full overflow-hidden">
+                  <div className="gx-corner-glows" />
+                  <div className="gx-watermark" />
 
-            {/* Background flourish */}
-            <div className="absolute inset-0 bg-grid opacity-10 pointer-events-none" />
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[60%] h-32 bg-amber-500/8 blur-[60px] pointer-events-none" />
+                  {/* Content */}
+                  <div className="relative h-full flex flex-col items-center text-center px-5 sm:px-10 py-4 sm:py-6">
+                    {/* Header - logo ring + kicker + wordmark */}
+                    <div className="flex flex-col items-center">
+                      <div
+                        className="size-10 sm:size-12 rounded-full border flex items-center justify-center"
+                        style={{
+                          borderColor: "var(--doc-gold)",
+                          background: "color-mix(in oklab, var(--doc-gold) 12%, transparent)",
+                          boxShadow: "0 0 0 3px color-mix(in oklab, var(--doc-gold) 14%, transparent)",
+                        }}
+                      >
+                        <Shield className="h-5 w-5" style={{ color: "var(--doc-gold)" }} />
+                      </div>
+                      <p className="mt-1.5 text-[8px] sm:text-[9px] font-mono tracking-[0.3em]" style={{ color: "var(--doc-muted)" }}>
+                        GUARDIANX ACADEMY
+                      </p>
+                      <p className="mt-1.5 sm:mt-2 text-[8px] sm:text-[10px] font-mono tracking-[0.45em] uppercase" style={{ color: "var(--doc-accent-2)" }}>
+                        · of completion ·
+                      </p>
+                      <h2
+                        className="text-base sm:text-2xl lg:text-3xl font-bold tracking-[0.35em] pl-[0.35em] leading-tight"
+                        style={{ color: "var(--doc-gold)" }}
+                      >
+                        CERTIFICATE
+                      </h2>
+                    </div>
 
-            {/* Content */}
-            <div className="relative h-full flex flex-col items-center text-center px-6 sm:px-12 py-8">
-              {/* Header - logo + verified badge */}
-              <div className="flex items-center justify-between w-full mb-4">
-                <div className="flex items-center gap-2">
-                  <div className="inline-flex items-center justify-center size-9 rounded-md border border-amber-500/40 bg-amber-500/10">
-                    <Shield className="h-5 w-5 text-amber-300" />
-                  </div>
-                  <div className="leading-tight text-left">
-                    <p className="text-[11px] font-mono text-amber-300 tracking-[0.2em] font-bold">GUARDIANX</p>
-                    <p className="text-[9px] font-mono text-muted-foreground tracking-[0.15em]">ACADEMY</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-emerald-500/40 bg-emerald-500/10">
-                  <CheckCircle2 className="h-3.5 w-3.5 text-emerald-300" />
-                  <span className="text-[10px] font-mono text-emerald-300 tracking-[0.2em] font-bold">✓ VERIFIED</span>
-                </div>
-              </div>
+                    {/* Recipient + course */}
+                    <div className="flex flex-col items-center mt-2 sm:mt-3">
+                      <p className="text-[7px] sm:text-[9px] font-mono tracking-[0.3em]" style={{ color: "var(--doc-muted)" }}>
+                        THIS CERTIFICATE IS PROUDLY PRESENTED TO
+                      </p>
+                      <p className="gx-script text-xl sm:text-3xl lg:text-4xl mt-1.5 leading-tight" style={{ color: "var(--doc-ink)", fontStyle: "italic" }}>
+                        GuardianX Student
+                      </p>
+                      <hr className="gx-gradient-rule w-48 sm:w-72 mt-2" />
+                      <p className="mt-2 sm:mt-3 text-[7px] sm:text-[9px] font-mono tracking-[0.25em] uppercase" style={{ color: "var(--doc-muted)" }}>
+                        for successfully completing
+                      </p>
+                      <h1 className="text-sm sm:text-xl lg:text-2xl font-bold tracking-tight leading-tight text-balance" style={{ color: "var(--doc-ink)" }}>
+                        {cert.course.title}
+                      </h1>
+                      <p className="text-[9px] sm:text-xs mt-1" style={{ color: "var(--doc-muted)" }}>
+                        Issued by <span className="font-medium" style={{ color: "var(--doc-gold)" }}>{cert.course.certBody || "GuardianX"}</span>
+                      </p>
+                    </div>
 
-              {/* Title block */}
-              <div className="flex-1 flex flex-col items-center justify-center">
-                <p className="text-[10px] sm:text-xs font-mono text-muted-foreground tracking-[0.4em] mb-2">
-                  CERTIFICATE OF COMPLETION
-                </p>
-                <p className="text-[10px] sm:text-xs font-mono text-amber-300/70 tracking-[0.3em] mb-4">
-                  THIS IS TO CERTIFY THAT
-                </p>
-                <h2 className="text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight mb-1 text-balance">
-                  GuardianX Student
-                </h2>
-                <p className="text-[10px] sm:text-xs font-mono text-muted-foreground tracking-[0.3em] mb-6">
-                  HAS SUCCESSFULLY COMPLETED
-                </p>
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gradient-premium tracking-[-0.02em] mb-2 text-balance leading-tight">
-                  {cert.course.title}
-                </h1>
-                <p className="text-xs sm:text-sm text-muted-foreground mb-6">
-                  Issued by <span className="text-amber-300 font-medium">{cert.course.certBody || "GuardianX"}</span>
-                </p>
+                    {/* Bottom - seal + signatures + QR */}
+                    <div className="mt-auto w-full flex items-end gap-2 sm:gap-4">
+                      {/* Gold seal with ribbon tails */}
+                      <div className="relative shrink-0 hidden sm:block mb-1">
+                        <div className="absolute left-1/2 top-[55%] w-3.5 h-8 rounded-[2px]" style={{ background: "var(--doc-accent-1)", opacity: 0.85, transform: "translateX(-88%) rotate(14deg)" }} />
+                        <div className="absolute left-1/2 top-[55%] w-3.5 h-8 rounded-[2px]" style={{ background: "var(--doc-accent-3)", opacity: 0.85, transform: "translateX(-12%) rotate(-14deg)" }} />
+                        <div
+                          className="relative size-14 rounded-full border-2 flex items-center justify-center"
+                          style={{
+                            borderColor: "var(--doc-gold)",
+                            background: "color-mix(in oklab, var(--doc-gold) 26%, var(--doc-bg-a))",
+                          }}
+                        >
+                          <div className="absolute inset-1 rounded-full border border-dashed" style={{ borderColor: "color-mix(in oklab, var(--doc-gold) 70%, transparent)" }} />
+                          <Award className="h-6 w-6" style={{ color: "var(--doc-gold)" }} />
+                        </div>
+                      </div>
 
-                {/* Seal - circular emblem */}
-                <div className="relative mb-6">
-                  <div className="absolute inset-0 rounded-full bg-amber-500/20 blur-md" />
-                  <div className="relative size-16 rounded-full border-2 border-amber-500/40 bg-amber-500/10 flex items-center justify-center">
-                    <Award className="h-7 w-7 text-amber-300" />
-                  </div>
-                </div>
+                      {/* Instructor signature */}
+                      <div className="flex-1 min-w-0">
+                        <div className="gx-script text-xs sm:text-base italic leading-none mb-1.5 truncate" style={{ color: "var(--doc-ink)" }}>
+                          {cert.course.instructor.name}
+                        </div>
+                        <div className="border-t pt-1.5" style={{ borderColor: "color-mix(in oklab, var(--doc-gold) 45%, transparent)" }}>
+                          <p className="text-[7px] sm:text-[8px] font-mono uppercase tracking-[0.25em]" style={{ color: "var(--doc-muted)" }}>
+                            Course Instructor · <span className="font-bold">{cert.score}%</span>
+                          </p>
+                        </div>
+                      </div>
 
-                {/* Score */}
-                <div className="inline-flex items-center gap-3 px-4 py-2 rounded-full border border-emerald-500/30 bg-emerald-500/10">
-                  <Target className="h-3.5 w-3.5 text-emerald-300" />
-                  <span className="text-xs font-mono text-emerald-300 tracking-wider">
-                    FINAL SCORE: <span className="font-bold">{cert.score}%</span>
-                  </span>
-                </div>
-              </div>
+                      {/* QR placeholder */}
+                      <div className="flex flex-col items-center shrink-0 gap-1">
+                        <div className="size-10 sm:size-12 rounded-md bg-white flex items-center justify-center" style={{ border: "1px solid var(--doc-line)" }}>
+                          <QrCode className="h-6 w-6 sm:h-7 sm:w-7 text-neutral-500" />
+                        </div>
+                        <p className="text-[6px] sm:text-[7px] font-mono uppercase tracking-[0.2em]" style={{ color: "var(--doc-muted)" }}>
+                          Scan to verify
+                        </p>
+                      </div>
 
-              {/* Footer - signature + QR + verification URL */}
-              <div className="w-full grid grid-cols-3 items-end gap-3 mt-4 pt-4 border-t border-amber-500/20">
-                {/* Instructor signature */}
-                <div className="text-left">
-                  <div className="flex items-center gap-2 mb-1">
-                    <Avatar className="h-6 w-6">
-                      <AvatarFallback className="bg-violet-500/10 text-violet-300 text-[9px] font-mono">
-                        {instructorInitials}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="font-mono text-amber-300/80 italic text-sm" style={{ fontFamily: "cursive, monospace" }}>
-                      {cert.course.instructor.name}
+                      {/* Program director signature */}
+                      <div className="flex-1 min-w-0">
+                        <div className="gx-script text-xs sm:text-base italic leading-none mb-1.5" style={{ color: "var(--doc-ink)" }}>
+                          GuardianX Academy
+                        </div>
+                        <div className="border-t pt-1.5" style={{ borderColor: "color-mix(in oklab, var(--doc-gold) 45%, transparent)" }}>
+                          <p className="text-[7px] sm:text-[8px] font-mono uppercase tracking-[0.25em]" style={{ color: "var(--doc-muted)" }}>
+                            Program Director
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Verification strip */}
+                    <div className="w-full mt-2.5 sm:mt-3 pt-2 border-t flex items-center justify-center gap-x-3 gap-y-0.5 flex-wrap" style={{ borderColor: "var(--doc-line)" }}>
+                      <span className="text-[7px] sm:text-[8px] font-mono" style={{ color: "var(--doc-muted)" }}>
+                        ID <span style={{ color: "var(--doc-ink)" }}>{cert.certificateId}</span>
+                      </span>
+                      <span className="text-[7px] sm:text-[8px] font-mono break-all max-w-[26ch] sm:max-w-none" style={{ color: "var(--doc-muted)" }}>
+                        {verifyUrl}
+                      </span>
+                      <span className="text-[7px] sm:text-[8px] font-mono tracking-wider" style={{ color: "var(--doc-muted)" }}>
+                        ISSUED {new Date(cert.issuedAt).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}
+                      </span>
                     </div>
                   </div>
-                  <div className="border-t border-amber-500/30 pt-1">
-                    <p className="text-[9px] font-mono text-muted-foreground uppercase tracking-wider">Instructor</p>
-                  </div>
                 </div>
-
-                {/* QR placeholder */}
-                <div className="flex flex-col items-center">
-                  <div className="size-14 rounded border border-border/60 bg-background flex items-center justify-center">
-                    <QrCode className="h-8 w-8 text-muted-foreground" />
-                  </div>
-                  <p className="text-[8px] font-mono text-muted-foreground uppercase tracking-wider mt-1">Scan to verify</p>
-                </div>
-
-                {/* Verification URL */}
-                <div className="text-right">
-                  <p className="text-[9px] font-mono text-muted-foreground uppercase tracking-wider mb-1">Verification</p>
-                  <p className="text-[9px] font-mono text-amber-300/80 break-all">{verifyUrl}</p>
-                  <p className="text-[9px] font-mono text-muted-foreground mt-1">
-                    ID: <span className="text-foreground">{cert.certificateId}</span>
-                  </p>
-                </div>
-              </div>
-
-              {/* Issue date footer */}
-              <div className="mt-3 text-[9px] font-mono text-muted-foreground tracking-wider">
-                ISSUED ON {new Date(cert.issuedAt).toLocaleDateString(undefined, { year: "numeric", month: "long", day: "numeric" })}
               </div>
             </div>
           </motion.div>
