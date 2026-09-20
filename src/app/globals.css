@@ -1070,6 +1070,22 @@ html:not(.gx-hydrated) [style*="opacity: 0"] {
   --doc-panel-strong: rgba(16, 185, 129, 0.13);
 }
 
+/* Phantom RED — GuardianX BlackOps hacking-institute theme */
+.gx-doc.gx-theme-phantom {
+  --doc-bg-a: #0a0507;
+  --doc-bg-b: #170709;
+  --doc-accent-1: #e11d2e;
+  --doc-accent-2: #ff5a4e;
+  --doc-accent-3: #f59e0b;
+  --doc-gold: #e11d2e;
+  --doc-ink: #faf7f5;
+  --doc-muted: rgba(250, 247, 245, 0.62);
+  --doc-line: rgba(255, 255, 255, 0.13);
+  --doc-panel: rgba(255, 255, 255, 0.05);
+  --doc-panel-strong: rgba(225, 29, 46, 0.14);
+  --doc-green: #22c55e;
+}
+
 /* Aurora mesh — flowing multi-point gradient field */
 .gx-aurora-mesh {
   background:
@@ -1077,6 +1093,28 @@ html:not(.gx-hydrated) [style*="opacity: 0"] {
     radial-gradient(100% 80% at 88% 8%, color-mix(in oklab, var(--doc-accent-2) 26%, transparent) 0%, transparent 52%),
     radial-gradient(120% 100% at 70% 100%, color-mix(in oklab, var(--doc-accent-3) 22%, transparent) 0%, transparent 58%),
     linear-gradient(135deg, var(--doc-bg-a) 0%, var(--doc-bg-b) 100%);
+}
+
+/* Phantom stays BLACK-first: dim the red mesh so accents don't flood the paper */
+.gx-doc.gx-theme-phantom .gx-aurora-mesh {
+  background:
+    radial-gradient(90% 70% at 12% 0%, color-mix(in oklab, var(--doc-accent-1) 13%, transparent) 0%, transparent 52%),
+    radial-gradient(80% 60% at 88% 8%, color-mix(in oklab, var(--doc-accent-3) 8%, transparent) 0%, transparent 50%),
+    radial-gradient(95% 80% at 70% 100%, color-mix(in oklab, var(--doc-accent-2) 10%, transparent) 0%, transparent 55%),
+    linear-gradient(135deg, var(--doc-bg-a) 0%, var(--doc-bg-b) 100%);
+}
+.gx-doc.gx-theme-phantom .gx-corner-glows::before { opacity: 0.15; }
+.gx-doc.gx-theme-phantom .gx-corner-glows::after { opacity: 0.09; }
+
+/* Phantom guilloché: rings clipped to the four corners (200px squares) so the
+   paper surface stays clean black instead of a full-page red crosshatch */
+.gx-doc.gx-theme-phantom .gx-guilloche {
+  background:
+    repeating-radial-gradient(circle at 0% 0%, transparent 0 7px, color-mix(in oklab, var(--doc-gold) 34%, transparent) 7px 8px) 0 0 / 200px 200px no-repeat,
+    repeating-radial-gradient(circle at 100% 0%, transparent 0 9px, color-mix(in oklab, var(--doc-accent-2) 26%, transparent) 9px 10px) 100% 0 / 200px 200px no-repeat,
+    repeating-radial-gradient(circle at 0% 100%, transparent 0 9px, color-mix(in oklab, var(--doc-accent-2) 22%, transparent) 9px 10px) 0 100% / 200px 200px no-repeat,
+    repeating-radial-gradient(circle at 100% 100%, transparent 0 7px, color-mix(in oklab, var(--doc-gold) 30%, transparent) 7px 8px) 100% 100% / 200px 200px no-repeat,
+    linear-gradient(135deg, color-mix(in oklab, var(--doc-gold) 13%, transparent), color-mix(in oklab, var(--doc-accent-1) 11%, transparent));
 }
 
 /* Fine noise grain over the mesh (kills gradient banding, adds texture) */
@@ -1186,6 +1224,106 @@ html:not(.gx-hydrated) [style*="opacity: 0"] {
   background: linear-gradient(160deg, var(--doc-bg-a), var(--doc-bg-b));
   position: relative;
   overflow: hidden;
+}
+
+/* ============================================================
+   BLACKOPS graphics kit — hacker-institute certificate overlays
+   (phantom theme, but var-driven so any theme can reuse them)
+   ============================================================ */
+
+/* CRT scanlines + slow sweep — sits above the paper, below content */
+.gx-scanlines {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  overflow: hidden;
+  z-index: 2;
+}
+.gx-scanlines::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    to bottom,
+    transparent 0 2px,
+    rgba(0, 0, 0, 0.22) 2px 3px
+  );
+  opacity: 0.35;
+}
+.gx-scanlines::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 90px;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    color-mix(in oklab, var(--doc-accent-1) 10%, transparent),
+    transparent
+  );
+  animation: gx-scan-sweep 7s linear infinite;
+}
+@keyframes gx-scan-sweep {
+  0% { top: -90px; }
+  100% { top: 100%; }
+}
+@media print {
+  .gx-scanlines::after { display: none; }
+}
+
+/* Tactical HUD corner brackets */
+.gx-hud-corners {
+  position: absolute;
+  inset: 12px;
+  pointer-events: none;
+  z-index: 3;
+}
+.gx-hud-corners::before,
+.gx-hud-corners::after,
+.gx-hud-corners > span::before,
+.gx-hud-corners > span::after {
+  content: "";
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  border: 0 solid color-mix(in oklab, var(--doc-accent-1) 80%, transparent);
+  filter: drop-shadow(0 0 6px color-mix(in oklab, var(--doc-accent-1) 55%, transparent));
+}
+.gx-hud-corners::before { top: 0; left: 0; border-top-width: 2px; border-left-width: 2px; }
+.gx-hud-corners::after { top: 0; right: 0; border-top-width: 2px; border-right-width: 2px; }
+.gx-hud-corners > span::before { bottom: 0; left: 0; border-bottom-width: 2px; border-left-width: 2px; }
+.gx-hud-corners > span::after { bottom: 0; right: 0; border-bottom-width: 2px; border-right-width: 2px; }
+
+/* Mono micro-text line (hex dumps / terminal readouts) */
+.gx-hexline {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  font-size: 7px;
+  letter-spacing: 0.18em;
+  color: color-mix(in oklab, var(--doc-accent-1) 42%, transparent);
+  white-space: nowrap;
+  overflow: hidden;
+  user-select: none;
+}
+
+/* Solid silhouette tint for brand logos on documents
+   (turns the blue GuardianX mark white / any color via filter chain) */
+.gx-logo-ink {
+  filter: brightness(0) invert(1);
+  object-fit: contain;
+}
+
+/* Red wax/holo seal ring used by phantom certificates */
+.gx-seal-phantom {
+  background:
+    radial-gradient(circle at 32% 28%, rgba(255, 122, 108, 0.85), transparent 42%),
+    radial-gradient(circle at 68% 72%, rgba(120, 8, 20, 0.9), transparent 55%),
+    linear-gradient(145deg, #ff4a3d 0%, #c31224 55%, #7d0a16 100%);
+  box-shadow:
+    0 0 0 1px rgba(255, 122, 108, 0.35),
+    0 6px 18px -6px rgba(225, 29, 46, 0.55),
+    inset 0 1px 2px rgba(255, 255, 255, 0.25);
 }
 
 /* Status stamp — angled rubber-stamp badge (PAID / DUE / OVERDUE) */

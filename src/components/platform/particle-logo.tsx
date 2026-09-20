@@ -49,6 +49,13 @@ interface ParticleLogoProps {
   interactive?: boolean
   /** show soft glow behind the particle field */
   showGlow?: boolean
+  /**
+   * Force every particle to a single color (any CSS rgb/hex string)
+   * instead of the logo's own pixel colors. Used to re-skin the mark
+   * (e.g. brand-red watermark on certificates). Alpha variation from
+   * the base opacity flicker is preserved.
+   */
+  tint?: string | null
 }
 
 export function ParticleLogo({
@@ -57,6 +64,7 @@ export function ParticleLogo({
   particleCount,
   interactive = true,
   showGlow = true,
+  tint = null,
 }: ParticleLogoProps) {
   const canvasRef = React.useRef<HTMLCanvasElement>(null)
   const wrapRef = React.useRef<HTMLDivElement>(null)
@@ -180,7 +188,7 @@ export function ParticleLogo({
         vx: 0,
         vy: 0,
         size: psz,
-        color: `rgb(${c.r},${c.g},${c.b})`,
+        color: tint ?? `rgb(${c.r},${c.g},${c.b})`,
         baseOpacity,
         opacity: prefersReducedMotion ? baseOpacity : 0,
         delay: Math.random(), // 0..1, used as fraction of assemblyDuration
@@ -191,7 +199,7 @@ export function ParticleLogo({
     particlesRef.current = particles
     startRef.current = performance.now()
     phaseRef.current = prefersReducedMotion ? "idle" : "assembling"
-  }, [size, getTargetCount, prefersReducedMotion])
+  }, [size, getTargetCount, prefersReducedMotion, tint])
 
   /* ----- Animation loop ----- */
   const animateRef = React.useRef<() => void>(() => {})

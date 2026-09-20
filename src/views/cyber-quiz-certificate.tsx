@@ -183,8 +183,8 @@ export function CyberQuizCertificateView() {
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5, delay: 0.15 }}
           ref={certRef}
-          className="gx-doc gx-theme-aurora gx-paper relative aspect-[1.414/1] w-full max-w-4xl mx-auto overflow-hidden rounded-2xl border border-white/15 shadow-2xl shadow-violet-500/20"
-          style={{ backgroundColor: "#0B0716" }}
+          className="gx-doc gx-theme-phantom gx-paper relative aspect-[1.414/1] w-full max-w-4xl mx-auto overflow-hidden rounded-2xl border border-white/15 shadow-2xl shadow-red-500/20"
+          style={{ backgroundColor: "#0A0507" }}
         >
           {/* Guilloché frame + aurora mesh document surface */}
           <div className="gx-guilloche absolute inset-0">
@@ -192,15 +192,17 @@ export function CyberQuizCertificateView() {
               <div className="gx-aurora-mesh gx-grain relative h-full w-full overflow-hidden">
                 <div className="gx-corner-glows" />
                 <div className="gx-watermark" />
+                <div className="gx-scanlines" />
+                <div className="gx-hud-corners"><span /></div>
 
                 {/* Content */}
                 <div className="relative h-full flex flex-col items-center justify-center text-center px-8 sm:px-12 py-8">
                   {/* Top: brand */}
                   <div className="flex items-center gap-2.5 mb-4">
-                    <img src="/guardianx-logo-v2.png" alt="GuardianX" className="h-10 w-10 object-contain" style={{ filter: "drop-shadow(0 0 8px rgba(124,58,237,0.5))" }} />
+                    <img src="/guardianx-logo-v2.png" alt="GuardianX" className="h-10 w-10 object-contain" style={{ filter: "brightness(0) invert(1) drop-shadow(0 0 8px rgba(225,29,46,0.6))" }} />
                     <div className="text-left">
-                      <div className="text-lg font-bold leading-none" style={{ color: "var(--doc-ink)" }}>
-                        Guardian<span style={{ color: "var(--doc-gold)" }}>X</span>
+                      <div className="text-lg font-bold leading-none" style={{ color: "var(--doc-ink)", textShadow: "0 0 18px rgba(225,29,46,0.35)" }}>
+                        Guardian<span style={{ color: "var(--doc-accent-1)" }}>X</span>
                       </div>
                       <div className="text-[8px] font-mono tracking-[0.3em] mt-0.5" style={{ color: "var(--doc-muted)" }}>ACADEMY</div>
                     </div>
@@ -245,11 +247,11 @@ export function CyberQuizCertificateView() {
                       <div className="text-xs font-semibold" style={{ color: "var(--doc-ink)" }}>{issueDate}</div>
                     </div>
                     <div className="text-center">
-                      {/* Gold verification seal with dashed ring */}
+                      {/* Red verification seal with dashed ring */}
                       <div className="relative inline-flex items-center justify-center mb-1">
-                        <div className="w-16 h-16 rounded-full bg-gradient-to-br from-[#ffe9a8] via-[#f5c451] to-[#c8901c] shadow-lg shadow-amber-500/30" />
-                        <div className="absolute inset-1.5 rounded-full border border-dashed border-[#5a3c05]/60" />
-                        <ShieldCheck className="absolute h-7 w-7 text-[#5a3c05]" />
+                        <div className="gx-seal-phantom w-16 h-16 rounded-full" />
+                        <div className="absolute inset-1.5 rounded-full border border-dashed border-white/50" />
+                        <ShieldCheck className="absolute h-7 w-7 text-white/95" />
                       </div>
                       <div className="text-[8px] font-mono tracking-[0.2em] uppercase" style={{ color: "var(--doc-muted)" }}>
                         Verified

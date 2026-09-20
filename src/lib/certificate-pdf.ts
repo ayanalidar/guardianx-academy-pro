@@ -30,8 +30,9 @@
  * never looks broken when no script face is installed.
  */
 import { api } from "@/lib/api"
+import { buildLogoDotMatrixSvg } from "@/lib/logo-dots"
 
-export type CertificatePdfTheme = "aurora" | "ivory" | "emerald"
+export type CertificatePdfTheme = "phantom" | "aurora" | "ivory" | "emerald"
 
 export interface CertificatePdfOptions {
   /**
@@ -72,6 +73,16 @@ type ThemeAssets = {
 }
 
 const THEME_ASSETS: Record<CertificatePdfTheme, ThemeAssets> = {
+  phantom: {
+    gold: "#E11D2E", // frame rules — signal red
+    accent: "#F59E0B", // rosette second row — amber
+    wm: "#FF3B3B", // fallback watermark stroke
+    sealInk: "#2A0508",
+    sealRing: "#7D0A16",
+    sealRibbonA: "#7D0A16",
+    sealRibbonB: "#F59E0B",
+    squiggle: "#FF6B5E",
+  },
   aurora: {
     gold: "#D4AF37",
     accent: "#22D3EE",
@@ -132,15 +143,30 @@ export async function downloadCertificatePDF(
         ? `${window.location.origin}/verify/${cert.certificateId}`
         : `/verify/${cert.certificateId}`)
 
+    // undefined → auto-embed the real logo PNG; null → vector mark
+    const logoPngDataUrl =
+      options.logoPngDataUrl !== undefined
+        ? options.logoPngDataUrl
+        : await fetchLogoPngDataUrl()
+
     // undefined → auto-generate in-browser; null → explicitly no QR
     const qrPngDataUrl =
       options.qrPngDataUrl !== undefined ? options.qrPngDataUrl : await buildQrPngDataUrl(verifyUrl)
 
+    const theme = options.theme ?? "phantom"
+
+    // phantom: static particle-logo watermark built from the real brand PNG
+    const logoDotsSvg =
+      theme === "phantom"
+        ? await buildLogoDotMatrixSvg({ step: 6, color: "#ff3b3b", opacity: 0.9 })
+        : null
+
     const html = buildCertificateHTML(cert, {
-      theme: options.theme ?? "aurora",
-      logoPngDataUrl: options.logoPngDataUrl ?? null,
+      theme,
+      logoPngDataUrl: logoPngDataUrl ?? null,
       qrPngDataUrl: qrPngDataUrl ?? null,
       verifyUrl,
+      logoDotsSvg,
     })
 
     const w = window.open("", "_blank", "width=1180,height=880")
@@ -160,6 +186,29 @@ export async function downloadCertificatePDF(
   } catch (e: any) {
     console.error("[cert-pdf]", e)
     alert("Failed to generate certificate PDF: " + e.message)
+  }
+}
+
+// ---------------------------------------------------------------------------
+// logo auto-embed — fetches the brand PNG and converts it to a data-URL so the
+// standalone print window (document.write on about:blank) can render the REAL
+// GuardianX logo. Returns null on any failure (vector fallback kicks in).
+// ---------------------------------------------------------------------------
+async function fetchLogoPngDataUrl(): Promise<string | null> {
+  try {
+    if (typeof fetch === "undefined" || typeof document === "undefined") return null
+    const res = await fetch("/guardianx-logo-v2.png", { cache: "force-cache" })
+    if (!res.ok) return null
+    const blob = await res.blob()
+    return await new Promise<string | null>((resolve) => {
+      const fr = new FileReader()
+      fr.onload = () => resolve(typeof fr.result === "string" ? fr.result : null)
+      fr.onerror = () => resolve(null)
+      fr.readAsDataURL(blob)
+    })
+  } catch (e) {
+    console.warn("[certificate-pdf] logo fetch failed — using vector mark", e)
+    return null
   }
 }
 
@@ -325,6 +374,23 @@ function qrPlaceholderSvg(): string {
 </svg>`
 }
 
+/** Deterministic pseudo-fingerprint (uppercase hex pairs) from a seed. */
+function hexFingerprint(seed: string, bytes = 22): string {
+  let x = 0x9e3779b9
+  let y = 0x85ebca6b
+  for (let i = 0; i < seed.length; i++) {
+    x = ((x ^ seed.charCodeAt(i)) * 0x01000193) >>> 0
+    y = ((y + seed.charCodeAt(i) * (i + 7)) * 0x27d4eb2f) >>> 0
+  }
+  const out: string[] = []
+  for (let i = 0; i < bytes; i++) {
+    x = (x * 1664525 + 1013904223) >>> 0
+    y = (y ^ (y << 13)) >>> 0
+    out.push(((x ^ y) & 0xff).toString(16).padStart(2, "0").toUpperCase())
+  }
+  return out.join(" ")
+}
+
 // ---------------------------------------------------------------------------
 // document builder (exported for visual verification scripts; the primary
 // entry point remains downloadCertificatePDF)
@@ -336,9 +402,11 @@ export function buildCertificateHTML(
     logoPngDataUrl: string | null
     qrPngDataUrl: string | null
     verifyUrl: string
+    logoDotsSvg?: string | null
   },
 ): string {
   const A = THEME_ASSETS[opts.theme]
+  const isPhantom = opts.theme === "phantom"
 
   const recipient = escapeHtml(String(cert.user?.name ?? "GuardianX Student"))
   const courseTitle = escapeHtml(String(cert.course?.title ?? "Course Completion"))
@@ -369,6 +437,30 @@ export function buildCertificateHTML(
     score !== null
       ? `<div class="score-line">final score ${score}%${dist ? ` &nbsp;·&nbsp; ${dist}` : ""}</div>`
       : ""
+
+  // phantom: particle-dot watermark from the real logo (fallback: shield stroke)
+  const wmInner = opts.logoDotsSvg
+    ? `<div class="wm wm-dots">${opts.logoDotsSvg}</div>`
+    : `<div class="wm">${shieldWatermarkSvg(A.wm)}</div>`
+
+  // phantom: terminal command readout
+  const terminalLine = isPhantom
+    ? `<div class="terminal"><b>root@gx:~$</b> guardianx issue --recipient &quot;${recipient}&quot;${score !== null ? ` --score ${score}%` : ""} <s>--verified ✓</s></div>`
+    : ""
+
+  // phantom: classification chips (top-right)
+  const chipRow = isPhantom
+    ? `<div class="chiprow"><span class="chipx green">✓ verified credential</span><span class="chipx red">gx blackops clearance</span></div>`
+    : ""
+
+  // phantom: SHA-256 fingerprint band above the verification strip
+  const hexBand = isPhantom
+    ? `<div class="hexband"><span class="hexline">SHA-256 ${hexFingerprint(String(cert.certificateId ?? ""), 22)}</span></div>`
+    : ""
+
+  const brandWordmark = isPhantom
+    ? `<div class="brand">GUARDIANX ACADEMY &nbsp;·&nbsp; CYBER DEFENSE INSTITUTE</div>`
+    : `<div class="brand">GUARDIANX ACADEMY &nbsp;·&nbsp; SECURE · LEARN · DEFEND</div>`
 
   return `<!DOCTYPE html>
 <html lang="en">
@@ -412,6 +504,16 @@ export function buildCertificateHTML(
     --glow1: rgba(16, 185, 129, 0.14); --glow2: rgba(45, 212, 191, 0.10); --glow3: rgba(163, 230, 53, 0.08);
     --band: rgba(2, 12, 8, 0.72); --band-line: rgba(236, 253, 245, 0.16);
   }
+  .cert.theme-phantom {
+    --bg-a: #0A0507; --bg-b: #170709;
+    --acc1: #E11D2E; --acc2: #F59E0B; --acc3: #FF5A4E;
+    --gold: #E11D2E; --gold-soft: rgba(225, 29, 46, 0.55);
+    --ink: #FAF7F5; --muted: rgba(250, 247, 245, 0.62);
+    --glow1: rgba(225, 29, 46, 0.17); --glow2: rgba(245, 158, 11, 0.08); --glow3: rgba(255, 90, 78, 0.11);
+    --band: rgba(8, 4, 5, 0.78); --band-line: rgba(255, 255, 255, 0.14);
+    --chip: rgba(255, 255, 255, 0.05); --chip-halo: rgba(225, 29, 46, 0.14);
+    --green: #22C55E;
+  }
 
   /* ============ page ============ */
   .cert {
@@ -444,6 +546,57 @@ export function buildCertificateHTML(
     position: absolute; left: 50%; top: 53%; width: 120mm; height: 120mm;
     transform: translate(-50%, -50%); opacity: 0.06; pointer-events: none;
   }
+  /* static particle-logo dots version (phantom) — brighter than the stroke one */
+  .wm.wm-dots { width: 132mm; height: 132mm; opacity: 0.17; }
+
+  /* ============ phantom BLACKOPS overlays ============ */
+  .scanlines {
+    display: none;
+    position: absolute; inset: 0; pointer-events: none; z-index: 2;
+    background: repeating-linear-gradient(to bottom, transparent 0 2px, rgba(0,0,0,0.20) 2px 3px);
+    opacity: 0.4;
+  }
+  .theme-phantom .scanlines { display: block; }
+  .hud { display: none; position: absolute; inset: 14mm; pointer-events: none; z-index: 3; }
+  .theme-phantom .hud { display: block; }
+  .hud i {
+    position: absolute; width: 8mm; height: 8mm; border: 0 solid var(--acc1); opacity: 0.9;
+  }
+  .hud i:nth-child(1) { top: 0; left: 0; border-top-width: 2.5pt; border-left-width: 2.5pt; }
+  .hud i:nth-child(2) { top: 0; right: 0; border-top-width: 2.5pt; border-right-width: 2.5pt; }
+  .hud i:nth-child(3) { bottom: 0; left: 0; border-bottom-width: 2.5pt; border-left-width: 2.5pt; }
+  .hud i:nth-child(4) { bottom: 0; right: 0; border-bottom-width: 2.5pt; border-right-width: 2.5pt; }
+  .terminal {
+    font-family: ${MONO_STACK}; font-size: 6.4pt; letter-spacing: 0.14em;
+    color: var(--muted); margin-top: 1.8mm; white-space: nowrap; overflow: hidden;
+    max-width: 220mm;
+  }
+  .terminal b { color: var(--acc1); font-weight: 700; }
+  .terminal s { color: var(--green, #22C55E); text-decoration: none; }
+  .hexline {
+    font-family: ${MONO_STACK}; font-size: 5.6pt; letter-spacing: 0.16em;
+    color: color-mix(in srgb, var(--acc1) 46%, transparent);
+    white-space: nowrap; overflow: hidden;
+  }
+  .hexband {
+    position: absolute; left: 20mm; right: 20mm; bottom: 31.5mm;
+    display: flex; align-items: center; justify-content: center; gap: 3mm;
+    pointer-events: none;
+  }
+  .hexband::before, .hexband::after {
+    content: ""; flex: 1; height: 0.4pt; background: var(--band-line);
+  }
+  .chiprow {
+    display: flex; gap: 2.2mm; justify-content: flex-end;
+    position: absolute; top: 15mm; right: 16mm;
+  }
+  .chipx {
+    font-family: ${MONO_STACK}; font-size: 5.4pt; letter-spacing: 0.2em; text-transform: uppercase;
+    padding: 1.1mm 2.6mm; border-radius: 10mm; white-space: nowrap;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .chipx.green { color: #86EFAC; border: 0.5pt solid rgba(34, 197, 94, 0.55); background: rgba(34, 197, 94, 0.10); }
+  .chipx.red { color: #FCA5A5; border: 0.5pt solid rgba(225, 29, 46, 0.55); background: rgba(225, 29, 46, 0.12); }
 
   /* ============ header ============ */
   .content {
@@ -456,7 +609,8 @@ export function buildCertificateHTML(
     box-shadow: 0 0 0 1.4mm var(--chip-halo);
     display: flex; align-items: center; justify-content: center;
   }
-  .logo-ring img { width: 16.5mm; height: 16.5mm; object-fit: contain; border-radius: 50%; background: #2E1065; }
+  .logo-ring img { width: 16.5mm; height: 16.5mm; object-fit: contain; border-radius: 50%; background: transparent; }
+  .theme-phantom .logo-ring img { filter: brightness(0) invert(1); }
   .logo-ring svg { width: 13mm; height: 13mm; }
   .brand { font-family: ${MONO_STACK}; font-size: 7.5pt; letter-spacing: 0.34em; color: var(--muted); margin-top: 2.6mm; }
   .kicker { font-family: ${MONO_STACK}; font-size: 9.5pt; letter-spacing: 0.5em; padding-left: 0.5em; color: var(--acc2); text-transform: uppercase; margin-top: 3.6mm; }
@@ -521,11 +675,13 @@ export function buildCertificateHTML(
   ${rosetteSvg(PAGE_W, PAGE_H, A.gold, A.accent)}
   <div class="frame-outer"></div>
   <div class="frame-inner"></div>
-  <div class="wm">${shieldWatermarkSvg(A.wm)}</div>
+  ${wmInner}
+  ${chipRow}
 
   <div class="content">
     <div class="logo-ring">${logoInner}</div>
-    <div class="brand">GUARDIANX ACADEMY &nbsp;·&nbsp; SECURE · LEARN · DEFEND</div>
+    ${brandWordmark}
+    ${terminalLine}
     <div class="kicker">&middot; of completion &middot;</div>
     <h1 class="wordmark">CERTIFICATE</h1>
 
@@ -557,6 +713,11 @@ export function buildCertificateHTML(
       <div class="sig-rule"><div class="sig-role">Program Director</div></div>
     </div>
   </div>
+
+  ${hexBand}
+
+  <div class="scanlines"></div>
+  <div class="hud"><i></i><i></i><i></i><i></i></div>
 
   <div class="vstrip">
     <div class="vqr">${qrInner}</div>
