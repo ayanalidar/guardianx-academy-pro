@@ -29,7 +29,7 @@ import {
   Server, Eye, Zap, ArrowUpRight, Terminal, BookMarked, FileEdit, ArrowRight, Globe,
 } from "lucide-react"
 import { toast } from "sonner"
-import { cn } from "@/lib/utils"
+import { cn, firstNameFor } from "@/lib/utils"
 import {
   ScrollReveal, Stagger, StaggerItem, Counter, CursorGlow, FadeIn,
 } from "@/components/platform/motion-system"
@@ -168,7 +168,7 @@ export function AdminDashboardView() {
               </TabsList>
             </ScrollArea>
 
-            <TabsContent value="overview" className="mt-6"><OverviewTab /></TabsContent>
+            <TabsContent value="overview" className="mt-6"><OverviewTab onGoTab={setTab} /></TabsContent>
             <TabsContent value="users" className="mt-6"><UsersTab /></TabsContent>
             <TabsContent value="courses" className="mt-6"><CoursesTab /></TabsContent>
             <TabsContent value="labs" className="mt-6"><LabsTab /></TabsContent>
@@ -239,7 +239,7 @@ function AdminHero() {
           Admin{" "}
           <span className="text-gradient-premium">Console</span>
           <span className="block text-[0.4em] font-medium text-muted-foreground mt-3 tracking-normal">
-            Welcome back, {user?.name?.split(" ")[0] ?? "Administrator"}.
+            Welcome back, {firstNameFor(user?.name, "Administrator")}.
           </span>
         </h1>
       </ScrollReveal>
@@ -278,7 +278,7 @@ function AdminHero() {
 /* ============================================================
    1. OVERVIEW TAB - platform stats, growth, signups, active labs
    ============================================================ */
-function OverviewTab() {
+function OverviewTab({ onGoTab }: { onGoTab?: (tab: AdminTab) => void }) {
   const { data, isLoading } = useQuery<OverviewData>({
     queryKey: ["admin", "overview"],
     queryFn: () => api("/api/admin/overview"),
@@ -463,6 +463,14 @@ function OverviewTab() {
                 )
               })}
             </div>
+            {onGoTab && (
+              <button
+                onClick={() => onGoTab("users")}
+                className="mt-4 pt-3 border-t border-border/60 w-full flex items-center justify-center gap-1.5 text-[11px] font-mono uppercase tracking-wider text-muted-foreground hover:text-amber-300 transition-colors"
+              >
+                Manage all users <ArrowRight className="h-3 w-3" />
+              </button>
+            )}
           </div>
         </ScrollReveal>
 
@@ -477,7 +485,10 @@ function OverviewTab() {
             </div>
             <div className="space-y-2 max-h-96 overflow-y-auto pr-2">
               {data.activeLabs.length === 0 ? (
-                <p className="text-sm text-muted-foreground py-8 text-center">No active labs.</p>
+                <div className="py-8 text-center">
+                  <FlaskConical className="h-8 w-8 text-muted-foreground/50 mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground">No active labs right now.</p>
+                </div>
               ) : data.activeLabs.map((p) => {
                 const col = colorFor(p.lab.color)
                 return (
@@ -499,6 +510,14 @@ function OverviewTab() {
                 )
               })}
             </div>
+            {onGoTab && (
+              <button
+                onClick={() => onGoTab("labs")}
+                className="mt-4 pt-3 border-t border-border/60 w-full flex items-center justify-center gap-1.5 text-[11px] font-mono uppercase tracking-wider text-muted-foreground hover:text-cyan-300 transition-colors"
+              >
+                Open lab console <ArrowRight className="h-3 w-3" />
+              </button>
+            )}
           </div>
         </ScrollReveal>
       </div>

@@ -30,8 +30,9 @@ import {
   Plus, Pencil, Trash2, Save, X, FileText, Radio, Calendar as CalendarIcon,
   Image as ImageIcon, Video, Link2, PlayCircle, StopCircle, Eye, Sparkles,
   ClipboardList, MessageSquare, CalendarClock, UserPlus, Palette, Building2,
+  Search,
 } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn, firstNameFor } from "@/lib/utils"
 import { toast } from "sonner"
 import { InstructorAssignmentsTab } from "@/components/instructor/assignments-tab"
 import { InstructorOfficeHoursTab } from "@/components/instructor/office-hours-tab"
@@ -155,7 +156,7 @@ function InstructorHero() {
               <Presentation className="h-3 w-3" /> INSTRUCTOR DASHBOARD
             </div>
             <h1 className="text-3xl font-bold tracking-tight">
-              Welcome back, <span className="text-cyan-400">{user?.name?.split(" ")[0]}</span>
+              Welcome back, <span className="text-cyan-400">{firstNameFor(user?.name, "Instructor")}</span>
             </h1>
             <p className="text-muted-foreground max-w-xl">
               Manage your courses, host live workshops, track student progress, and analyze engagement - all in one place.
@@ -202,12 +203,39 @@ function MyCoursesTab() {
   const { navigate } = useAppStore()
   const [createOpen, setCreateOpen] = React.useState(false)
   const [editingCourseId, setEditingCourseId] = React.useState<string | null>(null)
+  const [search, setSearch] = React.useState("")
+  const [category, setCategory] = React.useState<string>("all")
 
   const { data, isLoading } = useQuery<{ courses: InstructorCourse[]; totals: any }>({
     queryKey: ["instructor", "courses"],
     queryFn: () => api("/api/instructor/courses"),
   })
   const courses = data?.courses ?? []
+
+  // Categories that actually occur in the instructor's own catalog —
+  // avoids a wall of empty filter chips for single-domain instructors.
+  const activeCategories = React.useMemo(() => {
+    const set = new Set<string>()
+    courses.forEach((c) => c.category && set.add(c.category))
+    return Array.from(set).sort()
+  }, [courses])
+
+  const filteredCourses = React.useMemo(() => {
+    const q = search.trim().toLowerCase()
+    return courses.filter((c) => {
+      if (category !== "all" && c.category !== category) return false
+      if (!q) return true
+      return (
+        c.title?.toLowerCase().includes(q) ||
+        c.shortName?.toLowerCase().includes(q) ||
+        c.description?.toLowerCase().includes(q) ||
+        c.category?.toLowerCase().includes(q) ||
+        c.tags?.toLowerCase().includes(q)
+      )
+    })
+  }, [courses, search, category])
+
+  const isFiltering = search.trim() !== "" || category !== "all"
 
   if (isLoading) {
     return (
@@ -235,6 +263,50 @@ function MyCoursesTab() {
         </Button>
       </div>
 
+      {courses.length > 0 && (
+        <div className="space-y-2.5">
+          {/* Search — essential once a catalog grows past a screenful */}
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+            <Input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search by title, tag, category…"
+              className="pl-9 h-9 text-sm"
+            />
+          </div>
+          {activeCategories.length > 1 && (
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 -mx-1 px-1">
+              <button
+                onClick={() => setCategory("all")}
+                className={cn(
+                  "shrink-0 rounded-full border px-3 py-1 text-[11px] font-medium transition-colors",
+                  category === "all"
+                    ? "border-cyan-500/40 bg-cyan-500/15 text-cyan-300"
+                    : "border-border/60 text-muted-foreground hover:text-foreground hover:border-border"
+                )}
+              >
+                All ({courses.length})
+              </button>
+              {activeCategories.map((cat) => (
+                <button
+                  key={cat}
+                  onClick={() => setCategory(category === cat ? "all" : cat)}
+                  className={cn(
+                    "shrink-0 rounded-full border px-3 py-1 text-[11px] font-medium transition-colors",
+                    category === cat
+                      ? "border-cyan-500/40 bg-cyan-500/15 text-cyan-300"
+                      : "border-border/60 text-muted-foreground hover:text-foreground hover:border-border"
+                  )}
+                >
+                  {cat}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       {courses.length === 0 ? (
         <Card className="p-12 text-center border-dashed">
           <BookOpen className="h-10 w-10 text-muted-foreground mx-auto mb-3" />
@@ -244,17 +316,35 @@ function MyCoursesTab() {
             <Plus className="h-4 w-4 mr-1.5" /> Create Your First Course
           </Button>
         </Card>
+      ) : filteredCourses.length === 0 ? (
+        <Card className="p-10 text-center border-dashed">
+          <Search className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
+          <p className="font-medium mb-1">No matches</p>
+          <p className="text-sm text-muted-foreground mb-4">
+            No courses match your {category !== "all" ? `"${category}" + ` : ""}search. Try different keywords.
+          </p>
+          <Button variant="outline" size="sm" onClick={() => { setSearch(""); setCategory("all") }}>
+            <X className="h-3.5 w-3.5 mr-1.5" /> Clear filters
+          </Button>
+        </Card>
       ) : (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
-          {courses.map((c) => (
-            <InstructorCourseCard
-              key={c.id}
-              course={c}
-              onOpen={() => navigate({ name: "course", courseId: c.id })}
-              onEdit={() => setEditingCourseId(c.id)}
-            />
-          ))}
-        </div>
+        <>
+          {isFiltering && (
+            <p className="text-xs text-muted-foreground font-mono">
+              {filteredCourses.length} of {courses.length} courses
+            </p>
+          )}
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+            {filteredCourses.map((c) => (
+              <InstructorCourseCard
+                key={c.id}
+                course={c}
+                onOpen={() => navigate({ name: "course", courseId: c.id })}
+                onEdit={() => setEditingCourseId(c.id)}
+              />
+            ))}
+          </div>
+        </>
       )}
 
       <CreateCourseDialog open={createOpen} onOpenChange={setCreateOpen} onCreated={(id) => {
@@ -284,7 +374,7 @@ function InstructorCourseCard({ course, onOpen, onEdit }: {
 
   return (
     <Card className="overflow-hidden card-hover h-full flex flex-col">
-      <div className={cn("relative h-32 bg-gradient-to-br", col.gradient, "flex items-center justify-center overflow-hidden")}>
+      <div className={cn("relative h-24 bg-gradient-to-br", col.gradient, "flex items-center justify-center overflow-hidden")}>
         {course.thumbnail ? (
           <img
             src={course.thumbnail}
@@ -295,7 +385,7 @@ function InstructorCourseCard({ course, onOpen, onEdit }: {
         ) : (
           <>
             <div className="absolute inset-0 bg-grid opacity-40" />
-            <span className={cn("relative font-mono font-bold text-3xl", col.text)}>{course.shortName}</span>
+            <span className={cn("relative font-mono font-bold text-2xl", col.text)}>{course.shortName}</span>
           </>
         )}
         <div className="absolute top-2 right-2 flex gap-1">
@@ -305,10 +395,10 @@ function InstructorCourseCard({ course, onOpen, onEdit }: {
           <Badge variant="outline" className="text-[10px] bg-background/60 backdrop-blur">{course.certBody || course.category}</Badge>
         </div>
       </div>
-      <div className="p-4 flex-1 flex flex-col">
+      <div className="p-3.5 flex-1 flex flex-col">
         <h3 className="font-semibold text-sm mb-1 line-clamp-1">{course.title}</h3>
         <p className="text-xs text-muted-foreground line-clamp-2 mb-3 flex-1">{course.description}</p>
-        <div className="grid grid-cols-3 gap-2 text-center mb-3 pt-3 border-t border-border">
+        <div className="grid grid-cols-3 gap-2 text-center mb-3 pt-2.5 border-t border-border">
           <div>
             <div className="text-sm font-bold text-cyan-400 tabular-nums">{course.enrollmentCount}</div>
             <div className="text-[9px] text-muted-foreground uppercase">Students</div>

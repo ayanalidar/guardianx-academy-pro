@@ -378,6 +378,9 @@ export function DashboardView() {
 
         {/* ====================================================
             2b. PROGRESS OVERVIEW - Enrolled / Completed / In-Progress / Certs
+            (XP + level deliberately NOT repeated here — they're already
+            shown in StatsRow and its XP bar right above; rendering them
+            three times in the first two screens wasted vertical space.)
             ==================================================== */}
         <ScrollReveal delay={0.05}>
           <ProgressOverview
@@ -385,8 +388,6 @@ export function DashboardView() {
             completed={statsOverview.completed}
             inProgress={statsOverview.inProgress}
             certificates={statsOverview.certificates}
-            xp={xp}
-            level={level}
             loading={userLoading || meLoading}
           />
         </ScrollReveal>
@@ -1720,14 +1721,12 @@ function ReferralStat({
    2b. Progress Overview — Enrolled / Completed / In-Progress / Certs
    ============================================================ */
 function ProgressOverview({
-  enrolled, completed, inProgress, certificates, xp, level, loading,
+  enrolled, completed, inProgress, certificates, loading,
 }: {
   enrolled: number
   completed: number
   inProgress: number
   certificates: number
-  xp: number
-  level: number
   loading: boolean
 }) {
   if (loading) {
@@ -1776,25 +1775,6 @@ function ProgressOverview({
           </Card>
         ))}
       </div>
-      {/* condensed XP / level summary band */}
-      <div className="card-premium rounded-xl px-4 py-3 flex items-center justify-between gap-3 flex-wrap">
-        <div className="flex items-center gap-2">
-          <Zap className="size-3.5 text-amber-300" aria-hidden />
-          <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-            Total XP
-          </span>
-          <span className="font-mono text-sm font-bold text-amber-300 tabular-nums">
-            {xp.toLocaleString()}
-          </span>
-        </div>
-        <div className="flex items-center gap-2">
-          <TrendingUp className="size-3.5 text-emerald-300" aria-hidden />
-          <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
-            Current Level
-          </span>
-          <span className="font-mono text-sm font-bold text-emerald-300 tabular-nums">{level}</span>
-        </div>
-      </div>
     </section>
   )
 }
@@ -1838,7 +1818,14 @@ function WeeklyXpChart({
             No activity yet this week.
           </div>
         ) : (
-          <ResponsiveContainer width="100%" height={180}>
+          <>
+            {totalXp === 0 && (
+              <p className="text-[11px] font-mono text-muted-foreground mb-2 flex items-center gap-1.5">
+                <Zap className="size-3 text-amber-300/70" aria-hidden />
+                No XP earned yet this week — complete a lab or lesson to start a streak.
+              </p>
+            )}
+            <ResponsiveContainer width="100%" height={180}>
             <BarChart data={chartData} margin={{ top: 4, right: 4, left: -16, bottom: 0 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="oklch(0.3 0.02 270 / 0.25)" vertical={false} />
               <XAxis
@@ -1880,6 +1867,7 @@ function WeeklyXpChart({
               </Bar>
             </BarChart>
           </ResponsiveContainer>
+          </>
         )}
       </Card>
     </section>

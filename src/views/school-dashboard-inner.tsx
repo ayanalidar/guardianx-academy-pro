@@ -26,7 +26,7 @@ import {
   Phone, Globe, Mail, Crown, AlertTriangle, CheckCircle2, Clock, Flame,
   Trash2, Plus, X, Layers, Target, Save,
 } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn, firstNameFor } from "@/lib/utils"
 import { toast } from "sonner"
 
 export function SchoolDashboardInner() {
@@ -91,7 +91,7 @@ function SchoolHero() {
             </div>
             <h1 className="text-3xl font-bold tracking-tight">{school?.name ?? "Loading..."}</h1>
             <p className="text-muted-foreground max-w-xl">
-              Welcome back, <span className="text-violet-400 font-medium">{user?.name?.split(" ")[0]}</span>. Manage your students, batches, attendance, and reports.
+              Welcome back, <span className="text-violet-400 font-medium">{firstNameFor(user?.name, "Administrator")}</span>. Manage your students, batches, attendance, and reports.
             </p>
           </div>
         </div>
