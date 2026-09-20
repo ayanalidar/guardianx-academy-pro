@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { requireAdmin, withErrorHandler } from "@/lib/session"
 import { logAction } from "@/lib/audit"
+import { ensureTable } from "@/lib/db-safe"
 import { COURSE_LIST_FIELDS, normalizeCourseListInput } from "@/lib/course-lists"
 
 // GET /api/admin/courses — list all courses with enrollment counts, module counts, lesson counts
@@ -163,6 +164,11 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
   if (instructor.role !== "INSTRUCTOR" && instructor.role !== "ADMIN") {
     return NextResponse.json({ error: "User is not an instructor" }, { status: 400 })
   }
+
+  // Self-heal: sync the Course table to the current schema first (Prisma
+  // always sends required-with-default columns like whatYouWillLearn on
+  // INSERT — a drifted DB fails every create until those columns exist).
+  await ensureTable("Course")
 
   // Full create writes every current-schema column (course-extras lists,
   // instructorId, …). On drifted databases this throws P2022 and the admin

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { db } from "@/lib/db"
+import { ensureTable, isDriftError, withDriftRetry } from "@/lib/db-safe"
 import { getCurrentUser } from "@/lib/session"
 
 export const runtime = "nodejs"
@@ -78,19 +79,36 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  const authored = await db.authoredCourse.findMany({
-    where: { authorId: user.id },
-    orderBy: { updatedAt: "desc" },
-    select: {
-      id: true,
-      title: true,
-      status: true,
-      version: true,
-      config: true,
-      createdAt: true,
-      updatedAt: true,
-    },
-  })
+  // Drift-resilient: on a production DB where the AuthoredCourse table
+  // predates a migration (or is missing entirely), bootstrap the table and
+  // retry once. Final failure degrades to an empty studio instead of a 500.
+  const [authored, listErr] = await withDriftRetry("AuthoredCourse", () =>
+    db.authoredCourse.findMany({
+      where: { authorId: user.id },
+      orderBy: { updatedAt: "desc" },
+      select: {
+        id: true,
+        title: true,
+        status: true,
+        version: true,
+        config: true,
+        createdAt: true,
+        updatedAt: true,
+      },
+    })
+  )
+
+  if (listErr || !authored) {
+    console.error("[course-studio/list]", listErr)
+    return NextResponse.json({
+      courses: [],
+      degraded: true,
+      error: isDriftError(listErr)
+        ? "Course storage is being provisioned — try again in a moment."
+        : "Failed to load your courses",
+      totals: { total: 0, drafts: 0, review: 0, published: 0 },
+    })
+  }
 
   const list = authored.map((a) => {
     let config: any = {}
@@ -153,24 +171,43 @@ export async function POST(req: NextRequest) {
 
     const config = defaultCourseConfig(title, description, category, level)
 
-    const created = await db.authoredCourse.create({
-      data: {
-        title: title.trim(),
-        authorId: user.id,
-        status: "draft",
-        config: JSON.stringify(config),
-        version: 1,
-      },
-      select: {
-        id: true,
-        title: true,
-        status: true,
-        config: true,
-        version: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    })
+    // Self-heal: first-ever write bootstraps the AuthoredCourse table on
+    // databases that predate the Course Studio migration.
+    await ensureTable("AuthoredCourse")
+
+    const data = {
+      title: title.trim(),
+      authorId: user.id,
+      status: "draft",
+      config: JSON.stringify(config),
+      version: 1,
+    }
+    const [created, createErr] = await withDriftRetry("AuthoredCourse", () =>
+      db.authoredCourse.create({
+        data,
+        select: {
+          id: true,
+          title: true,
+          status: true,
+          config: true,
+          version: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      })
+    )
+
+    if (createErr || !created) {
+      console.error("[course-studio/create]", createErr)
+      return NextResponse.json(
+        {
+          error: isDriftError(createErr)
+            ? "Course storage is being provisioned — try again in a moment."
+            : "Failed to create course",
+        },
+        { status: 500 }
+      )
+    }
 
     return NextResponse.json(
       {

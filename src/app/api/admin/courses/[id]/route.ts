@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { requireAdmin, withErrorHandler } from "@/lib/session"
 import { logAction } from "@/lib/audit"
+import { ensureTable } from "@/lib/db-safe"
 import { COURSE_LIST_FIELDS, normalizeCourseListInput } from "@/lib/course-lists"
 
 // PATCH /api/admin/courses/[id] — update any course field (incl. published toggle)
@@ -49,6 +50,10 @@ export const PATCH = withErrorHandler(
       }
       finalInstructorId = String(instructorId)
     }
+
+    // Self-heal: sync the Course table to the current schema before the
+    // update (extras columns may be missing on drifted databases).
+    await ensureTable("Course")
 
     const updated = await db.course.update({
       where: { id },

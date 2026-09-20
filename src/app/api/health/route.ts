@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import { promises as fs } from "fs"
 import path from "path"
 import { db } from "@/lib/db"
+import { ensureTable } from "@/lib/db-safe"
 
 /**
  * Health endpoint — the single source of truth for "is the platform OK".
@@ -21,6 +22,30 @@ export const dynamic = "force-dynamic"
 
 let cachedBuildId: string | null = null
 let buildIdRead = false
+
+/**
+ * One-shot schema self-sync (per serverless instance): sync the course
+ * storage tables to the current Prisma schema (idempotent ADD COLUMN IF
+ * NOT EXISTS / CREATE TABLE IF NOT EXISTS). Runs on the first health hit
+ * after a deploy — monitors poll constantly, so production converges
+ * within seconds of going live instead of failing on first write.
+ */
+let schemaSynced = false
+async function syncSchemaOnce(): Promise<boolean> {
+  if (schemaSynced) return true
+  try {
+    await Promise.all([
+      ensureTable("Course"),
+      ensureTable("Module"),
+      ensureTable("Lesson"),
+      ensureTable("AuthoredCourse"),
+    ])
+    schemaSynced = true
+  } catch {
+    // Never break health over a failed sync — the write paths retry it.
+  }
+  return schemaSynced
+}
 
 async function readBuildId(): Promise<string | null> {
   if (buildIdRead) return cachedBuildId
@@ -86,6 +111,7 @@ export async function GET(req: Request) {
       db.exam.count(),
     ])
     payload.counts = { courses, users, exams }
+    payload.schema = { synced: await syncSchemaOnce() }
   } catch (e: any) {
     payload.ok = false
     payload.db = { ok: false, error: String(e?.message ?? e).slice(0, 200) }

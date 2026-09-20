@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { db } from "@/lib/db"
+import { ensureTable, filterToColumns, getTableColumns, isDriftError, withDriftRetry } from "@/lib/db-safe"
 import { getCurrentUser } from "@/lib/session"
 import { COURSE_LIST_FIELDS, normalizeCourseListInput } from "@/lib/course-lists"
 
@@ -81,7 +82,20 @@ function slugify(s: string): string {
 }
 
 async function getOwnedDraft(id: string, userId: string) {
-  const draft = await db.authoredCourse.findUnique({ where: { id } })
+  // Drift-resilient: bootstrap the AuthoredCourse table and retry once if
+  // the storage predates the Course Studio migration.
+  const [draft, err] = await withDriftRetry("AuthoredCourse", () =>
+    db.authoredCourse.findUnique({ where: { id } })
+  )
+  if (err) {
+    console.error("[course-studio/draft-lookup]", err)
+    return {
+      error: NextResponse.json(
+        { error: isDriftError(err) ? "Course storage is being provisioned — try again in a moment." : "Failed to load course" },
+        { status: 500 }
+      ),
+    }
+  }
   if (!draft) return { error: NextResponse.json({ error: "Course not found" }, { status: 404 }) }
   if (draft.authorId !== userId) {
     return { error: NextResponse.json({ error: "Forbidden — not the author" }, { status: 403 }) }
@@ -163,18 +177,32 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       data.version = (draft.version || 1) + 1
     }
 
-    const updated = await db.authoredCourse.update({
-      where: { id },
-      data,
-      select: {
-        id: true,
-        title: true,
-        status: true,
-        version: true,
-        config: true,
-        updatedAt: true,
-      },
-    })
+    const [updated, updErr] = await withDriftRetry("AuthoredCourse", () =>
+      db.authoredCourse.update({
+        where: { id },
+        data,
+        select: {
+          id: true,
+          title: true,
+          status: true,
+          version: true,
+          config: true,
+          updatedAt: true,
+        },
+      })
+    )
+
+    if (updErr || !updated) {
+      console.error("[course-studio/patch]", updErr)
+      return NextResponse.json(
+        {
+          error: isDriftError(updErr)
+            ? "Course storage is being provisioned — try again in a moment."
+            : "Failed to update course",
+        },
+        { status: 500 }
+      )
+    }
 
     return NextResponse.json({
       course: {
@@ -199,7 +227,14 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   const owned = await getOwnedDraft(id, user.id)
   if ("error" in owned) return owned.error
 
-  await db.authoredCourse.delete({ where: { id } })
+  // Drift-resilient delete (table may be missing on first-run databases).
+  const [, delErr] = await withDriftRetry("AuthoredCourse", () =>
+    db.authoredCourse.delete({ where: { id } })
+  )
+  if (delErr && !isDriftError(delErr)) {
+    console.error("[course-studio/delete]", delErr)
+    return NextResponse.json({ error: "Failed to delete course" }, { status: 500 })
+  }
   return NextResponse.json({ ok: true, deleted: id })
 }
 
@@ -249,91 +284,119 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   // We embed the draft id in the slug to make re-publishing idempotent.
   const desiredSlug = `${slugBase}-${draft.id.slice(-6)}`.slice(0, 80)
 
-  const existing = await db.course.findUnique({ where: { slug: desiredSlug } })
+  // Drift-resilient lookup: a full-model findUnique selects every Course
+  // column and 500s with P2022 on drifted databases. Select only columns
+  // that actually exist; if even the lookup fails treat it as "no existing
+  // course" (re-publish then creates rather than updates — the slug embeds
+  // the draft id, so collisions are practically impossible).
+  let existing: { id: string; instructorId?: string | null } | null = null
+  try {
+    existing = await db.course.findUnique({
+      where: { slug: desiredSlug },
+      select: { id: true, instructorId: true },
+    })
+  } catch {
+    try {
+      const cols = await getTableColumns("Course")
+      const select: Record<string, true> = { id: true }
+      if (cols.has("slug")) select.slug = true
+      if (cols.has("instructorId")) select.instructorId = true
+      existing = (await db.course.findUnique({ where: { slug: desiredSlug }, select })) as any
+    } catch {
+      existing = null
+    }
+  }
 
   // Course extras — config arrays normalized to the canonical JSON encoding
   const extrasData = Object.fromEntries(
     COURSE_LIST_FIELDS.map(({ key }) => [key, normalizeCourseListInput((config as any)[key])])
   ) as Record<string, string>
 
+  // --- Drift prep (before the transaction) -------------------------------
+  // Sync Course/Module/Lesson storage to the current Prisma schema (adds
+  // any missing columns — e.g. the five required-with-default course-extras
+  // columns Prisma always sends on INSERT). On a fully-synced schema this
+  // is a no-op passthrough.
+  await Promise.all([ensureTable("Course"), ensureTable("Module"), ensureTable("Lesson")])
+  const courseCols = await getTableColumns("Course")
+
+  const courseBase = {
+    title: config.title,
+    shortName: config.shortName || slugBase.toUpperCase().slice(0, 6),
+    description: config.description || "",
+    longDescription: config.longDescription || config.description || "",
+    category: config.category || "Certification",
+    level: config.level || "Beginner",
+    durationHours: Number(config.durationHours) || 40,
+    price: Number(config.price) || 0,
+    color: config.color || "violet",
+    tags: Array.isArray(config.tags) ? config.tags.join(",") : "",
+    certBody: config.certBody || null,
+    thumbnail: config.thumbnail || null,
+    ...extrasData,
+    published: true,
+    instructorId: user.id,
+  }
+  // Keep only fields whose columns exist. id/slug (create) stay explicit —
+  // if those core columns are missing the schema is unusable and the
+  // publish SHOULD fail loudly.
+  const courseCreateData: Record<string, unknown> = { slug: desiredSlug }
+  const courseUpdateData: Record<string, unknown> = {}
+  for (const [k, v] of Object.entries(courseBase)) {
+    if (!courseCols.has(k)) continue
+    courseCreateData[k] = v
+    courseUpdateData[k] = v
+  }
+
   try {
+    if (process.env.DB_SAFE_DEBUG === "1") {
+      console.error(
+        `[db-safe] publish createKeys=[${Object.keys(courseCreateData).join(",")}] updateKeys=[${Object.keys(courseUpdateData).join(",")}] existing=${existing ? existing.id : "null"}`
+      )
+    }
     const published = await db.$transaction(async (tx) => {
       let course: any
       if (existing) {
-        if (!force && existing.instructorId !== user.id) {
+        if (!force && existing.instructorId != null && existing.instructorId !== user.id) {
           throw new Error("Slug already taken by another instructor")
         }
         // Replace modules + lessons
         await tx.module.deleteMany({ where: { courseId: existing.id } })
         course = await tx.course.update({
           where: { id: existing.id },
-          data: {
-            title: config.title,
-            shortName: config.shortName || slugBase.toUpperCase().slice(0, 6),
-            description: config.description || "",
-            longDescription: config.longDescription || config.description || "",
-            category: config.category || "Certification",
-            level: config.level || "Beginner",
-            durationHours: Number(config.durationHours) || 40,
-            price: Number(config.price) || 0,
-            color: config.color || "violet",
-            tags: Array.isArray(config.tags) ? config.tags.join(",") : "",
-            certBody: config.certBody || null,
-            thumbnail: config.thumbnail || null,
-            ...extrasData,
-            published: true,
-          },
+          data: courseUpdateData,
         })
       } else {
-        course = await tx.course.create({
-          data: {
-            slug: desiredSlug,
-            title: config.title,
-            shortName: config.shortName || slugBase.toUpperCase().slice(0, 6),
-            description: config.description || "",
-            longDescription: config.longDescription || config.description || "",
-            category: config.category || "Certification",
-            level: config.level || "Beginner",
-            durationHours: Number(config.durationHours) || 40,
-            price: Number(config.price) || 0,
-            color: config.color || "violet",
-            tags: Array.isArray(config.tags) ? config.tags.join(",") : "",
-            certBody: config.certBody || null,
-            thumbnail: config.thumbnail || null,
-            ...extrasData,
-            published: true,
-            instructorId: user.id,
-          },
-        })
+        course = await tx.course.create({ data: courseCreateData as any })
       }
 
-      // Create modules + lessons
+      // Create modules + lessons — each write filtered to the columns the
+      // drifted database actually has (degrades gracefully; a fully-synced
+      // schema writes every field).
       for (let mIdx = 0; mIdx < config.modules.length; mIdx++) {
         const m = config.modules[mIdx]
-        const moduleRec = await tx.module.create({
-          data: {
-            courseId: course.id,
-            title: m.title || `Module ${mIdx + 1}`,
-            description: m.description || "",
-            order: mIdx,
-          },
+        const moduleData = await filterToColumns("Module", {
+          courseId: course.id,
+          title: m.title || `Module ${mIdx + 1}`,
+          description: m.description || "",
+          order: mIdx,
         })
+        const moduleRec = await tx.module.create({ data: moduleData as any })
         const lessons = Array.isArray(m.lessons) ? m.lessons : []
         for (let lIdx = 0; lIdx < lessons.length; lIdx++) {
           const l = lessons[lIdx]
-          await tx.lesson.create({
-            data: {
-              moduleId: moduleRec.id,
-              title: l.title || `Lesson ${lIdx + 1}`,
-              type: l.type || "reading",
-              content: l.content || "",
-              pdfUrl: l.pdfUrl || null,
-              pdfPages: Number(l.pdfPages) || 0,
-              durationMin: Number(l.durationMin) || 15,
-              order: lIdx,
-              preview: !!l.preview,
-            },
+          const lessonData = await filterToColumns("Lesson", {
+            moduleId: moduleRec.id,
+            title: l.title || `Lesson ${lIdx + 1}`,
+            type: l.type || "reading",
+            content: l.content || "",
+            pdfUrl: l.pdfUrl || null,
+            pdfPages: Number(l.pdfPages) || 0,
+            durationMin: Number(l.durationMin) || 15,
+            order: lIdx,
+            preview: !!l.preview,
           })
+          await tx.lesson.create({ data: lessonData as any })
         }
       }
 
