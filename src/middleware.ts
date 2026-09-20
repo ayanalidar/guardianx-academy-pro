@@ -42,6 +42,8 @@ const PROTECTED_API_PREFIXES: Array<[string, string[] | "any-auth"]> = [
   ["/api/course-studio", ["INSTRUCTOR", "ADMIN", "SUPER_ADMIN"]],
   // AI course generator: any auth (rate-limited in handler).
   ["/api/ai-course-generator", "any-auth"],
+  // AI Course Architect: any auth — route itself enforces admin/instructor-owner.
+  ["/api/ai/course-architect", "any-auth"],
   // Lab snapshots: any auth (user can only see their own snapshots).
   ["/api/lab-snapshots", "any-auth"],
   // Submissions peer-review: any auth (handler checks ownership).

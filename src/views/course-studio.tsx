@@ -65,11 +65,17 @@ import {
   Users,
   IndianRupee,
   Settings2,
+  Bot,
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 import { COURSE_LIST_FIELDS, parseCourseList } from "@/lib/course-lists"
+import {
+  BlueprintDialog,
+  CurriculumDialog,
+  LessonDeepDiveDialog,
+} from "@/components/studio/ai-architect"
 
 // ---------------------------------------------------------------------------
 // Types
@@ -875,6 +881,7 @@ function EditorView({
   const [expanded, setExpanded] = React.useState<Set<string>>(new Set())
   // "content" = modules/lessons tree, "details" = course metadata + extras
   const [tab, setTab] = React.useState<"content" | "details">("content")
+  const [architectOpen, setArchitectOpen] = React.useState(false)
 
   const modulesKey = ["course-studio-modules", course.id]
   const { data, isLoading, isError, error, refetch } = useQuery<{ modules: AdminModule[] }>({
@@ -1100,20 +1107,32 @@ function EditorView({
                 {modules.length}
               </Badge>
             </div>
-            <Button
-              size="sm"
-              variant="ghost"
-              className="h-7 px-2 text-violet-300 hover:bg-violet-500/10 hover:text-violet-200"
-              onClick={() => addModuleMutation.mutate()}
-              disabled={addModuleMutation.isPending}
-            >
-              {addModuleMutation.isPending ? (
-                <Loader2 className="h-3.5 w-3.5 animate-spin" />
-              ) : (
-                <Plus className="h-3.5 w-3.5" />
-              )}
-              <span className="ml-1 hidden sm:inline">Add</span>
-            </Button>
+            <div className="flex items-center gap-1">
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 px-2 text-violet-300 hover:bg-violet-500/10 hover:text-violet-200"
+                onClick={() => setArchitectOpen(true)}
+                title="Generate an in-depth curriculum with the AI Course Architect"
+              >
+                <Bot className="h-3.5 w-3.5" />
+                <span className="ml-1 hidden md:inline">AI Curriculum</span>
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                className="h-7 px-2 text-violet-300 hover:bg-violet-500/10 hover:text-violet-200"
+                onClick={() => addModuleMutation.mutate()}
+                disabled={addModuleMutation.isPending}
+              >
+                {addModuleMutation.isPending ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                ) : (
+                  <Plus className="h-3.5 w-3.5" />
+                )}
+                <span className="ml-1 hidden sm:inline">Add</span>
+              </Button>
+            </div>
           </div>
 
           <div className="flex-1 overflow-y-auto custom-scroll p-2 space-y-1.5">
@@ -1122,16 +1141,27 @@ function EditorView({
                 <Layers className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
                 <p className="text-sm font-medium mb-1">No modules yet</p>
                 <p className="text-xs text-muted-foreground mb-4">
-                  Add your first module to start building lessons.
+                  Add your first module — or let the AI Course Architect design an
+                  in-depth curriculum from its domain knowledge.
                 </p>
-                <Button
-                  size="sm"
-                  onClick={() => addModuleMutation.mutate()}
-                  disabled={addModuleMutation.isPending}
-                  className="bg-violet-600 hover:bg-violet-500"
-                >
-                  <Plus className="h-3.5 w-3.5 mr-1.5" /> Add Module
-                </Button>
+                <div className="flex items-center justify-center gap-2 flex-wrap">
+                  <Button
+                    size="sm"
+                    onClick={() => setArchitectOpen(true)}
+                    className="bg-violet-600 hover:bg-violet-500"
+                  >
+                    <Bot className="h-3.5 w-3.5 mr-1.5" /> Generate with AI
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => addModuleMutation.mutate()}
+                    disabled={addModuleMutation.isPending}
+                    className="border-border/60"
+                  >
+                    <Plus className="h-3.5 w-3.5 mr-1.5" /> Add Module
+                  </Button>
+                </div>
               </div>
             ) : (
               modules.map((m, idx) => (
@@ -1182,6 +1212,7 @@ function EditorView({
               key={selectedLesson.id}
               lesson={selectedLesson}
               courseId={course.id}
+              course={course}
             />
           ) : (
             <div className="flex items-center justify-center h-full min-h-[60vh] p-12 text-center">
@@ -1200,6 +1231,18 @@ function EditorView({
         </Card>
       </div>
       )}
+
+      {/* AI Course Architect — curriculum generator (append-only, review-before-apply) */}
+      <CurriculumDialog
+        open={architectOpen}
+        onOpenChange={setArchitectOpen}
+        course={course}
+        existingModuleCount={modules.length}
+        onApplied={() => {
+          qc.invalidateQueries({ queryKey: modulesKey })
+          qc.invalidateQueries({ queryKey: ["admin-courses-studio"] })
+        }}
+      />
     </div>
   )
 }
@@ -1236,6 +1279,7 @@ function CourseDetailsEditor({
     ),
   }))
   const [saving, setSaving] = React.useState(false)
+  const [blueprintOpen, setBlueprintOpen] = React.useState(false)
 
   const set = (k: string, v: string | boolean) => setForm((p) => ({ ...p, [k]: v }))
 
@@ -1286,6 +1330,15 @@ function CourseDetailsEditor({
             <Switch checked={form.published} onCheckedChange={(v) => set("published", v)} />
             {form.published ? "Published" : "Draft"}
           </label>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setBlueprintOpen(true)}
+            className="border-violet-500/30 text-violet-300 hover:bg-violet-500/10 hover:text-violet-200"
+            title="Generate course page sections with the AI Course Architect"
+          >
+            <Bot className="h-3.5 w-3.5 mr-1.5" /> AI Architect
+          </Button>
           <Button
             size="sm"
             onClick={() => saveMutation.mutate()}
@@ -1397,6 +1450,26 @@ function CourseDetailsEditor({
           </div>
         </div>
       </div>
+
+      {/* AI Course Architect — course page sections blueprint (fills the form, human saves) */}
+      <BlueprintDialog
+        open={blueprintOpen}
+        onOpenChange={setBlueprintOpen}
+        course={{
+          id: course.id,
+          title: course.title,
+          category: course.category,
+          level: course.level,
+          description: course.description,
+          tags: course.tags,
+          durationHours: course.durationHours,
+          certBody: course.certBody,
+        }}
+        onApply={(fields) => {
+          for (const [k, v] of Object.entries(fields)) set(k, v)
+          toast.success("Architect content applied — review and hit Save")
+        }}
+      />
     </Card>
   )
 }
@@ -1755,7 +1828,7 @@ function RenameModuleDialog({
 // ---------------------------------------------------------------------------
 // Lesson Editor (right panel)
 // ---------------------------------------------------------------------------
-function LessonEditor({ lesson, courseId }: { lesson: AdminLesson; courseId: string }) {
+function LessonEditor({ lesson, courseId, course }: { lesson: AdminLesson; courseId: string; course: CourseListItem }) {
   const qc = useQueryClient()
   const modulesKey = ["course-studio-modules", courseId]
 
@@ -1769,6 +1842,7 @@ function LessonEditor({ lesson, courseId }: { lesson: AdminLesson; courseId: str
   const [pdfPages, setPdfPages] = React.useState(String(lesson.pdfPages ?? 0))
   const [dirty, setDirty] = React.useState(false)
   const [error, setError] = React.useState<string | null>(null)
+  const [aiOpen, setAiOpen] = React.useState(false)
 
   // Reset local state when lesson prop changes
   React.useEffect(() => {
@@ -1843,6 +1917,15 @@ function LessonEditor({ lesson, courseId }: { lesson: AdminLesson; courseId: str
               <span className="h-1.5 w-1.5 rounded-full bg-amber-400 mr-1 animate-pulse" /> unsaved
             </Badge>
           )}
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setAiOpen(true)}
+            className="border-violet-500/30 text-violet-300 hover:bg-violet-500/10 hover:text-violet-200"
+            title="Expand this lesson into full teaching content with the AI Course Architect"
+          >
+            <Bot className="h-3.5 w-3.5 mr-1.5" /> AI Deep-Dive
+          </Button>
           <Button
             size="sm"
             onClick={handleSave}
@@ -2034,6 +2117,30 @@ function LessonEditor({ lesson, courseId }: { lesson: AdminLesson; courseId: str
           </div>
         )}
       </div>
+
+      {/* AI Course Architect — single lesson deep-dive (fills the editor, human saves) */}
+      <LessonDeepDiveDialog
+        open={aiOpen}
+        onOpenChange={setAiOpen}
+        course={{
+          id: courseId,
+          title: course.title,
+          category: course.category,
+          level: course.level,
+          description: course.description,
+          tags: course.tags,
+          durationHours: course.durationHours,
+          certBody: course.certBody,
+        }}
+        lesson={{ id: lesson.id, title: lesson.title, type: lesson.type, content: lesson.content }}
+        onApply={(content, title, durationMin) => {
+          setTitle(title)
+          setContent(content)
+          setDurationMin(String(durationMin))
+          markDirty()
+          toast.success("Architect lesson applied — review and Save")
+        }}
+      />
     </div>
   )
 }
