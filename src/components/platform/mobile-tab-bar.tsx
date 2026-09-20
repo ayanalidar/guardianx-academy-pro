@@ -15,6 +15,7 @@ import {
 } from "lucide-react"
 import { useAppStore } from "@/store/app-store"
 import { viewToPath } from "@/lib/url-router"
+import { roleHomeFor } from "@/lib/nav-data"
 import { useUser } from "@/hooks/use-user"
 import { cn } from "@/lib/utils"
 import type { LucideIcon } from "lucide-react"
@@ -53,11 +54,12 @@ export function MobileTabBar() {
   if (NON_APP_VIEWS.has(view.name)) return null
 
   const role = user.role
-  const isStaff = role === "ADMIN" || role === "INSTRUCTOR"
+  const staffHome = roleHomeFor(role)
+  const isStaff = staffHome === "admin" || staffHome === "instructor"
 
   const tabs: Tab[] = isStaff
     ? [
-        { label: "Console", icon: role === "ADMIN" ? Shield : Presentation, view: { name: role === "ADMIN" ? "admin" : "instructor" } },
+        { label: "Console", icon: staffHome === "admin" ? Shield : Presentation, view: { name: staffHome } as View },
         { label: "Labs", icon: FlaskConical, view: { name: "labs" } },
         { label: "Search", icon: Search, view: { name: "catalog" } },
         { label: "Profile", icon: User, view: { name: "profile" } },

@@ -31,7 +31,10 @@ export interface NavItem {
 }
 
 // ============================================================
-// STUDENT nav items - shown to STUDENT role (and ADMIN for testing)
+// STUDENT nav items - shown ONLY to the STUDENT role.
+// Staff roles (ADMIN / INSTRUCTOR) get their own dedicated lists below —
+// cross-role leakage (e.g. admins seeing "Parent Portal") is a bug, so
+// navForRole() no longer appends this list to staff navigation.
 // ============================================================
 export const STUDENT_NAV: NavItem[] = [
   { label: "Dashboard", icon: LayoutDashboard, view: { name: "dashboard" } },
@@ -128,14 +131,22 @@ export const PUBLIC_NAV: NavItem[] = [
   { label: "Verify Certificate", icon: ShieldCheck, view: { name: "verify" } },
 ]
 
-/** Nav for a role — dashboard entries per role; falls back to student nav. */
+/** Nav for a role — STRICT role separation: each role sees only its own list. */
 export function navForRole(role?: string | null): NavItem[] {
   switch (role) {
     case "ADMIN":
-      return [...ADMIN_NAV, ...STUDENT_NAV.filter(s => !ADMIN_NAV.some(a => a.label === s.label))]
+    case "SUPER_ADMIN":
+      return ADMIN_NAV
     case "INSTRUCTOR":
-      return [...INSTRUCTOR_NAV, ...STUDENT_NAV.filter(s => !INSTRUCTOR_NAV.some(a => a.label === s.label))]
+      return INSTRUCTOR_NAV
     default:
       return STUDENT_NAV
   }
+}
+
+/** The dashboard view each role should land on after login / when lost. */
+export function roleHomeFor(role?: string | null): string {
+  if (role === "ADMIN" || role === "SUPER_ADMIN") return "admin"
+  if (role === "INSTRUCTOR") return "instructor"
+  return "dashboard"
 }

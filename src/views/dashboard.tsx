@@ -2088,8 +2088,8 @@ function UpcomingDeadlines({
         icon={Calendar}
         label="Upcoming Deadlines"
         tone="amber"
-        actionLabel="Calendar"
-        onAction={() => navigate({ name: "admin-batch-calendar" })}
+        actionLabel="Assignments"
+        onAction={() => navigate({ name: "assignments" })}
       />
       {loading ? (
         <Skeleton className="h-32 rounded-xl" />

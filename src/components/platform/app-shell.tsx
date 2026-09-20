@@ -9,7 +9,7 @@ import {
 } from "lucide-react"
 import { useAppStore } from "@/store/app-store"
 import { viewToPath } from "@/lib/url-router"
-import { STUDENT_NAV, INSTRUCTOR_NAV, ADMIN_NAV, type NavItem } from "@/lib/nav-data"
+import { navForRole, type NavItem } from "@/lib/nav-data"
 import { useUser } from "@/hooks/use-user"
 import { useBatchLeadNotifications } from "@/hooks/use-batch-lead-notifications"
 import { Button } from "@/components/ui/button"
@@ -23,12 +23,9 @@ import { MobileTabBar } from "@/components/platform/mobile-tab-bar"
 import { GlobalSearch } from "@/components/platform/global-search"
 import { cn } from "@/lib/utils"
 
-// Keep legacy NAV_ITEMS alias for backwards compat (mobile menu etc)
-const NAV_ITEMS = STUDENT_NAV
-
-/* Nav data now lives in @/lib/nav-data.ts — single source of truth shared
-   with the command palette and the mobile tab bar. STUDENT_NAV,
-   INSTRUCTOR_NAV and ADMIN_NAV are imported at the top of this file. */
+// Nav rendering is strictly role-based (see navForRole in @/lib/nav-data.ts):
+//   ADMIN / SUPER_ADMIN → ADMIN_NAV, INSTRUCTOR → INSTRUCTOR_NAV, else STUDENT_NAV.
+// Legacy alias removed — every surface now resolves through navForRole().
 
 function Logo({ onClick }: { onClick?: () => void }) {
   return (
@@ -69,15 +66,8 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
   const { user } = useUser()
   const role = user?.role || "STUDENT"
 
-  // Determine which nav items to show based on role
-  let items: NavItem[] = []
-  if (role === "ADMIN") {
-    items = ADMIN_NAV
-  } else if (role === "INSTRUCTOR") {
-    items = INSTRUCTOR_NAV
-  } else {
-    items = STUDENT_NAV
-  }
+  // Strict role separation — staff never see student items and vice versa.
+  const items: NavItem[] = navForRole(role)
 
   function renderItem(item: NavItem, activeColor: string = "emerald") {
     const active = view.name === item.view.name
@@ -134,7 +124,7 @@ function SidebarFooter() {
 
   if (!user) return null
 
-  const isAdmin = user.role === "ADMIN"
+  const isAdmin = user.role === "ADMIN" || user.role === "SUPER_ADMIN"
 
   return (
     <div className="mt-auto pt-4 border-t border-border/40 space-y-3">

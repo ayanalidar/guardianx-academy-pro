@@ -136,7 +136,7 @@ export function AdminDashboardView() {
     )
   }
 
-  if (!user || user.role !== "ADMIN") {
+  if (!user || (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN")) {
     return <AccessDenied />
   }
 

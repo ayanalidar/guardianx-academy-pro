@@ -86,7 +86,7 @@ export function InstructorDashboardView() {
   const { user } = useUser()
   const [tab, setTab] = React.useState<InstructorTab>("courses")
 
-  if (user && user.role !== "INSTRUCTOR" && user.role !== "ADMIN") {
+  if (user && user.role !== "INSTRUCTOR" && user.role !== "ADMIN" && user.role !== "SUPER_ADMIN") {
     return (
       <Card className="p-12 text-center border-dashed">
         <Presentation className="h-10 w-10 text-muted-foreground mx-auto mb-3" />

@@ -16,6 +16,17 @@ import * as React from "react"
 import dynamic from "next/dynamic"
 import { useAppStore } from "@/store/app-store"
 import { HomeView } from "@/views/home"
+import { RoleGate, ROLES_ADMIN, ROLES_INSTRUCTOR } from "@/components/platform/role-gate"
+
+/*
+ * Role separation — every staff surface is wrapped in RoleGate so a
+ * mismatched role sees a branded "access restricted" panel (with a CTA
+ * back to their own dashboard) instead of a broken admin page. The API
+ * layer still enforces the real permissions (401/403); this is the UX
+ * layer of the same policy. Admin = ADMIN/SUPER_ADMIN, instructor
+ * tooling = INSTRUCTOR + admins. The batch calendar is shared: its API
+ * deliberately allows INSTRUCTOR read access.
+ */
 
 /** Skeleton shown while an (un-preloaded) view chunk streams in. */
 function ViewLoading() {
@@ -160,19 +171,19 @@ export function ViewRouter() {
       {view.name === "credentials" && <CredentialsView />}
       {view.name === "verify" && <VerifyView />}
       {view.name === "legal" && "pageType" in view && <LegalPageView pageType={view.pageType} />}
-      {view.name === "invoice-generator" && <InvoiceGeneratorView />}
-      {view.name === "proposal-maker" && <ProposalMakerView />}
-      {view.name === "admin-lead-crm" && <LeadCrmView />}
-      {view.name === "admin-batch-calendar" && <BatchCalendarView />}
-      {view.name === "admin-student-progress" && <StudentProgressView />}
-      {view.name === "admin-revenue" && <RevenueAnalyticsView />}
-      {view.name === "admin-cert-bulk" && <CertBulkIssuanceView />}
-      {view.name === "admin-email-campaign" && <EmailCampaignView />}
-      {view.name === "admin-instructor-assignment" && <InstructorAssignmentView />}
-      {view.name === "admin-audit-log" && <AuditLogView />}
-      {view.name === "admin-platform-health" && <PlatformHealthView />}
-      {view.name === "admin-notifications" && <NotificationCenterView />}
-      {view.name === "admin-coupons" && <AdminCouponsView />}
+      {view.name === "invoice-generator" && <RoleGate allow={ROLES_ADMIN} area="Invoice Generator"><InvoiceGeneratorView /></RoleGate>}
+      {view.name === "proposal-maker" && <RoleGate allow={ROLES_ADMIN} area="Proposal Maker"><ProposalMakerView /></RoleGate>}
+      {view.name === "admin-lead-crm" && <RoleGate allow={ROLES_ADMIN} area="Lead CRM"><LeadCrmView /></RoleGate>}
+      {view.name === "admin-batch-calendar" && <RoleGate allow={ROLES_INSTRUCTOR} area="Batch Calendar"><BatchCalendarView /></RoleGate>}
+      {view.name === "admin-student-progress" && <RoleGate allow={ROLES_ADMIN} area="Student Progress"><StudentProgressView /></RoleGate>}
+      {view.name === "admin-revenue" && <RoleGate allow={ROLES_ADMIN} area="Revenue Analytics"><RevenueAnalyticsView /></RoleGate>}
+      {view.name === "admin-cert-bulk" && <RoleGate allow={ROLES_ADMIN} area="Bulk Certificates"><CertBulkIssuanceView /></RoleGate>}
+      {view.name === "admin-email-campaign" && <RoleGate allow={ROLES_ADMIN} area="Email Campaigns"><EmailCampaignView /></RoleGate>}
+      {view.name === "admin-instructor-assignment" && <RoleGate allow={ROLES_ADMIN} area="Instructor Assignment"><InstructorAssignmentView /></RoleGate>}
+      {view.name === "admin-audit-log" && <RoleGate allow={ROLES_ADMIN} area="Audit Logs"><AuditLogView /></RoleGate>}
+      {view.name === "admin-platform-health" && <RoleGate allow={ROLES_ADMIN} area="Platform Health"><PlatformHealthView /></RoleGate>}
+      {view.name === "admin-notifications" && <RoleGate allow={ROLES_ADMIN} area="Notification Center"><NotificationCenterView /></RoleGate>}
+      {view.name === "admin-coupons" && <RoleGate allow={ROLES_ADMIN} area="Coupons"><AdminCouponsView /></RoleGate>}
       {view.name === "support" && <SupportView />}
       {view.name === "instructors" && <InstructorsView />}
       {view.name === "instructor-detail" && <InstructorDetailView />}
@@ -181,17 +192,17 @@ export function ViewRouter() {
       {view.name === "blog" && <BlogView />}
       {view.name === "blog-post" && "slug" in view && <BlogPostView slug={view.slug} />}
       {view.name === "cert-landing" && "certSlug" in view && <CertLandingView certSlug={view.certSlug} />}
-      {view.name === "admin-courses" && <AdminCoursesView />}
+      {view.name === "admin-courses" && <RoleGate allow={ROLES_ADMIN} area="Course Management"><AdminCoursesView /></RoleGate>}
       {view.name === "affiliate" && <AffiliateView />}
       {view.name === "pricing" && <PricingView />}
-      {view.name === "admin-seo" && <AdminSeoView />}
-      {view.name === "admin-open-schooling-leads" && <AdminOpenSchoolingLeadsView />}
-      {view.name === "admin-corporate-leads" && <AdminCorporateLeadsView />}
-      {view.name === "admin-cyber-quiz-questions" && <AdminCyberQuizQuestionsView />}
-      {view.name === "admin-cyber-quiz-attempts" && <AdminCyberQuizAttemptsView />}
-      {view.name === "admin-cyber-quiz-certs" && <AdminCyberQuizCertsView />}
-      {view.name === "admin-platform-stats" && <AdminPlatformStatsView />}
-      {view.name === "admin-settings" && <AdminSettingsView />}
+      {view.name === "admin-seo" && <RoleGate allow={ROLES_ADMIN} area="SEO Optimization"><AdminSeoView /></RoleGate>}
+      {view.name === "admin-open-schooling-leads" && <RoleGate allow={ROLES_ADMIN} area="Open Schooling Leads"><AdminOpenSchoolingLeadsView /></RoleGate>}
+      {view.name === "admin-corporate-leads" && <RoleGate allow={ROLES_ADMIN} area="Corporate Training Leads"><AdminCorporateLeadsView /></RoleGate>}
+      {view.name === "admin-cyber-quiz-questions" && <RoleGate allow={ROLES_ADMIN} area="Quiz Questions"><AdminCyberQuizQuestionsView /></RoleGate>}
+      {view.name === "admin-cyber-quiz-attempts" && <RoleGate allow={ROLES_ADMIN} area="Quiz Attempts"><AdminCyberQuizAttemptsView /></RoleGate>}
+      {view.name === "admin-cyber-quiz-certs" && <RoleGate allow={ROLES_ADMIN} area="Quiz Certificates"><AdminCyberQuizCertsView /></RoleGate>}
+      {view.name === "admin-platform-stats" && <RoleGate allow={ROLES_ADMIN} area="Platform Stats"><AdminPlatformStatsView /></RoleGate>}
+      {view.name === "admin-settings" && <RoleGate allow={ROLES_ADMIN} area="Platform Settings"><AdminSettingsView /></RoleGate>}
       {view.name === "course" && <CourseDetailView />}
       {view.name === "lesson" && <LessonView />}
       {view.name === "learning" && <MyLearningView />}
@@ -202,9 +213,9 @@ export function ViewRouter() {
       {view.name === "certificates" && <CertificatesView />}
       {view.name === "achievements" && <AchievementsView />}
       {view.name === "leaderboard" && <LeaderboardView />}
-      {view.name === "instructor" && <InstructorDashboardView />}
+      {view.name === "instructor" && <RoleGate allow={ROLES_INSTRUCTOR} area="Instructor Dashboard"><InstructorDashboardView /></RoleGate>}
       {view.name === "school" && <SchoolDashboardView />}
-      {view.name === "admin" && <AdminDashboardView />}
+      {view.name === "admin" && <RoleGate allow={ROLES_ADMIN} area="Admin Console"><AdminDashboardView /></RoleGate>}
       {view.name === "community" && <CommunityView />}
       {view.name === "profile" && <ProfileView />}
       {view.name === "assignments" && <AssignmentsView />}
@@ -232,8 +243,8 @@ export function ViewRouter() {
       {view.name === "skill-tree" && <SkillTreeView />}
       {view.name === "bug-bounty" && <BugBountyView />}
       {view.name === "parent-portal" && <ParentPortalView />}
-      {view.name === "course-studio" && <CourseStudioView />}
-      {view.name === "cms" && <CMSDashboardView />}
+      {view.name === "course-studio" && <RoleGate allow={ROLES_INSTRUCTOR} area="Course Studio"><CourseStudioView /></RoleGate>}
+      {view.name === "cms" && <RoleGate allow={ROLES_ADMIN} area="Content Studio CMS"><CMSDashboardView /></RoleGate>}
       {/* Exam platform */}
       {view.name === "exam-detail" && <ExamDetailView />}
     </div>

@@ -28,6 +28,7 @@ import { ErrorBoundary } from "@/components/platform/error-boundary"
 import { ViewRouter } from "@/components/platform/view-router"
 import { useAppStore, type View } from "@/store/app-store"
 import { hashToView, replaceViewInUrl, pathToView, PUBLIC_VIEWS } from "@/lib/url-router"
+import { roleHomeFor } from "@/lib/nav-data"
 import { startIdlePreload, attachIntentPrefetch } from "@/lib/view-preloader"
 
 export function AppRoot({ initialView }: { initialView?: View }) {
@@ -212,16 +213,18 @@ export function AppRoot({ initialView }: { initialView?: View }) {
   }
 
   // Logged in: if user explicitly navigates to a public view, show it with public shell
-  // BUT: if the view is still the default "home" and the user just logged in,
-  // redirect to their role-appropriate dashboard instead.
-  if (session && view.name === "home") {
-    // Auto-redirect to role dashboard on first load after login
+  // BUT: role separation — if the view is still the default "home", or a staff
+  // member somehow landed on the student "dashboard", redirect to their
+  // role-appropriate dashboard. (Reverse cases — e.g. a student opening an
+  // admin view — are handled by RoleGate panels in the ViewRouter.)
+  if (session) {
     const role = (session as any)?.user?.role
-    const targetView: string = role === "ADMIN" ? "admin" : role === "INSTRUCTOR" ? "instructor" : "dashboard"
-    if ((view.name as string) !== targetView) {
+    const roleHome: string = roleHomeFor(role)
+    const strayStudentDashboard = view.name === "dashboard" && roleHome !== "dashboard"
+    if ((view.name === "home" || strayStudentDashboard) && (view.name as string) !== roleHome) {
       // Use a microtask to avoid setState during render
       Promise.resolve().then(() => {
-        useAppStore.getState().navigate({ name: targetView as any })
+        useAppStore.getState().navigate({ name: roleHome as any })
       })
     }
   }
