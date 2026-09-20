@@ -586,7 +586,7 @@ export function CertLandingView({ certSlug }: CertLandingViewProps) {
                     </span>
                     <span className="flex items-center gap-1.5">
                       <Star className="h-3 w-3 text-amber-300" />
-                      {c.rating.toFixed(1)}
+                      {c.rating != null ? Number(c.rating).toFixed(1) : "—"}
                     </span>
                     <span className="flex items-center gap-1.5">
                       <Users className="h-3 w-3" />

@@ -16,7 +16,7 @@ export async function GET(
   })
   if (!slot) return NextResponse.json({ error: "Slot not found" }, { status: 404 })
 
-  if (slot.instructorId !== user.id && user.role !== "ADMIN") {
+  if (slot.instructorId !== user.id && !(user.role === "ADMIN" || user.role === "SUPER_ADMIN")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   }
 

@@ -152,7 +152,10 @@ export function CMSDashboardView() {
     )
   }
 
-  if (!user || user.role !== "ADMIN") {
+  // ADMIN_EMAILS bootstrap promotes platform owners to SUPER_ADMIN — the
+  // gate must accept both roles or the Content Studio locks the actual
+  // admin out ("Admin access required" shown to the super-admin).
+  if (!user || (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN")) {
     return <AccessDenied />
   }
 

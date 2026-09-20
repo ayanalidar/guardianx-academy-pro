@@ -70,7 +70,7 @@ export async function PATCH(
   const { id } = await params
   const group = await db.studyGroup.findUnique({ where: { id } })
   if (!group) return NextResponse.json({ error: "Group not found" }, { status: 404 })
-  if (group.creatorId !== user.id && user.role !== "ADMIN") {
+  if (group.creatorId !== user.id && !(user.role === "ADMIN" || user.role === "SUPER_ADMIN")) {
     return NextResponse.json({ error: "Only the owner can update this group" }, { status: 403 })
   }
 
@@ -125,7 +125,7 @@ export async function DELETE(
     select: { id: true, creatorId: true, title: true },
   })
   if (!group) return NextResponse.json({ error: "Group not found" }, { status: 404 })
-  if (group.creatorId !== user.id && user.role !== "ADMIN") {
+  if (group.creatorId !== user.id && !(user.role === "ADMIN" || user.role === "SUPER_ADMIN")) {
     return NextResponse.json({ error: "Only the owner can delete this group" }, { status: 403 })
   }
 

@@ -27,7 +27,7 @@ export async function POST(req: NextRequest) {
     })
     if (!batch) return NextResponse.json({ error: "Batch not found" }, { status: 404 })
     const schoolAdmin = await db.user.findUnique({ where: { id: user.id }, select: { schoolId: true, role: true } })
-    if (user.role !== "ADMIN" && schoolAdmin?.schoolId !== batch.school.id) {
+    if (!(user.role === "ADMIN" || user.role === "SUPER_ADMIN") && schoolAdmin?.schoolId !== batch.school.id) {
       return NextResponse.json({ error: "Not your batch" }, { status: 403 })
     }
     recipientUserIds = batch.members.map((s) => s.userId)

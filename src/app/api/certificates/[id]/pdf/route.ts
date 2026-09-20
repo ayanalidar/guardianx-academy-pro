@@ -22,7 +22,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   })
 
   if (!cert) return NextResponse.json({ error: "Certificate not found" }, { status: 404 })
-  if (cert.userId !== user.id && user.role !== "ADMIN") {
+  if (cert.userId !== user.id && !(user.role === "ADMIN" || user.role === "SUPER_ADMIN")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   }
 

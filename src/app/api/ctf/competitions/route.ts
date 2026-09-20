@@ -151,7 +151,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser()
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (user.role !== "ADMIN" && user.role !== "INSTRUCTOR") {
+  if (!(user.role === "ADMIN" || user.role === "SUPER_ADMIN" || user.role === "INSTRUCTOR")) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   }
 

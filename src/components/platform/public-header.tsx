@@ -264,7 +264,7 @@ export function PublicHeader() {
     return () => { cancelled = true; window.removeEventListener("guardianx-session-changed", check) }
   }, [])
 
-  const dashboardView: View = sessionUser?.role === "ADMIN"
+  const dashboardView: View = (sessionUser?.role === "ADMIN" || sessionUser?.role === "SUPER_ADMIN")
     ? { name: "admin" }
     : sessionUser?.role === "INSTRUCTOR"
       ? { name: "instructor" }

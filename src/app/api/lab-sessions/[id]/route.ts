@@ -8,7 +8,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
   const { id } = await params
   const session = await db.labSession.findUnique({ where: { id } })
   if (!session) return NextResponse.json({ error: "Session not found" }, { status: 404 })
-  if (session.userId !== user.id && user.role !== "ADMIN") return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  if (session.userId !== user.id && !(user.role === "ADMIN" || user.role === "SUPER_ADMIN")) return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   await db.labSession.update({ where: { id }, data: { status: "stopped", endedAt: new Date() } })
   return NextResponse.json({ success: true })
 }

@@ -347,7 +347,7 @@ export function ProfileView() {
   }
 
   const role = user.role ?? "STUDENT"
-  const isAdmin = role === "ADMIN"
+  const isAdmin = role === "ADMIN" || role === "SUPER_ADMIN"
   const isInstructor = role === "INSTRUCTOR"
   const isStudentLike = role === "STUDENT" || role === "SCHOOL_ADMIN"
 

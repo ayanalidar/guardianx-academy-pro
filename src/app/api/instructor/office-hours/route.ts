@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
   if (courseId) {
     const course = await db.course.findUnique({ where: { id: courseId } })
     if (!course) return NextResponse.json({ error: "Course not found" }, { status: 404 })
-    if (course.instructorId !== user.id && user.role !== "ADMIN") {
+    if (course.instructorId !== user.id && !(user.role === "ADMIN" || user.role === "SUPER_ADMIN")) {
       return NextResponse.json({ error: "Course not owned by you" }, { status: 403 })
     }
   }

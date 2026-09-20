@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentUser, rateLimit } from "@/lib/session"
-import ZAI from "z-ai-web-dev-sdk"
+import { getChatClient } from "@/lib/zai"
 
 export const runtime = "nodejs"
 export const maxDuration = 300
@@ -50,7 +50,12 @@ export async function POST(req: NextRequest) {
   const skills = JSON.parse(cert.skills || "[]")
 
   try {
-    const zai = await ZAI.create()
+    const zai = await getChatClient()
+    if (!zai) {
+      return NextResponse.json({
+        error: "AI service is not configured on this deployment. Set ZAI_BASE_URL and ZAI_API_KEY in the deployment environment variables (Vercel → Settings → Environment Variables), then redeploy.",
+      }, { status: 503 })
+    }
 
     // ============================================================
     // AGENT 1: Curriculum Designer
@@ -245,6 +250,12 @@ Return as JSON: {"covers_all": true/false, "assessment": "...", "missing_domains
 
   } catch (err: any) {
     console.error("[AI Course Generator] Error:", err)
-    return NextResponse.json({ error: "Course generation failed: " + (err.message || "Unknown error") }, { status: 500 })
+    const msg = String(err?.message || "Unknown error")
+    const isConfig = msg.includes("Configuration file") || msg.includes("not configured")
+    return NextResponse.json({
+      error: isConfig
+        ? "AI service is not configured on this deployment. Set ZAI_BASE_URL and ZAI_API_KEY in the deployment environment variables, then redeploy. (The Course Studio's AI Architect works without it — it falls back to the built-in GuardianX knowledge generator.)"
+        : "Course generation failed: " + msg,
+    }, { status: isConfig ? 503 : 500 })
   }
 }

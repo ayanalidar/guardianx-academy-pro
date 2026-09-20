@@ -153,10 +153,11 @@ export function BlueprintDialog({
     setError(null)
     setResult(null)
     try {
-      const res = await api<{ ok: boolean; blueprint: Record<string, any> }>("/api/ai/course-architect", {
+      const res = await api<{ ok: boolean; blueprint: Record<string, any>; source?: string; warning?: string }>("/api/ai/course-architect", {
         method: "POST",
         body: JSON.stringify({ action: "blueprint", courseId: course.id }),
       })
+      if (res.warning) toast.info(res.warning, { duration: 8000 })
       const bp = res.blueprint || {}
       const normalized: Record<string, string> = {}
       for (const f of BLUEPRINT_FIELDS) {
@@ -324,7 +325,7 @@ export function CurriculumDialog({
     setStage("loading")
     setError(null)
     try {
-      const res = await api<{ ok: boolean; modules: PlannedModule[] }>("/api/ai/course-architect", {
+      const res = await api<{ ok: boolean; modules: PlannedModule[]; source?: string; warning?: string }>("/api/ai/course-architect", {
         method: "POST",
         body: JSON.stringify({
           action: "curriculum",
@@ -334,6 +335,7 @@ export function CurriculumDialog({
           focusNotes,
         }),
       })
+      if (res.warning) toast.info(res.warning, { duration: 8000 })
       setModules(res.modules || [])
       setSelected(new Set((res.modules || []).map((_, i) => i)))
       setExpanded(new Set([0]))

@@ -110,7 +110,7 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
     <nav className="space-y-1">
       {/* Role-based nav items */}
       {items.map(item => {
-        if (role === "ADMIN") return renderItem(item, "amber")
+        if (role === "ADMIN" || role === "SUPER_ADMIN") return renderItem(item, "amber")
         if (role === "INSTRUCTOR") return renderItem(item, "cyan")
         return renderItem(item, "emerald")
       })}

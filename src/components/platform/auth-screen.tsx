@@ -202,7 +202,7 @@ export function AuthScreen() {
             navigate({ name: "school" })
           } else if (role === "INSTRUCTOR") {
             navigate({ name: "instructor" })
-          } else if (role === "ADMIN") {
+          } else if (role === "ADMIN" || role === "SUPER_ADMIN") {
             navigate({ name: "admin" })
           } else {
             navigate({ name: "dashboard" })
@@ -219,7 +219,7 @@ export function AuthScreen() {
       const r = await fetch("/api/auth/session", { credentials: "include" })
       const data = await r.json()
       const role = data?.user?.role
-      if (role === "ADMIN") navigate({ name: "admin" })
+      if (role === "ADMIN" || role === "SUPER_ADMIN") navigate({ name: "admin" })
       else if (role === "INSTRUCTOR") navigate({ name: "instructor" })
       else if (role === "SCHOOL_ADMIN") navigate({ name: "school" })
       else if (role) navigate({ name: "dashboard" })

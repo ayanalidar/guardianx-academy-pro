@@ -21,7 +21,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   })
   if (!submission) return NextResponse.json({ error: "Submission not found" }, { status: 404 })
 
-  if (user.role !== "ADMIN" && submission.assignment.instructorId !== user.id) {
+  if (!(user.role === "ADMIN" || user.role === "SUPER_ADMIN") && submission.assignment.instructorId !== user.id) {
     return NextResponse.json({ error: "Not your assignment" }, { status: 403 })
   }
 

@@ -111,7 +111,7 @@ type TierFilterValue = "all" | "platinum" | "gold" | "silver" | "bronze" | "earn
 export function AchievementsView() {
   const { navigate } = useAppStore()
   const { user } = useUser()
-  const isAdmin = user?.role === "ADMIN"
+  const isAdmin = user?.role === "ADMIN" || user?.role === "SUPER_ADMIN"
 
   const [tierFilter, setTierFilter] = React.useState<TierFilterValue>("all")
 

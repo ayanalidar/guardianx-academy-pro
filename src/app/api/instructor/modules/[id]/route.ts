@@ -13,7 +13,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     include: { course: { select: { instructorId: true } } },
   })
   if (!moduleData) return NextResponse.json({ error: "Module not found" }, { status: 404 })
-  if (user.role !== "ADMIN" && moduleData.course.instructorId !== user.id) {
+  if (!(user.role === "ADMIN" || user.role === "SUPER_ADMIN") && moduleData.course.instructorId !== user.id) {
     return NextResponse.json({ error: "Not your course" }, { status: 403 })
   }
 
@@ -40,7 +40,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
     include: { course: { select: { instructorId: true } } },
   })
   if (!moduleData) return NextResponse.json({ error: "Module not found" }, { status: 404 })
-  if (user.role !== "ADMIN" && moduleData.course.instructorId !== user.id) {
+  if (!(user.role === "ADMIN" || user.role === "SUPER_ADMIN") && moduleData.course.instructorId !== user.id) {
     return NextResponse.json({ error: "Not your course" }, { status: 403 })
   }
 

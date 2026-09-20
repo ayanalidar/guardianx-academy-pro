@@ -46,7 +46,7 @@ import {
   Star, Filter, Link as LinkIcon, ClipboardList, User, Award,
   Zap, Briefcase, GraduationCap, Trophy, Layout as LayoutIcon,
   ListFilter, ArrowRight,
-  Download, Check, Linkedin, Loader2, Trash2, Video,
+  Download, Check, Linkedin, Loader2, Trash2, Video, Upload,
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -140,6 +140,7 @@ export function LeadCrmView() {
   const [sourceFilter, setSourceFilter] = React.useState("all")
   const [selectedLeadId, setSelectedLeadId] = React.useState<string | null>(null)
   const [addLeadOpen, setAddLeadOpen] = React.useState(false)
+  const [importOpen, setImportOpen] = React.useState(false)
   const [googleFormUrl, setGoogleFormUrl] = React.useState("")
   const [connectFormOpen, setConnectFormOpen] = React.useState(false)
 
@@ -321,6 +322,9 @@ export function LeadCrmView() {
             <Button size="sm" variant="outline" onClick={() => setView(view === "kanban" ? "table" : "kanban")}>
               {view === "kanban" ? <ListFilter className="h-3.5 w-3.5 mr-1.5" /> : <LayoutIcon className="h-3.5 w-3.5 mr-1.5" />}
               {view === "kanban" ? "Table View" : "Kanban View"}
+            </Button>
+            <Button size="sm" variant="outline" onClick={() => setImportOpen(true)}>
+              <Upload className="h-3.5 w-3.5 mr-1.5" /> Import CSV
             </Button>
             <Button size="sm" variant="outline" onClick={() => setAddLeadOpen(true)}>
               <UserPlus className="h-3.5 w-3.5 mr-1.5" /> Add Lead
@@ -542,7 +546,18 @@ export function LeadCrmView() {
                   {isLoading ? (
                     <tr><td colSpan={8} className="py-8 text-center text-muted-foreground">Loading leads...</td></tr>
                   ) : leads.length === 0 ? (
-                    <tr><td colSpan={8} className="py-8 text-center text-muted-foreground">No leads found. Contact form submissions appear here.</td></tr>
+                    <tr>
+                      <td colSpan={8} className="py-10 text-center">
+                        <p className="text-muted-foreground font-medium mb-2">No leads found.</p>
+                        <p className="text-xs text-muted-foreground/80 max-w-md mx-auto mb-4">
+                          Google Form responses sync automatically once the webhook token is set (Admin → Settings → CRM Webhook).
+                          Already have responses? Rescue them now — download the Form's responses CSV and use <span className="font-semibold text-violet-300">Import CSV</span> above.
+                        </p>
+                        <Button size="sm" variant="outline" onClick={() => setImportOpen(true)}>
+                          <Upload className="h-3.5 w-3.5 mr-1.5" /> Import existing responses
+                        </Button>
+                      </td>
+                    </tr>
                   ) : (
                     leads.map((lead) => {
                       const statusMeta = STATUS_META[lead.status as PipelineStatus] ?? STATUS_META.New
@@ -584,6 +599,7 @@ export function LeadCrmView() {
 
       {/* === ADD LEAD DIALOG === */}
       <AddLeadDialog open={addLeadOpen} onOpenChange={setAddLeadOpen} onCreate={(payload) => createLeadMutation.mutate(payload)} />
+      <CsvImportDialog open={importOpen} onOpenChange={setImportOpen} />
 
       {/* === CONNECT GOOGLE FORM DIALOG === */}
       <ConnectFormDialog open={connectFormOpen} onOpenChange={setConnectFormOpen} initialUrl={googleFormUrl} onSave={handleSaveGoogleFormUrl} />
@@ -1020,6 +1036,120 @@ function AddLeadDialog({
           <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
           <Button onClick={handleCreate} className="bg-violet-600 hover:bg-violet-500">
             <Plus className="h-3.5 w-3.5 mr-1.5" /> Create Lead
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+/* ============================================================
+   CsvImportDialog — rescue leads collected before the webhook.
+   Google Form → Responses → ⋮ → Download responses (.csv), then
+   drop the file (or paste its content) here. Rows are upserted
+   by email; the requirement/message lands as the first note.
+   ============================================================ */
+function CsvImportDialog({
+  open,
+  onOpenChange,
+}: {
+  open: boolean
+  onOpenChange: (o: boolean) => void
+}) {
+  const queryClient = useQueryClient()
+  const [csvText, setCsvText] = React.useState("")
+  const [fileName, setFileName] = React.useState("")
+  const [busy, setBusy] = React.useState(false)
+  const [result, setResult] = React.useState<{ created: number; updated: number; skipped: number; errors: string[] } | null>(null)
+
+  const reset = () => { setCsvText(""); setFileName(""); setResult(null) }
+
+  const handleFile = async (file: File | undefined) => {
+    if (!file) return
+    setFileName(file.name)
+    const text = await file.text()
+    setCsvText(text)
+    setResult(null)
+  }
+
+  const doImport = async () => {
+    if (!csvText.trim()) { toast.error("Paste CSV content or choose a file first"); return }
+    setBusy(true)
+    setResult(null)
+    try {
+      const res = await fetch("/api/admin/leads/import", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ csv: csvText, source: "Google Form" }),
+      })
+      const j = await res.json()
+      if (!res.ok) throw new Error(j.error || `Import failed (HTTP ${res.status})`)
+      setResult({ created: j.created ?? 0, updated: j.updated ?? 0, skipped: j.skipped ?? 0, errors: j.errors ?? [] })
+      toast.success(`Imported ${j.created ?? 0} new leads${j.updated ? `, updated ${j.updated}` : ""}`)
+      queryClient.invalidateQueries({ queryKey: ["admin-leads"] })
+    } catch (e: any) {
+      toast.error(e?.message || "Import failed")
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={(o) => { onOpenChange(o); if (!o) reset() }}>
+      <DialogContent className="bg-card border-border/60 max-w-xl">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <Upload className="h-4 w-4 text-violet-300" /> Import Leads from CSV
+          </DialogTitle>
+        </DialogHeader>
+        <div className="space-y-4">
+          <div className="rounded-lg border border-violet-500/20 bg-violet-500/5 p-3 text-xs text-muted-foreground space-y-1">
+            <p className="font-medium text-violet-200">Rescue your existing Google Form responses:</p>
+            <p><span className="text-violet-300 font-semibold">1.</span> Open your Form → <span className="font-semibold">Responses</span> tab → link the Sheets icon or ⋮ menu</p>
+            <p><span className="text-violet-300 font-semibold">2.</span> Download responses as <span className="font-mono text-[10px]">.csv</span></p>
+            <p><span className="text-violet-300 font-semibold">3.</span> Drop the file below — columns are auto-detected (Name, Email, Phone, Organization, Type, Requirement, Message). Rows with a matching email are updated, not duplicated.</p>
+          </div>
+
+          <div>
+            <Label className="text-xs">Response file (.csv)</Label>
+            <Input
+              type="file"
+              accept=".csv,text/csv,text/plain"
+              onChange={(e) => handleFile(e.target.files?.[0])}
+              className="text-xs file:mr-3 file:text-xs"
+            />
+            {fileName && <p className="text-[10px] text-muted-foreground mt-1">Loaded: {fileName}</p>}
+          </div>
+
+          <div>
+            <Label className="text-xs">…or paste CSV content</Label>
+            <Textarea
+              value={csvText}
+              onChange={(e) => { setCsvText(e.target.value); setResult(null) }}
+              placeholder={"Timestamp,Name,Email,Phone,Organization,Type,Requirement\n2025-11-02 10:14:33,Aarav Sharma,aarav@example.com,+91 98xxx,AzPublic School,School,Cybersecurity workshop for students"}
+              className="font-mono text-[11px] min-h-32"
+            />
+          </div>
+
+          {result && (
+            <div className="rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3 text-xs space-y-1">
+              <p className="text-emerald-200 font-medium flex items-center gap-1.5">
+                <CheckCircle2 className="h-3.5 w-3.5" /> {result.created} created · {result.updated} updated
+                {result.skipped > 0 && ` · ${result.skipped} skipped`}
+              </p>
+              {result.errors.length > 0 && (
+                <div className="text-rose-300/90 space-y-0.5">
+                  {result.errors.map((err, i) => <p key={i} className="text-[10px]">{err}</p>)}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+        <DialogFooter>
+          <DialogClose asChild><Button variant="outline">Close</Button></DialogClose>
+          <Button onClick={doImport} disabled={busy || !csvText.trim()} className="bg-violet-600 hover:bg-violet-500">
+            {busy ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Upload className="h-3.5 w-3.5 mr-1.5" />}
+            Import Leads
           </Button>
         </DialogFooter>
       </DialogContent>

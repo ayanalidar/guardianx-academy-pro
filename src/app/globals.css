@@ -1152,8 +1152,13 @@ html:not(.gx-hydrated) [style*="opacity: 0"] {
   width: 68%;
   max-width: 620px;
   aspect-ratio: 1;
-  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ffffff' stroke-width='1'%3E%3Cpath d='M12 2l8 3.2v6.1c0 4.9-3.4 9.4-8 10.7-4.6-1.3-8-5.8-8-10.7V5.2L12 2z'/%3E%3Cpath d='M8.6 11.8l2.3 2.3 4.5-4.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
-  opacity: 0.05;
+  /* The REAL GuardianX GX-shield logo (public/guardianx-logo-v2.png), alpha-
+     masked and tinted white so it ghosts as a brand watermark on dark paper.
+     (Was a generic lucide shield+check SVG — looked like a placeholder.) */
+  background-color: rgba(255, 255, 255, 0.92);
+  -webkit-mask: url("/guardianx-logo-v2.png") center / contain no-repeat;
+  mask: url("/guardianx-logo-v2.png") center / contain no-repeat;
+  opacity: 0.06;
 }
 
 /* Calligraphic recipient name (certificate hero) */

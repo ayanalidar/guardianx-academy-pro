@@ -9,7 +9,7 @@ async function loadOwnedRubric(id: string, user: { id: string; role: string }) {
     select: { id: true, createdBy: true },
   })
   if (!rubric) return null
-  if (user.role !== "ADMIN" && rubric.createdBy !== user.id) {
+  if (!(user.role === "ADMIN" || user.role === "SUPER_ADMIN") && rubric.createdBy !== user.id) {
     return { forbidden: true } as const
   }
   return rubric
@@ -69,7 +69,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   if (courseId !== undefined && courseId) {
     const course = await db.course.findUnique({ where: { id: courseId }, select: { instructorId: true } })
     if (!course) return NextResponse.json({ error: "Course not found" }, { status: 404 })
-    if (user.role !== "ADMIN" && course.instructorId !== user.id) {
+    if (!(user.role === "ADMIN" || user.role === "SUPER_ADMIN") && course.instructorId !== user.id) {
       return NextResponse.json({ error: "Not your course" }, { status: 403 })
     }
   }

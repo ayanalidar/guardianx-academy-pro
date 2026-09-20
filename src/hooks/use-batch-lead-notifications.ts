@@ -14,7 +14,7 @@ import { useUser } from "@/hooks/use-user"
  */
 export function useBatchLeadNotifications() {
   const { user } = useUser()
-  const isAdmin = user?.role === "ADMIN"
+  const isAdmin = user?.role === "ADMIN" || user?.role === "SUPER_ADMIN"
 
   // Track the last seen lead timestamp
   const lastSeenRef = useRef<string | null>(null)

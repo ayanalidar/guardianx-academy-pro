@@ -9,7 +9,7 @@ async function loadOwnedAssignment(id: string, user: { id: string; role: string 
     include: { course: { select: { instructorId: true, id: true, title: true } } },
   })
   if (!assignment) return null
-  if (user.role !== "ADMIN" && assignment.instructorId !== user.id) {
+  if (!(user.role === "ADMIN" || user.role === "SUPER_ADMIN") && assignment.instructorId !== user.id) {
     return { forbidden: true } as const
   }
   return assignment

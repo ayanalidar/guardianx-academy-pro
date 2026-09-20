@@ -13,7 +13,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     select: { id: true, title: true, instructorId: true, courseId: true, pointsPossible: true, dueDate: true },
   })
   if (!assignment) return NextResponse.json({ error: "Assignment not found" }, { status: 404 })
-  if (user.role !== "ADMIN" && assignment.instructorId !== user.id) {
+  if (!(user.role === "ADMIN" || user.role === "SUPER_ADMIN") && assignment.instructorId !== user.id) {
     return NextResponse.json({ error: "Not your assignment" }, { status: 403 })
   }
 

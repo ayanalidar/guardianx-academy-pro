@@ -48,11 +48,31 @@ function setupTriggers() {
   Logger.log("Trigger set up successfully! Form responses will now sync to GuardianX CRM.");
 }
 
-function onFormSubmit(e) {
+/**
+ * BACKFILL — run this ONCE to sync ALL existing form responses
+ * (Apps Script triggers only fire on NEW submissions, so responses
+ * collected before setup never reach the CRM). Run it from the
+ * Apps Script editor: select backfillAllResponses → Run.
+ */
+function backfillAllResponses() {
+  var form = FormApp.getActiveForm();
+  var responses = form.getResponses();
+  var sent = 0, failed = 0;
+
+  for (var i = 0; i < responses.length; i++) {
+    var ok = submitResponse_(responses[i]);
+    if (ok) sent++; else failed++;
+    // Small delay so we never hammer the webhook / trip its rate limit.
+    Utilities.sleep(300);
+  }
+  Logger.log("Backfill complete: " + sent + " synced, " + failed + " failed of " + responses.length + " total responses.");
+}
+
+/** Shared submit used by both the live trigger and the backfill. */
+function submitResponse_(response) {
   try {
-    var response = e.response;
     var itemResponses = response.getItemResponses();
-    
+
     var lead = {
       name: "",
       email: "",
@@ -62,12 +82,11 @@ function onFormSubmit(e) {
       requirement: "",
       message: ""
     };
-    
-    // Map form responses to lead fields
+
     itemResponses.forEach(function(itemResponse) {
       var question = itemResponse.getItem().getTitle().toLowerCase();
       var answer = itemResponse.getResponse();
-      
+
       if (question.indexOf("name") !== -1) {
         lead.name = answer;
       } else if (question.indexOf("email") !== -1) {
@@ -84,9 +103,7 @@ function onFormSubmit(e) {
         lead.message = answer;
       }
     });
-    
-    // Send to GuardianX webhook
-    // Add batch info if set
+
     if (BATCH_NAME) {
       lead.batchName = BATCH_NAME;
       lead.certification = BATCH_CERT;
@@ -100,26 +117,35 @@ function onFormSubmit(e) {
       formId: FormApp.getActiveForm().getId(),
       lead: lead
     };
-    
+
     var options = {
       method: "post",
       contentType: "application/json",
       payload: JSON.stringify(payload),
       muteHttpExceptions: true
     };
-    
+
     var response = UrlFetchApp.fetch(WEBHOOK_URL, options);
     var responseCode = response.getResponseCode();
     var responseText = response.getContentText();
-    
+
     if (responseCode === 200 || responseCode === 201) {
       Logger.log("Lead synced successfully: " + lead.name + " (" + lead.email + ")");
+      return true;
     } else {
       Logger.log("Webhook failed. Code: " + responseCode + ", Response: " + responseText);
+      return false;
     }
-    
+
   } catch (error) {
     Logger.log("Error in onFormSubmit: " + error.toString());
+    return false;
+  }
+}
+
+function onFormSubmit(e) {
+  if (e && e.response) {
+    submitResponse_(e.response);
   }
 }
 

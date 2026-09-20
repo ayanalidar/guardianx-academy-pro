@@ -10,7 +10,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
   const course = await db.course.findUnique({ where: { id }, select: { instructorId: true } })
   if (!course) return NextResponse.json({ error: "Course not found" }, { status: 404 })
-  if (user.role !== "ADMIN" && course.instructorId !== user.id) {
+  if (!(user.role === "ADMIN" || user.role === "SUPER_ADMIN") && course.instructorId !== user.id) {
     return NextResponse.json({ error: "Not your course" }, { status: 403 })
   }
 

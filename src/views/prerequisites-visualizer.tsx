@@ -357,7 +357,7 @@ export function PrerequisitesVisualizerView() {
                       <div className="rounded-md bg-muted/30 px-3 py-2">
                         <div className="text-[10px] text-muted-foreground">Rating</div>
                         <div className="font-medium flex items-center gap-1">
-                          <Star className="h-3 w-3 text-amber-300" />{selectedNode.rating.toFixed(1)}
+                          <Star className="h-3 w-3 text-amber-300" />{selectedNode.rating != null ? Number(selectedNode.rating).toFixed(1) : "—"}
                         </div>
                       </div>
                     </div>

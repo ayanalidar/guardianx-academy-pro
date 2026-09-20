@@ -12,7 +12,7 @@ async function getOwnedCourse(courseId: string, user: { id: string; role: string
     select: { id: true, title: true, shortName: true, instructorId: true },
   })
   if (!course) return { error: NextResponse.json({ error: "Course not found" }, { status: 404 }) }
-  if (user.role !== "ADMIN" && course.instructorId !== user.id) {
+  if (!(user.role === "ADMIN" || user.role === "SUPER_ADMIN") && course.instructorId !== user.id) {
     return { error: NextResponse.json({ error: "Forbidden" }, { status: 403 }) }
   }
   return { course }

@@ -15,7 +15,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     select: { id: true, instructorId: true },
   })
   if (!course) return NextResponse.json({ error: "Course not found" }, { status: 404 })
-  if (user.role !== "ADMIN" && course.instructorId !== user.id) {
+  if (!(user.role === "ADMIN" || user.role === "SUPER_ADMIN") && course.instructorId !== user.id) {
     return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   }
 

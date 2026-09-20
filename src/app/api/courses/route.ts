@@ -155,7 +155,7 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
       category: c.category,
       level: c.level,
       durationHours: c.durationHours ?? 0,
-      price: c.price,
+      price: c.price ?? 0,
       rating: c.rating ?? null,
       studentsCount: c.studentsCount ?? 0,
       color: c.color ?? "violet",

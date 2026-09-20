@@ -10,7 +10,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 
   const lesson = await db.lesson.findUnique({ where: { id }, include: { module: { include: { course: { select: { instructorId: true } } } } } })
   if (!lesson) return NextResponse.json({ error: "Lesson not found" }, { status: 404 })
-  if (user.role !== "ADMIN" && lesson.module.course.instructorId !== user.id) {
+  if (!(user.role === "ADMIN" || user.role === "SUPER_ADMIN") && lesson.module.course.instructorId !== user.id) {
     return NextResponse.json({ error: "Not your course" }, { status: 403 })
   }
 
@@ -38,7 +38,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
 
   const lesson = await db.lesson.findUnique({ where: { id }, include: { module: { include: { course: { select: { instructorId: true } } } } } })
   if (!lesson) return NextResponse.json({ error: "Lesson not found" }, { status: 404 })
-  if (user.role !== "ADMIN" && lesson.module.course.instructorId !== user.id) {
+  if (!(user.role === "ADMIN" || user.role === "SUPER_ADMIN") && lesson.module.course.instructorId !== user.id) {
     return NextResponse.json({ error: "Not your course" }, { status: 403 })
   }
 

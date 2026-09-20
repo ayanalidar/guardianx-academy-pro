@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentUser, rateLimit } from "@/lib/session"
 import { domainKnowledgeBlock, domainCatalog } from "@/lib/cyber-knowledge"
-import ZAI from "z-ai-web-dev-sdk"
+import { getChatClient } from "@/lib/zai"
+import { localBlueprint, localCurriculum, localLesson } from "@/lib/ai-fallback"
 
 export const runtime = "nodejs"
 export const maxDuration = 300
@@ -219,6 +220,43 @@ async function loadCourseForUser(courseId: string, user: { id: string; role: str
 // Handler
 // ---------------------------------------------------------------------------
 
+/**
+ * Run an LLM action with built-in fallback.
+ *
+ * Guarantees the Studio NEVER gets a mystery 500: if the AI service is not
+ * configured (Vercel without ZAI_BASE_URL/ZAI_API_KEY) or the call fails,
+ * the built-in GuardianX knowledge generator produces the same response
+ * shape deterministically, flagged `source: "built-in"`.
+ */
+async function withFallback<T>(
+  run: (client: ChatClientLike) => Promise<T>,
+  fallback: () => T,
+): Promise<{ result: T; source: "llm" | "built-in"; warning?: string }> {
+  const client = await getChatClient()
+  if (client) {
+    try {
+      return { result: await run(client), source: "llm" }
+    } catch (e: any) {
+      console.error("[course-architect] LLM call failed, using built-in generator:", e?.message)
+      return {
+        result: fallback(),
+        source: "built-in",
+        warning: `AI service unavailable (${String(e?.message || e).slice(0, 140)}) — generated from the built-in GuardianX knowledge base instead.`,
+      }
+    }
+  }
+  return {
+    result: fallback(),
+    source: "built-in",
+    warning:
+      "Generated from the built-in GuardianX knowledge base. For full LLM-grade generation, set ZAI_BASE_URL and ZAI_API_KEY in the deployment environment.",
+  }
+}
+
+interface ChatClientLike {
+  chat: { completions: { create: (body: any) => Promise<any> } }
+}
+
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser()
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -239,17 +277,19 @@ export async function POST(req: NextRequest) {
   // --------------------------- blueprint ---------------------------
   if (action === "blueprint") {
     const ctx: CourseContext = course
-    const zai = await ZAI.create()
-    const res = await zai.chat.completions.create({
-      messages: [{ role: "user", content: blueprintPrompt(ctx) }],
-      thinking: { type: "disabled" },
-    })
-    try {
-      const data = extractJson(res.choices[0]?.message?.content || "")
-      return NextResponse.json({ ok: true, blueprint: data })
-    } catch (e: any) {
-      return NextResponse.json({ error: "Architect returned malformed JSON: " + e.message }, { status: 502 })
-    }
+    const { result, source, warning } = await withFallback(
+      async (client) => {
+        const res = await client.chat.completions.create({
+          messages: [{ role: "user", content: blueprintPrompt(ctx) }],
+          thinking: { type: "disabled" },
+        })
+        const data = extractJson(res.choices[0]?.message?.content || "")
+        if (!data || typeof data !== "object") throw new Error("empty blueprint response")
+        return data
+      },
+      () => localBlueprint(ctx),
+    )
+    return NextResponse.json({ ok: true, blueprint: result, source, ...(warning ? { warning } : {}) })
   }
 
   // --------------------------- curriculum ---------------------------
@@ -258,19 +298,20 @@ export async function POST(req: NextRequest) {
     const depth = body.depth === "deep" ? "deep" : "standard"
     const focusNotes = String(body.focusNotes || "").slice(0, 2000)
     const ctx: CourseContext = course
-    const zai = await ZAI.create()
-    const res = await zai.chat.completions.create({
-      messages: [{ role: "user", content: curriculumPrompt(ctx, moduleCount, depth, focusNotes) }],
-      thinking: { type: "disabled" },
-    })
-    try {
-      const data = extractJson(res.choices[0]?.message?.content || "")
-      const modules = Array.isArray(data?.modules) ? data.modules : []
-      if (!modules.length) throw new Error("no modules in response")
-      return NextResponse.json({ ok: true, modules })
-    } catch (e: any) {
-      return NextResponse.json({ error: "Architect returned malformed JSON: " + e.message }, { status: 502 })
-    }
+    const { result, source, warning } = await withFallback(
+      async (client) => {
+        const res = await client.chat.completions.create({
+          messages: [{ role: "user", content: curriculumPrompt(ctx, moduleCount, depth, focusNotes) }],
+          thinking: { type: "disabled" },
+        })
+        const data = extractJson(res.choices[0]?.message?.content || "")
+        const modules = Array.isArray(data?.modules) ? data.modules : []
+        if (!modules.length) throw new Error("no modules in response")
+        return { modules }
+      },
+      () => localCurriculum({ ...ctx, moduleCount, depth, focusNotes }),
+    )
+    return NextResponse.json({ ok: true, modules: result.modules, source, ...(warning ? { warning } : {}) })
   }
 
   // --------------------------- lesson deep-dive ---------------------------
@@ -285,29 +326,28 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Lesson not found in this course" }, { status: 404 })
     }
     const ctx: CourseContext = course
-    const zai = await ZAI.create()
-    const res = await zai.chat.completions.create({
-      messages: [{
-        role: "user",
-        content: lessonPrompt(ctx, lesson.module.title, {
-          title: lesson.title, type: lesson.type, content: lesson.content,
-        }),
-      }],
-      thinking: { type: "disabled" },
-    })
-    try {
-      const data = extractJson(res.choices[0]?.message?.content || "")
-      return NextResponse.json({
-        ok: true,
-        lesson: {
+    const { result, source, warning } = await withFallback(
+      async (client) => {
+        const res = await client.chat.completions.create({
+          messages: [{
+            role: "user",
+            content: lessonPrompt(ctx, lesson.module.title, {
+              title: lesson.title, type: lesson.type, content: lesson.content,
+            }),
+          }],
+          thinking: { type: "disabled" },
+        })
+        const data = extractJson(res.choices[0]?.message?.content || "")
+        if (!data?.content) throw new Error("empty lesson response")
+        return {
           title: String(data.title || lesson.title),
           durationMin: Math.max(1, parseInt(data.durationMin, 10) || lesson.durationMin),
           content: String(data.content || ""),
-        },
-      })
-    } catch (e: any) {
-      return NextResponse.json({ error: "Architect returned malformed JSON: " + e.message }, { status: 502 })
-    }
+        }
+      },
+      () => localLesson({ title: ctx.title, category: ctx.category, lesson: { title: lesson.title, type: lesson.type, content: lesson.content } }),
+    )
+    return NextResponse.json({ ok: true, lesson: result, source, ...(warning ? { warning } : {}) })
   }
 
   // --------------------------- apply curriculum ---------------------------

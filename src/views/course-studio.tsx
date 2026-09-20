@@ -557,12 +557,12 @@ function CourseCard({ course, onOpen }: { course: CourseListItem; onOpen: () => 
             <span className="truncate">{course.instructor?.name ?? "Unassigned"}</span>
           </div>
           <div className="flex items-center gap-1 text-xs font-medium tabular-nums">
-            {course.price === 0 ? (
+            {!course.price || course.price === 0 ? (
               <span className="text-emerald-300">Free</span>
             ) : (
               <span className="flex items-center">
                 <IndianRupee className="h-3 w-3" />
-                {course.price.toLocaleString("en-IN")}
+                {Number(course.price).toLocaleString("en-IN")}
               </span>
             )}
           </div>

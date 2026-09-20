@@ -238,9 +238,9 @@ export function AdminCoursesView() {
     if (!q) return courses
     return courses.filter(
       (c) =>
-        c.title.toLowerCase().includes(q) ||
-        c.shortName.toLowerCase().includes(q) ||
-        c.category.toLowerCase().includes(q),
+        (c.title ?? "").toLowerCase().includes(q) ||
+        (c.shortName ?? "").toLowerCase().includes(q) ||
+        (c.category ?? "").toLowerCase().includes(q),
     )
   }, [courses, search])
 
@@ -531,7 +531,9 @@ export function AdminCoursesView() {
                           <span>·</span>
                           <span className="flex items-center gap-0.5">
                             <Star className="h-2.5 w-2.5 text-amber-300" />
-                            {c.rating.toFixed(1)}
+                            {/* rating can be NULL on the drifted production DB —
+                                null.toFixed() crashed the whole page (blank /admin-courses) */}
+                            {c.rating != null ? Number(c.rating).toFixed(1) : "—"}
                           </span>
                           <span>·</span>
                           <span className="flex items-center gap-0.5">
@@ -568,12 +570,12 @@ export function AdminCoursesView() {
                     {/* Price */}
                     <div className="lg:col-span-1 text-sm font-medium tabular-nums flex items-center">
                       <span className="lg:hidden text-[10px] font-mono uppercase tracking-wider text-muted-foreground/70 mr-1">Price:</span>
-                      {c.price === 0 ? (
+                      {!c.price || c.price === 0 ? (
                         <span className="text-emerald-300">Free</span>
                       ) : (
                         <span className="flex items-center">
                           <IndianRupee className="h-3 w-3" />
-                          {c.price.toLocaleString("en-IN")}
+                          {Number(c.price).toLocaleString("en-IN")}
                         </span>
                       )}
                     </div>

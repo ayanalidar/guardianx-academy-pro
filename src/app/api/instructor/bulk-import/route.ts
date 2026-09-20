@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
     if (!course) return NextResponse.json({ error: "Course not found" }, { status: 404 })
 
     // Instructors can only import into courses they own; admins can import anywhere.
-    if (user.role !== "ADMIN" && course.instructorId !== user.id) {
+    if (!(user.role === "ADMIN" || user.role === "SUPER_ADMIN") && course.instructorId !== user.id) {
       return NextResponse.json({ error: "Forbidden — you do not own this course" }, { status: 403 })
     }
 

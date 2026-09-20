@@ -13,7 +13,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
     include: { quiz: { include: { lesson: { include: { module: { include: { course: { select: { instructorId: true } } } } } } } } },
   })
   if (!question) return NextResponse.json({ error: "Question not found" }, { status: 404 })
-  if (user.role !== "ADMIN" && question.quiz.lesson.module.course.instructorId !== user.id) {
+  if (!(user.role === "ADMIN" || user.role === "SUPER_ADMIN") && question.quiz.lesson.module.course.instructorId !== user.id) {
     return NextResponse.json({ error: "Not your course" }, { status: 403 })
   }
 
@@ -59,7 +59,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
     include: { quiz: { include: { lesson: { include: { module: { include: { course: { select: { instructorId: true } } } } } } } } },
   })
   if (!question) return NextResponse.json({ error: "Question not found" }, { status: 404 })
-  if (user.role !== "ADMIN" && question.quiz.lesson.module.course.instructorId !== user.id) {
+  if (!(user.role === "ADMIN" || user.role === "SUPER_ADMIN") && question.quiz.lesson.module.course.instructorId !== user.id) {
     return NextResponse.json({ error: "Not your course" }, { status: 403 })
   }
 
