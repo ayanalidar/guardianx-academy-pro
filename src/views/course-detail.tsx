@@ -211,7 +211,11 @@ function ScrollProgress() {
 
 // ============================================================
 // Helper: StickySectionNav — in-page anchor nav with scroll-spy.
-// Sticks under the auto-hiding fixed header (z-50); sits below it.
+// Sits in a fixed band BELOW the shell header at every breakpoint:
+//   mobile  — under the fixed header (64px band  -> top-16)
+//   desktop — under the sticky h-12 top strip    -> top-12
+// Solid opaque background so page cards never ghost through it,
+// and items are justified — evenly spread edge-to-edge on sm+.
 // ============================================================
 const SECTION_NAV_ITEMS = [
   { id: "gx-overview", label: "Overview" },
@@ -239,14 +243,14 @@ function StickySectionNav({ items }: { items: { id: string; label: string }[] })
   }, [items])
 
   return (
-    <div className="sticky top-0 z-40 border-b border-border/60 bg-background/85 backdrop-blur-xl">
-      <div className="mx-auto max-w-[1400px] px-4 sm:px-8 lg:px-10 flex items-center gap-1 overflow-x-auto scrollbar-thin">
+    <div className="sticky top-16 lg:top-12 z-30 border-b border-border/60 bg-background shadow-[0_12px_32px_-24px_rgba(0,0,0,0.65)]">
+      <div className="mx-auto max-w-[1400px] px-0 sm:px-8 lg:px-10 flex sm:grid sm:grid-cols-5 items-stretch overflow-x-auto sm:overflow-visible scrollbar-thin">
         {items.map(({ id, label }, i) => (
           <button
             key={id}
             onClick={() => document.getElementById(id)?.scrollIntoView({ behavior: "smooth", block: "start" })}
             className={cn(
-              "relative shrink-0 px-4 py-3.5 text-[11px] font-mono tracking-[0.18em] uppercase transition-colors whitespace-nowrap",
+              "relative shrink-0 sm:shrink sm:flex-1 flex items-center justify-center px-4 py-3.5 text-[11px] font-mono tracking-[0.18em] uppercase transition-colors whitespace-nowrap",
               active === id ? "text-violet-200" : "text-muted-foreground hover:text-foreground"
             )}
           >
@@ -255,7 +259,7 @@ function StickySectionNav({ items }: { items: { id: string; label: string }[] })
             {active === id && (
               <motion.span
                 layoutId="gx-section-nav-underline"
-                className="absolute bottom-0 left-3 right-3 h-[2px] bg-gradient-to-r from-violet-500 to-cyan-400 rounded-full"
+                className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[72%] max-w-40 h-[2px] bg-gradient-to-r from-violet-500 to-cyan-400 rounded-full"
                 transition={{ type: "spring", stiffness: 380, damping: 32 }}
               />
             )}
@@ -907,14 +911,14 @@ export function CourseDetailView() {
         {/* ====================================================
             4. WHAT YOU'LL ACHIEVE — visual achievement cards
             ==================================================== */}
-        <div id="gx-overview" className="scroll-mt-14">
+        <div id="gx-overview" className="scroll-mt-28 lg:scroll-mt-24">
           <AchievementCollection course={course} outcomes={outcomes} whatYouWillLearn={whatYouWillLearn} toolsCovered={toolsCovered} careerOutcomes={careerOutcomes} />
         </div>
 
         {/* ====================================================
             5. ANIMATED SKILL PROGRESSION CHART (Before vs After)
             ==================================================== */}
-        <div id="gx-skills" className="scroll-mt-14">
+        <div id="gx-skills" className="scroll-mt-28 lg:scroll-mt-24">
           <SkillProgressionChart tags={course.tags} />
         </div>
 
@@ -926,7 +930,7 @@ export function CourseDetailView() {
         {/* ====================================================
             7. INTERACTIVE CURRICULUM TIMELINE
             ==================================================== */}
-        <div id="gx-curriculum" className="scroll-mt-14">
+        <div id="gx-curriculum" className="scroll-mt-28 lg:scroll-mt-24">
           <CurriculumTimeline
             course={course}
             isEnrolled={isEnrolled}
@@ -965,7 +969,7 @@ export function CourseDetailView() {
         {/* ====================================================
             13. INSTRUCTOR SPOTLIGHT CARD
             ==================================================== */}
-        <div id="gx-instructor" className="scroll-mt-14">
+        <div id="gx-instructor" className="scroll-mt-28 lg:scroll-mt-24">
           <InstructorSpotlight instructor={course.instructor} navigate={navigate} />
         </div>
 
@@ -997,7 +1001,7 @@ export function CourseDetailView() {
         {/* ====================================================
             REVIEWS — kept from existing implementation
             ==================================================== */}
-        <div id="gx-reviews" className="scroll-mt-14">
+        <div id="gx-reviews" className="scroll-mt-28 lg:scroll-mt-24">
           <ReviewsSection courseId={course.id} isEnrolled={isEnrolled} />
         </div>
 
