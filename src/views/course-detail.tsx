@@ -3244,10 +3244,10 @@ function RelatedCoursesCarousel({
     <section className="py-8 lg:py-10 border-t border-border/60 relative overflow-hidden">
       <div className="absolute top-0 left-0 w-[500px] h-[400px] bg-violet-600/5 blur-[120px] rounded-full" />
       <div className="mx-auto max-w-[1400px] px-4 sm:px-8 lg:px-10 relative">
-        <div className="flex items-end justify-between mb-6 flex-wrap gap-4">
-          <div className="max-w-2xl">
+        <div className="flex items-end justify-between mb-5 flex-wrap gap-3">
+          <div>
             <SectionLabel index="15" className="text-violet-300">RELATED COURSES</SectionLabel>
-            <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance">
+            <h2 className="text-[clamp(1.5rem,3vw,2.25rem)] font-bold leading-tight tracking-[-0.03em] text-balance">
               Keep
               <span className="text-gradient-premium"> going.</span>
             </h2>
@@ -3265,64 +3265,60 @@ function RelatedCoursesCarousel({
         </div>
 
         {isLoading ? (
-          <div className="flex gap-5 overflow-x-auto pb-4 -mx-4 px-4 snap-x">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <Skeleton key={i} className="min-w-[280px] sm:min-w-[320px] h-72 rounded-2xl shrink-0" />
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <Skeleton key={i} className="h-44 sm:h-48 rounded-xl" />
             ))}
           </div>
         ) : courses.length === 0 ? (
-          <div className="text-center py-8 lg:py-6 lg:py-8 rounded-2xl border border-border/40 bg-card/20">
+          <div className="text-center py-8 rounded-2xl border border-border/40 bg-card/20">
             <BookOpen className="h-10 w-10 text-muted-foreground/40 mx-auto mb-3" />
             <p className="text-sm text-muted-foreground">No related courses found in this category yet.</p>
           </div>
         ) : (
-          <div className="flex gap-5 overflow-x-auto pb-4 -mx-4 px-4 snap-x snap-mandatory scrollbar-thin">
+          <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
             {courses.map((c, i) => {
               const levelColor = LEVEL_COLORS[c.level] ?? ""
               return (
                 <motion.div
                   key={c.id}
-                  initial={{ opacity: 0, y: 20 }}
+                  initial={{ opacity: 0, y: 16 }}
                   whileInView={{ opacity: 1, y: 0 }}
                   viewport={{ once: true, amount: 0.2 }}
-                  transition={{ duration: 0.5, delay: i * 0.06 }}
-                  className="group relative min-w-[280px] sm:min-w-[320px] shrink-0 snap-start"
+                  transition={{ duration: 0.4, delay: Math.min(i * 0.05, 0.3) }}
+                  className="group"
                 >
                   <button
                     onClick={() => navigate({ name: "course", courseId: c.id })}
-                    className="relative w-full h-full text-left rounded-2xl border border-border/60 bg-card/40 backdrop-blur overflow-hidden hover:border-violet-500/40 hover:bg-card/60 transition-all"
+                    className="relative w-full h-full text-left rounded-xl border border-border/60 bg-card/40 backdrop-blur overflow-hidden hover:border-violet-500/40 hover:bg-card/60 hover:shadow-[0_16px_40px_-24px_rgba(139,92,246,0.5)] transition-all"
                   >
-                    {/* Thumbnail */}
-                    <div className="relative aspect-[16/10] overflow-hidden">
+                    {/* Thumbnail — compact 16/9 */}
+                    <div className="relative aspect-[16/9] overflow-hidden">
                       <img
                         src={getCourseImage(c)}
                         alt={c.title}
+                        loading="lazy"
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-card via-card/40 to-transparent" />
-                      <div className="absolute top-3 left-3 flex flex-wrap gap-1.5">
-                        <Badge variant="outline" className={cn("text-[9px] font-mono tracking-wider", levelColor)}>
+                      <div className="absolute inset-0 bg-gradient-to-t from-card via-card/30 to-transparent" />
+                      <div className="absolute top-2 left-2">
+                        <Badge variant="outline" className={cn("text-[8px] font-mono tracking-wider", levelColor)}>
                           {c.level}
                         </Badge>
                       </div>
-                      <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-0.5 rounded-full bg-background/80 backdrop-blur border border-border/40">
-                        <Star className="h-3 w-3 text-amber-400 fill-amber-400" />
-                        <span className="text-[10px] font-mono tabular-nums">{c.rating != null ? Number(c.rating).toFixed(1) : "—"}</span>
+                      <div className="absolute top-2 right-2 flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-background/80 backdrop-blur border border-border/40">
+                        <Star className="h-2.5 w-2.5 text-amber-400 fill-amber-400" />
+                        <span className="text-[9px] font-mono tabular-nums">{c.rating != null ? Number(c.rating).toFixed(1) : "—"}</span>
                       </div>
                     </div>
-                    {/* Body */}
-                    <div className="p-4">
-                      <p className="text-[10px] font-mono text-violet-300 tracking-[0.2em] mb-2">{c.shortName}</p>
-                      <h3 className="font-semibold text-sm mb-2 line-clamp-2 group-hover:text-violet-200 transition-colors min-h-[2.5rem]">{c.title}</h3>
-                      <div className="flex items-center gap-3 text-[10px] font-mono text-muted-foreground tracking-wider mb-3">
-                        <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {c.durationHours ?? 0}h</span>
-                        <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {(c.studentsCount ?? 0).toLocaleString()}</span>
-                      </div>
-                      <div className="flex items-center justify-between pt-3 border-t border-border/40">
-                        <span className="text-xs text-muted-foreground truncate">{c.instructor?.name ?? "GuardianX Faculty"}</span>
-                        <span className="flex items-center gap-1 text-xs text-violet-300 font-mono group-hover:gap-2 transition-all">
-                          View <ArrowRight className="h-3 w-3" />
-                        </span>
+                    {/* Body — compact */}
+                    <div className="p-2.5 sm:p-3">
+                      <p className="text-[8px] sm:text-[9px] font-mono text-violet-300 tracking-[0.18em] mb-1">{c.shortName}</p>
+                      <h3 className="font-semibold text-[12px] sm:text-[13px] leading-snug mb-1.5 line-clamp-2 group-hover:text-violet-200 transition-colors min-h-[2.75em]">{c.title}</h3>
+                      <div className="flex items-center gap-2.5 text-[9px] sm:text-[10px] font-mono text-muted-foreground tracking-wide">
+                        <span className="flex items-center gap-1"><Clock className="h-2.5 w-2.5" /> {c.durationHours ?? 0}h</span>
+                        <span className="flex items-center gap-1"><Users className="h-2.5 w-2.5" /> {(c.studentsCount ?? 0).toLocaleString()}</span>
+                        <span className="ml-auto hidden sm:block truncate max-w-[45%] text-[9px]">{c.instructor?.name ?? "GuardianX Faculty"}</span>
                       </div>
                     </div>
                   </button>
