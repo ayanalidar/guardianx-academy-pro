@@ -459,6 +459,122 @@ export const CYBER_DOMAINS: Record<string, CyberDomainKnowledge> = {
     certs: ["CompTIA Security+ (crypto domain)", "CSSLP", "CISSP (domain 3 depth)", "Crypto engineering specializations"],
     roles: ["Security Engineer (Applied Crypto)", "PKI Administrator", "AppSec Engineer (Crypto focus)", "Protocol Implementation Reviewer"],
   },
+
+  "Mobile Security": {
+    key: "Mobile Security",
+    name: "Mobile Application & Device Security",
+    summary:
+      "Securing Android and iOS platforms across the full stack: application binaries, transport, storage, platform services and the enterprise device fleet (MDM/MTD). Modern mobile work maps OWASP MASVS/MASTG, reverse-engineers app binaries with objection/Frida, hardens device fleets and treats mobile malware as a first-class threat.",
+    coreTopics: [
+      "Platform security architecture: Android sandbox/SELinux/keystore vs iOS sandbox/Secure Enclave/Keychain",
+      "OWASP MASVS/MASTG methodology: static (MASVS-RESILIENCE) and dynamic analysis of mobile apps",
+      "Reverse engineering: apktool/jadx bytecode decompilation, class dumps, Hopper/Ghidra on native libs",
+      "Runtime instrumentation: Frida hooks, objection patching, SSL-pinning bypass, root/jailbreak detection evasion",
+      "Insecure data storage: shared preferences, SQLite dumps, Keychain/Keystore misuse, logs leaking PII",
+      "Mobile network attack surface: certificate pinning, MITM with mitmproxy on device traffic, API abuse",
+      "IPC attack surface: exported activities/services/receivers/content providers, deeplink hijacking",
+      "Mobile malware families: Android trojan droppers, spyware (stalkerware), banking fraud kits, tripwire detection",
+      "MDM/MAM/MTD: enrollment, app shielding, policy enforcement, BYOD vs COPE trade-offs",
+      "Hardening: ProGuard/R8 obfuscation, attestation (Play Integrity / DeviceCheck), secure CI signing",
+    ],
+    tools: ["MobSF", "jadx", "apktool", "Frida", "objection", "mitmproxy", "Burp Suite", "Drozer", "Android Studio / ADB", "Ghidra"],
+    frameworks: ["OWASP MASVS/MASTG", "OWASP Mobile Top 10", "NIST SP 800-124", "MITRE ATT&CK (Mobile)"],
+    labs: [
+      "Uncover hardcoded secrets and insecure storage in a deliberately vulnerable Android app with MobSF + jadx, then write the fix plan",
+      "Bypass certificate pinning and root detection with Frida/objection, capture the hidden API traffic with mitmproxy",
+      "Exploit an exported Android component (IPC abuse) with Drozer, then patch the manifest and re-verify",
+      "Stand up an MDM policy baseline for a fictional fleet: encryption, kiosk mode, app allowlists, jailbreak response",
+    ],
+    certs: ["eMAPT", "Mobile Security+ (Mobile+)", "CRTMA", "CompTIA Security+ (mobile domain)", "GMOB"],
+    roles: ["Mobile AppSec Engineer", "Mobile Penetration Tester", "MDM/MTD Administrator", "Application Security Analyst"],
+  },
+
+  "Wireless Security": {
+    key: "Wireless Security",
+    name: "Wi-Fi, RF & Wireless Infrastructure Security",
+    summary:
+      "Offensive and defensive wireless: 802.11 attack and defense (WPA2/WPA3-Enterprise, PMKID, evil twin, rogue AP hunting), RF fundamentals (SDR, signal capture), Bluetooth/BLE weaknesses, and the enterprise controls that survive contact with real attackers — 802.1X, WPA3-SAE, wireless IDS/IPS and RF survey methodology.",
+    coreTopics: [
+      "802.11 protocol fundamentals: frames, beacons, association, 4-way handshake, PMK/PTK key hierarchy",
+      "WPA2-PSK cracking: handshake capture with hcxdumptool, PMKID attack, Hashcat mask/rule attacks on captured hashes",
+      "WPA3-SAE: dragonfly handshake, dragonblood downgrade considerations, transition-mode attacks",
+      "WPA2/WPA3-Enterprise: EAP types (PEAP/TTLS/EAP-TLS), RADIUS, certificate validation, evil twin with hostapd-mana",
+      "Rogue AP / evil twin operations and detection: karma attacks, captive portal phishing lab (defensive framing)",
+      "Wireless reconnaissance: aircrack-ng suite, Kismet, spectrum analysis, heatmapping with Ekahau-style surveys",
+      "Bluetooth/BLE: GATT enumeration, sniffing, pairing weaknesses, tracker/relay considerations",
+      "SDR fundamentals: RTL-SDR capture, GSM/ADS-B/ISM band listening, signal demodulation basics",
+      "Defensive architecture: 802.1X with EAP-TLS, RADIUS redundancy, WIPS/WIDS deployment, rogue containment",
+      "Guest network segmentation, PSK enterprise alternatives (iPSK), and wireless NAC integration",
+    ],
+    tools: ["Aircrack-ng suite", "hcxdumptool/hcxtools", "Kismet", "hostapd-mana", "Wireshark", "Wifite", "hashcat", "RTL-SDR", "Alfa adapters", "Ekahau (survey)"],
+    frameworks: ["OWASP Wireless Security Testing Guide", "NIST SP 800-153", "CIS Controls (network/ wireless)", "MITRE ATT&CK (wireless vectors)"],
+    labs: [
+      "Capture a WPA2 handshake/PMKID in the isolated RF lab, crack it with Hashcat rules, then deploy the WPA3/802.1X controls that stop it",
+      "Stand up an evil-twin captive portal with hostapd-mana in the training range, harvest creds, then hunt it with Kismet + WIPS correlation",
+      "Perform a full wireless site survey: map APs, rogue devices, channel overlap and produce the remediation heat-map report",
+      "BLE GATT device enumeration and sniffing in the IoT corner of the range; document pairing weaknesses and mitigations",
+    ],
+    certs: ["OSWP", "WiFi-Challenge badges", "CompTIA Security+ / Pentest+ (wireless domain)", "CWSP", "GAWN"],
+    roles: ["Wireless Penetration Tester", "Network Security Engineer", "RF/Red Team Operator", "NOC/Wireless Infrastructure Engineer"],
+  },
+
+  "Social Engineering": {
+    key: "Social Engineering",
+    name: "Human-Layer Security — Phishing, Vishing & Social Engineering Defense",
+    summary:
+      "The human attack surface: phishing/vishing/smishing operations run lawfully and defensively, pretext development, psychology of influence, assessment with GoPhish-style controlled simulations, and the defensive stack that actually moves the needle — email authentication (SPF/DKIM/DMARC), gateway tuning, phishing-resistant MFA (FIDO2), report-button culture and metrics that measure resilience rather than shame.",
+    coreTopics: [
+      "Influence psychology: Cialdini principles, urgency/authority triggers, and why training-only approaches fail",
+      "Phishing operation lifecycle (authorized): target recon, pretext design, infrastructure (GoPhish, domains, tracking), execution, metrics",
+      "Vishing/smishing/deepfake voice: pretexts, VOIP setup for authorized labs, AI voice-clone risk awareness",
+      "Email authentication deep dive: SPF, DKIM, DMARC (p=none→quarantine→reject), BIMI, ARC — and how attackers abuse lookalikes",
+      "Gateway & mailbox defenses: EOP/Proofpoint-style rules, attachment detonation, URL rewriting, impersonation protection",
+      "Phishing-resistant MFA: FIDO2/WebAuthn vs push-bombing vs OTP — MFA fatigue attacks and number matching",
+      "Detection & response: anomaly signals, report-button telemetry, automated containment of confirmed phish",
+      "Security awareness program design: role-based scenarios, just-in-time coaching, measuring resilience (report rate, click trend, dwell time)",
+      "Physical social engineering (authorized engagements): badge cloning awareness, tailgating, drop-box USBs — and the controls",
+      "Insider-risk overlap: data exfiltration indicators, DLP touchpoints, HR/legal coordination",
+    ],
+    tools: ["GoPhish", "Mailcow/postfix (lab mail)", "SPF/DKIM/DMARC inspectors (dmarcian, MXToolbox)", "Evilginx-style proxies (awareness)", "VOIP lab stack (Asterisk)", "HaveIBeenPwned-style recon", "Modlishka (awareness)"],
+    frameworks: ["MITRE ATT&CK (Initial Access)", "NIST SP 800-50r1 (awareness training)", "SANS Security Awareness Maturity Model", "CIS Controls 14"],
+    labs: [
+      "Run a full authorized phishing simulation with GoPhish in the isolated mail lab: template, landing page, campaign, click/report metrics, debrief",
+      "Break and fix email authentication: deploy SPF+DKIM+DMARC for a lab domain, attempt a lookalike spoof, watch DMARC enforcement stop it",
+      "Simulate an MFA fatigue/push-bombing campaign against a lab tenant, then roll out number-matching/FIDO2 and re-test",
+      "Build the awareness playbook: convert campaign results into role-based micro-training and a resilience scorecard for executives",
+    ],
+    certs: ["SSEP (SANS Security Awareness)", "CompTIA Security+ (human layer)", "CEH (social engineering module)", "CPENT social engineering module"],
+    roles: ["Security Awareness Manager", "Human Risk Analyst", "Red Team Operator (Social Engineering)", "Email Security Engineer"],
+  },
+
+  "OT/ICS Security": {
+    key: "OT/ICS Security",
+    name: "Operational Technology & ICS/SCADA Security",
+    summary:
+      "Securing industrial environments where availability outranks confidentiality: Purdue model segmentation, ICS protocols (Modbus, DNP3, S7, EtherNet/IP), OT-aware threat intelligence (ICS ATT&CK), passive monitoring, unidirectional gateways and the safety-first methodology that separates a plant assessment from an IT pentest.",
+    coreTopics: [
+      "IT vs OT fundamentals: availability-safety triangle, real-time constraints, legacy Windows/embedded estates",
+      "Purdue Enterprise Reference Architecture: levels 0-3/DMZ, zone & conduit segmentation (IEC 62443)",
+      "Industrial protocols on the wire: Modbus/TCP, DNP3, S7comm, EtherNet/IP, OPC UA — replay/injection realities",
+      "Historic incidents as teaching cases: Stuxnet, Industroyer/CrashOverride, TRITON/TRISIS, Pipedream/Incontroller",
+      "MITRE ATT&CK for ICS: techniques, data sources, detection engineering for OT protocols",
+      "Passive OT monitoring: Deep Packet Inspection with Zeek ICS scripts, Nozomi/Claroty-style asset discovery concepts",
+      "OT-safe assessment methodology: zero-intrusive recon, engineer-accompanied testing, no active scanning on PLCs without sign-off",
+      "Network defense architecture: unidirectional gateways/data diodes, jump servers, DMZ historians, remote access hardening",
+      "Asset inventory & baselining: vendor stacks, firmware currency, commissioning-to-retirement lifecycle risks",
+      "Standards & governance: IEC 62443, NIST SP 800-82r3, NERC CIP mapping, ISA/IEC 62443 zones-with-conduits design",
+    ],
+    tools: ["Wireshark + ICS dissectors", "Zeek with ICS scripts", "Snort/Suricata ICS rulesets", "Modbus/S7 test utilities (lab PLC simulators, OpenPLC)", "GRASSMARLIN", "Claroty/Nozomi (concepts)", "Virtual PLC simulators"],
+    frameworks: ["IEC 62443", "NIST SP 800-82r3", "MITRE ATT&CK for ICS", "NERC CIP", "ISA 99"],
+    labs: [
+      "Build a virtual OT range: OpenPLC + ScadaBR HMI on Modbus/TCP, capture baseline traffic, fingerprint every asset passively",
+      "Replay and inject Modbus write commands in the sandboxed range, observe HMI impact, then engineer the Zeek/Suricata detection",
+      "Design Purdue segmentation for a fictional water-utility: zones, conduits, DMZ historian, jump server, data diode for Historian-to-Cloud",
+      "Tabletop a TRITON-style safety-instrumented-system incident: map to ATT&CK for ICS, produce the containment playbook that respects safety",
+    ],
+    certs: ["GICSP", "ISA/IEC 62443 Cybersecurity Certificates", "GridSec", "CAP", "CompTIA Security+ (OT awareness)"],
+    roles: ["OT/ICS Security Engineer", "ICS Penetration Tester", "SCADA Security Analyst", "Plant Network Architect"],
+  },
 }
 
 /**
@@ -534,4 +650,344 @@ export function domainCatalog(): string {
   return Object.values(CYBER_DOMAINS)
     .map((d) => `- ${d.name}`)
     .join("\n")
+}
+
+/* ============================================================
+   Expert lens — the senior-practitioner layer.
+   For each domain: HOW an expert approaches the work
+   (methodology), the wrong ideas students bring
+   (misconceptions the agent must actively correct), and the
+   questions employers actually ask (interviewProbes).
+   Injected into every architect prompt via domainExpertLens().
+   ============================================================ */
+
+export interface DomainExpertLens {
+  methodology: string[]
+  misconceptions: string[]
+  interviewProbes: string[]
+}
+
+export const DOMAIN_EXPERT_LENS: Record<string, DomainExpertLens> = {
+  "Ethical Hacking": {
+    methodology: [
+      "Evidence-first testing: every claimed finding carries a reproduction path, screenshot/output evidence and a severity rationale — an unproven finding is an opinion.",
+      "Kill-chain ordered operations: recon → enumerate → prioritise (CVSS + business context) → exploit → post-exploit → report; each stage gates the next.",
+      "Assume-detection mindset: for every action, note the telemetry it generates (EDR, Sysmon, NetFlow) so the report can also teach the defenders.",
+    ],
+    misconceptions: [
+      "Thinking a tool run equals a pentest — tools enumerate; the engineer's chaining, context and report are the deliverable.",
+      "Believing 'root on one box' ends the engagement: value is demonstrated by pivoting to tier-0 assets and business impact.",
+      "Assuming exploits are plug-and-play: public PoCs frequently need safe modification and environment awareness.",
+    ],
+    interviewProbes: [
+      "Walk me through your last full-scope engagement end-to-end, including the finding you were proudest of and why it mattered to the business.",
+      "You get a shell on a workstation inside an enterprise network — what are your first five actions and why that order?",
+      "How do you safely modify a public exploit, and how do you verify it will not take the target down?",
+    ],
+  },
+  Networking: {
+    methodology: [
+      "Layered diagnosis: physical → L2 → L3 → L4 → application; never jump to 'restart the firewall' before the path is proven with tcpdump/traceroute evidence.",
+      "Packet-level truth: if the logs disagree with the wire capture, the wire wins — teach students to read handshakes, TTLs and retransmissions.",
+      "Design reviews start with trust boundaries: every interface, VLAN and tunnel is a policy question, not a config line.",
+    ],
+    misconceptions: [
+      "Confusing NAT with a security control — it obscures addressing but is not a segmentation policy.",
+      "Believing a VLAN tag implies isolation without an enforced ACL/L3 boundary behind it.",
+      "Assuming TLS on the wire means the endpoint is trustworthy.",
+    ],
+    interviewProbes: [
+      "A user says 'the network is slow' — walk me through your end-to-end diagnostic from the wall port to the application.",
+      "Where exactly would you place a WAF, an IDS and a jump host in a segmented design, and what does each buy you?",
+      "Explain what a TCP retransmission storm tells you that CPU graphs cannot.",
+    ],
+  },
+  "Web Security": {
+    methodology: [
+      "Spec-driven testing: map every behaviour against the WSTG checklist and the application's own intended state machine — bugs hide where the two disagree.",
+      "Exploit chains over single bugs: a self-XSS plus a login CSRF can outperform one lonely RCE; always hunt for combinable weaknesses.",
+      "Fix-verification loop: every finding ends with a re-test that proves the remediation actually kills the exploit path.",
+    ],
+    misconceptions: [
+      "Believing HTTPS means the site is secure — transport privacy has nothing to do with authorization logic.",
+      "Equating a scanner's green board with safety: Burp/ZAP miss logic flaws, IDOR chains and business-logic abuse by design.",
+      "Trusting client-side validation as a control — the server is the only enforcement point that counts.",
+    ],
+    interviewProbes: [
+      "A web app has MFA, HTTPS and a WAF — give me three realistic attack paths that still work.",
+      "How do you test for IDOR methodically without spraying thousands of requests?",
+      "Explain a time you chained two low-severity findings into something critical.",
+    ],
+  },
+  "System Administration": {
+    methodology: [
+      "Baselines before tooling: a hardened image (CIS benchmark) beats any agent bolted onto a snowflake server.",
+      "Infrastructure as code or it does not exist: every hardening step must be reproducible via Ansible/Packer/Terraform.",
+      "Change is the risk window: patching cadences, rollback plans and maintenance windows are part of the security design, not overhead.",
+    ],
+    misconceptions: [
+      "Assuming antivirus equals endpoint security — identity hygiene, local admin rights and patching move the needle far more.",
+      "Believing servers 'drift randomly': drift comes from unmanaged change, which is a process failure, not a mystery.",
+      "Treating the sudoers file or local admin group as set-and-forget when they are the crown jewels of privilege escalation.",
+    ],
+    interviewProbes: [
+      "You inherit 200 unpatched servers with no inventory — what do you do in the first week?",
+      "How would you harden a Linux web server that must run a legacy PHP 5 app?",
+      "Explain your rollback plan when a Tuesday patch cycle breaks production.",
+    ],
+  },
+  "Security Management": {
+    methodology: [
+      "Risk-led governance: inventory → risk register → treatment decisions → control mapping → evidence; frameworks (ISO 27001, NIST CSF) structure the conversation, they are not the goal.",
+      "Metrics that change behaviour: mean-time-to-patch, phishing report rate, control coverage — vanity dashboards are compliance theatre.",
+      "Policy without enforcement is fiction: every policy statement needs an owning control, a technical or procedural verification, and an audit trail.",
+    ],
+    misconceptions: [
+      "Equating certification with security — an ISMS can pass audit while critical risks stay untreated.",
+      "Believing zero risk is achievable: the job is informed risk acceptance at the right leadership level.",
+      "Assuming awareness training alone prevents incidents — it shifts probabilities, controls decide outcomes.",
+    ],
+    interviewProbes: [
+      "The board asks 'are we secure?' — what do you actually present and from which data?",
+      "A critical risk has no budget: walk me through the acceptance and monitoring you would put around it.",
+      "How do you keep an ISO 27001 ISMS alive between surveillance audits?",
+    ],
+  },
+  "Identity & Access": {
+    methodology: [
+      "Identity is the new perimeter: map every service account, API key and federation trust as lovingly as you map user accounts.",
+      "Least privilege as a lifecycle: JIT elevation, access reviews, joiner-mover-leaver automation — standing privileges are debt.",
+      "Assume credential theft: design for phishing-resistant factors, conditional access and impossible-travel detection, not password rotation theatre.",
+    ],
+    misconceptions: [
+      "Believing MFA solves everything: push-fatigue, SIM-swap and AiTM proxy kits defeat weak factors — FIDO2 or nothing for tier-0.",
+      "Confusing authentication with authorization — who you are is not what you may do.",
+      "Assuming service accounts 'are fine' because nobody logs into them interactively.",
+    ],
+    interviewProbes: [
+      "Design the access model for a tier-0 admin: from workstation to domain controller, every hop and every control.",
+      "You find a service account with domain admin from 2016 — what is your remediation and communication plan?",
+      "How would you detect an AiTM phishing proxy stealing session tokens in your tenant?",
+    ],
+  },
+  "Cloud Security": {
+    methodology: [
+      "Control-plane first: who can create/modify IAM, networking and compute defines the blast radius — review the control plane before chasing workloads.",
+      "Guardrails over gates: SCPs/Azure Policy/Org policies make the insecure path impossible instead of auditing it afterwards.",
+      "Assume public: every storage, queue and endpoint is internet-scannable until proven otherwise — continuously prove otherwise.",
+    ],
+    misconceptions: [
+      "Believing the shared responsibility model ends at 'provider handles security' — IAM misconfig is always yours.",
+      "Treating cloud like a virtual datacenter: identical VPCs and logs everywhere ignore managed-service identities and metadata APIs (SSRF → role theft).",
+      "Assuming private subnets are unreachable — egress paths and VPC endpoints decide that.",
+    ],
+    interviewProbes: [
+      "An S3 bucket with PII goes public — walk me from detection through containment to the permanent control that prevents recurrence.",
+      "How does an SSRF in an EC2 app become a full account takeover, and what breaks that chain?",
+      "What would your SCP/Policy guardrail set contain on day one in a new AWS org?",
+    ],
+  },
+  DevSecOps: {
+    methodology: [
+      "Shift-left with teeth: SAST/DAST/SCA/IaC scanning in CI only counts when findings block merges or auto-file tickets with owners.",
+      "Pipeline is production: CI runners, registries and deploy keys are tier-0 assets — protect them like domain controllers.",
+      "Provenance and SBOM: signed images (cosign), attested builds and an SBOM you can query when the next log4j lands.",
+    ],
+    misconceptions: [
+      "Believing a weekly SCA scan is supply-chain security — dependencies need SBOMs, signing and rapid-rebuild drills.",
+      "Assuming developers will 'own security' because a dashboard exists — the platform team must make the secure path the default.",
+      "Equating secrets in vaults with secrets hygiene: rotation, short-lived credentials and scan-for-drift matter more.",
+    ],
+    interviewProbes: [
+      "Design the CI/CD security controls for a fintech deploying 50 times a day.",
+      "log4shell hits at 9am — what does your SBOM/registry tooling let you do by noon?",
+      "A developer needs a long-lived AWS key 'just for this one job' — what do you offer instead?",
+    ],
+  },
+  "Incident Response": {
+    methodology: [
+      "Stabilise before you investigate: containment scope decisions are business decisions — document them live with timestamps.",
+      "One evidence chain: acquire → hash → log → analyse, with write-blockers and copies; the case dies with a broken chain of custody.",
+      "Hypothesis-driven hunting: every indicator suggests a story; attack the story until it breaks or completes.",
+    ],
+    misconceptions: [
+      "Believing reimaging is containment: without root-cause, the same access path re-enters the next image.",
+      "Assuming alerts equal incidents and incidents equal breaches — triage discipline exists to separate them.",
+      "Treating the tabletop as a checkbox: the plan that survives contact is the one with contacts, authority and out-of-band comms rehearsed.",
+    ],
+    interviewProbes: [
+      "Suspicious lsass access on a finance workstation at 2am — take me through your next 60 minutes.",
+      "When do you pull the plug versus monitor, and who has authority to make that call?",
+      "How do you keep IR comms working when you suspect the email tenant is compromised?",
+    ],
+  },
+  "Digital Forensics": {
+    methodology: [
+      "Order of volatility: memory → network state → disk → backups; the first triage decision determines what exists to analyse.",
+      "Artifact corroboration: a single registry key or log line is a hint; a timeline built from independent artifacts is evidence.",
+      "Know the formats at byte level: parsing $MFT, hives, SQLite WAL or APFS yourself beats trusting a tool's summary.",
+    ],
+    misconceptions: [
+      "Believing 'the logs are gone' means no evidence: memory, USN journal, SRUM, prefetch, cloud audit trails persist.",
+      "Assuming tools like Autopsy output truth — parsers have bugs and anti-forensics plants artifacts.",
+      "Treating timestamps as absolute — timezone and clock-skew errors invent or destroy alibis.",
+    ],
+    interviewProbes: [
+      "You arrive on-site with a live, encrypted, powered-on laptop — what do you capture in what order and why?",
+      "How would you prove (not speculate) that a USB device was attached and files copied?",
+      "A suspect wiped browsers but the box kept running — where else does web activity live?",
+    ],
+  },
+  "Malware Analysis": {
+    methodology: [
+      "Triage pyramid: hashes → static properties (imports, strings, entropy) → sandbox behaviour → interactive detonation → reverse engineering, stopping as soon as the question is answered.",
+      "Isolation paranoia: analysis VMs are disposable, network-faked (INetSim/FakeNet), snapshotted and never domain-joined.",
+      "Extract capability, not trivia: what the binary does to hosts, credentials and persistence matters more than every string it contains.",
+    ],
+    misconceptions: [
+      "Believing packed/obfuscated means impossible: unpacking is a workflow (run, dump, rebuild imports), not black magic.",
+      "Assuming a sandbox report is the full story: evasion-aware samples behave differently under monitoring.",
+      "Treating malware analysis as IOC harvesting — capabilities and TTPs drive detections longer than hashes do.",
+    ],
+    interviewProbes: [
+      "A sample refuses to run in any sandbox — how do you approach it?",
+      "Walk me from a suspicious Word doc to YARA rules you would deploy enterprise-wide.",
+      "What is the difference between staging, installation and C2 behaviours when you report to a SOC?",
+    ],
+  },
+  "Threat Intelligence": {
+    methodology: [
+      "Intelligence answers questions: start from the consumer's decision (patch now? block? hunt?) and work backwards — collecting everything is collecting nothing.",
+      "Finish the pyramid: map IOCs upward to TTPs and campaigns so detections outlive infrastructure rotation.",
+      "Adversary emulation feedback loop: every intel product should end as a detection, a hunt package or an engineering ticket.",
+    ],
+    misconceptions: [
+      "Equating feeds with intelligence — raw IOCs without context and confidence are noise with a API bill.",
+      "Believing APT attribution matters to defenders more than TTPs: you cannot block a nation-state's name.",
+      "Assuming intel is a SOC-only product — risk, fraud and executive teams are consumers too.",
+    ],
+    interviewProbes: [
+      "A new ransomware crew targets your sector — what intelligence product do you deliver, to whom, by when?",
+      "How do you measure whether your threat intel program is worth its cost?",
+      "Take one ATT&CK technique and show how you would go from report to working detection.",
+    ],
+  },
+  Cryptography: {
+    methodology: [
+      "Never roll your own: primitive selection comes from standards and libraries (libsodium, platform APIs); the engineering is in protocol and key management.",
+      "Threat-model the key lifecycle: generation, storage, rotation, revocation — most real failures live there, not in the math.",
+      "Prove implementations in tests: known-answer tests, fuzzing parsers, constant-time checks for anything touching secrets.",
+    ],
+    misconceptions: [
+      "Believing 'AES-256' is a security claim — modes, nonces and key handling decide everything (GCM nonce reuse is catastrophic).",
+      "Confusing encoding (base64) or hashing (SHA) with encryption.",
+      "Assuming longer keys fix design flaws: ECB and MD5 stay broken at any length.",
+    ],
+    interviewProbes: [
+      "You need encrypted search over user records — walk me through the trade-offs you would evaluate.",
+      "Why is GCM nonce reuse worse than CBC IV reuse, and how do libraries prevent both?",
+      "Design the key rotation plan for a service encrypting data at rest with customer-managed keys.",
+    ],
+  },
+  "Mobile Security": {
+    methodology: [
+      "Test like the data flows: device → app binary → platform storage → network → backend API; the backend API is where business logic usually dies.",
+      "Instrument before you read code: Frida hooks reveal runtime truth that static decompilation only hints at.",
+      "Assess the fleet, not just the app: an MDM baseline review often finds higher risk than any single APK.",
+    ],
+    misconceptions: [
+      "Believing app-store review means security — it is a malware scan and checklist, not a penetration test.",
+      "Assuming iOS is 'safe by default': Keychain misuse, weak ATS exceptions and jailbroken fleets negate platform promises.",
+      "Treating obfuscation (ProGuard) as encryption — the binary still runs on an attacker-controlled device.",
+    ],
+    interviewProbes: [
+      "How would you test a banking app end-to-end with only a rooted device and a proxy?",
+      "Where do mobile apps most often leak PII that a static scan would miss?",
+      "Design the mobile device policy for a bring-your-own-device workforce handling customer data.",
+    ],
+  },
+  "Wireless Security": {
+    methodology: [
+      "Survey before you attack: channel map, client inventory and AP fleet baseline turn wireless testing from noise into findings.",
+      "Enterprise first: the WPA2/WPA3-Enterprise EAP negotiation is where real networks fail — certificate validation and rogue RADIUS.",
+      "Pair every attack with its detection: a PMKID crack demo ends with the WIPS signature and 802.1X design that kills it.",
+    ],
+    misconceptions: [
+      "Believing hiding SSIDs or MAC filtering adds meaningful security — both are trivia-level bypasses.",
+      "Assuming WPA3 means done: transition mode re-enables downgrade games and enterprise deployment is where the risk lives.",
+      "Treating guest Wi-Fi as isolated until proven: client-to-client forwarding and flat VLANs are the classic fail.",
+    ],
+    interviewProbes: [
+      "You are asked to secure a conference venue Wi-Fi for 2000 attendees — design it.",
+      "How does an evil twin defeat a validated enterprise EAP-TLS network, and what stops it?",
+      "What wireless telemetry would you ship to your SIEM and what hunts would you run on it?",
+    ],
+  },
+  "Social Engineering": {
+    methodology: [
+      "Metrics over fear: report rate, click-rate trend and time-to-report measure resilience — shaming users kills reporting culture.",
+      "Control-pair every simulation: each authorized campaign must end with a technical control test (DMARC, gateway, MFA) not just a user test.",
+      "Pretext realism with ethics: authorized scenarios only, no real credentials harvested, instant disclosure and data destruction.",
+    ],
+    misconceptions: [
+      "Believing annual training prevents phishing — in-the-moment coaching and easy reporting beat annual slide decks.",
+      "Assuming MFA stops phishing: OTP and push are phishable; FIDO2 and number matching are the bar.",
+      "Treating users as the 'weakest link' instead of the sensors you armed badly.",
+    ],
+    interviewProbes: [
+      "Click rate is down but credential compromises are up — what is actually happening and what do you change?",
+      "Design the DMARC rollout for a company with marketing vendors sending on its behalf.",
+      "How would you defend the CFO against a deepfake voice authorization request?",
+    ],
+  },
+  "OT/ICS Security": {
+    methodology: [
+      "Safety outranks security findings: no active scans or writes against live PLCs without engineer sign-off — the lab simulates, the plant never experiments.",
+      "Passive-first visibility: mirror SPAN ports and fingerprint assets with Zeek/GRASSMARLIN before anyone touches a device.",
+      "Segment by zones and conduits: IEC 62443 design reviews beat scanning — most OT incidents are IT-side lateral movement into flat networks.",
+    ],
+    misconceptions: [
+      "Believing air-gaps exist: vendor remote access, USB media and business-data historians connect everything.",
+      "Assuming IT patching cadences apply: firmware cycles are shutdown-window events requiring compensating controls.",
+      "Treating OT devices as unpatchable black boxes — monitoring, segmentation and egress control carry the load instead.",
+    ],
+    interviewProbes: [
+      "IT detects ransomware spreading toward the plant floor — what are your first three moves and what must you NOT do?",
+      "How do you build an OT asset inventory without active scanning?",
+      "Walk me through zoning a mid-size food-plant network to IEC 62443 principles.",
+    ],
+  },
+  General: {
+    methodology: [
+      "Fundamentals compound: CIA triad, least privilege, defense in depth and complete mediation solve most novel scenarios students will meet.",
+      "Teach the transferable loop: model the threat → pick the control → verify it works → monitor for decay.",
+      "Vocabulary precision: attack vs vulnerability vs threat vs risk — interviews and audits punish loose language.",
+    ],
+    misconceptions: [
+      "Believing security is a product you buy rather than a property you engineer and operate.",
+      "Assuming attackers are outside: insider risk and supply-chain compromise are core curriculum, not edge cases.",
+      "Confusing compliance checkboxes with measurable resilience.",
+    ],
+    interviewProbes: [
+      "Explain defense in depth with a concrete control stack for one realistic asset.",
+      "What is the difference between a threat, a vulnerability and a risk — with an example of each?",
+      "How do you decide between mitigating, transferring or accepting a risk?",
+    ],
+  },
+}
+
+/** Senior-practitioner lens block for prompts — empty string for unknown domains. */
+export function domainExpertLens(category: string | null | undefined): string {
+  const d = resolveDomain(category)
+  const lens = DOMAIN_EXPERT_LENS[d.key]
+  if (!lens) return ""
+  const list = (arr: string[]) => arr.map((x) => `  - ${x}`).join("\n")
+  return `
+EXPERT LENS — how a senior ${d.key} practitioner works:
+Methodology:
+${list(lens.methodology)}
+Misconceptions you must actively correct in learners:
+${list(lens.misconceptions)}
+Interview questions this domain actually gets asked:
+${list(lens.interviewProbes)}`
 }

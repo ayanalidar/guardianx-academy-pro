@@ -10,7 +10,7 @@
  * reviewable, domain-specific content.
  */
 
-import { resolveDomain, type CyberDomainKnowledge } from "@/lib/cyber-knowledge"
+import { resolveDomain, DOMAIN_EXPERT_LENS, type CyberDomainKnowledge } from "@/lib/cyber-knowledge"
 
 export interface BlueprintCtx {
   title: string
@@ -338,4 +338,260 @@ export function localLesson(ctx: { title: string; category: string; lesson: { ti
       ? lessonContent(`Lab: ${ctx.lesson.title}`, d, true, true, ctx.lesson.content || d.labs[0]!)
       : lessonContent(`${ctx.lesson.title}: ${ctx.lesson.content ? ctx.lesson.content.slice(0, 300) : d.coreTopics[0]}`, d, true, false, ""),
   }
+}
+
+/* ============================================================
+   Syllabus Audit (coverage gap analysis — no LLM required)
+   ============================================================ */
+
+export interface AuditCourseCtx {
+  title: string
+  category: string
+  level: string
+}
+
+export interface AuditModuleInput {
+  title: string
+  lessons: { title: string; type: string; content: string }[]
+}
+
+export interface LocalAuditResult {
+  scores: { coverage: number; depth: number; practicality: number; overall: number }
+  strengths: string[]
+  gaps: string[]
+  recommendations: { title: string; detail: string; severity: "high" | "medium" | "low" }[]
+  coverageMap: { topic: string; covered: boolean; evidence: string }[]
+}
+
+/** Deterministic keyword-vs-coreTopics gap analysis over the course inventory. */
+export function localAudit(ctx: AuditCourseCtx, modules: AuditModuleInput[]): LocalAuditResult {
+  const d = resolveDomain(ctx.category)
+
+  // Build one lowercase haystack from the whole inventory.
+  const parts: string[] = []
+  for (const m of modules) {
+    parts.push(m.title)
+    for (const l of m.lessons) {
+      parts.push(l.title, (l.content || "").slice(0, 600))
+    }
+  }
+  const haystack = parts.join(" ").toLowerCase()
+
+  const tokenPresent = (needle: string) => {
+    const words = needle
+      .toLowerCase()
+      .replace(/[^a-z0-9+ ]/g, " ")
+      .split(/\s+/)
+      .filter((w) => w.length > 2 && !["the", "and", "for", "with", "vs", "into", "from"].includes(w))
+    if (!words.length) return haystack.includes(needle.toLowerCase())
+    // Topic counts as covered when ≥40% of its significant words appear.
+    const hits = words.filter((w) => haystack.includes(w)).length
+    return hits / words.length >= 0.4
+  }
+
+  // 1) Topic coverage
+  const coverageMap = d.coreTopics.map((t) => {
+    const [head] = splitTopic(t)
+    const covered = tokenPresent(head || t)
+    const evidence = covered
+      ? (modules.find((m) => (m.title + " " + m.lessons.map((l) => l.title).join(" ")).toLowerCase().includes((head || t).split(/[ :,]/)[0]!.toLowerCase()))?.title ?? "covered in lesson content")
+      : "not found in module or lesson titles/content"
+    return { topic: head || t, covered, evidence }
+  })
+  const coveredCount = coverageMap.filter((c) => c.covered).length
+  const coverage = d.coreTopics.length ? Math.round((coveredCount / d.coreTopics.length) * 100) : 100
+
+  // 2) Depth heuristic — average teaching content per reading lesson
+  const readingLessons = modules.flatMap((m) => m.lessons.filter((l) => l.type === "reading" || l.type === "pdf"))
+  const avgContent = readingLessons.length
+    ? readingLessons.reduce((a, l) => a + (l.content || "").length, 0) / readingLessons.length
+    : 0
+  const depth = Math.max(0, Math.min(100, Math.round((avgContent / 1800) * 100)))
+
+  // 3) Practicality — lab share + tool mentions
+  const allLessons = modules.flatMap((m) => m.lessons)
+  const labShare = allLessons.length ? allLessons.filter((l) => l.type === "lab").length / allLessons.length : 0
+  const toolsHit = d.tools.filter((t) => haystack.includes(t.toLowerCase().split(/[\s(/]/)[0]!)).length
+  const toolCoverage = d.tools.length ? toolsHit / d.tools.length : 0
+  const practicality = Math.min(100, Math.round(labShare * 250 + toolCoverage * 50))
+
+  const overall = Math.round(coverage * 0.45 + depth * 0.25 + practicality * 0.3)
+
+  // 4) Strengths / gaps / recommendations
+  const coveredTopics = coverageMap.filter((c) => c.covered)
+  const strengths: string[] = []
+  if (coveredTopics.length) {
+    strengths.push(`Solid coverage of ${coveredTopics.slice(0, 3).map((c) => c.topic).join(", ")}${coveredTopics.length > 3 ? " and more" : ""}.`)
+  }
+  if (labShare >= 0.25) strengths.push(`Healthy hands-on ratio — ${Math.round(labShare * 100)}% of lessons are labs.`)
+  if (toolsHit >= 3) strengths.push(`Learners practise with ${toolsHit} domain-standard tools (e.g. ${d.tools.filter((t) => haystack.includes(t.toLowerCase().split(/[\s(/]/)[0]!)).slice(0, 3).join(", ")}).`)
+  if (!strengths.length) strengths.push("A curriculum skeleton exists to build on — the domain map below gives the build order.")
+
+  const missingTopics = coverageMap.filter((c) => !c.covered)
+  const gaps: string[] = missingTopics.map((c) => `${c.topic} — ${c.evidence}`)
+  const missingTools = d.tools.filter((t) => !haystack.includes(t.toLowerCase().split(/[\s(/]/)[0]!))
+  if (missingTools.length && allLessons.length) {
+    gaps.push(`Tooling not yet hands-on: ${missingTools.slice(0, 5).join(", ")}${missingTools.length > 5 ? "…" : ""}`)
+  }
+  if (labShare < 0.2 && allLessons.length) gaps.push(`Lab intensity low (${Math.round(labShare * 100)}% of lessons) — ${d.name} is learned by doing.`)
+  if (avgContent < 800 && readingLessons.length) gaps.push(`Reading lessons average only ~${Math.round(avgContent)} characters of teaching content — below teachable depth.`)
+
+  const recommendations: LocalAuditResult["recommendations"] = []
+  for (const t of missingTopics.slice(0, 4)) {
+    recommendations.push({
+      title: `Add a module (or lessons) covering ${t.topic}`,
+      detail: `Generate a targeted module on "${t.topic}" — the curriculum generator honours focus notes, so feed it this gap. Anchor it to ${d.frameworks[0] ?? "the relevant framework"} and include a lab from the domain playbook (${d.labs[0] ?? "guided hands-on scenario"}).`,
+      severity: recommendations.length < 2 ? "high" : "medium",
+    })
+  }
+  if (labShare < 0.2) {
+    recommendations.push({
+      title: "Raise the lab ratio to ~1 lab per 2 reading lessons",
+      detail: `Add scenario labs from the domain playbook: ${d.labs.slice(0, 2).join(" / ")}. Every lab needs Objective, Environment, Steps and Deliverable.`,
+      severity: "high",
+    })
+  }
+  if (avgContent < 800 && readingLessons.length) {
+    recommendations.push({
+      title: "Deepen existing reading lessons to teachable grade",
+      detail: "Use the Lesson Deep-Dive action on the thinnest lessons — target 450-800 words of mechanism-level teaching with real commands, pitfalls and takeaways.",
+      severity: "medium",
+    })
+  }
+  if (missingTools.length >= 3) {
+    recommendations.push({
+      title: `Put learners hands-on with ${missingTools.slice(0, 3).join(", ")}`,
+      detail: `These domain-standard tools appear in no lesson yet. Employers probe for them by name — fold them into existing labs or add short tool-walkthrough lessons.`,
+      severity: "medium",
+    })
+  }
+  if (!recommendations.length) {
+    recommendations.push({
+      title: "Curriculum covers the domain map well",
+      detail: "Consider an exam-prep/capstone polish: a timed integrative scenario, a professional reporting lesson and a certification-readiness checkpoint.",
+      severity: "low",
+    })
+  }
+
+  return { scores: { coverage, depth, practicality, overall }, strengths, gaps, recommendations, coverageMap }
+}
+
+/* ============================================================
+   Assessment bank (exam-grade MCQs — no LLM required)
+   ============================================================ */
+
+export interface LocalQuestion {
+  text: string
+  options: string[]
+  answerIndex: number
+  explanation: string
+  difficulty: "easy" | "medium" | "hard"
+  domain: string
+}
+
+export interface LocalAssessmentCtx {
+  category: string
+  moduleTitle: string
+  count: number
+}
+
+type QuestionStem = { text: string; correct: string; explanation: string }
+
+const QUESTION_STEMS: [
+  (topic: string, tool: string) => QuestionStem,
+  (topic: string) => QuestionStem,
+  (topic: string, tool: string, misconception: string) => QuestionStem,
+] = [
+  (topic: string, tool: string) => ({
+    text: `Which tool is the practitioner standard for working with ${topic.toLowerCase()}?`,
+    correct: tool,
+    explanation: `${tool} is the domain-standard tool for this task — interviews and real operations expect hands-on fluency with it.`,
+  }),
+  (topic: string) => ({
+    text: `When planning work involving ${topic.toLowerCase()}, which framing do senior practitioners apply FIRST?`,
+    correct: "Map the activity to the governing framework and scope/authorisation boundaries",
+    explanation: `Scoping and framework mapping come before tooling — it is what separates professional operations from ad-hoc hacking.`,
+  }),
+  (topic: string, _tool: string, misconception: string) => ({
+    text: `A teammate says: "${misconception}" What is the strongest correction?`,
+    correct: "The premise is wrong — apply the domain methodology: evidence first, then controls",
+    explanation: `This is a known misconception in the field; the expert workflow (scope → evidence → control → verify) is the reliable correction.`,
+  }),
+]
+
+/** Deterministic exam-grade question bank composed from the domain knowledge base. */
+export function localAssessment(ctx: LocalAssessmentCtx): { questions: LocalQuestion[] } {
+  const d = resolveDomain(ctx.category)
+  const lens = DOMAIN_EXPERT_LENS[d.key]
+  const count = Math.min(Math.max(Math.round(ctx.count) || 8, 4), 15)
+  const questions: LocalQuestion[] = []
+
+  const topics = d.coreTopics.map((t) => splitTopic(t)[0]!)
+  const difficulties: LocalQuestion["difficulty"][] = ["easy", "easy", "medium", "medium", "hard"]
+
+  for (let i = 0; i < count; i++) {
+    const topic = topics[i % topics.length]!
+    const tool = d.tools[i % d.tools.length]!
+    const otherTools = d.tools.filter((t) => t !== tool)
+    const difficulty = difficulties[i % difficulties.length]!
+    const stemKind = i % 3
+
+    let text: string
+    let options: string[]
+    let answerIndex: number
+    let explanation: string
+
+    if (stemKind === 0) {
+      const q = QUESTION_STEMS[0]!(topic, tool)
+      text = q.text
+      explanation = q.explanation
+      options = [tool, ...otherTools.slice(0, 3).map((t) => t.split(/[\s(/]/)[0]!)]
+      answerIndex = 0
+      // Rotate the correct answer position so keys do not pattern.
+      const rot = i % options.length
+      ;[options[0], options[rot]] = [options[rot]!, options[0]!]
+      answerIndex = rot
+    } else if (stemKind === 1) {
+      const q = QUESTION_STEMS[1]!(topic)
+      text = q.text
+      explanation = q.explanation
+      const fw = d.frameworks
+      options = [
+        q.correct,
+        "Jump straight to tooling — speed beats documentation",
+        "Copy the approach from an unrelated domain",
+        "Skip scoping; authorisation is a formality",
+      ]
+      answerIndex = 0
+      const rot = i % options.length
+      ;[options[0], options[rot]] = [options[rot]!, options[0]!]
+      answerIndex = rot
+    } else {
+      const mis = lens?.misconceptions[i % (lens?.misconceptions.length || 1)] ?? "Security is mainly about buying the right tools"
+      const q = QUESTION_STEMS[2]!(topic, tool, mis)
+      text = q.text
+      explanation = lens?.methodology[i % (lens?.methodology.length || 1)] ?? q.explanation
+      options = [
+        q.correct,
+        "The teammate is right — accept the premise",
+        "Escalate to management without technical analysis",
+        "The premise is true for this domain only",
+      ]
+      answerIndex = 0
+      const rot = i % options.length
+      ;[options[0], options[rot]] = [options[rot]!, options[0]!]
+      answerIndex = rot
+    }
+
+    questions.push({
+      text: text.slice(0, 400),
+      options: options.map((o) => o.slice(0, 160)),
+      answerIndex,
+      explanation: explanation.slice(0, 400),
+      difficulty,
+      domain: d.key,
+    })
+  }
+
+  return { questions }
 }

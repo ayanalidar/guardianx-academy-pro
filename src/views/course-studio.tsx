@@ -66,6 +66,7 @@ import {
   IndianRupee,
   Settings2,
   Bot,
+  ClipboardCheck,
 } from "lucide-react"
 import { motion, AnimatePresence } from "framer-motion"
 import { cn } from "@/lib/utils"
@@ -75,6 +76,8 @@ import {
   BlueprintDialog,
   CurriculumDialog,
   LessonDeepDiveDialog,
+  AuditDialog,
+  AssessmentDialog,
 } from "@/components/studio/ai-architect"
 
 // ---------------------------------------------------------------------------
@@ -882,6 +885,9 @@ function EditorView({
   // "content" = modules/lessons tree, "details" = course metadata + extras
   const [tab, setTab] = React.useState<"content" | "details">("content")
   const [architectOpen, setArchitectOpen] = React.useState(false)
+  const [auditOpen, setAuditOpen] = React.useState(false)
+  const [curriculumFocus, setCurriculumFocus] = React.useState("")
+  const [assessmentModule, setAssessmentModule] = React.useState<AdminModule | null>(null)
 
   const modulesKey = ["course-studio-modules", course.id]
   const { data, isLoading, isError, error, refetch } = useQuery<{ modules: AdminModule[] }>({
@@ -1121,6 +1127,16 @@ function EditorView({
               <Button
                 size="sm"
                 variant="ghost"
+                className="h-7 px-2 text-amber-300 hover:bg-amber-500/10 hover:text-amber-200"
+                onClick={() => setAuditOpen(true)}
+                title={`Audit this course against the ${course.category} domain map — scores, gaps and a fix plan`}
+              >
+                <ClipboardCheck className="h-3.5 w-3.5" />
+                <span className="ml-1 hidden md:inline">Audit</span>
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
                 className="h-7 px-2 text-violet-300 hover:bg-violet-500/10 hover:text-violet-200"
                 onClick={() => addModuleMutation.mutate()}
                 disabled={addModuleMutation.isPending}
@@ -1179,6 +1195,7 @@ function EditorView({
                   onAddLesson={() => addLessonMutation.mutate(m.id)}
                   onDeleteLesson={(lessonId) => deleteLessonMutation.mutate(lessonId)}
                   onDeleteModule={() => deleteModuleMutation.mutate(m.id)}
+                  onQuestionBank={() => setAssessmentModule(m)}
                   courseId={course.id}
                 />
               ))
@@ -1238,9 +1255,36 @@ function EditorView({
         onOpenChange={setArchitectOpen}
         course={course}
         existingModuleCount={modules.length}
+        initialFocusNotes={curriculumFocus}
         onApplied={() => {
           qc.invalidateQueries({ queryKey: modulesKey })
           qc.invalidateQueries({ queryKey: ["admin-courses-studio"] })
+        }}
+      />
+
+      {/* AI Syllabus Auditor — scores the course, feeds fixes to the curriculum generator */}
+      <AuditDialog
+        open={auditOpen}
+        onOpenChange={setAuditOpen}
+        course={course}
+        onFeedToCurriculum={(notes) => {
+          setCurriculumFocus(notes)
+          setArchitectOpen(true)
+        }}
+      />
+
+      {/* AI Assessment Builder — exam-grade question bank per module */}
+      <AssessmentDialog
+        open={!!assessmentModule}
+        onOpenChange={(o) => { if (!o) setAssessmentModule(null) }}
+        course={course}
+        module={
+          assessmentModule
+            ? { id: assessmentModule.id, title: assessmentModule.title, lessons: assessmentModule.lessons.map((l) => ({ id: l.id, title: l.title })) }
+            : { id: "", title: "", lessons: [] }
+        }
+        onApplied={() => {
+          qc.invalidateQueries({ queryKey: modulesKey })
         }}
       />
     </div>
@@ -1487,6 +1531,7 @@ function ModuleRow({
   onAddLesson,
   onDeleteLesson,
   onDeleteModule,
+  onQuestionBank,
   courseId,
 }: {
   module: AdminModule
@@ -1498,6 +1543,7 @@ function ModuleRow({
   onAddLesson: () => void
   onDeleteLesson: (lessonId: string) => void
   onDeleteModule: () => void
+  onQuestionBank: () => void
   courseId: string
 }) {
   const [renameOpen, setRenameOpen] = React.useState(false)
@@ -1529,6 +1575,18 @@ function ModuleRow({
             {m.lessons.length} lesson{m.lessons.length === 1 ? "" : "s"}
           </div>
         </div>
+        <Button
+          size="sm"
+          variant="ghost"
+          className="h-6 w-6 p-0 text-muted-foreground hover:text-violet-300 hover:bg-violet-500/10"
+          onClick={(e) => {
+            e.stopPropagation()
+            onQuestionBank()
+          }}
+          title="AI question bank — exam-grade quiz for this module"
+        >
+          <Sparkles className="h-3 w-3" />
+        </Button>
         <Button
           size="sm"
           variant="ghost"

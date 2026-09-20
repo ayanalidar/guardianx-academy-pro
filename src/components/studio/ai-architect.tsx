@@ -303,12 +303,14 @@ export function CurriculumDialog({
   course,
   existingModuleCount,
   onApplied,
+  initialFocusNotes,
 }: {
   open: boolean
   onOpenChange: (o: boolean) => void
   course: ArchitectCourseContext
   existingModuleCount: number
   onApplied: () => void
+  initialFocusNotes?: string
 }) {
   const [stage, setStage] = React.useState<"params" | "loading" | "review" | "applying">("params")
   const [error, setError] = React.useState<string | null>(null)
@@ -318,6 +320,8 @@ export function CurriculumDialog({
   const [moduleCount, setModuleCount] = React.useState("6")
   const [depth, setDepth] = React.useState("standard")
   const [focusNotes, setFocusNotes] = React.useState("")
+  const [reviewed, setReviewed] = React.useState(true)
+  const [critique, setCritique] = React.useState<{ score?: number; verdict?: string; fixes?: string[] } | null>(null)
   const [confirmAppend, setConfirmAppend] = React.useState(false)
   const [runId, setRunId] = React.useState(0)
 
@@ -325,7 +329,7 @@ export function CurriculumDialog({
     setStage("loading")
     setError(null)
     try {
-      const res = await api<{ ok: boolean; modules: PlannedModule[]; source?: string; warning?: string }>("/api/ai/course-architect", {
+      const res = await api<{ ok: boolean; modules: PlannedModule[]; source?: string; warning?: string; critique?: { score?: number; verdict?: string; fixes?: string[] } | null }>("/api/ai/course-architect", {
         method: "POST",
         body: JSON.stringify({
           action: "curriculum",
@@ -333,9 +337,11 @@ export function CurriculumDialog({
           moduleCount: parseInt(moduleCount, 10) || 6,
           depth,
           focusNotes,
+          ...(reviewed ? { quality: "reviewed" } : {}),
         }),
       })
       if (res.warning) toast.info(res.warning, { duration: 8000 })
+      setCritique(res.critique ?? null)
       setModules(res.modules || [])
       setSelected(new Set((res.modules || []).map((_, i) => i)))
       setExpanded(new Set([0]))
@@ -345,7 +351,7 @@ export function CurriculumDialog({
       setStage("params")
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [course.id, moduleCount, depth, focusNotes])
+  }, [course.id, moduleCount, depth, focusNotes, reviewed])
 
   React.useEffect(() => {
     if (open && runId > 0 && stage === "params") generate()
@@ -356,8 +362,10 @@ export function CurriculumDialog({
     if (open) {
       setStage("params")
       setError(null)
+      setCritique(null)
+      if (initialFocusNotes) setFocusNotes(initialFocusNotes)
     }
-  }, [open])
+  }, [open, initialFocusNotes])
 
   const selectedModules = modules.filter((_, i) => selected.has(i))
   const selectedLessons = selectedModules.reduce((acc, m) => acc + (m.lessons?.length || 0), 0)
@@ -430,6 +438,18 @@ export function CurriculumDialog({
                   className="bg-background/60 text-sm"
                 />
               </div>
+              <label className="flex items-start gap-2.5 rounded-lg border border-emerald-500/20 bg-emerald-500/5 p-3 cursor-pointer">
+                <Checkbox checked={reviewed} onCheckedChange={(v) => setReviewed(v === true)} className="mt-0.5" />
+                <span className="min-w-0">
+                  <span className="text-xs font-medium text-emerald-200 flex items-center gap-1.5">
+                    <ShieldCheck className="h-3.5 w-3.5" /> Two-agent quality loop
+                  </span>
+                  <span className="text-[11px] text-muted-foreground leading-relaxed block mt-0.5">
+                    A second critic agent scores the draft (coverage, specificity, lab distribution, level calibration)
+                    and a reviser applies its fixes before you ever see it. Slightly slower, noticeably better.
+                  </span>
+                </span>
+              </label>
               <div className="rounded-lg border border-violet-500/20 bg-violet-500/5 p-3 space-y-1.5">
                 <p className="text-xs font-medium text-violet-200 flex items-center gap-1.5">
                   <Bot className="h-3.5 w-3.5" /> What the agent will do
@@ -449,6 +469,20 @@ export function CurriculumDialog({
 
           {stage === "review" && (
             <div className="space-y-2.5 py-2">
+              {critique && (
+                <div className="rounded-lg border border-emerald-500/25 bg-emerald-500/5 px-3 py-2.5">
+                  <div className="flex items-center gap-2 text-xs font-medium text-emerald-200">
+                    <ShieldCheck className="h-3.5 w-3.5" />
+                    Two-agent loop complete
+                    {typeof critique.score === "number" && (
+                      <Badge variant="outline" className="text-[10px] font-mono text-emerald-300 border-emerald-500/40 bg-emerald-500/10">
+                        critic score {critique.score}/100
+                      </Badge>
+                    )}
+                  </div>
+                  {critique.verdict && <p className="text-[11px] text-muted-foreground mt-1">{critique.verdict}</p>}
+                </div>
+              )}
               <div className="flex items-center justify-between text-xs text-muted-foreground">
                 <span>{modules.length} modules · {selectedLessons} lessons · ~{Math.round(totalMin / 60)}h of material</span>
                 <Button variant="ghost" size="sm" onClick={() => setRunId((n) => n + 1)} className="h-7 text-[11px]">
@@ -682,6 +716,386 @@ export function LessonDeepDiveDialog({
               className="bg-violet-600 hover:bg-violet-500"
             >
               <Sparkles className="h-3.5 w-3.5 mr-1.5" /> Use in lesson editor
+            </Button>
+          </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// 4. Syllabus Audit — the agent reviews the WHOLE course
+// ---------------------------------------------------------------------------
+
+interface AuditResult {
+  scores: { coverage: number; depth: number; practicality: number; overall: number }
+  strengths: string[]
+  gaps: string[]
+  recommendations: { title: string; detail: string; severity: "high" | "medium" | "low" }[]
+}
+
+function ScoreChip({ label, value }: { label: string; value: number }) {
+  const tone =
+    value >= 75 ? "text-emerald-300 border-emerald-500/40 bg-emerald-500/10"
+    : value >= 50 ? "text-amber-300 border-amber-500/40 bg-amber-500/10"
+    : "text-rose-300 border-rose-500/40 bg-rose-500/10"
+  return (
+    <div className={cn("rounded-lg border px-3 py-2 text-center", tone)}>
+      <div className="text-lg font-bold leading-none">{value}</div>
+      <div className="text-[9px] font-mono tracking-wider mt-1 opacity-80">{label}</div>
+    </div>
+  )
+}
+
+export function AuditDialog({
+  open,
+  onOpenChange,
+  course,
+  onFeedToCurriculum,
+}: {
+  open: boolean
+  onOpenChange: (o: boolean) => void
+  course: ArchitectCourseContext
+  onFeedToCurriculum: (focusNotes: string) => void
+}) {
+  const [loading, setLoading] = React.useState(false)
+  const [error, setError] = React.useState<string | null>(null)
+  const [audit, setAudit] = React.useState<AuditResult | null>(null)
+  const [runId, setRunId] = React.useState(0)
+
+  const generate = React.useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    setAudit(null)
+    try {
+      const res = await api<{ ok: boolean; audit: AuditResult; source?: string; warning?: string }>(
+        "/api/ai/course-architect",
+        { method: "POST", body: JSON.stringify({ action: "audit", courseId: course.id }) },
+      )
+      if (res.warning) toast.info(res.warning, { duration: 8000 })
+      setAudit(res.audit)
+    } catch (e: any) {
+      setError(e?.message || "Audit failed")
+    } finally {
+      setLoading(false)
+    }
+  }, [course.id])
+
+  React.useEffect(() => {
+    if (open) generate()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, runId])
+
+  const focusFromAudit = React.useCallback(() => {
+    if (!audit) return ""
+    const recs = audit.recommendations.map((r) => `- ${r.title}: ${r.detail}`).join("\n")
+    return `Address these syllabus-audit findings:\n${recs}`
+  }, [audit])
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="bg-card border-border/60 max-w-3xl max-h-[88vh] flex flex-col">
+        <DialogHeader>
+          <ArchitectHeader subtitle={`Auditing "${course.title}" against senior-level ${course.category} expectations — coverage, depth, practicality.`} />
+        </DialogHeader>
+
+        <div className="flex-1 overflow-y-auto custom-scroll min-h-0 pr-1">
+          {loading ? (
+            <GeneratingState label="The Auditor is mapping your inventory against the domain knowledge base…" />
+          ) : error ? (
+            <ErrorState message={error} onRetry={() => setRunId((n) => n + 1)} />
+          ) : audit ? (
+            <div className="space-y-4 py-2">
+              {/* Scores */}
+              <div className="grid grid-cols-4 gap-2">
+                <ScoreChip label="COVERAGE" value={audit.scores.coverage} />
+                <ScoreChip label="DEPTH" value={audit.scores.depth} />
+                <ScoreChip label="PRACTICALITY" value={audit.scores.practicality} />
+                <ScoreChip label="OVERALL" value={audit.scores.overall} />
+              </div>
+
+              {/* Strengths */}
+              {audit.strengths.length > 0 && (
+                <div className="space-y-1.5">
+                  <p className="text-[10px] font-mono tracking-[0.2em] text-emerald-300 flex items-center gap-1.5">
+                    <ShieldCheck className="h-3 w-3" /> STRENGTHS
+                  </p>
+                  {audit.strengths.map((s, i) => (
+                    <p key={i} className="text-xs text-foreground/90 leading-relaxed pl-4 border-l-2 border-emerald-500/30">• {s}</p>
+                  ))}
+                </div>
+              )}
+
+              {/* Gaps */}
+              {audit.gaps.length > 0 && (
+                <div className="space-y-1.5">
+                  <p className="text-[10px] font-mono tracking-[0.2em] text-amber-300 flex items-center gap-1.5">
+                    <AlertTriangle className="h-3 w-3" /> GAPS FOUND
+                  </p>
+                  {audit.gaps.map((g, i) => (
+                    <p key={i} className="text-xs text-foreground/90 leading-relaxed pl-4 border-l-2 border-amber-500/30">• {g}</p>
+                  ))}
+                </div>
+              )}
+
+              {/* Recommendations */}
+              <div className="space-y-1.5">
+                <p className="text-[10px] font-mono tracking-[0.2em] text-violet-300 flex items-center gap-1.5">
+                  <Bot className="h-3 w-3" /> PRIORITIZED FIX PLAN
+                </p>
+                {audit.recommendations.map((r, i) => (
+                  <div key={i} className="rounded-lg border border-border/50 bg-background/40 p-3 space-y-1">
+                    <div className="flex items-center gap-2">
+                      <Badge
+                        variant="outline"
+                        className={cn(
+                          "text-[9px] font-mono shrink-0",
+                          r.severity === "high" ? "text-rose-300 border-rose-500/40 bg-rose-500/10"
+                          : r.severity === "medium" ? "text-amber-300 border-amber-500/40 bg-amber-500/10"
+                          : "text-cyan-300 border-cyan-500/40 bg-cyan-500/10",
+                        )}
+                      >
+                        {r.severity.toUpperCase()}
+                      </Badge>
+                      <p className="text-xs font-semibold text-foreground">{r.title}</p>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground leading-relaxed">{r.detail}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
+        </div>
+
+        <DialogFooter className="flex-col sm:flex-row gap-2 border-t border-border/60 pt-3">
+          <ReviewNote />
+          <div className="flex items-center gap-2 ml-auto">
+            <Button variant="outline" size="sm" onClick={() => setRunId((n) => n + 1)} className="border-border/60">
+              <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> Re-audit
+            </Button>
+            <Button
+              size="sm"
+              disabled={!audit}
+              onClick={() => {
+                onFeedToCurriculum(focusFromAudit())
+                onOpenChange(false)
+              }}
+              className="bg-violet-600 hover:bg-violet-500"
+            >
+              <Wand2 className="h-3.5 w-3.5 mr-1.5" /> Fix with Curriculum Generator
+            </Button>
+          </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// 5. Assessment Bank — exam-grade question builder per module
+// ---------------------------------------------------------------------------
+
+interface BankQuestion {
+  text: string
+  options: string[]
+  answerIndex: number
+  explanation: string
+  difficulty: "easy" | "medium" | "hard"
+  domain: string
+}
+
+export function AssessmentDialog({
+  open,
+  onOpenChange,
+  course,
+  module,
+  onApplied,
+}: {
+  open: boolean
+  onOpenChange: (o: boolean) => void
+  course: ArchitectCourseContext
+  module: { id: string; title: string; lessons: { id: string; title: string }[] }
+  onApplied: (created: number) => void
+}) {
+  const [loading, setLoading] = React.useState(false)
+  const [applying, setApplying] = React.useState(false)
+  const [error, setError] = React.useState<string | null>(null)
+  const [questions, setQuestions] = React.useState<BankQuestion[]>([])
+  const [selected, setSelected] = React.useState<Set<number>>(new Set())
+  const [targetLesson, setTargetLesson] = React.useState<string>("")
+  const [runId, setRunId] = React.useState(0)
+
+  const generate = React.useCallback(async () => {
+    setLoading(true)
+    setError(null)
+    setQuestions([])
+    try {
+      const res = await api<{
+        ok: boolean
+        questions: BankQuestion[]
+        module: { lessons: { id: string; title: string }[] }
+        source?: string
+        warning?: string
+      }>("/api/ai/course-architect", {
+        method: "POST",
+        body: JSON.stringify({ action: "assessments", courseId: course.id, moduleId: module.id, count: 8 }),
+      })
+      if (res.warning) toast.info(res.warning, { duration: 8000 })
+      setQuestions(res.questions || [])
+      setSelected(new Set((res.questions || []).map((_, i) => i)))
+      // Default the quiz target to the module's last lesson (same convention
+      // the course generator uses) or let the author pick another.
+      const lessons = res.module?.lessons || []
+      setTargetLesson(lessons.length ? lessons[lessons.length - 1]!.id : "")
+    } catch (e: any) {
+      setError(e?.message || "Generation failed")
+    } finally {
+      setLoading(false)
+    }
+  }, [course.id, module.id])
+
+  React.useEffect(() => {
+    if (open) generate()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, runId])
+
+  const applyAssessment = async () => {
+    if (!targetLesson) {
+      toast.error("This module has no lessons yet — add a lesson first, then attach the quiz.")
+      return
+    }
+    setApplying(true)
+    try {
+      const payload = questions.filter((_, i) => selected.has(i))
+      const res = await api<{ ok: boolean; created: number }>("/api/ai/course-architect", {
+        method: "POST",
+        body: JSON.stringify({
+          action: "apply_assessments",
+          courseId: course.id,
+          lessonId: targetLesson,
+          moduleTitle: module.title,
+          questions: payload,
+        }),
+      })
+      toast.success(`Created quiz with ${res.created} questions`)
+      onApplied(res.created)
+      onOpenChange(false)
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to create the quiz")
+    } finally {
+      setApplying(false)
+    }
+  }
+
+  const DIFF_COLOR: Record<string, string> = {
+    easy: "text-emerald-300 border-emerald-500/40 bg-emerald-500/10",
+    medium: "text-amber-300 border-amber-500/40 bg-amber-500/10",
+    hard: "text-rose-300 border-rose-500/40 bg-rose-500/10",
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="bg-card border-border/60 max-w-3xl max-h-[88vh] flex flex-col">
+        <DialogHeader>
+          <ArchitectHeader subtitle={`Exam-grade question bank for "${module.title}" — test application, not trivia.`} />
+        </DialogHeader>
+
+        <div className="flex-1 overflow-y-auto custom-scroll min-h-0 pr-1">
+          {loading ? (
+            <GeneratingState label="The Assessment Builder is writing exam-grade questions…" />
+          ) : error ? (
+            <ErrorState message={error} onRetry={() => setRunId((n) => n + 1)} />
+          ) : questions.length > 0 ? (
+            <div className="space-y-2.5 py-2">
+              <div className="flex items-center justify-between text-xs text-muted-foreground">
+                <span>{questions.length} questions · {selected.size} selected</span>
+                <Button variant="ghost" size="sm" onClick={() => setRunId((n) => n + 1)} className="h-7 text-[11px]">
+                  <RefreshCw className="h-3 w-3 mr-1" /> Regenerate
+                </Button>
+              </div>
+              {questions.map((q, i) => (
+                <div
+                  key={i}
+                  className={cn(
+                    "rounded-lg border p-3 space-y-2",
+                    selected.has(i) ? "border-violet-500/30 bg-violet-500/5" : "border-border/40 bg-background/30 opacity-60",
+                  )}
+                >
+                  <div className="flex items-start gap-2.5">
+                    <Checkbox
+                      checked={selected.has(i)}
+                      onCheckedChange={(v) =>
+                        setSelected((prev) => {
+                          const next = new Set(prev)
+                          if (v) next.add(i)
+                          else next.delete(i)
+                          return next
+                        })
+                      }
+                      className="mt-0.5"
+                    />
+                    <div className="min-w-0 flex-1 space-y-1.5">
+                      <p className="text-xs font-medium text-foreground leading-relaxed">{q.text}</p>
+                      <div className="grid sm:grid-cols-2 gap-1.5">
+                        {q.options.map((opt, oi) => (
+                          <p
+                            key={oi}
+                            className={cn(
+                              "text-[11px] rounded-md px-2 py-1 border",
+                              oi === q.answerIndex
+                                ? "text-emerald-200 border-emerald-500/40 bg-emerald-500/10"
+                                : "text-muted-foreground border-border/40 bg-background/40",
+                            )}
+                          >
+                            {String.fromCharCode(65 + oi)}. {opt}
+                          </p>
+                        ))}
+                      </div>
+                      <p className="text-[10px] text-muted-foreground leading-relaxed">
+                        <span className="text-emerald-300">Why:</span> {q.explanation}
+                      </p>
+                      <div className="flex items-center gap-1.5">
+                        <Badge variant="outline" className={cn("text-[9px] font-mono", DIFF_COLOR[q.difficulty])}>
+                          {q.difficulty.toUpperCase()}
+                        </Badge>
+                        <Badge variant="outline" className="text-[9px] font-mono text-muted-foreground border-border/40">
+                          {q.domain}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : null}
+        </div>
+
+        <DialogFooter className="flex-col sm:flex-row gap-2 border-t border-border/60 pt-3">
+          <ReviewNote />
+          <div className="flex items-center gap-2 ml-auto w-full sm:w-auto">
+            {module.lessons.length > 0 && (
+              <Select value={targetLesson} onValueChange={setTargetLesson}>
+                <SelectTrigger className="h-8 text-xs bg-background/60 min-w-[160px] flex-1 sm:flex-none">
+                  <SelectValue placeholder="Attach quiz to lesson…" />
+                </SelectTrigger>
+                <SelectContent>
+                  {module.lessons.map((l) => (
+                    <SelectItem key={l.id} value={l.id} className="text-xs max-w-[280px]">
+                      {l.title.length > 44 ? `${l.title.slice(0, 44)}…` : l.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+            <Button
+              size="sm"
+              disabled={applying || !questions.length || !selected.size}
+              onClick={applyAssessment}
+              className="bg-violet-600 hover:bg-violet-500 shrink-0"
+            >
+              {applying ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5 mr-1.5" />}
+              Create quiz ({selected.size})
             </Button>
           </div>
         </DialogFooter>
