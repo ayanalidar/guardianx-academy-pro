@@ -98,7 +98,9 @@ export function VerifyView() {
 
   function copyShareUrl() {
     if (!activeId) return
-    const url = `${window.location.origin}/#/verify/${encodeURIComponent(activeId)}`
+    // Canonical path URL (legacy /#/verify/… hash links still redirect, but
+    // new shares should be clean, crawlable real paths).
+    const url = `${window.location.origin}/verify/${encodeURIComponent(activeId)}`
     navigator.clipboard?.writeText(url)
     toast.success("Verification URL copied")
   }
@@ -416,7 +418,13 @@ function VerifiedCard({
             )}
             {cred.examType && (
               <Badge variant="outline" className="border-border/60 text-muted-foreground bg-muted/20">
-                {cred.examType === "online-quiz" ? "Online Quiz" : cred.examType === "proctored" ? "Proctored Exam" : cred.examType}
+                {cred.examType === "online-quiz"
+                  ? "Online Quiz"
+                  : cred.examType === "proctored"
+                  ? "Proctored Exam"
+                  : cred.examType === "course-completion"
+                  ? "Course Completion"
+                  : cred.examType}
               </Badge>
             )}
           </div>
@@ -542,7 +550,7 @@ function VerifiedCard({
           )}
           <Button
             size="sm"
-            onClick={() => (window.location.href = `${window.location.origin}/#/credentials`)}
+            onClick={() => (window.location.href = `${window.location.origin}/credentials`)}
             className="flex-1 min-w-[140px] bg-violet-600 hover:bg-violet-500"
           >
             <Award className="h-3.5 w-3.5 mr-1.5" /> Browse Credentials

@@ -48,7 +48,9 @@ export function CredentialsView() {
   }
 
   function copyUrl(credId: string) {
-    const url = `https://academy.guardianx.cloud/#/verify/${credId}`
+    // Origin-relative canonical path (legacy /#/verify/… hash form still
+    // redirects, but this is the clean shareable URL).
+    const url = `${window.location.origin}/verify/${credId}`
     navigator.clipboard?.writeText(url)
     setCopied(credId)
     toast.success("Verification URL copied!")

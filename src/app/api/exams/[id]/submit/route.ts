@@ -341,7 +341,9 @@ export async function POST(
           expiryDate,
           status: "valid",
           verificationHash,
-          verificationUrl: `/api/credentials/verify/${credentialId}`,
+          // Human-facing verify URL (was /api/credentials/verify/<id> — a raw
+          // JSON endpoint — so "Copy Verification URL" handed recruiters JSON).
+          verificationUrl: `/verify/${credentialId}`,
         },
       })
     } else {

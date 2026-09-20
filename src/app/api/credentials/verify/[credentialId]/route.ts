@@ -51,6 +51,10 @@ export async function GET(req: Request, { params }: { params: Promise<{ credenti
           status: cred.status,
           skillsAssessed: JSON.parse(cred.skillsAssessed || "[]"),
           examType: cred.examType,
+          // Human-facing canonical link — the verify page for this credential.
+          // Previously absent, which meant the "Open certificate" button never
+          // rendered for exam credentials.
+          verificationUrl: `/verify/${cred.credentialId}`,
           // NOTE: verificationHash is intentionally NOT returned publicly —
           // it is a server-side integrity value, not a display field.
         },
@@ -80,13 +84,47 @@ export async function GET(req: Request, { params }: { params: Promise<{ credenti
             status: quizCert.status,
             examType: "online-quiz",
             // verificationHash intentionally omitted (server-side only)
-            verificationUrl: quizCert.verificationUrl,
+            // OVERRIDE the stored value: old rows point at /verify?id=… (the
+            // verification page itself — circular). "Open certificate" must
+            // open the FULL certificate page, not the verifier again.
+            verificationUrl: `/cyber-quiz/certificate/${quizCert.credentialId}`,
           },
         })
       }
     }
 
-    // ── Not found in either table ──
+    // ── Check course-completion Certificate (GX-… format) ──
+    // The /verify page must be universal: dashboard-issued course
+    // certificates (Certificate table) were previously NOT verifiable here
+    // at all — pasting their ID returned "not found".
+    const courseCert = await db.certificate.findUnique({
+      where: { certificateId: credentialId },
+      include: {
+        user: { select: { name: true } },
+        course: { select: { title: true, shortName: true, level: true } },
+      },
+    })
+
+    if (courseCert) {
+      return NextResponse.json({
+        valid: true,
+        credential: {
+          credentialId: courseCert.certificateId,
+          candidateName: courseCert.user.name,
+          certificationName: courseCert.course.title,
+          certificationSlug: courseCert.course.shortName,
+          certificationLevel: courseCert.course.level,
+          score: courseCert.score,
+          issueDate: courseCert.issuedAt,
+          expiryDate: null,
+          status: "valid",
+          examType: "course-completion",
+          verificationUrl: `/verify/${courseCert.certificateId}`,
+        },
+      })
+    }
+
+    // ── Not found in any table ──
     return NextResponse.json({ valid: false, credential: null })
   } catch (err) {
     console.error("[api/credentials/verify] error:", err)

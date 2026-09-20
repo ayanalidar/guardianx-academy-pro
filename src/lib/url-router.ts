@@ -157,9 +157,12 @@ export function pathToView(pathWithSearch: string): View | null {
   if ((parts[0] === "exams" || parts[0] === "exam") && parts[1]) {
     return { name: "exam-detail", examId: parts[1] }
   }
-  // /verify, /verify/<id>, /verify?credentialId=<id>
+  // /verify, /verify/<id>, /verify?credentialId=<id>, /verify?id=<id>
+  // (CyberQuizCertificate rows store verificationUrl with ?id=, and the
+  // homepage verify card uses ?certificateId= — all must resolve.)
   if (parts[0] === "verify") {
-    const credentialId = parts[1] ?? search.get("credentialId") ?? undefined
+    const credentialId =
+      parts[1] ?? search.get("credentialId") ?? search.get("id") ?? search.get("certificateId") ?? undefined
     return { name: "verify", credentialId }
   }
   // /instructors/<id>  (listing handled by flat views below)
