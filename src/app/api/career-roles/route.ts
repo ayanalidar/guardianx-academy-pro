@@ -5,7 +5,7 @@ export const runtime = "nodejs"
 
 /**
  * GET /api/career-roles
- * Public — returns all published CareerPathRole entries ordered by `order`.
+ * Public - returns all published CareerPathRole entries ordered by `order`.
  *
  * NOTE: The Prisma model is named `CareerPathRole` (not `CareerRole`) to
  * avoid colliding with the pre-existing CareerRole model used by

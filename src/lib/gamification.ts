@@ -118,7 +118,7 @@ export async function awardXp(
     data: { xp: newXp, level: newLevel, streak: newStreak, lastActiveDate: today },
   })
 
-  // log activity (only one per type per day to avoid spam — but allow multiple)
+  // log activity (only one per type per day to avoid spam - but allow multiple)
   await db.userActivity.create({
     data: { userId, type, xp, meta, date: today },
   })
@@ -126,7 +126,7 @@ export async function awardXp(
   // check achievements
   const newAchievements = await checkAchievements(userId, type)
 
-  // WEEK_WARRIOR (7-day streak) — explicitly award on every awardXp call
+  // WEEK_WARRIOR (7-day streak) - explicitly award on every awardXp call
   // if the user has reached a 7-day streak. The auto-checkAchievements
   // flow also catches this, but the explicit call makes the spec-mandated
   // award path obvious and self-documenting in the API route.
@@ -158,10 +158,10 @@ export async function awardXp(
 // Achievement definitions checked dynamically.
 //
 // Codes follow the naming convention requested by the product spec:
-//   FIRST_STEP   — awarded on the user's first course enrollment
-//   FIRST_LAB    — awarded when the user solves their first lab
-//   WEEK_WARRIOR — awarded when the user maintains a 7-day streak
-//   CERTIFIED    — awarded when the user earns their first certificate
+//   FIRST_STEP - awarded on the user's first course enrollment
+//   FIRST_LAB - awarded when the user solves their first lab
+//   WEEK_WARRIOR - awarded when the user maintains a 7-day streak
+//   CERTIFIED - awarded when the user earns their first certificate
 //
 // Legacy codes (STREAK_3, ENROLLED_3, etc.) are intentionally kept for
 // backward compatibility with existing UserAchievement rows in production.
@@ -193,11 +193,11 @@ const ACHIEVEMENT_DEFS: AchievementDef[] = [
   { code: "STREAK_3", title: "On a Roll", description: "Maintain a 3-day streak", icon: "Flame", color: "orange", xp: 50, tier: "bronze",
     check: async (s) => s.streak >= 3,
     progressFor: (s) => ({ current: Math.min(s.streak, 3), target: 3, label: `${s.streak} / 3 day streak` }) },
-  // WEEK_WARRIOR — 7-day streak (spec literal code).
+  // WEEK_WARRIOR - 7-day streak (spec literal code).
   { code: "WEEK_WARRIOR", title: "Week Warrior", description: "Maintain a 7-day streak", icon: "Flame", color: "red", xp: 150, tier: "silver",
     check: async (s) => s.streak >= 7,
     progressFor: (s) => ({ current: Math.min(s.streak, 7), target: 7, label: `${s.streak} / 7 day streak` }) },
-  // CERTIFIED — first certificate (spec literal code).
+  // CERTIFIED - first certificate (spec literal code).
   { code: "CERTIFIED", title: "Certified", description: "Earn your first certificate", icon: "Award", color: "amber", xp: 200, tier: "gold",
     check: async (s) => s.certificates >= 1,
     progressFor: (s) => ({ current: Math.min(s.certificates, 1), target: 1, label: `${s.certificates} / 1 certificate earned` }) },
@@ -210,7 +210,7 @@ const ACHIEVEMENT_DEFS: AchievementDef[] = [
   { code: "LEVEL_10", title: "Guardian Elite", description: "Reach level 10", icon: "ShieldCheck", color: "emerald", xp: 300, tier: "gold",
     check: async (s) => s.level >= 10,
     progressFor: (s) => ({ current: Math.min(s.level, 10), target: 10, label: `Level ${s.level} / 10` }) },
-  // FIRST_STEP — first course enrollment (spec literal code).
+  // FIRST_STEP - first course enrollment (spec literal code).
   { code: "FIRST_STEP", title: "First Step", description: "Enroll in your first course", icon: "BookMarked", color: "cyan", xp: 25, tier: "bronze",
     check: async (s) => s.enrollments >= 1,
     progressFor: (s) => ({ current: Math.min(s.enrollments, 1), target: 1, label: `${s.enrollments} / 1 enrollment` }) },
@@ -305,7 +305,7 @@ export async function getProgressForCode(
 }
 
 /**
- * Compute progress for ALL achievement definitions in one pass — used by
+ * Compute progress for ALL achievement definitions in one pass - used by
  * /api/achievements to avoid N+1 computeStats calls.
  */
 export async function getAllProgress(userId: string): Promise<Record<string, AchievementProgress | null>> {

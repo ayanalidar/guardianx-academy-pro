@@ -56,7 +56,7 @@ ${user.name} sent you a message on GuardianX Academy:
 "${content}"
 
 Reply at: https://guardianx.academy (Messages)
-— GuardianX Academy`,
+ - GuardianX Academy`,
     type: "message",
     userId: recipient.id,
   })

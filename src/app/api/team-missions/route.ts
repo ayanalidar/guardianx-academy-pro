@@ -29,7 +29,7 @@ async function seedMissions() {
       description:
         "Compromise a vulnerable e-commerce platform, exfiltrate data, then perform forensics on the captured traffic.",
       scenario:
-        "A red-team engagement against ShopGuard — a fictional online store. Your team must identify the vulnerability chain, gain code execution, then pivot to forensics on the attacker footprint you leave behind.",
+        "A red-team engagement against ShopGuard - a fictional online store. Your team must identify the vulnerability chain, gain code execution, then pivot to forensics on the attacker footprint you leave behind.",
       maxTeamSize: 3,
       duration: 60,
       difficulty: "medium",

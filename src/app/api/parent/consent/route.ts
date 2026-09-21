@@ -6,7 +6,7 @@ import { getCurrentUser } from "@/lib/session"
 export const runtime = "nodejs"
 
 /**
- * Parent-link consent — STUDENT side.
+ * Parent-link consent - STUDENT side.
  *
  * GET  /api/parent/consent        → pending parent-link requests for the
  *                                   signed-in user (as the student).
@@ -15,7 +15,7 @@ export const runtime = "nodejs"
  *                                   Also accepts { token } to approve via the
  *                                   one-time consent token (emailed link).
  *
- * SECURITY: requires the STUDENT's own NextAuth session — the student whose
+ * SECURITY: requires the STUDENT's own NextAuth session - the student whose
  * profile the parent wants to link to. This is the consent step that was
  * previously missing (a parent could previously link to any student by
  * knowing their email).
@@ -62,7 +62,7 @@ export async function POST(req: NextRequest) {
   }
   const { parentId, token, action } = parsed.data
 
-  // Locate the pending request — always scoped to the signed-in student
+  // Locate the pending request - always scoped to the signed-in student
   const request = await db.parentAccount.findFirst({
     where: token
       ? { consentToken: token, studentId: user.id, status: "PENDING" }
@@ -95,7 +95,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, status: "rejected" })
   }
 
-  // Approve — consume the one-time token, activate the link
+  // Approve - consume the one-time token, activate the link
   await db.parentAccount.update({
     where: { id: request.id },
     data: { status: "ACTIVE", consentToken: null, decidedAt: new Date() },
@@ -107,7 +107,7 @@ export async function POST(req: NextRequest) {
     await sendEmail({
       to: request.email,
       subject: "Your GuardianX parent portal is now active",
-      body: `Hi ${request.name},\n\nGood news — ${user.name} approved your parent/guardian link request. You can now log in to the GuardianX parent portal with the email and password you registered.\n\nThe GuardianX Team`,
+      body: `Hi ${request.name},\n\nGood news - ${user.name} approved your parent/guardian link request. You can now log in to the GuardianX parent portal with the email and password you registered.\n\nThe GuardianX Team`,
       type: "notification",
     })
   } catch {

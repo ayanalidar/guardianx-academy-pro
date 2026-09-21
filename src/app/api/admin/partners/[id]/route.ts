@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { requireAdmin } from "@/lib/session"
 
-// PATCH /api/admin/partners/[id] — update a partner institution
+// PATCH /api/admin/partners/[id] - update a partner institution
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const user = await requireAdmin()

@@ -102,7 +102,7 @@ interface CourseListItem {
   color: string
   tags: string
   certBody: string | null
-  // Course extras (JSON-encoded string arrays — see src/lib/course-lists.ts)
+  // Course extras (JSON-encoded string arrays - see src/lib/course-lists.ts)
   whatYouWillLearn: string
   prerequisites: string
   whoShouldAttend: string
@@ -329,7 +329,7 @@ function ListView({ onOpen }: { onOpen: (c: CourseListItem) => void }) {
               Build your <span className="text-gradient-premium">cyber curriculum</span>
             </h1>
             <p className="text-muted-foreground text-sm max-w-xl">
-              Manage every course in the catalog — design modules, craft lessons, and ship
+              Manage every course in the catalog - design modules, craft lessons, and ship
               production-ready content. All wired directly to the live database.
             </p>
           </div>
@@ -829,7 +829,7 @@ function CreateCourseDialog({
             <div>
               <div className="text-sm font-medium">Published</div>
               <p className="text-[10px] text-muted-foreground">
-                Unpublished courses are drafts — hidden from the public catalog.
+                Unpublished courses are drafts - hidden from the public catalog.
               </p>
             </div>
             <Checkbox
@@ -1072,7 +1072,7 @@ function EditorView({
           </div>
         </div>
 
-        {/* Tab switcher — Content (modules/lessons) vs Course Details */}
+        {/* Tab switcher - Content (modules/lessons) vs Course Details */}
         <div className="flex items-center gap-1 p-1 rounded-lg border border-border/60 bg-card/40">
           <button
             onClick={() => setTab("content")}
@@ -1129,7 +1129,7 @@ function EditorView({
                 variant="ghost"
                 className="h-7 px-2 text-amber-300 hover:bg-amber-500/10 hover:text-amber-200"
                 onClick={() => setAuditOpen(true)}
-                title={`Audit this course against the ${course.category} domain map — scores, gaps and a fix plan`}
+                title={`Audit this course against the ${course.category} domain map - scores, gaps and a fix plan`}
               >
                 <ClipboardCheck className="h-3.5 w-3.5" />
                 <span className="ml-1 hidden md:inline">Audit</span>
@@ -1157,7 +1157,7 @@ function EditorView({
                 <Layers className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
                 <p className="text-sm font-medium mb-1">No modules yet</p>
                 <p className="text-xs text-muted-foreground mb-4">
-                  Add your first module — or let the AI Course Architect design an
+                  Add your first module - or let the AI Course Architect design an
                   in-depth curriculum from its domain knowledge.
                 </p>
                 <div className="flex items-center justify-center gap-2 flex-wrap">
@@ -1249,7 +1249,7 @@ function EditorView({
       </div>
       )}
 
-      {/* AI Course Architect — curriculum generator (append-only, review-before-apply) */}
+      {/* AI Course Architect - curriculum generator (append-only, review-before-apply) */}
       <CurriculumDialog
         open={architectOpen}
         onOpenChange={setArchitectOpen}
@@ -1262,7 +1262,7 @@ function EditorView({
         }}
       />
 
-      {/* AI Syllabus Auditor — scores the course, feeds fixes to the curriculum generator */}
+      {/* AI Syllabus Auditor - scores the course, feeds fixes to the curriculum generator */}
       <AuditDialog
         open={auditOpen}
         onOpenChange={setAuditOpen}
@@ -1273,7 +1273,7 @@ function EditorView({
         }}
       />
 
-      {/* AI Assessment Builder — exam-grade question bank per module */}
+      {/* AI Assessment Builder - exam-grade question bank per module */}
       <AssessmentDialog
         open={!!assessmentModule}
         onOpenChange={(o) => { if (!o) setAssessmentModule(null) }}
@@ -1292,7 +1292,7 @@ function EditorView({
 }
 
 // ---------------------------------------------------------------------------
-// Course Details Editor — full metadata + course extras (what you'll learn,
+// Course Details Editor - full metadata + course extras (what you'll learn,
 // prerequisites, who should attend, tools, career outcomes). Persists via
 // PATCH /api/admin/courses/[id].
 // ---------------------------------------------------------------------------
@@ -1345,7 +1345,7 @@ function CourseDetailsEditor({
           certBody: form.certBody,
           thumbnail: form.thumbnail,
           published: form.published,
-          // extras — newline text is normalized server-side (course-lists.ts)
+          // extras - newline text is normalized server-side (course-lists.ts)
           ...Object.fromEntries(COURSE_LIST_FIELDS.map(({ key }) => [key, (form as any)[key]])),
         }),
       }),
@@ -1470,12 +1470,12 @@ function CourseDetailsEditor({
           </div>
         </div>
 
-        {/* Course extras — the sections on the public course page */}
+        {/* Course extras - the sections on the public course page */}
         <div className="pt-2 border-t border-border/60">
           <div className="flex items-center gap-2 mb-3 mt-2">
             <Sparkles className="h-4 w-4 text-amber-300" />
             <h4 className="text-sm font-semibold">Course page sections</h4>
-            <span className="text-[11px] text-muted-foreground">one item per line — shown exactly as typed</span>
+            <span className="text-[11px] text-muted-foreground">one item per line - shown exactly as typed</span>
           </div>
           <div className="grid lg:grid-cols-2 gap-4">
             {COURSE_LIST_FIELDS.map(({ key, label, hint, placeholder }) => (
@@ -1495,7 +1495,7 @@ function CourseDetailsEditor({
         </div>
       </div>
 
-      {/* AI Course Architect — course page sections blueprint (fills the form, human saves) */}
+      {/* AI Course Architect - course page sections blueprint (fills the form, human saves) */}
       <BlueprintDialog
         open={blueprintOpen}
         onOpenChange={setBlueprintOpen}
@@ -1511,7 +1511,7 @@ function CourseDetailsEditor({
         }}
         onApply={(fields) => {
           for (const [k, v] of Object.entries(fields)) set(k, v)
-          toast.success("Architect content applied — review and hit Save")
+          toast.success("Architect content applied - review and hit Save")
         }}
       />
     </Card>
@@ -1583,7 +1583,7 @@ function ModuleRow({
             e.stopPropagation()
             onQuestionBank()
           }}
-          title="AI question bank — exam-grade quiz for this module"
+          title="AI question bank - exam-grade quiz for this module"
         >
           <Sparkles className="h-3 w-3" />
         </Button>
@@ -2176,7 +2176,7 @@ function LessonEditor({ lesson, courseId, course }: { lesson: AdminLesson; cours
         )}
       </div>
 
-      {/* AI Course Architect — single lesson deep-dive (fills the editor, human saves) */}
+      {/* AI Course Architect - single lesson deep-dive (fills the editor, human saves) */}
       <LessonDeepDiveDialog
         open={aiOpen}
         onOpenChange={setAiOpen}
@@ -2196,7 +2196,7 @@ function LessonEditor({ lesson, courseId, course }: { lesson: AdminLesson; cours
           setContent(content)
           setDurationMin(String(durationMin))
           markDirty()
-          toast.success("Architect lesson applied — review and Save")
+          toast.success("Architect lesson applied - review and Save")
         }}
       />
     </div>

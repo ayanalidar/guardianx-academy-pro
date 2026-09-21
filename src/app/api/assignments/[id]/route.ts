@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/session"
 
-// GET — get assignment details (must be enrolled or instructor)
+// GET - get assignment details (must be enrolled or instructor)
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params // assignment id
   const user = await getCurrentUser()

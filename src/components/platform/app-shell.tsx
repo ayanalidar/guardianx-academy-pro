@@ -25,7 +25,7 @@ import { cn } from "@/lib/utils"
 
 // Nav rendering is strictly role-based (see navForRole in @/lib/nav-data.ts):
 //   ADMIN / SUPER_ADMIN → ADMIN_NAV, INSTRUCTOR → INSTRUCTOR_NAV, else STUDENT_NAV.
-// Legacy alias removed — every surface now resolves through navForRole().
+// Legacy alias removed - every surface now resolves through navForRole().
 
 function Logo({ onClick }: { onClick?: () => void }) {
   return (
@@ -66,7 +66,7 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
   const { user } = useUser()
   const role = user?.role || "STUDENT"
 
-  // Strict role separation — staff never see student items and vice versa.
+  // Strict role separation - staff never see student items and vice versa.
   const items: NavItem[] = navForRole(role)
 
   function renderItem(item: NavItem, activeColor: string = "emerald") {
@@ -225,7 +225,7 @@ function MobileNav() {
 }
 
 export function AppShell({ children }: { children: React.ReactNode }) {
-  // Push notifications for admin — polls for new batch leads
+  // Push notifications for admin - polls for new batch leads
   useBatchLeadNotifications()
 
   return (
@@ -256,7 +256,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
 
       {/* Main content */}
       <main id="main-content" className="flex-1 min-w-0 overflow-x-hidden">
-        {/* Desktop top strip — sticky, holds search + notification bell */}
+        {/* Desktop top strip - sticky, holds search + notification bell */}
         <div className="hidden lg:flex sticky top-0 z-30 h-12 items-center justify-end px-4 gap-2 border-b border-border/40 bg-background/70 backdrop-blur-xl">
           <GlobalSearch variant="icon" />
           <NotificationBell />

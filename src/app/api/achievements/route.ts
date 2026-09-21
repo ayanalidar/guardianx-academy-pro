@@ -29,7 +29,7 @@ export async function GET() {
   const levelInfo = levelFromXp(xp)
   const rank = rankTitle(levelInfo.level)
 
-  // build full achievement list (earned + locked) — also include any
+  // build full achievement list (earned + locked) - also include any
   // admin-created achievements stored in the DB that aren't part of the
   // static ACHIEVEMENT_DEFS list (so admin-created trophies still show).
   const dynamicRows = await db.achievement.findMany({

@@ -4,13 +4,13 @@ import { requireAdmin, withErrorHandler } from "@/lib/session"
 
 export const runtime = "nodejs"
 
-/* GET /api/admin/audit-logs — ADMIN only.
+/* GET /api/admin/audit-logs - ADMIN only.
  * Query params:
- *   page      — 1-based page (default 1)
- *   pageSize  — items per page (default 25, max 100)
- *   action    — dotted action prefix filter (e.g. "course", "user.delete")
- *   userId    — exact userId filter
- *   resource  — exact resource filter (e.g. "Course")
+ *   page - 1-based page (default 1)
+ *   pageSize - items per page (default 25, max 100)
+ *   action - dotted action prefix filter (e.g. "course", "user.delete")
+ *   userId - exact userId filter
+ *   resource - exact resource filter (e.g. "Course")
  *
  * Returns: { logs, total, page, pageSize, totalPages }
  */
@@ -24,7 +24,7 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
   const action = url.searchParams.get("action")?.trim() || undefined
   const userId = url.searchParams.get("userId")?.trim() || undefined
   const resource = url.searchParams.get("resource")?.trim() || undefined
-  // Server-side free-text search — previously the search box only filtered
+  // Server-side free-text search - previously the search box only filtered
   // the current page client-side, hiding matches on other pages.
   const q = url.searchParams.get("q")?.trim() || undefined
 

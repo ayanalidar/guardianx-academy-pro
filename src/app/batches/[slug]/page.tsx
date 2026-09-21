@@ -11,7 +11,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     const ogParams = new URLSearchParams({ title: batch.name, kicker: "Live Training Batch", badge: batch.certification || "", accent: "cyan" })
     return {
       title: `${batch.name} (${batch.certification})`,
-      description: `${batch.name} — ${batch.mode} batch starting ${batch.startDate}. Instructor: ${batch.instructor}. ${batch.seats - batch.enrolled} seats left. Enroll now!`,
+      description: `${batch.name} - ${batch.mode} batch starting ${batch.startDate}. Instructor: ${batch.instructor}. ${batch.seats - batch.enrolled} seats left. Enroll now!`,
       openGraph: {
         title: `${batch.name}`,
         description: `${batch.certification} batch starting ${batch.startDate}. ${batch.schedule}. ${batch.seats - batch.enrolled} seats left.`,
@@ -27,7 +27,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 }
 
 /**
- * Batch detail — a REAL server-routable page (`/batches/<slug>`) that also
+ * Batch detail - a REAL server-routable page (`/batches/<slug>`) that also
  * hydrates into the SPA store via PublicRouteView. This is the fix for the
  * old dead-end: the page previously rendered a static client tree that
  * ignored store navigation, so clicking any header link changed the URL but

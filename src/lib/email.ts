@@ -2,7 +2,7 @@ import nodemailer from "nodemailer"
 import { getSettings } from "@/lib/settings"
 
 /**
- * GuardianX email service — sends transactional emails via SMTP.
+ * GuardianX email service - sends transactional emails via SMTP.
  *
  * Reads SMTP settings from the Platform Settings DB (admin-configurable)
  * first, falls back to env vars. If neither is configured, emails are
@@ -79,7 +79,7 @@ export async function sendEmail({
 }): Promise<boolean> {
   const [t, settings] = await Promise.all([getTransporter(), getEmailSettings()])
   if (!t || !settings) {
-    console.warn("[email] SMTP not configured — skipping email to:", to)
+    console.warn("[email] SMTP not configured - skipping email to:", to)
     return false
   }
   try {

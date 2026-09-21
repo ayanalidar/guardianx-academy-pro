@@ -5,7 +5,7 @@ import { requireAdmin, withErrorHandler, readJsonBody, rateLimit } from "@/lib/s
 export const runtime = "nodejs"
 
 /**
- * POST /api/admin/email-campaign — send a campaign email to an audience.
+ * POST /api/admin/email-campaign - send a campaign email to an audience.
  *
  * Replaces the previous fake client-side implementation (a setTimeout +
  * success toast in admin-email-campaign.tsx) with a real send:
@@ -72,9 +72,9 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
   let failed = 0
   const log: Array<{ email: string; status: string }> = []
 
-  // Sequential send — SMTP servers prefer steady paced sends over bursts.
+  // Sequential send - SMTP servers prefer steady paced sends over bursts.
   for (const r of recipients) {
-    // Placeholder substitution — every placeholder the composer templates
+    // Placeholder substitution - every placeholder the composer templates
     // advertise must render, otherwise students get literal {{credId}} mail.
     // Unresolvable ones fall back to a sensible generic value.
     const rendered = body
@@ -118,7 +118,7 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
   return NextResponse.json({ sent, failed, total: recipients.length })
 })
 
-// GET /api/admin/email-campaign — audience counts for the composer UI
+// GET /api/admin/email-campaign - audience counts for the composer UI
 export const GET = withErrorHandler(async () => {
   const admin = await requireAdmin()
   if (admin instanceof NextResponse) return admin

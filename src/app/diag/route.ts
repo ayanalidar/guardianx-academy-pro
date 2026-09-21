@@ -5,7 +5,7 @@ export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
 
 /**
- * /diag — one-visit client diagnostics for "I can't see courses / uploads fail".
+ * /diag - one-visit client diagnostics for "I can't see courses / uploads fail".
  *
  * WHY A ROUTE HANDLER (not a page):
  *  - Returns a COMPLETE standalone HTML document. It does not import the app
@@ -15,7 +15,7 @@ export const dynamic = "force-dynamic"
  *  - Stamps `X-GX-Build` on the response. The page compares the build that
  *    was DELIVERED to the browser against the build /api/health reports from
  *    origin. A mismatch is definitive proof the preview edge-gateway is
- *    serving a pinned stale entry — previously invisible from the outside.
+ *    serving a pinned stale entry - previously invisible from the outside.
  *
  * New paths are never in a gateway cache, so /diag always reaches origin.
  */
@@ -35,7 +35,7 @@ const PAGE_SHELL = String.raw`
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <meta name="robots" content="noindex, nofollow" />
-<title>GuardianX — Client Diagnostics</title>
+<title>GuardianX - Client Diagnostics</title>
 <style>
   :root { color-scheme: dark; }
   * { box-sizing: border-box; }
@@ -80,7 +80,7 @@ const PAGE_SHELL = String.raw`
   <div class="head">
     <div class="logo">🛡️</div>
     <div>
-      <h1>GuardianX — Client Diagnostics</h1>
+      <h1>GuardianX - Client Diagnostics</h1>
       <div class="sub">Run this page if courses don't appear or uploads fail. No data leaves your browser.</div>
     </div>
   </div>
@@ -109,7 +109,7 @@ const PAGE_SHELL = String.raw`
   <div class="foot">
     "Force repair" unregisters service workers, deletes cached pages and clears app storage keys, then reloads the catalog.
     Your password and login cookie are not touched. If the verdict above says the delivered build is stale, run the repair,
-    then reload this page — if it still reports stale, the preview gateway is pinning an old copy; waiting a few minutes or
+    then reload this page - if it still reports stale, the preview gateway is pinning an old copy; waiting a few minutes or
     reopening the preview link usually clears it.
   </div>
 </div>
@@ -163,10 +163,10 @@ window.__GX_PAGE_BUILD__ = "__BUILD_ID__";
       STATE.catalogCount = n
       if (cat.ok && n !== null) {
         setPill("p-cat", n > 0 ? "ok" : "warn", n > 0 ? (n + " COURSES") : "EMPTY")
-        setDet("d-cat", "HTTP " + cat.status + " in " + cat.ms + "ms — your browser received " + n + " courses from the API")
+        setDet("d-cat", "HTTP " + cat.status + " in " + cat.ms + "ms - your browser received " + n + " courses from the API")
       } else {
         setPill("p-cat", "bad", "FAIL")
-        setDet("d-cat", "HTTP " + cat.status + " in " + cat.ms + "ms — response was not a course list")
+        setDet("d-cat", "HTTP " + cat.status + " in " + cat.ms + "ms - response was not a course list")
       }
     } catch (e) {
       setPill("p-cat", "bad", "FAIL")
@@ -182,7 +182,7 @@ window.__GX_PAGE_BUILD__ = "__BUILD_ID__";
         setDet("d-me", "signed in as " + u.email)
       } else {
         setPill("p-me", "warn", "LOGGED OUT")
-        setDet("d-me", "no session cookie reached the server — admin tools and uploads will be blocked")
+        setDet("d-me", "no session cookie reached the server - admin tools and uploads will be blocked")
       }
     } catch (e) {
       setPill("p-me", "bad", "FAIL")
@@ -225,15 +225,15 @@ window.__GX_PAGE_BUILD__ = "__BUILD_ID__";
 
     if (stale) {
       verdict("red",
-        "Stale build detected — your browser was served an old copy",
+        "Stale build detected - your browser was served an old copy",
         "This page was delivered as build <b>" + pageBuild + "</b> but the live origin is build <b>" + originBuild + "</b>. " +
         "Everything else below may look fine and the app can still be broken. Press <b>Force repair this browser</b>, then reload this page. " +
-        "If it still reports stale after that, the preview gateway is holding an old entry — give it a few minutes and reload.")
+        "If it still reports stale after that, the preview gateway is holding an old entry - give it a few minutes and reload.")
     } else if (cat && cat.ok && STATE.catalogCount === 0) {
       verdict("amber",
         "You are on the current build, but the catalog API returned 0 courses",
         "Origin health reports courses in the database, yet the catalog endpoint returned an empty list to your browser. " +
-        "Copy the report below and send it back — that combination pinpoints the failing layer.")
+        "Copy the report below and send it back - that combination pinpoints the failing layer.")
     } else if (cat && !cat.ok) {
       verdict("red",
         "The catalog API is failing from your browser",
@@ -241,12 +241,12 @@ window.__GX_PAGE_BUILD__ = "__BUILD_ID__";
         "(gateway or network) is altering the response. Copy the report below and send it back.")
     } else if (STATE.user === null) {
       verdict("amber",
-        "Catalog works — but you are signed out",
+        "Catalog works - but you are signed out",
         "Your browser is not sending a session the server recognizes (" + (STATE.catalogCount || 0) + " courses came through fine). " +
         "Browsing works signed-out, but uploading courses requires signing in again. If signing in loops, press Force repair, then sign in.")
     } else {
       verdict("green",
-        "All green — build, catalog and session are healthy",
+        "All green - build, catalog and session are healthy",
         "Delivered build matches origin (" + pageBuild + "), the catalog API returned " + STATE.catalogCount + " courses, and you are signed in as " + STATE.user + ". " +
         "If a page still looks wrong, it is a one-off render glitch: press Force repair and reload. With ?go=1 in the address this page auto-continues to the catalog.")
 
@@ -297,7 +297,7 @@ window.__GX_PAGE_BUILD__ = "__BUILD_ID__";
     try { await navigator.clipboard.writeText(text); ok = true } catch (e) {}
     if (!ok) { ta.focus(); ta.select(); try { ok = document.execCommand("copy") } catch (e) {} }
     var b = el("b-copy")
-    b.textContent = ok ? "Copied ✓" : "Copied to box below — paste it back"
+    b.textContent = ok ? "Copied ✓" : "Copied to box below - paste it back"
     if (!ok) return
     setTimeout(function () { b.textContent = "Copy report" }, 2500)
   }

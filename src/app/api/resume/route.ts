@@ -59,7 +59,7 @@ async function buildAutopopulate(userId: string, user: any) {
   ])
 
   const certifications = certs.map((c) => ({
-    title: c.course.certBody ? `${c.course.shortName} — ${c.course.certBody}` : c.course.shortName,
+    title: c.course.certBody ? `${c.course.shortName} - ${c.course.certBody}` : c.course.shortName,
     issuer: c.course.certBody || "GuardianX Academy",
     date: new Date(c.issuedAt).toLocaleDateString("en-US", { year: "numeric", month: "short" }),
     verificationId: c.certificateId,

@@ -18,7 +18,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
             // on remount/window focus/reconnect. refetchOnWindowFocus was
             // previously disabled, which let a stale response (e.g. a
             // pre-login `{ user: null }` or a transient failure) stick for
-            // the lifetime of the SPA — the "courses don't show" bug.
+            // the lifetime of the SPA - the "courses don't show" bug.
             staleTime: 15 * 1000,
             // Smart retry: never retry client errors (4xx are real answers,
             // e.g. 402 checkout-required); retry network/5xx failures up to
@@ -41,7 +41,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
   // dispatches "guardianx-session-changed". Without this, the [me] query
   // keeps serving the PRE-LOGIN `{ user: null }` response (cached by the
   // login page, fresh for 30s, window-focus refetch disabled) for the
-  // lifetime of the SPA session — dashboards then render "Operator" with
+  // lifetime of the SPA session - dashboards then render "Operator" with
   // zero courses and every `enabled: !!user?.id` query stays disabled.
   React.useEffect(() => {
     const handler = () => {

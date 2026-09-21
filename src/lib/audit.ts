@@ -1,7 +1,7 @@
 import { db } from "@/lib/db"
 
 /**
- * logAction() — append a row to the AuditLog table.
+ * logAction() - append a row to the AuditLog table.
  *
  * Used by admin mutation endpoints (course/user/coupon/instructor CRUD)
  * to keep a tamper-evident history of platform changes. The caller is
@@ -9,7 +9,7 @@ import { db } from "@/lib/db"
  * entry only records real changes.
  *
  * Failures here are swallowed (logged server-side) so they never break
- * the calling request — audit logging is best-effort, not transactional
+ * the calling request - audit logging is best-effort, not transactional
  * with the business mutation.
  *
  * @param userId    the acting user's id (or null for system actions)
@@ -46,7 +46,7 @@ export async function logAction(
       },
     })
   } catch (err) {
-    // Best-effort — never break the calling request.
+    // Best-effort - never break the calling request.
     console.error("[audit] logAction failed:", err)
   }
 }

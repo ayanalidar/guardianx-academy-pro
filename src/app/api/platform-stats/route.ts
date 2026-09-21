@@ -6,7 +6,7 @@ export const runtime = "nodejs"
 
 /**
  * GET /api/platform-stats
- * Public — returns all visible platform stats.
+ * Public - returns all visible platform stats.
  *
  * For entries with source = "calculated", the value is recomputed live from
  * the database so the homepage numbers always reflect reality:

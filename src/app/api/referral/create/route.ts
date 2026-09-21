@@ -6,7 +6,7 @@ export const runtime = "nodejs"
 
 const REFERRAL_LINK_BASE = "https://academy.guardianx.cloud"
 
-/* POST /api/referral/create — auth required.
+/* POST /api/referral/create - auth required.
  * ---------------------------------------------------------------
  * Idempotently returns the logged-in student's active referral.
  * - If the student already has a PENDING referral, reuse it.

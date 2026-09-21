@@ -5,7 +5,7 @@ export const runtime = "nodejs"
 
 /**
  * GET /api/learning-paths/[slug]
- * Public — returns a single learning path by slug.
+ * Public - returns a single learning path by slug.
  */
 export async function GET(
   _req: Request,

@@ -8,7 +8,7 @@ export const runtime = "nodejs"
 
 /**
  * POST /api/exams/[id]/submit
- * AUTHENTICATED — submit exam answers, calculate score, return result.
+ * AUTHENTICATED - submit exam answers, calculate score, return result.
  *
  * Body shape:
  *   {
@@ -30,12 +30,12 @@ export const runtime = "nodejs"
  *   - Persists the answers (in ORIGINAL option-index space, so the review
  *     page can render them against the unshuffled options) + score + status.
  *   - If score >= passingScore: marks attempt "passed" and issues a
- *     GuardianCredential (idempotent — only one credential per attempt).
+ *     GuardianCredential (idempotent - only one credential per attempt).
  *   - Returns the score, per-question `correct: true/false`, and the per-domain
  *     breakdown + the issued credential (if any).
  *
  * Privacy: For questions the user got WRONG, the response NEVER includes
- * `correctAnswer` or `explanation` — only `correct: false`. For questions the
+ * `correctAnswer` or `explanation` - only `correct: false`. For questions the
  * user got right, `correctAnswer` + `explanation` are included (the user
  * already chose correctly, so revealing the answer leaks nothing new).
  */
@@ -298,7 +298,7 @@ export async function POST(
     },
   })
 
-  // Update the proctoring session — close it
+  // Update the proctoring session - close it
   await db.proctoringSession.updateMany({
     where: { examAttemptId: attempt.id },
     data: { endedAt: new Date() },
@@ -307,7 +307,7 @@ export async function POST(
   // Issue a credential if passed and a certification is linked
   let credential: any = null
   if (passed && attempt.exam.certificationId) {
-    // Idempotent — check whether this attempt already issued a credential
+    // Idempotent - check whether this attempt already issued a credential
     const existing = await db.guardianCredential.findFirst({
       where: { examAttemptId: attempt.id, userId: user.id },
     })
@@ -341,8 +341,8 @@ export async function POST(
           expiryDate,
           status: "valid",
           verificationHash,
-          // Human-facing verify URL (was /api/credentials/verify/<id> — a raw
-          // JSON endpoint — so "Copy Verification URL" handed recruiters JSON).
+          // Human-facing verify URL (was /api/credentials/verify/<id> - a raw
+          // JSON endpoint - so "Copy Verification URL" handed recruiters JSON).
           verificationUrl: `/verify/${credentialId}`,
         },
       })
@@ -423,7 +423,7 @@ function safeParse<T>(raw: string | null | undefined, fallback: T): T {
 }
 
 /**
- * mapSelectedToOriginal — converts the client's `selected` value (which
+ * mapSelectedToOriginal - converts the client's `selected` value (which
  * references DISPLAYED option indices, i.e. positions in the shuffled
  * options array) to the ORIGINAL option indices used by the QuestionBank's
  * `correctAnswer` field.
@@ -445,7 +445,7 @@ function mapSelectedToOriginal(
 ): any {
   if (selected === null || selected === undefined) return null
 
-  // truefalse answers are sent as strings ("true"/"false"), not indices —
+  // truefalse answers are sent as strings ("true"/"false"), not indices - 
   // no mapping needed.
   if (questionType === "truefalse") {
     return selected
@@ -509,7 +509,7 @@ function isAnswerCorrect(
 }
 
 async function generateUniqueCredentialId(year: number): Promise<string> {
-  // GX-CERT-YYYY-XXXXXX — 6 crypto-random hex chars (16.7M combos/year).
+  // GX-CERT-YYYY-XXXXXX - 6 crypto-random hex chars (16.7M combos/year).
   // Was: Math.floor(1000 + Math.random()*9000) → only 9,000 enumerable IDs.
   for (let attempt = 0; attempt < 10; attempt++) {
     const id = generateCredentialId("GX-CERT").replace(
@@ -521,7 +521,7 @@ async function generateUniqueCredentialId(year: number): Promise<string> {
     })
     if (!exists) return id
   }
-  // Fallback — timestamp suffix (still non-guessable suffix)
+  // Fallback - timestamp suffix (still non-guessable suffix)
   return `GX-CERT-${year}-${Date.now().toString(36).toUpperCase()}`
 }
 

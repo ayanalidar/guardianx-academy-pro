@@ -1,5 +1,5 @@
 /**
- * Invoice helpers — shared validation + server-side totals for /api/invoices.
+ * Invoice helpers - shared validation + server-side totals for /api/invoices.
  *
  * Totals are ALWAYS recomputed server-side from the line items and rates so
  * the stored record can never be tampered with from the client (the browser

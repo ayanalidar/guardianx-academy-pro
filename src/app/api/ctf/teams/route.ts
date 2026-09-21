@@ -5,7 +5,7 @@ import { getCurrentUser } from "@/lib/session"
 export const runtime = "nodejs"
 
 // ============================================================
-// CTF Teams — create & list for a competition
+// CTF Teams - create & list for a competition
 // GET:  ?competitionId=... → list teams
 // POST: { competitionId, name } → create team (caller becomes captain)
 // ============================================================

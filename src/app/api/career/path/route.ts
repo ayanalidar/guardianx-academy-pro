@@ -5,8 +5,8 @@ import { getCurrentUser, withErrorHandler, readJsonBody, rateLimit } from "@/lib
 export const runtime = "nodejs"
 
 /**
- * GET /api/career/path — current user's saved career plan (or null).
- * POST /api/career/path — create/update the user's career plan (upsert).
+ * GET /api/career/path - current user's saved career plan (or null).
+ * POST /api/career/path - create/update the user's career plan (upsert).
  *
  * Backs the Career Planner view (src/views/career-planner.tsx), which
  * previously called this route when it did not exist (404 → silent failure).
@@ -78,7 +78,7 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
   return NextResponse.json({ path: decodeLists(path) })
 })
 
-/** Model stores arrays as JSON strings — decode for the client shape the
+/** Model stores arrays as JSON strings - decode for the client shape the
  *  view already expects (it JSON.parses defensively too). */
 function decodeLists(p: {
   id: string; userId: string; targetRole: string; currentRole: string;

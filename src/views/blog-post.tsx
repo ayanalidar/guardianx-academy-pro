@@ -16,7 +16,7 @@ import {
 import { toast } from "sonner"
 
 /* ============================================================
-   /blog/<slug> — single blog post view
+   /blog/<slug> - single blog post view
    ------------------------------------------------------------
    - Article layout: title, author avatar + name, date, category badge
    - Markdown content rendered with ReactMarkdown + remark-gfm

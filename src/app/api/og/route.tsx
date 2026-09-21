@@ -1,7 +1,7 @@
 import { ImageResponse } from "next/og"
 
 /**
- * Dynamic Open-Graph image generator — branded share cards for
+ * Dynamic Open-Graph image generator - branded share cards for
  * courses, batches, blog posts and any page that sets
  * openGraph.images to `/api/og?...`.
  *

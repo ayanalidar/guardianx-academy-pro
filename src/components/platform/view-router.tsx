@@ -1,7 +1,7 @@
 "use client"
 
 /**
- * ViewRouter — the SPA's view renderer, extracted from the old
+ * ViewRouter - the SPA's view renderer, extracted from the old
  * `src/app/page.tsx` so it can be shared by:
  *   - the root page (`/`)
  *   - the catch-all bridge page (`src/app/[...gx]/page.tsx`)
@@ -19,7 +19,7 @@ import { HomeView } from "@/views/home"
 import { RoleGate, ROLES_ADMIN, ROLES_INSTRUCTOR } from "@/components/platform/role-gate"
 
 /*
- * Role separation — every staff surface is wrapped in RoleGate so a
+ * Role separation - every staff surface is wrapped in RoleGate so a
  * mismatched role sees a branded "access restricted" panel (with a CTA
  * back to their own dashboard) instead of a broken admin page. The API
  * layer still enforces the real permissions (401/403); this is the UX

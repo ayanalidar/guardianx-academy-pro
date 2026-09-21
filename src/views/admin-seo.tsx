@@ -65,7 +65,7 @@ import {
 import { toast } from "sonner"
 
 /* ============================================================
-   /admin-seo — comprehensive SEO Optimization Dashboard
+   /admin-seo - comprehensive SEO Optimization Dashboard
    ------------------------------------------------------------
    7 sections:
      A. SEO Health Score (circular gauge)
@@ -127,7 +127,7 @@ function scoreLabel(s: number): string {
   return "Healthy"
 }
 
-/** Length quality indicator for title (ideal 30–60) or description (ideal 120–160). */
+/** Length quality indicator for title (ideal 30-60) or description (ideal 120-160). */
 type LengthState = "good" | "warn" | "bad"
 function lengthState(len: number, min: number, max: number): LengthState {
   if (len === 0) return "bad"
@@ -531,7 +531,7 @@ function EditSeoDialog({
     if (!page) return
     setSaving(true)
     try {
-      // Derive the page key from the audit page url — strip the leading "#/"
+      // Derive the page key from the audit page url - strip the leading "#/"
       // (or "/" for home). For dynamic pages the key is "course-<slug>" etc.
       // (matches the audit route's section naming).
       const pageKey = urlToPageKey(page.url)
@@ -564,7 +564,7 @@ function EditSeoDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Pencil className="h-4 w-4 text-amber-300" />
-            Edit SEO — {page.name}
+            Edit SEO - {page.name}
           </DialogTitle>
           <DialogDescription>
             Override the default title / description / OG image / keywords
@@ -588,14 +588,14 @@ function EditSeoDialog({
                       : "text-amber-400",
                 )}
               >
-                {title.length} / 30–60 ideal
+                {title.length} / 30-60 ideal
               </span>
             </div>
             <Input
               id="seo-title"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Page title — keep between 30–60 chars"
+              placeholder="Page title - keep between 30-60 chars"
               maxLength={120}
             />
           </div>
@@ -614,7 +614,7 @@ function EditSeoDialog({
                       : "text-amber-400",
                 )}
               >
-                {description.length} / 120–160 ideal
+                {description.length} / 120-160 ideal
               </span>
             </div>
             <Textarea
@@ -694,7 +694,7 @@ function MetaTagsManager({
   const [saving, setSaving] = React.useState(false)
 
   React.useEffect(() => {
-    setTitleTemplate(global.titleTemplate || "GuardianX Academy — %s")
+    setTitleTemplate(global.titleTemplate || "GuardianX Academy - %s")
     setDescription(
       global.description ||
         "Master cybersecurity by actually breaking things. Real cyber range, hands-on labs, certification tracks, CTF arena, and career paths. Learn. Break. Defend. Prove.",
@@ -747,7 +747,7 @@ function MetaTagsManager({
             id="g-title"
             value={titleTemplate}
             onChange={(e) => setTitleTemplate(e.target.value)}
-            placeholder="GuardianX Academy — %s"
+            placeholder="GuardianX Academy - %s"
           />
           <p className="text-[10px] text-muted-foreground">
             Use <code>%s</code> as the placeholder for the page-specific title.
@@ -765,7 +765,7 @@ function MetaTagsManager({
             maxLength={200}
           />
           <p className="text-[10px] text-muted-foreground">
-            {description.length} / 120–160 recommended
+            {description.length} / 120-160 recommended
           </p>
         </div>
 
@@ -826,7 +826,7 @@ function SitemapManager({ totalUrls }: { totalUrls: number }) {
       toast.success("Sitemap URL copied")
       setTimeout(() => setCopied(false), 1500)
     } catch {
-      toast.error("Couldn't copy — please copy manually")
+      toast.error("Couldn't copy - please copy manually")
     }
   }
 
@@ -836,7 +836,7 @@ function SitemapManager({ totalUrls }: { totalUrls: number }) {
         <Hash className="h-4 w-4 text-cyan-300" /> Sitemap Manager
       </h2>
       <p className="text-xs text-muted-foreground mb-4">
-        The sitemap is generated dynamically from the database — every time
+        The sitemap is generated dynamically from the database - every time
         Google fetches the URL, it sees the latest published courses, blog
         posts, events, and certifications.
       </p>
@@ -925,7 +925,7 @@ function SitemapStat({
 }
 
 /* ----------------------- E. Robots.txt Editor ----------------------- */
-const DEFAULT_ROBOTS = `# robots.txt — GuardianX Academy
+const DEFAULT_ROBOTS = `# robots.txt - GuardianX Academy
 # Default policy: allow all crawlers, point at the sitemap.
 
 User-agent: *
@@ -983,7 +983,7 @@ function RobotsEditor({
           </h2>
           <p className="text-xs text-muted-foreground mt-1">
             Controls which crawlers can access which parts of the site. The
-            sitemap URL is appended automatically — keep one at the end.
+            sitemap URL is appended automatically - keep one at the end.
           </p>
         </div>
         <a
@@ -1072,7 +1072,7 @@ function StructuredDataOverview({
         url: "https://academy.guardianx.cloud",
         logo: "https://academy.guardianx.cloud/guardianx-logo-v2.png",
         description:
-          "Cyber security training operating system — courses, labs, certifications, and a live cyber range.",
+          "Cyber security training operating system - courses, labs, certifications, and a live cyber range.",
         sameAs: [
           "https://twitter.com/guardianx",
           "https://linkedin.com/company/guardianx",
@@ -1190,7 +1190,7 @@ function StructuredDataOverview({
             name: "How long is the CEH certification valid?",
             acceptedAnswer: {
               "@type": "Answer",
-              text: "3 years — you can renew with EC-Council's ECE credits.",
+              text: "3 years - you can renew with EC-Council's ECE credits.",
             },
           },
         ],
@@ -1524,7 +1524,7 @@ function KeywordTracker({
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Tag className="h-4 w-4 text-amber-300" /> Edit Keywords —{" "}
+              <Tag className="h-4 w-4 text-amber-300" /> Edit Keywords - {" "}
               {editingKey}
             </DialogTitle>
             <DialogDescription>
@@ -1563,7 +1563,7 @@ function KeywordTracker({
   )
 }
 
-/* =================== Autopilot — one-click audit + fix =================== */
+/* =================== Autopilot - one-click audit + fix =================== */
 
 interface AutopilotIssue {
   type: string
@@ -1625,7 +1625,7 @@ function SeoAutopilot({ onFixed }: { onFixed: () => void }) {
       if (mode === "apply") {
         const n = (j.fixed as AutopilotFix[] | undefined)?.length ?? 0
         if (n > 0) toast.success(`Autopilot fixed ${n} issue${n === 1 ? "" : "s"}`)
-        else toast.info("Nothing left to auto-fix — you are all clean")
+        else toast.info("Nothing left to auto-fix - you are all clean")
         onFixed()
       }
     } catch (e) {
@@ -1655,7 +1655,7 @@ function SeoAutopilot({ onFixed }: { onFixed: () => void }) {
               </h2>
               <p className="text-sm text-muted-foreground mt-1 max-w-xl">
                 Scans every course, blog post, event and certification for missing
-                descriptions, excerpts and slugs — then fixes them automatically from
+                descriptions, excerpts and slugs - then fixes them automatically from
                 each item&apos;s own content and pings search engines to recrawl instantly.
               </p>
             </div>
@@ -1732,7 +1732,7 @@ function SeoAutopilot({ onFixed }: { onFixed: () => void }) {
                       <AlertTriangle className="h-5 w-5 text-amber-300" />
                     )
                   ) : (
-                    <span className="text-muted-foreground">—</span>
+                    <span className="text-muted-foreground"> - </span>
                   )}
                   {report.ping ? <span className="text-sm">{report.ping.submitted} URLs</span> : ""}
                 </div>
@@ -1798,7 +1798,7 @@ function SeoAutopilot({ onFixed }: { onFixed: () => void }) {
                         )}
                       />
                       <span className="truncate">{is.label}</span>
-                      <span className="text-muted-foreground">— {is.issue}</span>
+                      <span className="text-muted-foreground"> - {is.issue}</span>
                     </div>
                   ))}
                 </div>
@@ -1816,7 +1816,7 @@ function SeoAutopilot({ onFixed }: { onFixed: () => void }) {
                   {report.humanActions.slice(0, 20).map((h, i) => (
                     <div key={i} className="rounded-lg border border-border/40 bg-cyan-500/5 p-2.5 text-xs">
                       <span className="font-medium">{h.label}</span>
-                      <span className="text-muted-foreground"> — {h.reason}</span>
+                      <span className="text-muted-foreground"> - {h.reason}</span>
                     </div>
                   ))}
                 </div>
@@ -1833,7 +1833,7 @@ function SeoAutopilot({ onFixed }: { onFixed: () => void }) {
             <DialogTitle>Apply {report?.fixes.length ?? 0} automatic fixes?</DialogTitle>
             <DialogDescription>
               Generated descriptions, excerpts and slugs will be written to the live
-              content. Only empty or too-short fields are touched — existing well-formed
+              content. Only empty or too-short fields are touched - existing well-formed
               content is never overwritten. Search engines are pinged afterwards.
             </DialogDescription>
           </DialogHeader>
@@ -1892,7 +1892,7 @@ export function AdminSeoView() {
   })
 
   // Estimate sitemap URL count = static routes + dynamic content count
-  // We can't fetch /api/sitemap.xml as XML easily here — use the audit count
+  // We can't fetch /api/sitemap.xml as XML easily here - use the audit count
   // as a proxy (it includes all dynamic content + static pages).
   const sitemapUrlCount = auditQuery.data?.totalPages ?? 0
 

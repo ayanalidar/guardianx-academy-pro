@@ -30,7 +30,7 @@ interface InBrowserTerminalProps {
 }
 
 /**
- * In-Browser Terminal — connects to the Terminal Gateway via WebSocket.
+ * In-Browser Terminal - connects to the Terminal Gateway via WebSocket.
  * Uses xterm.js for a full-featured terminal experience.
  * 
  * WebSocket URL: /?XTransformPort=3005 (Caddy forwards to terminal-gateway on port 3005)

@@ -6,7 +6,7 @@ export const runtime = "nodejs"
 
 /**
  * GET /api/exams/[id]
- * AUTHENTICATED — exam details WITHOUT correct answers.
+ * AUTHENTICATED - exam details WITHOUT correct answers.
  * If `?include=questions` is supplied, returns the question set
  * with options but never exposes correctAnswer/explanation.
  */

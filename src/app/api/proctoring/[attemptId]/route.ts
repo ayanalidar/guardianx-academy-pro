@@ -6,10 +6,10 @@ export const runtime = "nodejs"
 
 /**
  * GET /api/proctoring/[attemptId]
- * AUTHENTICATED — read proctoring session for an attempt.
+ * AUTHENTICATED - read proctoring session for an attempt.
  *
  * POST /api/proctoring/[attemptId]
- * AUTHENTICATED — update proctoring session flags / counters.
+ * AUTHENTICATED - update proctoring session flags / counters.
  * Body:
  *   {
  *     flags?: Array<{ type: string; timestamp: number; severity?: string; detail: string }>,

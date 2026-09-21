@@ -5,7 +5,7 @@ export const runtime = "nodejs"
 
 /**
  * GET /api/skills/[slug]
- * Public — returns a single skill by slug, with its category and related data.
+ * Public - returns a single skill by slug, with its category and related data.
  */
 export async function GET(
   _req: Request,

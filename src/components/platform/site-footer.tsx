@@ -160,7 +160,7 @@ export function SiteFooter() {
             </button>
             <p className="text-sm text-muted-foreground max-w-md leading-relaxed mb-5">
               Industry-leading cyber security certification training. In-premises batches at
-              schools, colleges, and universities — plus virtual cohorts for individual learners.
+              schools, colleges, and universities - plus virtual cohorts for individual learners.
               Practice with real payloads, hands-on Docker labs, and proctored examinations.
             </p>
             <div className="flex items-center gap-2">
@@ -187,7 +187,7 @@ export function SiteFooter() {
             </div>
             <p className="text-xs text-muted-foreground mb-4 leading-relaxed">
               Get the latest on new courses, lab releases, scholarship opportunities, and cyber
-              security insights. No spam — unsubscribe anytime.
+              security insights. No spam - unsubscribe anytime.
             </p>
             {subscribed ? (
               <div className="flex items-center gap-2 p-3 rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 text-sm">

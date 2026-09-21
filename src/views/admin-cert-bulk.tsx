@@ -60,7 +60,7 @@ export function CertBulkIssuanceView() {
         toast.info(res.message)
       } else {
         toast.success(
-          `${res.issued.length} certificate${res.issued.length === 1 ? "" : "s"} issued — students notified by email`,
+          `${res.issued.length} certificate${res.issued.length === 1 ? "" : "s"} issued - students notified by email`,
         )
       }
     },
@@ -109,7 +109,7 @@ export function CertBulkIssuanceView() {
             </div>
           ) : courses.length === 0 ? (
             <p className="text-sm text-muted-foreground py-6 text-center">
-              No completed enrollments yet — certificates become issuable once students finish a course.
+              No completed enrollments yet - certificates become issuable once students finish a course.
             </p>
           ) : (
             <div className="space-y-2">
@@ -152,7 +152,7 @@ export function CertBulkIssuanceView() {
                 <h3 className="font-semibold text-sm">{selected.title}</h3>
                 <p className="text-xs text-muted-foreground mt-1">
                   {selected.eligible} student{selected.eligible === 1 ? "" : "s"} eligible
-                  {selected.certBody ? ` · ${selected.certBody} track` : ""} — verified credentials + email notification
+                  {selected.certBody ? ` · ${selected.certBody} track` : ""} - verified credentials + email notification
                 </p>
               </div>
               <Button
@@ -201,7 +201,7 @@ export function CertBulkIssuanceView() {
         {/* Info */}
         <Card className="p-4 border-violet-500/20 bg-violet-500/5">
           <p className="text-xs text-muted-foreground">
-            <span className="text-violet-300 font-semibold">HOW IT WORKS:</span> Select a course with completed students, click "Issue Certificates", and GuardianX generates verifiable credentials (unique GX-… ID + tamper-evident hash) for each eligible student. Students are notified in-app and by email with their credential ID. Issuance is idempotent — students who already hold a certificate are never duplicated.
+            <span className="text-violet-300 font-semibold">HOW IT WORKS:</span> Select a course with completed students, click "Issue Certificates", and GuardianX generates verifiable credentials (unique GX-… ID + tamper-evident hash) for each eligible student. Students are notified in-app and by email with their credential ID. Issuance is idempotent - students who already hold a certificate are never duplicated.
           </p>
         </Card>
       </div>

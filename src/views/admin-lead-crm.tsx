@@ -410,7 +410,7 @@ export function LeadCrmView() {
                 <div className="text-[10px] font-mono text-muted-foreground mt-2">
                   TOKEN: <span className="text-cyan-300">set in Admin → Settings → CRM Webhook</span>
                   <span className="block mt-1 text-amber-300/80">
-                    The server REJECTS requests with any other token — the old hardcoded default was removed for security.
+                    The server REJECTS requests with any other token - the old hardcoded default was removed for security.
                   </span>
                 </div>
               </div>
@@ -551,7 +551,7 @@ export function LeadCrmView() {
                         <p className="text-muted-foreground font-medium mb-2">No leads found.</p>
                         <p className="text-xs text-muted-foreground/80 max-w-md mx-auto mb-4">
                           Google Form responses sync automatically once the webhook token is set (Admin → Settings → CRM Webhook).
-                          Already have responses? Rescue them now — download the Form's responses CSV and use <span className="font-semibold text-violet-300">Import CSV</span> above.
+                          Already have responses? Rescue them now - download the Form's responses CSV and use <span className="font-semibold text-violet-300">Import CSV</span> above.
                         </p>
                         <Button size="sm" variant="outline" onClick={() => setImportOpen(true)}>
                           <Upload className="h-3.5 w-3.5 mr-1.5" /> Import existing responses
@@ -583,7 +583,7 @@ export function LeadCrmView() {
         )}
       </div>
       ) : (
-        /* Batch Leads moved to the dedicated Batch Leads Hub — every batch
+        /* Batch Leads moved to the dedicated Batch Leads Hub - every batch
            now has its own screen with its leads + copy-paste Apps Script. */
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
           <div className="rounded-2xl border border-violet-500/30 bg-violet-500/5 p-8 flex flex-col items-center text-center max-w-xl mx-auto">
@@ -592,7 +592,7 @@ export function LeadCrmView() {
             </div>
             <h3 className="text-base font-semibold">Batch Leads have a new home</h3>
             <p className="text-xs text-muted-foreground mt-1.5 max-w-sm">
-              Every batch now gets its own screen with its captured leads, pipeline stats, CSV export and the copy-paste Google Apps Script — all in the Batch Leads Hub.
+              Every batch now gets its own screen with its captured leads, pipeline stats, CSV export and the copy-paste Google Apps Script - all in the Batch Leads Hub.
             </p>
             <Button
               onClick={() => navigate({ name: "admin-batch-hub" })}
@@ -1063,7 +1063,7 @@ function AddLeadDialog({
 }
 
 /* ============================================================
-   CsvImportDialog — rescue leads collected before the webhook.
+   CsvImportDialog - rescue leads collected before the webhook.
    Google Form → Responses → ⋮ → Download responses (.csv), then
    drop the file (or paste its content) here. Rows are upserted
    by email; the requirement/message lands as the first note.
@@ -1126,7 +1126,7 @@ function CsvImportDialog({
             <p className="font-medium text-violet-200">Rescue your existing Google Form responses:</p>
             <p><span className="text-violet-300 font-semibold">1.</span> Open your Form → <span className="font-semibold">Responses</span> tab → link the Sheets icon or ⋮ menu</p>
             <p><span className="text-violet-300 font-semibold">2.</span> Download responses as <span className="font-mono text-[10px]">.csv</span></p>
-            <p><span className="text-violet-300 font-semibold">3.</span> Drop the file below — columns are auto-detected (Name, Email, Phone, Organization, Type, Requirement, Message). Rows with a matching email are updated, not duplicated.</p>
+            <p><span className="text-violet-300 font-semibold">3.</span> Drop the file below - columns are auto-detected (Name, Email, Phone, Organization, Type, Requirement, Message). Rows with a matching email are updated, not duplicated.</p>
           </div>
 
           <div>

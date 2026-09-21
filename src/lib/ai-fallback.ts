@@ -1,10 +1,10 @@
 /**
- * GuardianX — Built-in Course Content Generator (no external AI required).
+ * GuardianX - Built-in Course Content Generator (no external AI required).
  *
  * When the ZAI LLM client is unavailable (e.g. Vercel deployment without
  * ZAI_BASE_URL/ZAI_API_KEY), the Course Architect falls back to this
  * deterministic generator. It composes the SAME response shapes the LLM
- * path returns — blueprint sections and module/lesson curricula — from the
+ * path returns - blueprint sections and module/lesson curricula - from the
  * curated cybersecurity domain knowledge base (src/lib/cyber-knowledge.ts),
  * so the Studio experience never 500s and always produces usable,
  * reviewable, domain-specific content.
@@ -59,7 +59,7 @@ const LEVEL_PREREQS: Record<string, string[]> = {
   Beginner: [
     "Comfortable using Windows or Linux as a daily operating system",
     "Basic networking vocabulary (IP address, port, DNS, firewall)",
-    "No prior security experience required — foundations are built in-course",
+    "No prior security experience required - foundations are built in-course",
     "Curiosity and the discipline to practise in lawful lab environments only",
   ],
   Intermediate: [
@@ -85,8 +85,8 @@ export function localBlueprint(ctx: BlueprintCtx) {
   const level = (ctx.level || "Beginner").trim()
 
   const para1 = `${ctx.title} is a ${level.toLowerCase()}-level, lab-driven program in ${d.name.toLowerCase()} delivered the GuardianX way: every concept is anchored to what practitioners actually do with real tooling, then immediately rehearsed in safe, isolated ranges. ${d.summary}`
-  const para2 = `Across ${ctx.durationHours || 40} hours you will work through ${d.coreTopics.length} core topic areas — from ${splitTopic(d.coreTopics[0]!)[0].toLowerCase()} to ${splitTopic(d.coreTopics[d.coreTopics.length - 1]!)[0].toLowerCase()} — using ${d.tools.slice(0, 6).join(", ")}, and more. Instruction maps each technique to ${d.frameworks.slice(0, 2).join(" and ")} so your skills translate directly to industry expectations and interview scenarios.`
-  const para3 = `The curriculum culminates in integrative capstone labs where you combine reconnaissance, execution and reporting into professional deliverables. Graduates leave with verifiable artifacts, mapped frameworks, and a portfolio of evidence — aligned toward ${d.certs.slice(0, 3).join(", ")} and roles such as ${d.roles.slice(0, 2).join(" or ")}.`
+  const para2 = `Across ${ctx.durationHours || 40} hours you will work through ${d.coreTopics.length} core topic areas - from ${splitTopic(d.coreTopics[0]!)[0].toLowerCase()} to ${splitTopic(d.coreTopics[d.coreTopics.length - 1]!)[0].toLowerCase()} - using ${d.tools.slice(0, 6).join(", ")}, and more. Instruction maps each technique to ${d.frameworks.slice(0, 2).join(" and ")} so your skills translate directly to industry expectations and interview scenarios.`
+  const para3 = `The curriculum culminates in integrative capstone labs where you combine reconnaissance, execution and reporting into professional deliverables. Graduates leave with verifiable artifacts, mapped frameworks, and a portfolio of evidence - aligned toward ${d.certs.slice(0, 3).join(", ")} and roles such as ${d.roles.slice(0, 2).join(" or ")}.`
 
   const learn = d.coreTopics.slice(0, 10).map((t) => {
     const [head] = splitTopic(t)
@@ -102,7 +102,7 @@ export function localBlueprint(ctx: BlueprintCtx) {
     const verb = verbMap[head.split(" ")[0]!] ?? "Master"
     // Keep the head's original casing (acronyms like ISMS/OWASP must survive)
     const headPhrase = t.includes(":") ? t.slice(0, t.indexOf(":")).trim() : t
-    return `${verb} ${headPhrase} — ${t.includes(":") ? t.slice(t.indexOf(":") + 1).trim() : "in depth"}`
+    return `${verb} ${headPhrase} - ${t.includes(":") ? t.slice(t.indexOf(":") + 1).trim() : "in depth"}`
   })
 
   return {
@@ -151,7 +151,7 @@ function lessonContent(topic: string, d: CyberDomainKnowledge, deep: boolean, is
       `A completed lab report: commands used, evidence of each stage, findings rated against ${d.frameworks[0] ?? "industry standards"}, and the verified remediation.`,
       ...(deep
         ? [``, `## Extension Challenges`,
-           `1. Repeat the scenario with detection enabled — identify the telemetry your actions generated (Sysmon/EDR/NetFlow).`,
+           `1. Repeat the scenario with detection enabled - identify the telemetry your actions generated (Sysmon/EDR/NetFlow).`,
            `2. Harden the target and re-attempt to validate the control actually stops the technique.`]
         : []),
     ].join("\n")
@@ -161,7 +161,7 @@ function lessonContent(topic: string, d: CyberDomainKnowledge, deep: boolean, is
   const detail = parts.length ? parts : [topic]
   return [
     `## Overview`,
-    `${head} is a core discipline of ${d.name.toLowerCase()}. This lesson teaches the mechanism — how it actually works at the protocol, OS or application level — not just the vocabulary.`,
+    `${head} is a core discipline of ${d.name.toLowerCase()}. This lesson teaches the mechanism - how it actually works at the protocol, OS or application level - not just the vocabulary.`,
     ``,
     `## Key Concepts`,
     detail.slice(0, deep ? 6 : 4).map((p) => `- ${titleCase(p)}`).join("\n"),
@@ -197,19 +197,19 @@ export function localCurriculum(ctx: CurriculumCtx) {
     lessons: { title: string; type: string; durationMin: number; preview: boolean; content: string }[]
   }[] = []
 
-  // ---- Orientation (module 1, lesson 1 — free preview) ----
+  // ---- Orientation (module 1, lesson 1 - free preview) ----
   const orientation = {
-    title: "Course Orientation — How This Program Works",
+    title: "Course Orientation - How This Program Works",
     type: "reading",
     durationMin: 15,
     preview: true,
     content: [
       `## Welcome to ${ctx.title}`,
-      `This ${ctx.level?.toLowerCase() ?? "foundational"} program covers ${d.name} through ${teachModules} teaching modules plus an integrative capstone. Every module pairs concept lessons with graded hands-on labs — cybersecurity is learned by doing.`,
+      `This ${ctx.level?.toLowerCase() ?? "foundational"} program covers ${d.name} through ${teachModules} teaching modules plus an integrative capstone. Every module pairs concept lessons with graded hands-on labs - cybersecurity is learned by doing.`,
       ``,
       `## How to Succeed`,
       `- Do the labs. Reading alone will not build the reflexes this field demands.`,
-      `- Map every technique you learn to ${d.frameworks[0] ?? "the relevant frameworks"} — that is the language of employers and auditors.`,
+      `- Map every technique you learn to ${d.frameworks[0] ?? "the relevant frameworks"} - that is the language of employers and auditors.`,
       `- Keep an evidence folder: screenshots and command output from every lab become your portfolio.`,
       ``,
       `## Tools You Will Master`,
@@ -225,17 +225,17 @@ export function localCurriculum(ctx: CurriculumCtx) {
     const theme = titleCase(firstTopic.split(" ").slice(0, 3).join(" "))
     const isLast = gi === groups.length - 1
     const moduleTitle = gi === 0
-      ? `${theme} — Foundations & First Blood`
+      ? `${theme} - Foundations & First Blood`
       : isLast && groups.length > 2
-        ? `${theme} — Advanced Operations`
-        : `${theme} — Applied Practice`
+        ? `${theme} - Advanced Operations`
+        : `${theme} - Applied Practice`
 
     const lessons: { title: string; type: string; durationMin: number; preview: boolean; content: string }[] = []
     if (gi === 0) lessons.push(orientation)
 
     group.forEach((topic, ti) => {
       const [head, parts] = splitTopic(topic)
-      const specific = parts.length ? ` — ${parts[0]!}` : ""
+      const specific = parts.length ? ` - ${parts[0]!}` : ""
       lessons.push({
         title: `${head}${specific}`.slice(0, 120),
         type: "reading",
@@ -258,14 +258,14 @@ export function localCurriculum(ctx: CurriculumCtx) {
 
     modules.push({
       title: moduleTitle,
-      description: `Covers ${group.map((t) => splitTopic(t)[0].toLowerCase()).slice(0, 3).join(", ")}${group.length > 3 ? " and more" : ""} — concepts immediately rehearsed in labs mapped to ${d.frameworks[0] ?? "industry frameworks"}.`,
+      description: `Covers ${group.map((t) => splitTopic(t)[0].toLowerCase()).slice(0, 3).join(", ")}${group.length > 3 ? " and more" : ""} - concepts immediately rehearsed in labs mapped to ${d.frameworks[0] ?? "industry frameworks"}.`,
       lessons,
     })
   })
 
   // ---- Capstone ----
   modules.push({
-    title: "Capstone — Integrative Scenario & Professional Reporting",
+    title: "Capstone - Integrative Scenario & Professional Reporting",
     description: `A full end-to-end scenario combining every skill from the program, finished with a professional report built on ${d.frameworks[0] ?? "industry frameworks"}.`,
     lessons: [
       {
@@ -287,7 +287,7 @@ export function localCurriculum(ctx: CurriculumCtx) {
         ].join("\n"),
       },
       {
-        title: "Capstone Lab — Full Execution",
+        title: "Capstone Lab - Full Execution",
         type: "lab",
         durationMin: deep ? 120 : 90,
         preview: false,
@@ -318,7 +318,7 @@ export function localCurriculum(ctx: CurriculumCtx) {
           `This program maps to ${d.certs.join(", ")}. The capstone doubles as exam rehearsal: time-boxed objectives, evidence-based scoring, framework-anchored reporting.`,
           ``,
           `## Your Next Step`,
-          `Roles this prepares you for: ${d.roles.join(", ")}. Keep your evidence folder — it is your interview portfolio.`,
+          `Roles this prepares you for: ${d.roles.join(", ")}. Keep your evidence folder - it is your interview portfolio.`,
         ].join("\n"),
       },
     ],
@@ -341,7 +341,7 @@ export function localLesson(ctx: { title: string; category: string; lesson: { ti
 }
 
 /* ============================================================
-   Syllabus Audit (coverage gap analysis — no LLM required)
+   Syllabus Audit (coverage gap analysis - no LLM required)
    ============================================================ */
 
 export interface AuditCourseCtx {
@@ -401,14 +401,14 @@ export function localAudit(ctx: AuditCourseCtx, modules: AuditModuleInput[]): Lo
   const coveredCount = coverageMap.filter((c) => c.covered).length
   const coverage = d.coreTopics.length ? Math.round((coveredCount / d.coreTopics.length) * 100) : 100
 
-  // 2) Depth heuristic — average teaching content per reading lesson
+  // 2) Depth heuristic - average teaching content per reading lesson
   const readingLessons = modules.flatMap((m) => m.lessons.filter((l) => l.type === "reading" || l.type === "pdf"))
   const avgContent = readingLessons.length
     ? readingLessons.reduce((a, l) => a + (l.content || "").length, 0) / readingLessons.length
     : 0
   const depth = Math.max(0, Math.min(100, Math.round((avgContent / 1800) * 100)))
 
-  // 3) Practicality — lab share + tool mentions
+  // 3) Practicality - lab share + tool mentions
   const allLessons = modules.flatMap((m) => m.lessons)
   const labShare = allLessons.length ? allLessons.filter((l) => l.type === "lab").length / allLessons.length : 0
   const toolsHit = d.tools.filter((t) => haystack.includes(t.toLowerCase().split(/[\s(/]/)[0]!)).length
@@ -423,24 +423,24 @@ export function localAudit(ctx: AuditCourseCtx, modules: AuditModuleInput[]): Lo
   if (coveredTopics.length) {
     strengths.push(`Solid coverage of ${coveredTopics.slice(0, 3).map((c) => c.topic).join(", ")}${coveredTopics.length > 3 ? " and more" : ""}.`)
   }
-  if (labShare >= 0.25) strengths.push(`Healthy hands-on ratio — ${Math.round(labShare * 100)}% of lessons are labs.`)
+  if (labShare >= 0.25) strengths.push(`Healthy hands-on ratio - ${Math.round(labShare * 100)}% of lessons are labs.`)
   if (toolsHit >= 3) strengths.push(`Learners practise with ${toolsHit} domain-standard tools (e.g. ${d.tools.filter((t) => haystack.includes(t.toLowerCase().split(/[\s(/]/)[0]!)).slice(0, 3).join(", ")}).`)
-  if (!strengths.length) strengths.push("A curriculum skeleton exists to build on — the domain map below gives the build order.")
+  if (!strengths.length) strengths.push("A curriculum skeleton exists to build on - the domain map below gives the build order.")
 
   const missingTopics = coverageMap.filter((c) => !c.covered)
-  const gaps: string[] = missingTopics.map((c) => `${c.topic} — ${c.evidence}`)
+  const gaps: string[] = missingTopics.map((c) => `${c.topic} - ${c.evidence}`)
   const missingTools = d.tools.filter((t) => !haystack.includes(t.toLowerCase().split(/[\s(/]/)[0]!))
   if (missingTools.length && allLessons.length) {
     gaps.push(`Tooling not yet hands-on: ${missingTools.slice(0, 5).join(", ")}${missingTools.length > 5 ? "…" : ""}`)
   }
-  if (labShare < 0.2 && allLessons.length) gaps.push(`Lab intensity low (${Math.round(labShare * 100)}% of lessons) — ${d.name} is learned by doing.`)
-  if (avgContent < 800 && readingLessons.length) gaps.push(`Reading lessons average only ~${Math.round(avgContent)} characters of teaching content — below teachable depth.`)
+  if (labShare < 0.2 && allLessons.length) gaps.push(`Lab intensity low (${Math.round(labShare * 100)}% of lessons) - ${d.name} is learned by doing.`)
+  if (avgContent < 800 && readingLessons.length) gaps.push(`Reading lessons average only ~${Math.round(avgContent)} characters of teaching content - below teachable depth.`)
 
   const recommendations: LocalAuditResult["recommendations"] = []
   for (const t of missingTopics.slice(0, 4)) {
     recommendations.push({
       title: `Add a module (or lessons) covering ${t.topic}`,
-      detail: `Generate a targeted module on "${t.topic}" — the curriculum generator honours focus notes, so feed it this gap. Anchor it to ${d.frameworks[0] ?? "the relevant framework"} and include a lab from the domain playbook (${d.labs[0] ?? "guided hands-on scenario"}).`,
+      detail: `Generate a targeted module on "${t.topic}" - the curriculum generator honours focus notes, so feed it this gap. Anchor it to ${d.frameworks[0] ?? "the relevant framework"} and include a lab from the domain playbook (${d.labs[0] ?? "guided hands-on scenario"}).`,
       severity: recommendations.length < 2 ? "high" : "medium",
     })
   }
@@ -454,14 +454,14 @@ export function localAudit(ctx: AuditCourseCtx, modules: AuditModuleInput[]): Lo
   if (avgContent < 800 && readingLessons.length) {
     recommendations.push({
       title: "Deepen existing reading lessons to teachable grade",
-      detail: "Use the Lesson Deep-Dive action on the thinnest lessons — target 450-800 words of mechanism-level teaching with real commands, pitfalls and takeaways.",
+      detail: "Use the Lesson Deep-Dive action on the thinnest lessons - target 450-800 words of mechanism-level teaching with real commands, pitfalls and takeaways.",
       severity: "medium",
     })
   }
   if (missingTools.length >= 3) {
     recommendations.push({
       title: `Put learners hands-on with ${missingTools.slice(0, 3).join(", ")}`,
-      detail: `These domain-standard tools appear in no lesson yet. Employers probe for them by name — fold them into existing labs or add short tool-walkthrough lessons.`,
+      detail: `These domain-standard tools appear in no lesson yet. Employers probe for them by name - fold them into existing labs or add short tool-walkthrough lessons.`,
       severity: "medium",
     })
   }
@@ -477,7 +477,7 @@ export function localAudit(ctx: AuditCourseCtx, modules: AuditModuleInput[]): Lo
 }
 
 /* ============================================================
-   Assessment bank (exam-grade MCQs — no LLM required)
+   Assessment bank (exam-grade MCQs - no LLM required)
    ============================================================ */
 
 export interface LocalQuestion {
@@ -505,16 +505,16 @@ const QUESTION_STEMS: [
   (topic: string, tool: string) => ({
     text: `Which tool is the practitioner standard for working with ${topic.toLowerCase()}?`,
     correct: tool,
-    explanation: `${tool} is the domain-standard tool for this task — interviews and real operations expect hands-on fluency with it.`,
+    explanation: `${tool} is the domain-standard tool for this task - interviews and real operations expect hands-on fluency with it.`,
   }),
   (topic: string) => ({
     text: `When planning work involving ${topic.toLowerCase()}, which framing do senior practitioners apply FIRST?`,
     correct: "Map the activity to the governing framework and scope/authorisation boundaries",
-    explanation: `Scoping and framework mapping come before tooling — it is what separates professional operations from ad-hoc hacking.`,
+    explanation: `Scoping and framework mapping come before tooling - it is what separates professional operations from ad-hoc hacking.`,
   }),
   (topic: string, _tool: string, misconception: string) => ({
     text: `A teammate says: "${misconception}" What is the strongest correction?`,
-    correct: "The premise is wrong — apply the domain methodology: evidence first, then controls",
+    correct: "The premise is wrong - apply the domain methodology: evidence first, then controls",
     explanation: `This is a known misconception in the field; the expert workflow (scope → evidence → control → verify) is the reliable correction.`,
   }),
 ]
@@ -558,7 +558,7 @@ export function localAssessment(ctx: LocalAssessmentCtx): { questions: LocalQues
       const fw = d.frameworks
       options = [
         q.correct,
-        "Jump straight to tooling — speed beats documentation",
+        "Jump straight to tooling - speed beats documentation",
         "Copy the approach from an unrelated domain",
         "Skip scoping; authorisation is a formality",
       ]
@@ -573,7 +573,7 @@ export function localAssessment(ctx: LocalAssessmentCtx): { questions: LocalQues
       explanation = lens?.methodology[i % (lens?.methodology.length || 1)] ?? q.explanation
       options = [
         q.correct,
-        "The teammate is right — accept the premise",
+        "The teammate is right - accept the premise",
         "Escalate to management without technical analysis",
         "The premise is true for this domain only",
       ]

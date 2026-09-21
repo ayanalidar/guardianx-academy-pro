@@ -4,7 +4,7 @@ import { getCurrentUser, withErrorHandler } from "@/lib/session"
 
 export const runtime = "nodejs"
 
-/* GET /api/affiliate/me — auth required.
+/* GET /api/affiliate/me - auth required.
  * Returns the current user's affiliate record + recent click activity.
  * Returns { affiliate: null } if the user is not yet an affiliate. */
 export const GET = withErrorHandler(async () => {

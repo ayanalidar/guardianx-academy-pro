@@ -5,7 +5,7 @@ import { db } from "@/lib/db"
 import { ensureTable } from "@/lib/db-safe"
 
 /**
- * Health endpoint — the single source of truth for "is the platform OK".
+ * Health endpoint - the single source of truth for "is the platform OK".
  *
  * Used by two self-healing loops:
  *  - Host watchdog (scripts/watchdog.py): restarts next/postgres when this
@@ -27,7 +27,7 @@ let buildIdRead = false
  * One-shot schema self-sync (per serverless instance): sync the course
  * storage tables to the current Prisma schema (idempotent ADD COLUMN IF
  * NOT EXISTS / CREATE TABLE IF NOT EXISTS). Runs on the first health hit
- * after a deploy — monitors poll constantly, so production converges
+ * after a deploy - monitors poll constantly, so production converges
  * within seconds of going live instead of failing on first write.
  */
 let schemaSynced = false
@@ -42,7 +42,7 @@ async function syncSchemaOnce(): Promise<boolean> {
     ])
     schemaSynced = true
   } catch {
-    // Never break health over a failed sync — the write paths retry it.
+    // Never break health over a failed sync - the write paths retry it.
   }
   return schemaSynced
 }
@@ -61,7 +61,7 @@ async function readBuildId(): Promise<string | null> {
 /**
  * Host-level self-healing state, written every cycle by watchdog v3
  * (scripts/watchdog.py). Surfaced here so /status and anyone can see the
- * platform is being actively supervised — probe results, repairs, sweep.
+ * platform is being actively supervised - probe results, repairs, sweep.
  * Missing/stale file simply means the watchdog is not running (or was
  * wiped); it must NEVER break the health response itself.
  */
@@ -117,7 +117,7 @@ export async function GET(req: Request) {
     payload.db = { ok: false, error: String(e?.message ?? e).slice(0, 200) }
   }
 
-  // ?probe=courses — deep diagnostic: run the EXACT query /api/courses uses
+  // ?probe=courses - deep diagnostic: run the EXACT query /api/courses uses
   // (take 1) and surface the raw Prisma error. Purpose: when production code
   // (auto-deployed latest) meets an older database schema, the catalog 500s
   // with a generic "Internal server error" and the real cause only shows in

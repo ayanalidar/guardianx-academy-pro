@@ -5,7 +5,7 @@ import { logAction } from "@/lib/audit"
 
 export const runtime = "nodejs"
 
-/* GET /api/admin/coupons  — ADMIN only. List all coupons. */
+/* GET /api/admin/coupons - ADMIN only. List all coupons. */
 export const GET = withErrorHandler(async () => {
   const currentUser = await requireAdmin()
   if (currentUser instanceof NextResponse) return currentUser
@@ -17,7 +17,7 @@ export const GET = withErrorHandler(async () => {
   return NextResponse.json({ coupons, count: coupons.length })
 })
 
-/* POST /api/admin/coupons — ADMIN only. Create a coupon.
+/* POST /api/admin/coupons - ADMIN only. Create a coupon.
  * Body: { code, type, value, maxUses?, validFrom, validUntil?, courseId?, active? }
  *   - code: required, uppercased + trimmed; must be unique
  *   - type: "percentage" | "fixed"  (default "percentage")
@@ -102,7 +102,7 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
     }
   }
 
-  // Optional course scope — verify the course exists if provided
+  // Optional course scope - verify the course exists if provided
   let courseScope: string | null = null
   if (courseId && String(courseId).trim() !== "") {
     const course = await db.course.findUnique({ where: { id: String(courseId).trim() } })

@@ -1,14 +1,14 @@
 import { NextResponse } from "next/server"
 
 /**
- * http-cache — Cache-Control helpers for Route Handlers.
+ * http-cache - Cache-Control helpers for Route Handlers.
  *
- * WHY: Vercel serverless functions pay ~1.5–2.5s on cold start (bundle init
+ * WHY: Vercel serverless functions pay ~1.5-2.5s on cold start (bundle init
  * + Prisma engine + first DB connection). Public, non-personalized GET
  * endpoints (course catalog, platform stats, learning paths, batches, …)
  * were paying that cost for EVERY visitor. Marking their responses
  * `public, s-maxage=N, stale-while-revalidate=M` lets the Vercel edge CDN
- * serve them in ~10–50ms and shields the origin from request storms —
+ * serve them in ~10-50ms and shields the origin from request storms - 
  * origin is hit at most once per s-maxage window per URL variant.
  *
  * RULES:

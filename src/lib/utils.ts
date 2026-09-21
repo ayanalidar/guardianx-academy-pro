@@ -6,9 +6,9 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 /**
- * firstNameFor — greeting-safe first-name extraction.
+ * firstNameFor - greeting-safe first-name extraction.
  * `name?.split(" ")[0]` breaks for titles like "Dr. Sarah Chen" (yields
- * "Dr."), producing greetings such as "Welcome back, Dr." — this helper
+ * "Dr."), producing greetings such as "Welcome back, Dr." - this helper
  * skips common honorifics before picking the first real token.
  */
 const HONORIFICS = new Set([

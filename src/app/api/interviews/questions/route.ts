@@ -5,7 +5,7 @@ import { getCurrentUser } from "@/lib/session"
 export const runtime = "nodejs"
 
 // ============================================================
-// Mock Interview — list questions by role
+// Mock Interview - list questions by role
 // GET /api/interviews/questions?role=SOC+Analyst&difficulty=intermediate
 // Auto-seeds 30 questions across multiple roles.
 // ============================================================
@@ -44,7 +44,7 @@ const SEED_QUESTIONS = [
   // DFIR / Incident Response
   { role: "Incident Response Specialist", difficulty: "intermediate", question: "Walk through the SANS PICERL incident response lifecycle.", expectedAnswer: "Preparation, Identification, Containment, Eradication, Recovery, Lessons learned.", category: "technical", tags: "ir,framework" },
   { role: "Incident Response Specialist", difficulty: "advanced", question: "How do you preserve volatile evidence on a live Windows host?", expectedAnswer: "Capture memory with Magnet RAM Capture / WinPMEM; collect network connections, processes, registry hives, event logs; hash everything; chain of custody.", category: "technical", tags: "forensics,windows" },
-  { role: "Incident Response Specialist", difficulty: "advanced", question: "Suspected PowerShell Empire beacon — what do you look for?", expectedAnswer: "Anomalous powershell.exe child processes; long encoded -enc commands; System.Net.WebClient downloads; recurring beaconing to suspect domains; check AMSI logs.", category: "scenario", tags: "forensics,malware" },
+  { role: "Incident Response Specialist", difficulty: "advanced", question: "Suspected PowerShell Empire beacon - what do you look for?", expectedAnswer: "Anomalous powershell.exe child processes; long encoded -enc commands; System.Net.WebClient downloads; recurring beaconing to suspect domains; check AMSI logs.", category: "scenario", tags: "forensics,malware" },
 
   // IAM / PAM Specialist
   { role: "IAM Specialist", difficulty: "beginner", question: "What is the difference between authentication and authorization?", expectedAnswer: "Authentication verifies WHO you are (passwords, MFA). Authorization decides WHAT you can do (RBAC, ABAC).", category: "technical", tags: "iam,fundamentals" },
@@ -52,7 +52,7 @@ const SEED_QUESTIONS = [
   { role: "IAM Specialist", difficulty: "advanced", question: "How would you design a PAM rollout for a 5,000-employee org?", expectedAnswer: "Inventory privileged accounts; phase by risk (Domain Admins first); onboard to vault; enforce session recording + JIT access; rotate creds; integrate with ITSM for approvals; train admins.", category: "scenario", tags: "pam,cyberark" },
 
   // Behavioral (cross-role)
-  { role: "SOC Analyst", difficulty: "intermediate", question: "Tell me about a time you disagreed with a teammate on a security decision.", expectedAnswer: "STAR format — Situation, Task, Action, Result. Demonstrate collaboration, evidence-based reasoning, willingness to be wrong.", category: "behavioral", tags: "soft-skills" },
+  { role: "SOC Analyst", difficulty: "intermediate", question: "Tell me about a time you disagreed with a teammate on a security decision.", expectedAnswer: "STAR format - Situation, Task, Action, Result. Demonstrate collaboration, evidence-based reasoning, willingness to be wrong.", category: "behavioral", tags: "soft-skills" },
   { role: "Pentester", difficulty: "intermediate", question: "Describe a finding a client pushed back on. How did you handle it?", expectedAnswer: "Reaffirm with evidence (PoC, impact), reference CWE/CVE, offer risk-rated remediation options, escalate to leadership if needed.", category: "behavioral", tags: "communication" },
   { role: "Security Engineer", difficulty: "intermediate", question: "How do you stay current with security threats?", expectedAnswer: "Podcasts, RSS feeds, CTF participation, vendor advisories, threat-intel reports, peer Slack/Discord communities, conference attendance.", category: "behavioral", tags: "learning" },
   { role: "Cloud Security Engineer", difficulty: "beginner", question: "Why do you want to work in cloud security specifically?", expectedAnswer: "Personalize: pace of innovation, blast radius, shared-responsibility nuances, automation-first mindset.", category: "behavioral", tags: "motivation" },

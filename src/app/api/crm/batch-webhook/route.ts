@@ -28,14 +28,14 @@ export const runtime = "nodejs"
  * }
  *
  * Creates a BatchLead record linked to the correct batch.
- * No auth — the webhook URL + token provide security.
+ * No auth - the webhook URL + token provide security.
  */
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json().catch(() => null)
     if (!body) return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
 
-    // SECURITY: verify the webhook secret. There is NO hardcoded fallback —
+    // SECURITY: verify the webhook secret. There is NO hardcoded fallback - 
     // the previous default ("guardianx-crm-webhook-2025") was shipped in a
     // public file and let anyone inject leads / email-bomb admins.
     // Set CRM_WEBHOOK_SECRET (env or Platform Settings) and share it with
@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
     const { timingSafeEqual } = await import("crypto")
     const webhookSecret = await getSetting("CRM_WEBHOOK_SECRET")
     if (!webhookSecret) {
-      console.error("[crm/webhook] CRM_WEBHOOK_SECRET not configured — rejecting webhook")
+      console.error("[crm/webhook] CRM_WEBHOOK_SECRET not configured - rejecting webhook")
       return NextResponse.json({ error: "Webhook not configured" }, { status: 503 })
     }
     const provided = typeof body.token === "string" ? body.token : ""
@@ -94,13 +94,13 @@ export async function POST(req: NextRequest) {
 
     // --- email notification to admins ---
     await notifyAdmins(
-      `New Batch Lead — ${batch.name} (${batch.certification}) — ${lead.name}`,
-      leadNotificationEmailTemplate(`Batch Lead — ${batch.name}`, [
+      `New Batch Lead - ${batch.name} (${batch.certification}) - ${lead.name}`,
+      leadNotificationEmailTemplate(`Batch Lead - ${batch.name}`, [
         { label: "Name", value: String(lead.name).trim() },
         { label: "WhatsApp", value: String(lead.whatsappNumber).trim() },
-        { label: "LinkedIn", value: lead.linkedinProfile ? String(lead.linkedinProfile).trim() : "—" },
-        { label: "Status", value: lead.professionalStatus ? String(lead.professionalStatus).trim() : "—" },
-        { label: "Job role", value: lead.jobRole ? String(lead.jobRole).trim() : "—" },
+        { label: "LinkedIn", value: lead.linkedinProfile ? String(lead.linkedinProfile).trim() : " - " },
+        { label: "Status", value: lead.professionalStatus ? String(lead.professionalStatus).trim() : " - " },
+        { label: "Job role", value: lead.jobRole ? String(lead.jobRole).trim() : " - " },
         { label: "Batch", value: `${batch.name} (${batch.certification})` },
       ])
     )
@@ -114,7 +114,7 @@ export async function POST(req: NextRequest) {
     if (candidateEmail && candidateEmail.includes("@")) {
       await sendEmail({
         to: candidateEmail,
-        subject: `Registration received — ${batch.name} | GuardianX Academy`,
+        subject: `Registration received - ${batch.name} | GuardianX Academy`,
         html: `
 <div style="font-family: -apple-system, BlinkMacSystemFont, sans-serif; max-width: 600px; margin: 0 auto; background: #0a0a0f; padding: 40px; border-radius: 12px;">
   <div style="text-align: center; margin-bottom: 32px;">
@@ -140,7 +140,7 @@ export async function POST(req: NextRequest) {
   } catch (error: any) {
     // If it's a unique constraint (duplicate submission), return a friendly error
     if (error?.code === "P2002") {
-      return NextResponse.json({ error: "Duplicate lead — this form has already been submitted" }, { status: 409 })
+      return NextResponse.json({ error: "Duplicate lead - this form has already been submitted" }, { status: 409 })
     }
     console.error("[batch-webhook] Error:", error?.message || error)
     return NextResponse.json({ error: "Internal server error" }, { status: 500 })

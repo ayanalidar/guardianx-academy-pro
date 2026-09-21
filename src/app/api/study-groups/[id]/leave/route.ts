@@ -23,7 +23,7 @@ export async function POST(
     return NextResponse.json({ error: "You are not a member of this group" }, { status: 400 })
   }
 
-  // Owner cannot leave — they must transfer ownership or delete the group.
+  // Owner cannot leave - they must transfer ownership or delete the group.
   if (myMembership.role === "owner") {
     return NextResponse.json(
       {

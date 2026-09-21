@@ -4,19 +4,19 @@ import { withErrorHandler } from "@/lib/session"
 
 export const runtime = "nodejs"
 
-/* GET /api/affiliate/track?code=<code> — public.
+/* GET /api/affiliate/track?code=<code> - public.
  * Increments clicks + creates an AffiliateClick record, then redirects
  * to the homepage. Used as the referral link target (the affiliate's
  * referral link points to this endpoint with their unique code).
  *
  * Query params:
- *   code   (required) — the affiliate referral code
- *   course (optional) — a courseId to associate with the click (for
+ *   code   (required) - the affiliate referral code
+ *   course (optional) - a courseId to associate with the click (for
  *                       attribution when the link is placed on a course page)
  *
  * Behaviour:
  *   - If the code is missing or invalid, redirect to home anyway (don't 404
- *     in the browser — that's a poor UX for a referral link click).
+ *     in the browser - that's a poor UX for a referral link click).
  *   - IP + userAgent are best-effort from the request headers.
  *   - Always redirects to "/#/" so the user lands on the homepage.
  */
@@ -55,7 +55,7 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
     }
   }
 
-  // Always redirect to home — referral links should land on the homepage
+  // Always redirect to home - referral links should land on the homepage
   const homeUrl = new URL("/", req.url)
   return NextResponse.redirect(homeUrl, 302)
 })

@@ -23,7 +23,7 @@ interface BatchData {
 }
 
 /**
- * BatchDetailView — renders a training batch's details for `/batches/<slug>`.
+ * BatchDetailView - renders a training batch's details for `/batches/<slug>`.
  *
  * Used in two spaces:
  *   1. The real Next.js page `src/app/batches/[slug]/page.tsx` via
@@ -32,7 +32,7 @@ interface BatchData {
  *      from anywhere in the platform works without a full reload.
  *
  * The internal navigate() calls (All batches / Browse courses / Contact)
- * are store-driven — they work because the page follows the store
+ * are store-driven - they work because the page follows the store
  * reactively (PublicRouteView), fixing the old "URL changes but the
  * screen stays" dead-end on batch detail pages.
  */

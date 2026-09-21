@@ -30,11 +30,11 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
   if (!razorpayPaymentId) return NextResponse.json({ error: "razorpayPaymentId is required" }, { status: 400 })
   if (!razorpaySignature) return NextResponse.json({ error: "razorpaySignature is required" }, { status: 400 })
 
-  // Load the order first — we need razorpayOrderId for signature verification
+  // Load the order first - we need razorpayOrderId for signature verification
   const order = await db.order.findUnique({ where: { id: orderId } })
   if (!order) return NextResponse.json({ error: "Order not found" }, { status: 404 })
   if (order.userId !== user.id) {
-    return NextResponse.json({ error: "Forbidden — order belongs to another user" }, { status: 403 })
+    return NextResponse.json({ error: "Forbidden - order belongs to another user" }, { status: 403 })
   }
   if (order.status === "paid") {
     return NextResponse.json({ error: "Order already paid" }, { status: 400 })
@@ -64,7 +64,7 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
         { status: 500 }
       )
     }
-    console.warn("[payment/verify] PAYMENT_MOCK_MODE=true — accepting unverified payment (dev only)")
+    console.warn("[payment/verify] PAYMENT_MOCK_MODE=true - accepting unverified payment (dev only)")
   } else {
     // No secret + no explicit mock flag → refuse to verify. This prevents
     // a misconfigured production deploy from silently accepting forged
@@ -97,7 +97,7 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
         data: { usedCount: { increment: 1 } },
       })
     } catch {
-      // ignore — best effort
+      // ignore - best effort
     }
   }
 
@@ -150,7 +150,7 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
         if (enrollUser && course) {
           await sendEmail({
             to: enrollUser.email,
-            subject: `📚 Enrolled — ${course.title}`,
+            subject: `📚 Enrolled - ${course.title}`,
             body: `Hi ${enrollUser.name},\n\nYou've successfully enrolled in "${course.title}" on GuardianX Academy.\n\nDive in and start learning. Your journey to becoming a cyber guardian starts now!\n\nThe GuardianX Team`,
             type: "notification",
             userId: user.id,

@@ -5,7 +5,7 @@ import { logAction } from "@/lib/audit"
 
 export const runtime = "nodejs"
 
-/* PATCH /api/admin/subscription-plans/[id] — ADMIN only. Update a plan.
+/* PATCH /api/admin/subscription-plans/[id] - ADMIN only. Update a plan.
  * Accepts any of: { name?, price?, features?, popular?, order?, active? }
  */
 export const PATCH = withErrorHandler(
@@ -87,7 +87,7 @@ export const PATCH = withErrorHandler(
   },
 )
 
-/* DELETE /api/admin/subscription-plans/[id] — ADMIN only. Delete a plan. */
+/* DELETE /api/admin/subscription-plans/[id] - ADMIN only. Delete a plan. */
 export const DELETE = withErrorHandler(
   async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const currentUser = await requireAdmin()

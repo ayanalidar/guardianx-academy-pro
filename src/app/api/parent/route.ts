@@ -11,14 +11,14 @@ import {
 export const runtime = "nodejs"
 
 /**
- * Parent/Guardian Portal — main endpoint.
+ * Parent/Guardian Portal - main endpoint.
  *
- * GET  — returns the parent's student overview (progress, attendance,
+ * GET - returns the parent's student overview (progress, attendance,
  *        courses, certificates, labs, XP/level, recent activity).
  *        Requires a valid `x-parent-token` header.
  *
- * POST — parent login: verify email + password against ParentAccount and
- *        return a signed token + parent profile. (No NextAuth dependency —
+ * POST - parent login: verify email + password against ParentAccount and
+ *        return a signed token + parent profile. (No NextAuth dependency - 
  *        parent accounts live in their own table.)
  */
 
@@ -28,14 +28,14 @@ const loginSchema = z.object({
 })
 
 // ---------------------------------------------------------------------------
-// GET — student overview for the authenticated parent
+// GET - student overview for the authenticated parent
 // ---------------------------------------------------------------------------
 export async function GET(req: NextRequest) {
   const token = readParentToken(req)
   const payload = verifyParentToken(token)
   if (!payload) {
     return NextResponse.json(
-      { error: "Unauthorized — invalid or expired parent token" },
+      { error: "Unauthorized - invalid or expired parent token" },
       { status: 401 }
     )
   }
@@ -66,7 +66,7 @@ export async function GET(req: NextRequest) {
   })
   if (parentStatus?.status !== "ACTIVE") {
     return NextResponse.json(
-      { error: "This parent link is not active — awaiting student approval or blocked." },
+      { error: "This parent link is not active - awaiting student approval or blocked." },
       { status: 403 }
     )
   }
@@ -269,7 +269,7 @@ export async function GET(req: NextRequest) {
 }
 
 // ---------------------------------------------------------------------------
-// POST — parent login
+// POST - parent login
 // ---------------------------------------------------------------------------
 export async function POST(req: NextRequest) {
   try {

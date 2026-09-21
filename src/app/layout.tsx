@@ -10,12 +10,12 @@ import { HydrationFlag } from "@/components/platform/hydration-flag";
 /**
  * Client recovery scripts, inlined in <head> so they run before React.
  *
- * 1. Chunk-error auto-reload — if a /_next/static script/stylesheet fails to
+ * 1. Chunk-error auto-reload - if a /_next/static script/stylesheet fails to
  *    load (typical after a deploy when the browser holds a stale HTML shell),
  *    reload ONCE to fetch the fresh build. Guarded by sessionStorage so we
  *    never reload-loop; the guard self-clears after 20s of healthy load.
  *
- * 2. Reveal rescue timer — if hydration has not completed ~2.5s after DOM
+ * 2. Reveal rescue timer - if hydration has not completed ~2.5s after DOM
  *    ready, add `gx-reveal-rescue` to <html>. Combined with the failsafe CSS
  *    in globals.css this forces all scroll-reveal content visible, so a
  *    broken/partial hydration can NEVER leave pages permanently blank.
@@ -59,7 +59,7 @@ const CLIENT_RECOVERY_SCRIPT = `
     };
     /* Last-resort sweep: reveal anything still hidden by inline/computed
        styles (covers CSSOM-set opacity that attribute selectors cannot see).
-       Runs ONLY in rescue mode — a broken browser must never hide content. */
+       Runs ONLY in rescue mode - a broken browser must never hide content. */
     var forceVisible = function () {
       try {
         var els = document.querySelectorAll("body *");
@@ -106,7 +106,7 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL("https://academy.guardianx.cloud"),
   title: {
-    default: "GuardianX Academy — Cyber Security Training in India | CEH, CISSP, CCNA",
+    default: "GuardianX Academy - Cyber Security Training in India | CEH, CISSP, CCNA",
     template: "%s · GuardianX Academy",
   },
   description:
@@ -141,12 +141,12 @@ export const metadata: Metadata = {
   publisher: "GuardianX Academy",
   applicationName: "GuardianX Academy",
   category: "Education",
-  // NOTE: no layout-level `alternates.canonical` — a canonical here would be
+  // NOTE: no layout-level `alternates.canonical` - a canonical here would be
   // inherited by EVERY page, telling Google all pages are copies of the
   // homepage (actively de-indexes the site). Each page sets its own
   // self-referencing canonical instead.
   openGraph: {
-    title: "GuardianX Academy — Cyber Security Training Operating System",
+    title: "GuardianX Academy - Cyber Security Training Operating System",
     description:
       "Master cybersecurity by actually breaking things. Real cyber range, hands-on labs, certification tracks, CTF arena, and career paths. Learn. Break. Defend. Prove.",
     url: "https://academy.guardianx.cloud",
@@ -158,7 +158,7 @@ export const metadata: Metadata = {
         url: "/og-default.png",
         width: 1200,
         height: 630,
-        alt: "GuardianX Academy — Learn. Break. Defend. Prove.",
+        alt: "GuardianX Academy - Learn. Break. Defend. Prove.",
         type: "image/png",
       },
       {
@@ -174,7 +174,7 @@ export const metadata: Metadata = {
     card: "summary_large_image",
     site: "@guardianx",
     creator: "@guardianx",
-    title: "GuardianX Academy — Cyber Security Training Operating System",
+    title: "GuardianX Academy - Cyber Security Training Operating System",
     description:
       "Master cybersecurity by actually breaking things. Real cyber range, hands-on labs, certification tracks, CTF arena, and career paths. Learn. Break. Defend. Prove.",
     images: ["/og-default.png"],

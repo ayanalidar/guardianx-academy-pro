@@ -17,7 +17,7 @@ import {
 } from "lucide-react"
 
 /* ============================================================
-   /instructors — public listing of all INSTRUCTOR users with
+   /instructors - public listing of all INSTRUCTOR users with
    their InstructorProfile data. (master-prompt §25)
    ============================================================ */
 
@@ -50,14 +50,14 @@ const WHY_FEATURES = [
   {
     icon: ShieldCheck,
     title: "Industry-Verified Expertise",
-    desc: "Every instructor is vetted by the GuardianX team — credentials checked, references verified, teaching sample reviewed.",
+    desc: "Every instructor is vetted by the GuardianX team - credentials checked, references verified, teaching sample reviewed.",
     tint: "text-violet-300",
     tintBg: "bg-violet-500/10",
   },
   {
     icon: Briefcase,
     title: "Real-World Experience",
-    desc: "Instructors work in the field, not just theory. Pentests, SOC shifts, GRC audits — they teach what they did last week.",
+    desc: "Instructors work in the field, not just theory. Pentests, SOC shifts, GRC audits - they teach what they did last week.",
     tint: "text-cyan-300",
     tintBg: "bg-cyan-500/10",
   },
@@ -71,14 +71,14 @@ const WHY_FEATURES = [
   {
     icon: Terminal,
     title: "Hands-On Teaching",
-    desc: "Learn by doing, not just watching slides. Labs, capture-the-flag, live exercises — applied from minute one.",
+    desc: "Learn by doing, not just watching slides. Labs, capture-the-flag, live exercises - applied from minute one.",
     tint: "text-emerald-300",
     tintBg: "bg-emerald-500/10",
   },
   {
     icon: MessageSquare,
     title: "Personalized Feedback",
-    desc: "Direct feedback on assignments, labs, and mock exams. No black-box grading — your instructor reviews your work.",
+    desc: "Direct feedback on assignments, labs, and mock exams. No black-box grading - your instructor reviews your work.",
     tint: "text-rose-300",
     tintBg: "bg-rose-500/10",
   },
@@ -132,7 +132,7 @@ const EXPERTISE_DOMAINS = [
   {
     icon: Gavel,
     title: "GRC",
-    desc: "Governance, risk management, compliance — ISO 27001, SOC 2, PCI-DSS, NIST.",
+    desc: "Governance, risk management, compliance - ISO 27001, SOC 2, PCI-DSS, NIST.",
     keywords: ["grc", "governance", "risk", "compliance", "iso", "soc 2", "audit"],
     tint: "text-amber-300",
     tintBg: "bg-amber-500/10",
@@ -171,7 +171,7 @@ const EXPERTISE_DOMAINS = [
 const TRAINING_STEPS = [
   { num: "01", icon: Search, title: "Choose Your Course", desc: "Browse the catalog and pick a course aligned to your certification goal." },
   { num: "02", icon: UserCheck, title: "Get Matched with an Instructor", desc: "We pair you with an instructor whose expertise matches your track." },
-  { num: "03", icon: Video, title: "Attend Live Sessions", desc: "Join live, interactive sessions — ask questions, watch demos, take notes." },
+  { num: "03", icon: Video, title: "Attend Live Sessions", desc: "Join live, interactive sessions - ask questions, watch demos, take notes." },
   { num: "04", icon: Terminal, title: "Practice with Labs", desc: "Apply what you learned in hands-on labs, CTFs, and mock exams." },
   { num: "05", icon: Trophy, title: "Get Certified", desc: "Pass the exam, earn your GuardianX credential, and update your CV." },
 ] as const
@@ -227,7 +227,7 @@ export function InstructorsView() {
               <span className="text-gradient-premium">done the work.</span>
             </h1>
             <p className="text-base lg:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              Every GuardianX instructor has shipped production security work — pentests, SOC operations,
+              Every GuardianX instructor has shipped production security work - pentests, SOC operations,
               GRC programs, cloud hardening. No career academics. Just operators teaching what they actually do.
             </p>
           </motion.div>
@@ -416,7 +416,7 @@ export function InstructorsView() {
       </section>
 
       {/* =====================================================
-          NEW SECTION — WHY LEARN FROM GUARDIANX INSTRUCTORS
+          NEW SECTION - WHY LEARN FROM GUARDIANX INSTRUCTORS
           6 feature cards explaining what makes our instructors different.
           ===================================================== */}
       <section
@@ -474,7 +474,7 @@ export function InstructorsView() {
       </section>
 
       {/* =====================================================
-          NEW SECTION — INSTRUCTOR EXPERTISE
+          NEW SECTION - INSTRUCTOR EXPERTISE
           Visual grid of 8 security domain cards, each with a live
           count of how many instructors cover that domain.
           ===================================================== */}
@@ -546,7 +546,7 @@ export function InstructorsView() {
       </section>
 
       {/* =====================================================
-          NEW SECTION — HOW INSTRUCTOR-LED TRAINING WORKS
+          NEW SECTION - HOW INSTRUCTOR-LED TRAINING WORKS
           5-step visual timeline: choose → match → attend →
           practice → certify. Horizontal on desktop, vertical
           on mobile (mirrors the homepage methodology timeline).
@@ -580,7 +580,7 @@ export function InstructorsView() {
             </h2>
             <p className="text-sm text-muted-foreground leading-relaxed">
               A clear 5-step path from picking a course to walking out certified. Every step is
-              designed to keep you accountable to a real human instructor — not just a video queue.
+              designed to keep you accountable to a real human instructor - not just a video queue.
             </p>
           </motion.div>
 
@@ -646,7 +646,7 @@ export function InstructorsView() {
       </section>
 
       {/* =====================================================
-          NEW SECTION — STATS STRIP
+          NEW SECTION - STATS STRIP
           4 stat tiles: instructors, courses, learners, certs.
           ===================================================== */}
       <section aria-labelledby="stats-heading" className="relative py-10 lg:py-14 border-t border-border/40">
@@ -722,7 +722,7 @@ export function InstructorsView() {
       </section>
 
       {/* =====================================================
-          NEW SECTION — FINAL CTA
+          NEW SECTION - FINAL CTA
           "Ready to learn from the best?" with buttons to
           Browse Courses + Contact Us.
           ===================================================== */}

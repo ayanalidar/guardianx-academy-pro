@@ -51,11 +51,11 @@ export const POST = withErrorHandler(async (req) => {
     const to = s.EMAIL_TO_ADMINS || currentUser.email
     const ok = await sendEmail({
       to,
-      subject: "GuardianX — Email Test",
+      subject: "GuardianX - Email Test",
       html: `<div style="font-family:sans-serif;padding:40px;background:#0a0a0f;color:#fff;border-radius:12px;"><h1 style="color:#a78bfa;">GuardianX Email Test</h1><p>This is a test email from the GuardianX Platform Settings page.</p><p>If you received this, SMTP is working correctly.</p></div>`,
     })
     if (!ok) {
-      return NextResponse.json({ ok: false, error: "Failed to send — check SMTP credentials" }, { status: 400 })
+      return NextResponse.json({ ok: false, error: "Failed to send - check SMTP credentials" }, { status: 400 })
     }
     return NextResponse.json({ ok: true, message: `Test email sent to ${to}` })
   }
@@ -80,11 +80,11 @@ export const POST = withErrorHandler(async (req) => {
     })
     if (!sent) {
       return NextResponse.json(
-        { ok: false, error: "Sentry rejected the event — check the DSN (must be a valid project DSN)" },
+        { ok: false, error: "Sentry rejected the event - check the DSN (must be a valid project DSN)" },
         { status: 400 },
       )
     }
-    return NextResponse.json({ ok: true, message: "Test event delivered to Sentry — check your project issues" })
+    return NextResponse.json({ ok: true, message: "Test event delivered to Sentry - check your project issues" })
   }
 
   if (type === "auth") {
@@ -92,7 +92,7 @@ export const POST = withErrorHandler(async (req) => {
     // exchange a dummy code against Google's token endpoint.
     //  - invalid_client  → the ID/secret pair is wrong
     //  - invalid_grant   → credentials are VALID (Google parsed them and only
-    //                      rejected the fake code) — this is the success signal
+    //                      rejected the fake code) - this is the success signal
     const s = await getSettings(["GOOGLE_CLIENT_ID", "GOOGLE_CLIENT_SECRET"])
     if (!s.GOOGLE_CLIENT_ID || !s.GOOGLE_CLIENT_SECRET) {
       return NextResponse.json({ ok: false, error: "Google Client ID / Secret not configured" }, { status: 400 })
@@ -114,23 +114,23 @@ export const POST = withErrorHandler(async (req) => {
         return NextResponse.json({
           ok: true,
           message:
-            "Google credentials are valid (token endpoint accepted the client). Remember: the callback URL of THIS deployment must also be registered as an Authorized redirect URI in Google Cloud Console — see the panel in Admin → Settings → Google OAuth.",
+            "Google credentials are valid (token endpoint accepted the client). Remember: the callback URL of THIS deployment must also be registered as an Authorized redirect URI in Google Cloud Console - see the panel in Admin → Settings → Google OAuth.",
         })
       }
       if (data?.error === "redirect_uri_mismatch") {
-        // Google parsed the client pair fine but rejected the redirect_uri —
+        // Google parsed the client pair fine but rejected the redirect_uri - 
         // credentials are valid, the callback URL just isn't registered.
         return NextResponse.json({
           ok: true,
           message:
-            "Credentials are valid, BUT the redirect URI is NOT registered in Google Cloud Console — this is exactly what blocks sign-in with \"Access blocked: This app's request is invalid\". Add the callback URL shown in Admin → Settings → Google OAuth as an Authorized redirect URI.",
+            "Credentials are valid, BUT the redirect URI is NOT registered in Google Cloud Console - this is exactly what blocks sign-in with \"Access blocked: This app's request is invalid\". Add the callback URL shown in Admin → Settings → Google OAuth as an Authorized redirect URI.",
         })
       }
       if (data?.error === "invalid_client") {
         return NextResponse.json({
           ok: false,
           error:
-            "Google rejected the client — the Client ID / Secret pair is wrong. Paste both exactly as shown in Google Cloud Console (no quotes, no extra characters).",
+            "Google rejected the client - the Client ID / Secret pair is wrong. Paste both exactly as shown in Google Cloud Console (no quotes, no extra characters).",
         }, { status: 400 })
       }
       return NextResponse.json(

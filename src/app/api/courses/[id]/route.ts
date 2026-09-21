@@ -7,10 +7,10 @@ export const GET = withErrorHandler(async (_req: NextRequest, { params }: { para
   const { id } = await params
   const user = await getCurrentUser()
 
-  // ── Tier 1 — full detail query (current schema: instructor relation,
+  // ── Tier 1 - full detail query (current schema: instructor relation,
   // modules→lessons with pdfPages, labs, counts). On deployments whose DB
   // predates the course-extras columns (e.g. Vercel auto-deploying fresh
-  // code against a stale remote DB) this throws P2022/P2021 — degrade
+  // code against a stale remote DB) this throws P2022/P2021 - degrade
   // instead of returning a blank page.
   let course: any = null
   let degraded = false
@@ -43,7 +43,7 @@ export const GET = withErrorHandler(async (_req: NextRequest, { params }: { para
   } catch {
     degraded = true
 
-    // ── Tier 2 — schema discovery. Select only Course columns that actually
+    // ── Tier 2 - schema discovery. Select only Course columns that actually
     // exist in the remote DB, and attach relations conditionally.
     let cols = new Set<string>()
     try {
@@ -61,7 +61,7 @@ export const GET = withErrorHandler(async (_req: NextRequest, { params }: { para
       "whatYouWillLearn", "prerequisites", "whoShouldAttend", "toolsCovered", "careerOutcomes",
     ]
     const select: Record<string, true> = {
-      // v1-era columns — present in every schema version this project had.
+      // v1-era columns - present in every schema version this project had.
       id: true, title: true,
     }
     for (const k of WANTED) if (cols.has(k)) select[k] = true
@@ -72,7 +72,7 @@ export const GET = withErrorHandler(async (_req: NextRequest, { params }: { para
     }
     // Include the curriculum only when the Module/Lesson tables actually
     // exist on the remote DB. pdfPages is intentionally omitted from the
-    // lesson select — it is a newer column and may not exist there.
+    // lesson select - it is a newer column and may not exist there.
     try {
       const tbl = await db.$queryRaw<{ ok: number | null }[]>`
         SELECT to_regclass('public."Module"') IS NOT NULL
@@ -97,7 +97,7 @@ export const GET = withErrorHandler(async (_req: NextRequest, { params }: { para
       const selectFull = Object.keys(rel).length ? { ...select, ...rel } : select
       course = await db.course.findUnique({ where: { id }, select: selectFull })
     } catch {
-      // ── Tier 3 — bare minimum, guaranteed columns only.
+      // ── Tier 3 - bare minimum, guaranteed columns only.
       try {
         course = await db.course.findUnique({
           where: { id },
@@ -111,7 +111,7 @@ export const GET = withErrorHandler(async (_req: NextRequest, { params }: { para
 
   if (!course) return NextResponse.json({ error: "Course not found" }, { status: 404 })
 
-  // Degraded rows may lack modules/labs/_count — normalize so the client
+  // Degraded rows may lack modules/labs/_count - normalize so the client
   // can never crash on missing arrays.
   if (!Array.isArray(course.modules)) course.modules = []
   if (!Array.isArray(course.labs)) course.labs = []
@@ -134,7 +134,7 @@ export const GET = withErrorHandler(async (_req: NextRequest, { params }: { para
         lessonProgress[p.lessonId] = { completed: p.completed, position: p.position }
       }
     } catch {
-      // Progress read failure must not blank the page — degrade to anonymous view.
+      // Progress read failure must not blank the page - degrade to anonymous view.
       enrollment = null
       lessonProgress = {}
     }
@@ -152,7 +152,7 @@ export const GET = withErrorHandler(async (_req: NextRequest, { params }: { para
     progressPct: totalLessons ? Math.round((completedLessons / totalLessons) * 100) : 0,
     degraded,
   }
-  // Anonymous course-detail responses are identical for every visitor —
+  // Anonymous course-detail responses are identical for every visitor - 
   // edge-cache them. Authenticated responses embed enrollment + progress
   // and must never be cached.
   if (user) {

@@ -1,5 +1,5 @@
 /**
- * invoice-pdf.ts — native vector A4 invoice PDF (jsPDF), replaces the old
+ * invoice-pdf.ts - native vector A4 invoice PDF (jsPDF), replaces the old
  * html2canvas screenshot pipeline (raster quality, dark-theme card floating
  * in the middle of a landscape page).
  *
@@ -7,12 +7,12 @@
  * zoom/print DPI, the document fills the full A4 portrait page.
  *
  * TWO THEMES:
- *  - "dark"  — the aurora glass "screen style": full-page deep indigo/violet
+ *  - "dark" - the aurora glass "screen style": full-page deep indigo/violet
  *              aurora gradient, frosted glass panels (translucent white fills
  *              with hairline borders), cyan-violet-fuchsia accent bars, soft
  *              radial glow orbs. Mirrors the on-screen Invoice Generator look.
  *              Best for sharing/emailing (heavy for physical printing).
- *  - "light" — print-friendly white paper invoice (ink-safe).
+ *  - "light" - print-friendly white paper invoice (ink-safe).
  *
  * Runs in the browser (QR data-URL passed in) and in Node (qrPngDataUrl:
  * null) for visual verification scripts.
@@ -65,7 +65,7 @@ export interface InvoicePdfOptions {
   logoPngDataUrl?: string | null
   /** "dark" = cyber screen style, "light" = print-friendly paper style. */
   theme?: InvoiceTheme
-  /** Injectable font loader — browser uses fetch(), Node scripts use fs. */
+  /** Injectable font loader - browser uses fetch(), Node scripts use fs. */
   loadFontFile?: (path: string) => Promise<ArrayBuffer>
 }
 
@@ -125,7 +125,7 @@ const C_DARK: Palette = {
   accentB: [232, 121, 249], // fuchsia-400
   accentC: [34, 211, 238], // cyan-400
   violetDark: [70, 44, 140], // violet panel tint
-  violet: [178, 156, 255], // labels — brighter for contrast on glass
+  violet: [178, 156, 255], // labels - brighter for contrast on glass
   violetSoft: [210, 196, 255],
   ink: [248, 250, 252], // near-white body text
   sub: [199, 206, 220], // slate-300-ish
@@ -331,7 +331,7 @@ function withOpacity(pdf: jsPDF, opacity: number, fn: () => void) {
   pdf.restoreGraphicsState()
 }
 
-/** Full-page vertical aurora gradient — indigo → violet → deep navy. */
+/** Full-page vertical aurora gradient - indigo → violet → deep navy. */
 function paintPageBg(pdf: jsPDF, pw: number, ph = 297) {
   const top: RGB = [34, 24, 72] // indigo glow
   const mid: RGB = [23, 16, 50] // violet night
@@ -358,7 +358,7 @@ function drawOrb(pdf: jsPDF, cx: number, cy: number, r: number, color: RGB, ring
   }
 }
 
-/** Frosted glass panel — translucent white fill + hairline light border. */
+/** Frosted glass panel - translucent white fill + hairline light border. */
 function glassPanel(pdf: jsPDF, x: number, y: number, w: number, h: number, r = 3) {
   withOpacity(pdf, 0.055, () => {
     pdf.setFillColor(255, 255, 255)
@@ -402,7 +402,7 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
 
   const fmtDate = (iso: string) => {
     const d = new Date(iso)
-    if (isNaN(d.getTime())) return iso || "—"
+    if (isNaN(d.getTime())) return iso || " - "
     return d.toLocaleDateString(cur.locale, { day: "numeric", month: "short", year: "numeric" })
   }
 
@@ -456,7 +456,7 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
     setFont(pdf, "bold", 9.5, C.white)
     pdf.text("GUARDIANX ACADEMY", ML, 9.6)
     setFont(pdf, "med", 8, C.violetSoft)
-    pdf.text(safe(`Invoice ${data.number} — continued`), MR, 9.6, { align: "right" })
+    pdf.text(safe(`Invoice ${data.number} - continued`), MR, 9.6, { align: "right" })
     return 28
   }
 
@@ -467,7 +467,7 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
       pdf.setFillColor(C.violetDark[0], C.violetDark[1], C.violetDark[2])
       pdf.rect(ML, y, CW, 8, "F")
     }
-    // aurora sheen over the header row (both themes) — Luxe table header
+    // aurora sheen over the header row (both themes) - Luxe table header
     gradientBand3(pdf, ML, y, CW, 8, C.accentA, C.accentB, C.accentC, DARK ? 30 : 34)
     setFont(pdf, "bold", 7.4, C.white)
     pdf.text("ITEM", 26, y + 5.2, { charSpace: 0.4 })
@@ -479,7 +479,7 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
   }
 
   // =========================================================================
-  // PAGE CANVAS — the cyber screen background (dark theme only)
+  // PAGE CANVAS - the cyber screen background (dark theme only)
   // =========================================================================
   if (DARK) {
     paintPageBg(pdf, PW)
@@ -490,7 +490,7 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
   }
 
   // =========================================================================
-  // HEADER BAND (full-bleed aurora hero — 52mm tall, Aurora Luxe)
+  // HEADER BAND (full-bleed aurora hero - 52mm tall, Aurora Luxe)
   // =========================================================================
   gradientBand(pdf, 0, 0, PW, 52, C.headerLeft, C.headerRight, 56)
   if (DARK) {
@@ -510,12 +510,12 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
   drawOrb(pdf, 96, 45, 14, C.accentC, 5, 0.05)
   drawOrb(pdf, 205, 40, 12, C.accentA, 5, 0.05)
 
-  // logo — large GuardianX shield on a glowing 40mm badge (Aurora Luxe hero);
+  // logo - large GuardianX shield on a glowing 40mm badge (Aurora Luxe hero);
   // falls back to the drawn GX badge if the image is unavailable.
   let logoDrawn = false
   if (opts.logoPngDataUrl) {
     try {
-      // glow badge behind the shield — big, app-icon presence
+      // glow badge behind the shield - big, app-icon presence
       pdf.saveGraphicsState()
       pdf.setGState(new (pdf as any).GState({ opacity: 0.5 }))
       pdf.setFillColor(C.violetDark[0], C.violetDark[1], C.violetDark[2])
@@ -536,7 +536,7 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
   }
   if (!logoDrawn) {
     if (opts.logoPngDataUrl) {
-      // addImage failed after the chip was drawn — paint the chip area back
+      // addImage failed after the chip was drawn - paint the chip area back
       // with the local gradient colour so the fallback badge sits clean.
       const bg = lerp(C.headerLeft, C.headerRight, 14 / PW)
       pdf.setFillColor(bg[0], bg[1], bg[2])
@@ -563,7 +563,7 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
   setFont(pdf, "bold", 27, C.white)
   pdf.text("INVOICE", MR, 21.5, { align: "right", charSpace: 1.2 })
   setFont(pdf, "med", 11.5, C.violetSoft)
-  pdf.text(safe(data.number || "—"), MR, 28, { align: "right" })
+  pdf.text(safe(data.number || " - "), MR, 28, { align: "right" })
 
   const stColor = ST(data.status)
   setFont(pdf, "bold", 8.6, C.white)
@@ -599,7 +599,7 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
   }
 
   // =========================================================================
-  // BILL TO / INVOICE DETAILS — frosted panels (Aurora Luxe)
+  // BILL TO / INVOICE DETAILS - frosted panels (Aurora Luxe)
   // =========================================================================
   let y = 63
 
@@ -659,10 +659,10 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
     pdf.text(addrLines, ML + 12, cy)
   }
 
-  // right column — dates / currency (right aligned rows)
+  // right column - dates / currency (right aligned rows)
   const rows: Array<[string, string]> = [
     ["Issue Date", fmtDate(data.issueDate)],
-    ["Due Date", data.dueDate ? fmtDate(data.dueDate) : "—"],
+    ["Due Date", data.dueDate ? fmtDate(data.dueDate) : " - "],
     ["Currency", `${cur.symbol === "₹" && rupeeFallback ? "Rs." : cur.symbol} ${data.currency}`],
   ]
   let ry = y + 1.6
@@ -792,7 +792,7 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
     setFont(pdf, "reg", 7.4, C.sub)
     pdf.text("A/C · IFSC", ML + 30, qy)
     setFont(pdf, "med", 7.2, C.ink)
-    pdf.text(safe(`${data.accountNumber ?? "—"}  ${data.ifscCode ?? ""}`), ML + 84, qy, { align: "right" })
+    pdf.text(safe(`${data.accountNumber ?? " - "}  ${data.ifscCode ?? ""}`), ML + 84, qy, { align: "right" })
     leftBottom = y + cardH
   }
 
@@ -805,7 +805,7 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
     pdf.text(safe(row.value), MR, ty + 4.4, { align: "right" })
     ty += 6
   }
-  // total pill — oversized hero total (dark: frosted glass, light: solid)
+  // total pill - oversized hero total (dark: frosted glass, light: solid)
   if (DARK) {
     glassPanel(pdf, 108, ty + 1, MR - 108, 15, 2.6)
     gradientBand3(pdf, 108, ty + 0.2, MR - 108, 0.8, C.accentA, C.accentB, C.accentC, 48)
@@ -860,7 +860,7 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
     bankBottom = by
   }
 
-  // signature (right, same band as bank details) — cursive flourish + line
+  // signature (right, same band as bank details) - cursive flourish + line
   const sigY = y + 2
   setFont(pdf, "reg", 7.4, C.faint)
   pdf.text("For GUARDIANX ACADEMY", MR, sigY, { align: "right" })

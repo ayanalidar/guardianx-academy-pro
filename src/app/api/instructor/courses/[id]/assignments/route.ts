@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentUser, requireRole } from "@/lib/session"
 
-// GET — list assignments for a course.
+// GET - list assignments for a course.
 // Instructors (owner) and enrolled students can view.
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params // course id
@@ -40,7 +40,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   return NextResponse.json({ course: { id: course.id, title: course.title }, assignments })
 }
 
-// POST — create a new assignment (INSTRUCTOR/ADMIN only, must be course owner)
+// POST - create a new assignment (INSTRUCTOR/ADMIN only, must be course owner)
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params // course id
   const user = await requireRole(["INSTRUCTOR", "ADMIN", "SUPER_ADMIN"])

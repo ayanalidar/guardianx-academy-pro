@@ -242,7 +242,7 @@ const MEGA_MENU_GROUPS: MegaMenuGroup[] = [
     ],
   },
   {
-    // Direct tab — no dropdown; clicking goes straight to /hiring.
+    // Direct tab - no dropdown; clicking goes straight to /hiring.
     id: "hiring",
     label: "Hiring",
     items: [],
@@ -287,7 +287,7 @@ export function PublicHeader() {
 
   // CMS-driven brand (Admin → Content Studio → Global → Header).
   // The CMS header navLinks/tagline keys are superseded by the mega-menu
-  // structure — only the brand name/accent are consumed here.
+  // structure - only the brand name/accent are consumed here.
   const globalCms = usePageContent("global")
   const brandName = getContent(globalCms.data, "header", "brandName", "Guardian")
   const brandAccent = getContent(globalCms.data, "header", "brandAccent", "X")
@@ -338,7 +338,7 @@ export function PublicHeader() {
     closeTimer.current = setTimeout(() => setOpenMenuId(null), 120)
   }, [cancelCloseTimer])
 
-  // Menu item URL — external items (e.g. Open Schooling) point at their
+  // Menu item URL - external items (e.g. Open Schooling) point at their
   // dedicated Next.js route opened in a new browser tab; internal items use
   // the canonical SPA path so middle-click / new-tab / SEO all work.
   const menuItemHref = React.useCallback((item: MegaMenuItem): string => {
@@ -411,12 +411,12 @@ export function PublicHeader() {
           </div>
         </motion.a>
 
-        {/* ===== Global search (between logo and nav) — visible on all sizes ===== */}
+        {/* ===== Global search (between logo and nav) - visible on all sizes ===== */}
         <div className="hidden lg:block flex-1 max-w-md mx-4">
           <GlobalSearch />
         </div>
 
-        {/* Mobile search — visible below lg (was desktop-only before) */}
+        {/* Mobile search - visible below lg (was desktop-only before) */}
         <div className="lg:hidden flex-1 mx-3 min-w-0">
           <GlobalSearch />
         </div>

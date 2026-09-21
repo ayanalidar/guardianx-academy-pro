@@ -3,7 +3,7 @@ import NextAuth from "next-auth"
 import { getAuthOptions } from "@/lib/auth"
 
 /**
- * NextAuth route handler — builds options PER REQUEST via getAuthOptions().
+ * NextAuth route handler - builds options PER REQUEST via getAuthOptions().
  *
  * This is what makes Admin → Settings actually work for Google OAuth + SMTP
  * magic link: credentials saved in the Platform Settings DB are picked up on

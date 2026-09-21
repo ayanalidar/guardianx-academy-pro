@@ -5,7 +5,7 @@ import { getCurrentUser } from "@/lib/session"
 export const runtime = "nodejs"
 
 // ============================================================
-// Mock Interview — single interview resource
+// Mock Interview - single interview resource
 // GET:  fetch interview + questions + answers
 // POST: submit answer (and optionally auto-grade via LLM)
 // ============================================================
@@ -94,7 +94,7 @@ export async function POST(
 
     // If completing, attempt to score via LLM
     if (action === "complete") {
-      // Simple heuristic score if LLM unavailable — keyword overlap
+      // Simple heuristic score if LLM unavailable - keyword overlap
       const keywordScores = allAnswers.map((a) => {
         const q = questions.find((qq) => qq.id === a.questionId)
         if (!q || !q.expectedAnswer) return 0
@@ -158,7 +158,7 @@ ${allAnswers
         // Fallback feedback if LLM fails
         feedback =
           score >= 80
-            ? "Strong answers — covered the key concepts. Practice articulating edge cases."
+            ? "Strong answers - covered the key concepts. Practice articulating edge cases."
             : score >= 60
             ? "Decent baseline, but several answers missed critical details. Review the expected answers below."
             : "Several gaps identified. Revisit fundamentals for this role and retry."

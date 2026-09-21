@@ -5,14 +5,14 @@ import { logAction } from "@/lib/audit"
 
 export const runtime = "nodejs"
 
-/* POST /api/admin/subscription-plans — ADMIN only. Create a plan.
+/* POST /api/admin/subscription-plans - ADMIN only. Create a plan.
  * Body:
- *   name        (required) — e.g. "Free", "Pro", "Enterprise"
- *   price       (required) — monthly price in INR (>= 0)
- *   features?   (optional) — string[] of feature bullets (default [])
- *   popular?    (optional) — boolean (default false)
- *   order?      (optional) — display order (default 0)
- *   active?     (optional) — boolean (default true)
+ *   name        (required) - e.g. "Free", "Pro", "Enterprise"
+ *   price       (required) - monthly price in INR (>= 0)
+ *   features?   (optional) - string[] of feature bullets (default [])
+ *   popular?    (optional) - boolean (default false)
+ *   order?      (optional) - display order (default 0)
+ *   active?     (optional) - boolean (default true)
  */
 export const POST = withErrorHandler(async (req: NextRequest) => {
   const currentUser = await requireAdmin()
@@ -52,7 +52,7 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
         featuresStr = JSON.stringify(parsed.filter((s) => typeof s === "string"))
       }
     } catch {
-      // fall through — keep default "[]"
+      // fall through - keep default "[]"
     }
   }
 

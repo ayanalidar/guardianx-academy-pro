@@ -140,7 +140,7 @@ export function AchievementsView() {
   })
 
   // ----- tier filter (declared before any early returns to satisfy the
-  // React rules-of-hooks — hooks must run in the same order every render) -----
+  // React rules-of-hooks - hooks must run in the same order every render) -----
   const achievementsList = data?.achievements ?? []
   const earnedCount = data?.earnedCount ?? 0
   const totalCount = data?.totalCount ?? 0
@@ -684,7 +684,7 @@ function ActivityIcon({ type }: { type: string }) {
 }
 
 /* ============================================================
-   CreateAchievementDialog — admin-only dialog for creating
+   CreateAchievementDialog - admin-only dialog for creating
    new custom achievements via POST /api/admin/achievements
    ============================================================ */
 function CreateAchievementDialog({
@@ -736,7 +736,7 @@ function CreateAchievementDialog({
             New Achievement
           </DialogTitle>
           <DialogDescription>
-            Create a custom trophy. It will appear in every user&apos;s &quot;locked&quot; list —
+            Create a custom trophy. It will appear in every user&apos;s &quot;locked&quot; list - 
             award it manually to individual users from the admin console.
           </DialogDescription>
         </DialogHeader>

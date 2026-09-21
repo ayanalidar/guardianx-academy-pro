@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { requireAdmin } from "@/lib/session"
 
-// GET /api/admin/partners — list all partner institutions (admin only)
+// GET /api/admin/partners - list all partner institutions (admin only)
 export async function GET() {
   const user = await requireAdmin()
   if (user instanceof NextResponse) return user
@@ -14,7 +14,7 @@ export async function GET() {
   return NextResponse.json({ partners })
 }
 
-// POST /api/admin/partners — create a new partner institution
+// POST /api/admin/partners - create a new partner institution
 export async function POST(req: NextRequest) {
   const user = await requireAdmin()
   if (user instanceof NextResponse) return user

@@ -5,7 +5,7 @@ import { withErrorHandler } from "@/lib/session"
 export const runtime = "nodejs"
 
 /* GET /api/cyber-quiz/certificate/[credentialId]
- * Public endpoint — fetch a certificate by its credential ID (e.g.
+ * Public endpoint - fetch a certificate by its credential ID (e.g.
  * GX-QUIZ-2026-A1B2). Used by the certificate view + the public verify page.
  *
  * Returns the full certificate + the attempt's domainScores for the

@@ -14,7 +14,7 @@ import {
 } from "lucide-react"
 
 /* ============================================================
-   /events — public workshops / webinars / CTFs / campus
+   /events - public workshops / webinars / CTFs / campus
    programs / bootcamps (master-prompt §36)
    ============================================================ */
 
@@ -105,7 +105,7 @@ export function EventsView() {
               <span className="text-gradient-premium">Events &amp; Workshops.</span>
             </h1>
             <p className="text-base lg:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
-              Live workshops, webinars, CTFs, campus programs, and bootcamps — most are free to attend.
+              Live workshops, webinars, CTFs, campus programs, and bootcamps - most are free to attend.
               All sessions are recorded and shared with registered attendees.
             </p>
           </motion.div>

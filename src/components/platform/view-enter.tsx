@@ -1,7 +1,7 @@
 "use client"
 
 /**
- * ViewEnter — keys its wrapper on the active SPA view name so every view
+ * ViewEnter - keys its wrapper on the active SPA view name so every view
  * swap plays a short fade/slide-up enter animation. Purely presentational;
  * the animation is CSS-only and disabled under prefers-reduced-motion.
  */

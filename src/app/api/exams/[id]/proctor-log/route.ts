@@ -5,13 +5,13 @@ import { getCurrentUser, withErrorHandler, readJsonBody } from "@/lib/session"
 export const runtime = "nodejs"
 
 /**
- * POST /api/exams/[id]/proctor-log — live anti-cheat event ingest.
+ * POST /api/exams/[id]/proctor-log - live anti-cheat event ingest.
  *
  * The exam runner (exam-view.tsx) posts every proctoring violation here the
  * moment it happens: tab_switch, fullscreen_exit, copy, paste, right_click,
  * keyboard_violation. Events are appended to the attempt's ProctoringSession
  * flags (JSON), the violation counters are incremented, and when the incident
- * count crosses the threshold the attempt is VOIDED server-side — the client
+ * count crosses the threshold the attempt is VOIDED server-side - the client
  * reads `voided` / `voidReason` from the response and ends the exam.
  *
  * Previously this route did not exist, so every proctor event 404'd and was
@@ -19,7 +19,7 @@ export const runtime = "nodejs"
  * server-side voiding never happened.
  *
  * Body: { attemptId: string, eventType: string, detail?: string }
- *       { attemptId: string, action: "void", reason?: string }  — explicit
+ *       { attemptId: string, action: "void", reason?: string } - explicit
  *       void from the runner's "Exit & Void" path.
  * Resp: { ok: true, incidentCount }  or  { voided: true, voidReason }
  */
@@ -110,7 +110,7 @@ export const POST = withErrorHandler(async (req: NextRequest, { params }: { para
     return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   }
   if (attempt.status === "voided") {
-    // Already voided — mirror the terminal response so the client exits.
+    // Already voided - mirror the terminal response so the client exits.
     return NextResponse.json({
       voided: true,
       voidReason: "This attempt was voided due to proctoring violations.",
@@ -120,7 +120,7 @@ export const POST = withErrorHandler(async (req: NextRequest, { params }: { para
     return NextResponse.json({ error: "Attempt is no longer in progress" }, { status: 409 })
   }
 
-  // Load (or defensively recreate) the proctoring session — it should always
+  // Load (or defensively recreate) the proctoring session - it should always
   // exist since /start creates it, but events must never be lost.
   let proctoring = await db.proctoringSession.findUnique({
     where: { examAttemptId: attempt.id },

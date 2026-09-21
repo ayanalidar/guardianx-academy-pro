@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/session"
 
-// GET — list all assignments across enrolled courses for the current student,
+// GET - list all assignments across enrolled courses for the current student,
 // with submission status (submitted/graded/missing) and due-soon flags.
 export async function GET() {
   const user = await getCurrentUser()

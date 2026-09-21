@@ -11,7 +11,7 @@ async function schoolAdminGuard() {
   const user = await getCurrentUser()
   if (!user) return { error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) }
   if (user.role !== "SCHOOL_ADMIN") {
-    return { error: NextResponse.json({ error: "Forbidden — SCHOOL_ADMIN only" }, { status: 403 }) }
+    return { error: NextResponse.json({ error: "Forbidden - SCHOOL_ADMIN only" }, { status: 403 }) }
   }
   if (!user.schoolId) {
     return { error: NextResponse.json({ error: "No school linked to this account" }, { status: 403 }) }
@@ -90,7 +90,7 @@ export async function GET(req: NextRequest) {
   const totalRecords = records.length
   const attendanceRate = totalRecords ? Math.round(((present + late) / totalRecords) * 100) : 0
 
-  // byDate — group by `date|sessionType`, take 14 most recent
+  // byDate - group by `date|sessionType`, take 14 most recent
   const byDateMap = new Map<string, { date: string; sessionType: string; present: number; absent: number; late: number; excused: number; total: number; recordedAt: Date }>()
   for (const r of records) {
     const key = `${r.date}|${r.sessionType}`
@@ -117,7 +117,7 @@ export async function GET(req: NextRequest) {
     .slice(0, 14)
     .map(({ recordedAt: _r, ...rest }) => rest)
 
-  // byStudent — per-student attendance rate
+  // byStudent - per-student attendance rate
   const byStudentMap = new Map<string, { userId: string; present: number; absent: number; late: number; excused: number; total: number }>()
   for (const r of records) {
     const entry = byStudentMap.get(r.userId) || { userId: r.userId, present: 0, absent: 0, late: 0, excused: 0, total: 0 }

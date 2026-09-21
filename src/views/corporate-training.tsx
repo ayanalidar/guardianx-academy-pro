@@ -146,7 +146,7 @@ const PRICING = [
 const FAQS = [
   {
     q: "Can you customize the curriculum for our tech stack?",
-    a: "Yes. Every cohort starts with a scoping call where we map your stack (cloud provider, languages, frameworks, existing security tooling) and threat model. We then build a curriculum around your real environment — not generic examples. Custom modules typically take 1-2 weeks to prepare.",
+    a: "Yes. Every cohort starts with a scoping call where we map your stack (cloud provider, languages, frameworks, existing security tooling) and threat model. We then build a curriculum around your real environment - not generic examples. Custom modules typically take 1-2 weeks to prepare.",
   },
   {
     q: "Do you offer on-site training outside Kashmir and Noida?",
@@ -162,11 +162,11 @@ const FAQS = [
   },
   {
     q: "What's the minimum batch size?",
-    a: "Minimum is 5 learners per cohort. Below that, we recommend enrolling your team in our public batches instead (per-seat pricing applies). There's no maximum — we've run cohorts of 200+ with multiple instructors.",
+    a: "Minimum is 5 learners per cohort. Below that, we recommend enrolling your team in our public batches instead (per-seat pricing applies). There's no maximum - we've run cohorts of 200+ with multiple instructors.",
   },
   {
     q: "Do you offer ongoing training contracts (annual)?",
-    a: "Yes. Our Enterprise tier is built for this — annual contracts with quarterly cohorts, onboarding for new hires, skill-roadmap planning, and exec dashboards. Reach out via the form and we'll scope a multi-year program.",
+    a: "Yes. Our Enterprise tier is built for this - annual contracts with quarterly cohorts, onboarding for new hires, skill-roadmap planning, and exec dashboards. Reach out via the form and we'll scope a multi-year program.",
   },
   {
     q: "Can you run incident response tabletop exercises for our exec team?",
@@ -190,7 +190,7 @@ const TRAINING_INTERESTS = [
   { value: "GRC", label: "GRC & Compliance (ISO 27001, SOC 2, PCI, GDPR)" },
   { value: "Leadership", label: "Leadership / Executive briefings" },
   { value: "Custom", label: "Custom mix" },
-  { value: "NotSure", label: "Not sure — help us scope" },
+  { value: "NotSure", label: "Not sure - help us scope" },
 ]
 
 // ============================================================
@@ -287,7 +287,7 @@ export function CorporateTrainingView() {
             Built for every kind of <span className="text-gradient-premium">security team</span>.
           </h2>
           <p className="text-muted-foreground mb-6 max-w-2xl">
-            From SOC analysts to CISOs — we train every layer of your security org.
+            From SOC analysts to CISOs - we train every layer of your security org.
           </p>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {WHO_ITS_FOR.map((item) => {

@@ -1,8 +1,8 @@
 /**
- * logo-dots.ts — dot-matrix ("particle logo") GuardianX generator.
+ * logo-dots.ts - dot-matrix ("particle logo") GuardianX generator.
  *
  * Loads the real brand PNG (/guardianx-logo-v2.png), samples its alpha
- * channel on a grid and emits an SVG assembled from tiny squares — a
+ * channel on a grid and emits an SVG assembled from tiny squares - a
  * static particle-logo that survives the browser print pipeline (an
  * animated canvas does not) and can be embedded inline in the
  * certificate HTML document.

@@ -1,13 +1,13 @@
 /* ============================================================
-   SEO Autopilot — pure logic (no DB, no network).
+   SEO Autopilot - pure logic (no DB, no network).
 
    Used by /api/admin/seo/autopilot to:
      1. Audit content rows (courses / blog / events / batches /
         certifications) for SEO completeness.
      2. Propose deterministic, SAFE auto-fixes (generated
-        descriptions, excerpts, slugs) — everything a human would
+        descriptions, excerpts, slugs) - everything a human would
         otherwise fix by copy-pasting content.
-     3. Score content 0–100 before and after applying fixes.
+     3. Score content 0-100 before and after applying fixes.
 
    Pure functions only → unit-testable without a database.
    ============================================================ */
@@ -120,7 +120,7 @@ export function generateSnippet(source: string, maxLen = 155): string {
 
 /** Deterministically derive tags from category + title keywords. */
 export function deriveTags(category: string, title: string): string {
-  const parts = [category, ...title.split(/[\s\-–—:,]+/)]
+  const parts = [category, ...title.split(/[\s\--- :,]+/)]
     .map((t) => t.trim())
     .filter((t) => t.length >= 3 && t.length <= 24 && !/^\d+$/.test(t));
   const uniq = Array.from(new Set(parts.map((p) => p.toLowerCase()))).slice(0, 6);
@@ -178,23 +178,23 @@ export function auditContent(rows: ContentAuditRow[]): AutopilotAudit {
       seenSlugs.add(slug);
     }
 
-    // -- title length (report only — titles are content) --
+    // -- title length (report only - titles are content) --
     const titleLen = (row.title || "").trim().length;
     if (!row.title || titleLen === 0) {
       issues.push({
         type: row.type, id: row.id, label, url,
         issue: "Missing title", severity: "critical", autoFixable: false,
       });
-      humanActions.push({ label, reason: "Title is empty — give the item a real name in the CMS." });
+      humanActions.push({ label, reason: "Title is empty - give the item a real name in the CMS." });
     } else if (titleLen < TITLE_MIN) {
       issues.push({
         type: row.type, id: row.id, label, url,
-        issue: `Title too short (${titleLen} chars — aim for ${TITLE_MIN}+)`, severity: "warning", autoFixable: false,
+        issue: `Title too short (${titleLen} chars - aim for ${TITLE_MIN}+)`, severity: "warning", autoFixable: false,
       });
     } else if (titleLen > TITLE_MAX) {
       issues.push({
         type: row.type, id: row.id, label, url,
-        issue: `Title too long (${titleLen} chars — aim for ≤${TITLE_MAX})`, severity: "info", autoFixable: false,
+        issue: `Title too long (${titleLen} chars - aim for ≤${TITLE_MAX})`, severity: "info", autoFixable: false,
       });
     }
 
@@ -220,13 +220,13 @@ export function auditContent(rows: ContentAuditRow[]): AutopilotAudit {
         });
         humanActions.push({
           label,
-          reason: "No description and no long-form body to generate one from — write 1–2 sentences in the CMS.",
+          reason: "No description and no long-form body to generate one from - write 1-2 sentences in the CMS.",
         });
       }
     } else if (desc.length > 300) {
       issues.push({
         type: row.type, id: row.id, label, url,
-        issue: `Description very long (${desc.length} chars — SERPs cut at ~160)`, severity: "info", autoFixable: false,
+        issue: `Description very long (${desc.length} chars - SERPs cut at ~160)`, severity: "info", autoFixable: false,
       });
     }
 
@@ -282,12 +282,12 @@ export function publicUrlFor(type: SeoContentType, slugOrId: string): string {
 
 /**
  * Re-score assuming every proposed fix has been applied.
- * (Pure — no DB writes; used to show projected score.)
+ * (Pure - no DB writes; used to show projected score.)
  */
 export function projectScoreAfter(audit: AutopilotAudit): number {
   const fixedByKey = new Set(audit.fixes.map((f) => `${f.type}:${f.id}:${f.field}`));
   const stillOpen = audit.issues.filter((is) => {
-    if (!is.autoFixable) return true; // human action — remains open
+    if (!is.autoFixable) return true; // human action - remains open
     const field = is.issue.toLowerCase().includes("slug")
       ? "slug"
       : is.type === "blog" ? "excerpt" : "description";

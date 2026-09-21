@@ -4,11 +4,11 @@ import { withErrorHandler } from "@/lib/session"
 
 export const runtime = "nodejs"
 
-/* GET /api/blog — public list of published blog posts (paginated).
+/* GET /api/blog - public list of published blog posts (paginated).
  * Query params:
- *   page      — 1-based page number (default 1)
- *   pageSize  — items per page (default 9, max 24)
- *   category  — filter by category (e.g. "Threat Analysis")
+ *   page - 1-based page number (default 1)
+ *   pageSize - items per page (default 9, max 24)
+ *   category - filter by category (e.g. "Threat Analysis")
  *
  * Returns:
  *   { posts: [...], total, page, pageSize, totalPages, categories }

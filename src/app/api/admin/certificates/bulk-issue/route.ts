@@ -8,7 +8,7 @@ import { sendEmail } from "@/lib/email"
 export const runtime = "nodejs"
 
 /**
- * Bulk certificate issuance — the real backend for Admin → Bulk Certificates.
+ * Bulk certificate issuance - the real backend for Admin → Bulk Certificates.
  *
  * GET  /api/admin/certificates/bulk-issue
  *        → per-course summary of completed enrollments vs issued certificates,
@@ -147,12 +147,12 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
       if (u.email) {
         await sendEmail({
           to: u.email,
-          subject: `Certificate Earned — ${course.title}`,
+          subject: `Certificate Earned - ${course.title}`,
           body: `Hi ${u.name ?? "there"},\n\nCongratulations! You've completed "${course.title}" on GuardianX Academy.\n\nYour certificate ID is: ${certificateId}\n\nVerify it anytime at academy.guardianx.cloud using this ID.\n\nKeep learning,\nThe GuardianX Team`,
         })
       }
     } catch {
-      // SMTP misconfiguration must not block issuance — logged by sendEmail
+      // SMTP misconfiguration must not block issuance - logged by sendEmail
     }
     issued.push({ userId: u.id, student: u.name ?? u.email ?? u.id, email: u.email ?? "", certificateId })
   }

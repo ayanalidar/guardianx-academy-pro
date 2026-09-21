@@ -4,7 +4,7 @@ import { getCurrentUser, withErrorHandler } from "@/lib/session"
 
 export const runtime = "nodejs"
 
-/* GET /api/referral/my — auth required.
+/* GET /api/referral/my - auth required.
  * ---------------------------------------------------------------
  * Returns all referrals made by the logged-in user + aggregate
  * stats (total, enrolled, rewarded). Also includes the user's

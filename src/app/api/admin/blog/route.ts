@@ -13,7 +13,7 @@ function slugify(s: string): string {
     .replace(/^-+|-+$/g, "")
 }
 
-/* GET /api/admin/blog — admin list (all posts, published + draft). */
+/* GET /api/admin/blog - admin list (all posts, published + draft). */
 export const GET = withErrorHandler(async (req: NextRequest) => {
   const currentUser = await requireAdmin()
   if (currentUser instanceof NextResponse) return currentUser
@@ -40,7 +40,7 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
   return NextResponse.json({ posts, count: posts.length })
 })
 
-/* POST /api/admin/blog — admin create.
+/* POST /api/admin/blog - admin create.
  * Body: { title, excerpt?, content?, category?, tags?, thumbnail?, published?, featured?, slug? }
  */
 export const POST = withErrorHandler(async (req: NextRequest) => {

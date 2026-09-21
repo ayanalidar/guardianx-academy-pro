@@ -43,7 +43,7 @@ export function useUser() {
   // CRITICAL: the [me] cache can hold the PRE-LOGIN `{ user: null }`
   // response (fetched on the login page). Global staleTime is 30s and
   // window-focus refetching is off, so inside the SPA that stale null
-  // used to stick indefinitely — dashboards rendered "Operator" with
+  // used to stick indefinitely - dashboards rendered "Operator" with
   // zero courses ("the courses don't show"). When the auth screens
   // signal a session change, invalidate so every consumer refetches.
   React.useEffect(() => {

@@ -6,9 +6,9 @@ import { logAction } from "@/lib/audit"
 export const runtime = "nodejs"
 
 /* ============================================================
- * PATCH  /api/admin/hiring/jobs/[id] — update an opening
+ * PATCH  /api/admin/hiring/jobs/[id] - update an opening
  *        (fields, or status: active | draft | closed)
- * DELETE /api/admin/hiring/jobs/[id] — delete an opening
+ * DELETE /api/admin/hiring/jobs/[id] - delete an opening
  *        (cascades its applications)
  * ADMIN-only. Every mutation is audit-logged.
  * ============================================================ */

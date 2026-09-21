@@ -4,7 +4,7 @@ import { getCurrentUser } from "@/lib/session"
 
 export const runtime = "nodejs"
 
-// GET /api/cms — list all content (admin only).
+// GET /api/cms - list all content (admin only).
 // Optional ?page= filter.
 export async function GET(req: NextRequest) {
   const user = await getCurrentUser()
@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({ items, count: items.length })
 }
 
-// POST /api/cms — upsert one content item (admin only).
+// POST /api/cms - upsert one content item (admin only).
 // Body: { page, section, key, value }
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser()

@@ -44,19 +44,19 @@ type VerifyResponse = {
 }
 
 /**
- * VerifyView — public certificate verification page (master-prompt §44).
+ * VerifyView - public certificate verification page (master-prompt §44).
  *
  * Reachable at `/#/verify/<credentialId>` or `/#/verify?credentialId=<id>`.
- * Also reachable with no id (`/#/verify`) — in that case the user is
+ * Also reachable with no id (`/#/verify`) - in that case the user is
  * prompted to paste a credential ID into a search box.
  *
  * Fetches from `/api/credentials/verify/[credentialId]` (public, no auth)
  * and renders one of five states:
- *   1. EMPTY             — prompt to enter a credential ID
- *   2. LOADING           — animated verifying state
- *   3. VERIFIED ✓        — stunning certificate-preview card
- *   4. REVOKED / EXPIRED — amber/rose card with explanation
- *   5. NOT FOUND         — clean error message with retry hint
+ *   1. EMPTY - prompt to enter a credential ID
+ *   2. LOADING - animated verifying state
+ *   3. VERIFIED ✓ - stunning certificate-preview card
+ *   4. REVOKED / EXPIRED - amber/rose card with explanation
+ *   5. NOT FOUND - clean error message with retry hint
  *
  * Styled with the premium dark-tech aesthetic (card-premium, glow,
  * mono-caps micro-labels, text-gradient-premium accents, violet palette).
@@ -76,7 +76,7 @@ export function VerifyView() {
     queryFn: async (): Promise<VerifyResponse | null> => {
       if (!activeId) return null
       const res = await fetch(`/api/credentials/verify/${encodeURIComponent(activeId)}`)
-      // Always 200 (even on not-found / revoked) — the API never 4xx's
+      // Always 200 (even on not-found / revoked) - the API never 4xx's
       // for non-existent ids; it returns { valid: false, credential: null }
       if (!res.ok) {
         throw new Error("Verification service unavailable")
@@ -144,7 +144,7 @@ export function VerifyView() {
 
             <p className="text-base lg:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
               GuardianX credentials are publicly verifiable. Enter a credential ID to
-              confirm its authenticity, candidate, and current status — no login required.
+              confirm its authenticity, candidate, and current status - no login required.
             </p>
           </motion.div>
         </div>
@@ -468,7 +468,7 @@ function VerifiedCard({
           </div>
         </div>
 
-        {/* Credential ID — full width, monospace */}
+        {/* Credential ID - full width, monospace */}
         <div className="rounded-xl border border-violet-500/20 bg-violet-500/5 px-4 py-3 mb-5">
           <p className="text-[10px] font-mono text-muted-foreground tracking-[0.25em] mb-1 flex items-center gap-1.5">
             <Hash className="h-3 w-3" /> CREDENTIAL ID
@@ -698,7 +698,7 @@ function NotFoundCard({ id }: { id: string }) {
           Credential not found
         </h2>
         <p className="text-sm text-muted-foreground max-w-md mx-auto leading-relaxed mb-6">
-          No GuardianX credential matches this ID. <span className="text-foreground">Check the ID and try again</span> —
+          No GuardianX credential matches this ID. <span className="text-foreground">Check the ID and try again</span> - 
           it may have been mistyped, fabricated, or never issued.
         </p>
 

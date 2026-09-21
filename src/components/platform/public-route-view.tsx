@@ -35,7 +35,7 @@ import { HiringView } from "@/views/hiring"
 import { CourseDetailView } from "@/views/course-detail"
 
 /* ============================================================
-   PublicRouteView — wraps a public page rendered at a real
+   PublicRouteView - wraps a public page rendered at a real
    Next.js route (e.g. /courses/[slug]) with:
      1. The PublicPageShell (header + footer).
      2. The initial view component, server-rendered for SEO.
@@ -45,7 +45,7 @@ import { CourseDetailView } from "@/views/course-detail"
 
    Navigation note (path-routing era): `navigate()` now pushes REAL
    paths via history.pushState and updates the store. This component
-   simply follows the store reactively — when the user clicks a nav
+   simply follows the store reactively - when the user clicks a nav
    item, the new view renders in place (no reload, no hash fallback).
    Views covered by renderView() render from statically-imported
    components; anything else falls through to the lazy ViewRouter.
@@ -90,8 +90,8 @@ function renderView(view: View): React.ReactNode {
 export function PublicRouteView({ initialView }: { initialView: View }) {
   const storeView = useAppStore((s) => s.view)
   // Hydration flag: false during SSR + the very first client render (so the
-  // DEEP-LINKED view paints), true after the mount effect (so the store —
-  // the single source of truth — drives every subsequent render). This used
+  // DEEP-LINKED view paints), true after the mount effect (so the store - 
+  // the single source of truth - drives every subsequent render). This used
   // to be a ref read during render, which is illegal in React.
   const [hydrated, setHydrated] = React.useState(false)
 
@@ -109,7 +109,7 @@ export function PublicRouteView({ initialView }: { initialView: View }) {
   }, [initialView])
 
   // SSR + the first client paint must render the DEEP-LINKED view
-  // (initialView) — not the store's pristine `{name:"home"}` default, which
+  // (initialView) - not the store's pristine `{name:"home"}` default, which
   // would otherwise give crawlers and pre-hydration users homepage HTML on
   // detail pages. After the mount effect runs, always follow the store.
   const storeIsPristine = JSON.stringify(storeView) === JSON.stringify({ name: "home" })

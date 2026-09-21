@@ -149,7 +149,7 @@ function LabLeaderboards({ currentUserId }: { currentUserId?: string }) {
           <ScrollReveal>
             <div className="flex items-center justify-between mb-6 pb-4 border-b border-border/60">
               <div>
-                <p className="text-[10px] font-mono text-muted-foreground tracking-[0.3em] mb-1">02 - RANKS {rest[0].rank}–{rest[rest.length - 1].rank}</p>
+                <p className="text-[10px] font-mono text-muted-foreground tracking-[0.3em] mb-1">02 - RANKS {rest[0].rank}-{rest[rest.length - 1].rank}</p>
                 <h2 className="text-2xl lg:text-3xl font-bold tracking-tight">The field</h2>
               </div>
               <span className="text-[10px] font-mono text-muted-foreground tracking-[0.2em]">{rest.length} DEFENDERS</span>
@@ -316,7 +316,7 @@ function CourseLeaderboards({ currentUserId }: { currentUserId?: string }) {
           <ScrollReveal>
             <div className="flex items-center justify-between mb-6 pb-4 border-b border-border/60">
               <div>
-                <p className="text-[10px] font-mono text-muted-foreground tracking-[0.3em] mb-1">02 - RANKS {rest[0].rank}–{rest[rest.length - 1].rank}</p>
+                <p className="text-[10px] font-mono text-muted-foreground tracking-[0.3em] mb-1">02 - RANKS {rest[0].rank}-{rest[rest.length - 1].rank}</p>
                 <h2 className="text-2xl lg:text-3xl font-bold tracking-tight">The field</h2>
               </div>
               <span className="text-[10px] font-mono text-muted-foreground tracking-[0.2em]">{rest.length} LEARNERS</span>

@@ -34,7 +34,7 @@ interface CourseItem {
   studentsCount: number; color: string; thumbnail: string | null
   tags: string; certBody: string | null; price: number
   // Degraded catalog responses (schema drift on older databases) omit the
-  // instructor relation — every render must tolerate null (see ?? fallbacks).
+  // instructor relation - every render must tolerate null (see ?? fallbacks).
   instructor: { id: string; name: string; title: string | null; avatar?: string | null } | null
   lessonCount: number; moduleCount: number
   enrollment?: { progress: number; completed: boolean; lastAccessed: string | null; enrolledAt: string } | null
@@ -142,7 +142,7 @@ export function CourseCatalogView() {
     },
     // Instant paint from the last good snapshot while the fresh fetch runs.
     placeholderData: () => readCatalog<{ courses: CourseItem[] }>(catalogCacheId) ?? undefined,
-    // If the network dies, keep polling every 5s until it returns — the
+    // If the network dies, keep polling every 5s until it returns - the
     // user never has to press Retry.
     refetchInterval: (query) => (query.state.error ? 5000 : false),
   })
@@ -178,7 +178,7 @@ export function CourseCatalogView() {
   const getSuffix = (key: string, fallback: string = "") =>
     platformStats.find((s) => s.key === key)?.suffix ?? fallback
 
-  // Stats strip values — prefer the editable platform stats, fall back to
+  // Stats strip values - prefer the editable platform stats, fall back to
   // computed values if the API hasn't loaded yet.
   const totalCourses = parseInt(getStat("course_count", "0")) || courses.length || 27
   const totalStudents = getStat("learner_count", "5")
@@ -376,7 +376,7 @@ export function CourseCatalogView() {
             <EmptyState
               icon={BookOpen}
               title="Couldn't load the catalog"
-              description="The connection to the course library was interrupted. This is usually temporary — retry and the catalog will come back."
+              description="The connection to the course library was interrupted. This is usually temporary - retry and the catalog will come back."
               actionLabel="Retry"
               onAction={() => refetch()}
               className="border-0 bg-transparent"
@@ -396,26 +396,26 @@ export function CourseCatalogView() {
           <EmptyState
             icon={BookOpen}
             title="No courses found"
-            description="Try adjusting your search or clearing a filter — the catalog covers offensive, defensive, cloud and GRC tracks."
+            description="Try adjusting your search or clearing a filter - the catalog covers offensive, defensive, cloud and GRC tracks."
             actionLabel="Clear all filters"
             onAction={() => { setQ(""); setCategory("All"); setLevel("All"); setStatus("all") }}
             className="py-16"
           />
         ) : (
           <>
-            {/* Connection blip banner — catalog shown from the local snapshot */}
+            {/* Connection blip banner - catalog shown from the local snapshot */}
             {isError && (
               <div className="mb-6 flex items-center gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-200">
                 <Shield className="h-4 w-4 shrink-0" />
                 <span>
-                  Connection interrupted — showing your last saved catalog. Retrying automatically every few seconds.
+                  Connection interrupted - showing your last saved catalog. Retrying automatically every few seconds.
                 </span>
               </div>
             )}
-            {/* Course spotlight — animated infinite loop carousel */}
+            {/* Course spotlight - animated infinite loop carousel */}
             {courses.length > 0 && <CourseSpotlightLoop courses={courses} />}
 
-            {/* All courses — grid or list view */}
+            {/* All courses - grid or list view */}
             {courses.length > 0 && (
               <div className="mt-8 lg:mt-10">
                 <div className="flex items-center justify-between mb-6 gap-3">
@@ -575,7 +575,7 @@ export function CourseCatalogView() {
                     ["Duration", (c: CourseItem) => `${c.durationHours ?? 0} hours`],
                     ["Modules", (c: CourseItem) => String(c.moduleCount ?? 0)],
                     ["Lessons", (c: CourseItem) => String(c.lessonCount ?? 0)],
-                    ["Rating", (c: CourseItem) => `★ ${c.rating ?? "—"} / 5`],
+                    ["Rating", (c: CourseItem) => `★ ${c.rating ?? " - "} / 5`],
                     ["Students", (c: CourseItem) => (c.studentsCount ?? 0).toLocaleString()],
                     ["Certification", (c: CourseItem) => c.certBody || "Self-paced"],
                     ["Price", (c: CourseItem) => (c.price > 0 ? `₹${c.price.toLocaleString("en-IN")}` : "FREE")],
@@ -665,7 +665,7 @@ function CourseSpotlightLoop({ courses }: { courses: CourseItem[] }) {
 
   if (loop.length === 0) return null
 
-  // Too few courses to loop convincingly — static grid instead.
+  // Too few courses to loop convincingly - static grid instead.
   if (loop.length <= 4) {
     return (
       <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
@@ -793,7 +793,7 @@ function SpotlightCard({ course, index }: { course: CourseItem; index: number })
             <span className="flex items-center gap-1"><Users className="h-3 w-3" /> {(course.studentsCount ?? 0).toLocaleString()}</span>
             <span className="flex items-center gap-1 text-amber-300">
               <Star className="h-3 w-3 fill-amber-300/40 text-amber-300" />
-              {course.rating != null ? Number(course.rating).toFixed(1) : "—"}
+              {course.rating != null ? Number(course.rating).toFixed(1) : " - "}
             </span>
           </div>
 
@@ -928,7 +928,7 @@ function CourseCard({
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-1.5">
               <Star className="h-3.5 w-3.5 text-amber-400 fill-amber-400/40" />
-              <span className="text-xs font-semibold tabular-nums">{course.rating ?? "—"}</span>
+              <span className="text-xs font-semibold tabular-nums">{course.rating ?? " - "}</span>
               <span className="text-[10px] text-muted-foreground">/5</span>
             </div>
             <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -1045,7 +1045,7 @@ function CourseListRow({
         <div className="flex items-center gap-3 mt-1 text-[10px] font-mono text-muted-foreground flex-wrap">
           <span className="flex items-center gap-1"><Clock className="size-3" aria-hidden />{course.durationHours ?? 0}h</span>
           <span className="flex items-center gap-1"><BookOpen className="size-3" aria-hidden />{course.lessonCount ?? 0} lessons</span>
-          <span className="flex items-center gap-1"><Star className="size-3 text-amber-400" aria-hidden />{course.rating ?? "—"}</span>
+          <span className="flex items-center gap-1"><Star className="size-3 text-amber-400" aria-hidden />{course.rating ?? " - "}</span>
           <span className="hidden md:inline">{course.instructor?.name ?? "GuardianX Faculty"}</span>
         </div>
       </div>

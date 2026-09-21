@@ -1,22 +1,22 @@
 "use client"
 
 /**
- * AdvancedSkillMap — homepage §5 skill constellation (v2).
+ * AdvancedSkillMap - homepage §5 skill constellation (v2).
  *
- * Design goals (learned from v1 feedback — the hologram was too busy):
+ * Design goals (learned from v1 feedback - the hologram was too busy):
  *   - READABLE: domain nodes are real HTML pills (icon + name + %), never
  *     tiny SVG text. The detail panel is a proper card, not an overlay popup.
  *   - RESTRAINED MOTION: one-time entrance (links draw in, nodes pop),
  *     a single slow energy-flow on the ACTIVE link only, smooth panel
  *     transitions. No scanlines, particles, flicker, tilt or sheen.
  *   - PREMIUM: soft guide rings, curved bezier links with per-domain
- *     color, glass pills, generous spacing — matches the platform's
+ *     color, glass pills, generous spacing - matches the platform's
  *     dark cyan/violet design language.
  *
  * Engineering notes:
  *   - Zero new dependencies; framer-motion + CSS/SVG only.
  *   - SSR-safe: all geometry is deterministic math from SKILL_MAP_DATA
- *     angles — no Math.random, no window access during render.
+ *     angles - no Math.random, no window access during render.
  *   - Fully keyboard accessible: nodes are buttons, panel is aria-live.
  *   - Honors prefers-reduced-motion (entrance + flow animation skipped).
  */
@@ -29,7 +29,7 @@ import { cn } from "@/lib/utils"
 
 /* One-line tagline per domain, shown in the detail panel. */
 const DOMAIN_TAGLINES: Record<string, string> = {
-  Offensive: "Break in like an attacker — recon, exploit, escalate.",
+  Offensive: "Break in like an attacker - recon, exploit, escalate.",
   Defensive: "Detect, respond and harden against live threats.",
   Network: "Master the wires, routes and firewalls underneath.",
   Web: "Secure the modern application stack end to end.",
@@ -38,7 +38,7 @@ const DOMAIN_TAGLINES: Record<string, string> = {
   GRC: "Turn security into policy, risk and compliance.",
 }
 
-/* Bezier helpers — geometry lives in a 100×100 viewBox. */
+/* Bezier helpers - geometry lives in a 100×100 viewBox. */
 const CX = 50
 const CY = 50
 const NODE_RADIUS = 38
@@ -203,7 +203,7 @@ export function AdvancedSkillMap() {
               onMouseEnter={() => setActive(i)}
               onFocus={() => setActive(i)}
               aria-pressed={isActive}
-              aria-label={`${meta.name} domain — ${meta.progress}% complete. Show skills.`}
+              aria-label={`${meta.name} domain - ${meta.progress}% complete. Show skills.`}
               initial={prefersReduced ? false : { opacity: 0, scale: 0.8 }}
               whileInView={{ opacity: 1, scale: 1 }}
               viewport={{ once: true, amount: 0.3 }}

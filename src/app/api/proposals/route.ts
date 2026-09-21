@@ -5,10 +5,10 @@ import { requireAdmin, withErrorHandler, readJsonBody, rateLimit } from "@/lib/s
 export const runtime = "nodejs"
 
 /**
- * /api/proposals — persistence for the Proposal Maker (Admin → Proposal Maker).
+ * /api/proposals - persistence for the Proposal Maker (Admin → Proposal Maker).
  *
- * GET  — list saved proposals (id, title, clientName, updatedAt).
- * POST — create a saved proposal. Body: { title, clientName, config }.
+ * GET - list saved proposals (id, title, clientName, updatedAt).
+ * POST - create a saved proposal. Body: { title, clientName, config }.
  *        `config` is the full JSON snapshot of the slide deck. Capped at
  *        1 MB (the deck is text + small structures).
  *

@@ -38,7 +38,7 @@ import {
 } from "lucide-react"
 import { toast } from "sonner"
 
-// Icon components for the key-stats slide — re-attached by position when a
+// Icon components for the key-stats slide - re-attached by position when a
 // saved proposal is loaded (icons themselves are not serializable).
 const KEY_STAT_ICONS = [Award, FlaskConical, Users, Building2]
 
@@ -67,7 +67,7 @@ const SLIDES = [
 ] as const
 
 // ---------------------------------------------------------------------
-// Aurora Luxe deck theme — shared CSS contract in globals.css (.gx-doc).
+// Aurora Luxe deck theme - shared CSS contract in globals.css (.gx-doc).
 // Every slide root carries .gx-doc + .gx-theme-<docTheme>, so flipping
 // this single value re-skins all 13 slides live (screen + PDF export).
 // ---------------------------------------------------------------------
@@ -344,11 +344,11 @@ export function ProposalMakerView() {
 
   const [activeSlide, setActiveSlide] = React.useState<number>(1)
 
-  // Aurora Luxe deck theme — applied to every slide root (.gx-doc .gx-theme-*)
+  // Aurora Luxe deck theme - applied to every slide root (.gx-doc .gx-theme-*)
   const [docTheme, setDocTheme] = React.useState<DocTheme>("aurora")
 
   // ------------------------------------------------------------------
-  // Saved-proposal persistence (/api/proposals) — the whole deck used
+  // Saved-proposal persistence (/api/proposals) - the whole deck used
   // to live only in React state and was lost on every refresh.
   // ------------------------------------------------------------------
   const queryClient = useQueryClient()
@@ -360,7 +360,7 @@ export function ProposalMakerView() {
       institutionName, institutionType, contactName, contactEmail, contactPhone, institutionAddress,
       proposalTitle, programDuration, deliveryMode, targetAudience, studentCount,
       executiveSummary, valueProps, missionStatement,
-      // icon components can't be serialized — store label/value only
+      // icon components can't be serialized - store label/value only
       keyStats: keyStats.map((k) => ({ label: k.label, value: k.value })),
       modules, studentBenefits, institutionBenefits, facultyBenefits,
       currency, perStudentPrice, labAccessFee, instructorFee, discountRate, revenueShare,
@@ -429,7 +429,7 @@ export function ProposalMakerView() {
     onSuccess: (res: any, wasNew) => {
       if (wasNew && res?.proposal?.id) setProposalId(res.proposal.id)
       queryClient.invalidateQueries({ queryKey: ["proposals"] })
-      toast.success("Proposal saved — safe to leave this page")
+      toast.success("Proposal saved - safe to leave this page")
     },
     onError: (e: any) => toast.error(e.message || "Save failed"),
   })
@@ -493,11 +493,11 @@ export function ProposalMakerView() {
   }
 
   /**
-   * Real PDF export — captures each of the 13 slides with html2canvas-pro
+   * Real PDF export - captures each of the 13 slides with html2canvas-pro
    * and writes one A4-landscape page per slide via jsPDF.
    *
    * The previous implementation called window.print() and relied on the
-   * browser's "Background graphics" checkbox being ON — with the default
+   * browser's "Background graphics" checkbox being ON - with the default
    * (OFF), the dark oklch-colored deck printed as blank/ghost pages.
    * html2canvas-pro understands Tailwind v4's oklch()/color-mix colors and
    * produces a deterministic PDF independent of browser print settings.
@@ -543,7 +543,7 @@ export function ProposalMakerView() {
       }
 
       pdf.save(`${proposalNumber || "proposal"}.pdf`)
-      toast.success("PDF downloaded — one page per slide")
+      toast.success("PDF downloaded - one page per slide")
     } catch (err: any) {
       console.error("[proposal-pdf]", err)
       toast.error(err?.message || "Failed to generate PDF. Try the Print button as a fallback.")
@@ -554,7 +554,7 @@ export function ProposalMakerView() {
 
   function handlePrint() {
     window.print()
-    toast.info("Print dialog opened — enable 'Background graphics' for correct colors")
+    toast.info("Print dialog opened - enable 'Background graphics' for correct colors")
   }
 
   function scrollToSlide(id: number) {
@@ -583,7 +583,7 @@ export function ProposalMakerView() {
             </div>
           </div>
           <div className="flex items-center gap-2 flex-wrap">
-            {/* Aurora Luxe theme switcher — re-skins the whole deck live (maker UI only) */}
+            {/* Aurora Luxe theme switcher - re-skins the whole deck live (maker UI only) */}
             <div className="flex items-center gap-1 rounded-lg border border-border/60 bg-muted/40 p-1" role="group" aria-label="Deck theme (Aurora Luxe)">
               <Palette className="h-3.5 w-3.5 text-muted-foreground mx-1 shrink-0" />
               {DOC_THEMES.map((t) => (
@@ -606,7 +606,7 @@ export function ProposalMakerView() {
                 </button>
               ))}
             </div>
-            {/* Saved proposals — load / save / delete */}
+            {/* Saved proposals - load / save / delete */}
             <Select
               value={proposalId ?? "__NONE__"}
               onValueChange={(v) => v !== "__NONE__" && loadMutation.mutate(v)}
@@ -1195,7 +1195,7 @@ export function ProposalMakerView() {
               <Slide id={11} title="Timeline" theme={docTheme}>
                 <div className="relative p-6 sm:p-10">
                   <SlideHeading num={11} kicker="Roadmap" title="Implementation Timeline" />
-                  {/* Horizontal aurora timeline (sm+) — glowing dots on a gradient rule,
+                  {/* Horizontal aurora timeline (sm+) - glowing dots on a gradient rule,
                       glass phase cards alternating above / below the line */}
                   <div className="hidden sm:block">
                     <div className="grid grid-cols-5 gap-x-3">
@@ -1398,7 +1398,7 @@ export function ProposalMakerView() {
             break-after: page;
           }
           /* Force background colors into print output even when the browser's
-             'Background graphics' checkbox is OFF — most browsers honor
+             'Background graphics' checkbox is OFF - most browsers honor
              print-color-adjust on the element itself. */
           #proposal-preview, #proposal-preview * {
             -webkit-print-color-adjust: exact !important;
@@ -1434,7 +1434,7 @@ function Slide({
 }) {
   return (
     <>
-      {/* Maker chrome — on-screen navigation aid only, excluded from capture/print */}
+      {/* Maker chrome - on-screen navigation aid only, excluded from capture/print */}
       <div className="print:hidden px-6 sm:px-10 py-2 bg-muted/30 border-b border-border/40 flex items-center gap-2">
         <Badge variant="outline" className="text-[9px] font-mono">SLIDE {id}/13</Badge>
         <span className="text-[10px] uppercase tracking-wider text-muted-foreground">{title}</span>
@@ -1444,7 +1444,7 @@ function Slide({
         className={cn("gx-doc relative overflow-hidden scroll-mt-20 border-b border-border/40", `gx-theme-${theme}`)}
         style={{ backgroundColor: "var(--doc-bg-a)" }}
       >
-        {/* Aurora mesh backdrop — full-bleed on the cover, softened wash on content slides */}
+        {/* Aurora mesh backdrop - full-bleed on the cover, softened wash on content slides */}
         <div aria-hidden className={cn("absolute inset-0 gx-aurora-mesh pointer-events-none", cover ? "opacity-100" : "opacity-40")} />
         {/* Corner aurora glows (dimmer on content slides) */}
         <div aria-hidden className={cn("gx-corner-glows", cover ? undefined : "opacity-60")} />

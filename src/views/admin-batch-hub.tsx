@@ -1,12 +1,12 @@
 "use client"
 
 /**
- * AdminBatchHubView — Batch Leads Hub (redesigned batch/leads surface).
+ * AdminBatchHubView - Batch Leads Hub (redesigned batch/leads surface).
  *
  * Replaces the old "select a batch from a dropdown inside a CRM tab" UX:
- *   • Screen 1 — master: one card per batch with live lead counts
+ *   • Screen 1 - master: one card per batch with live lead counts
  *     (total + unworked "New"), seats fill, form-connection status.
- *   • Screen 2 — every batch opens its OWN screen: batch hero, pipeline
+ *   • Screen 2 - every batch opens its OWN screen: batch hero, pipeline
  *     stats, the leads captured for that batch, CSV export, and the
  *     full Google Apps Script displayed inline with one-click copy-paste
  *     (batch ID baked in, nothing to edit manually).
@@ -187,7 +187,7 @@ function CopyBtn({ text, label, copiedLabel, size = "sm" }: { text: string; labe
           toast.success(copiedLabel || "Copied to clipboard")
           setTimeout(() => setCopied(false), 2000)
         } else {
-          toast.error("Copy failed — select the text manually")
+          toast.error("Copy failed - select the text manually")
         }
       }}
     >
@@ -198,7 +198,7 @@ function CopyBtn({ text, label, copiedLabel, size = "sm" }: { text: string; labe
 }
 
 // ============================================================
-// Root — master screen OR per-batch screen
+// Root - master screen OR per-batch screen
 // ============================================================
 export function AdminBatchHubView({ initialBatchId }: { initialBatchId?: string }) {
   const { navigate } = useAppStore()
@@ -253,7 +253,7 @@ export function AdminBatchHubView({ initialBatchId }: { initialBatchId?: string 
 }
 
 // ============================================================
-// Screen 1 — master grid: one card per batch
+// Screen 1 - master grid: one card per batch
 // ============================================================
 function HubMaster({ batches, isLoading, onOpen }: { batches: TrainingBatchRow[]; isLoading: boolean; onOpen: (id: string) => void }) {
   const [search, setSearch] = React.useState("")
@@ -285,7 +285,7 @@ function HubMaster({ batches, isLoading, onOpen }: { batches: TrainingBatchRow[]
             <LayoutGrid className="h-5 w-5 text-violet-300" /> Batch Leads Hub
           </h1>
           <p className="text-xs text-muted-foreground mt-1">
-            Every batch gets its own screen — open one to see its captured leads, pipeline and the copy-paste Apps Script.
+            Every batch gets its own screen - open one to see its captured leads, pipeline and the copy-paste Apps Script.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -332,7 +332,7 @@ function HubMaster({ batches, isLoading, onOpen }: { batches: TrainingBatchRow[]
           </p>
           {batches.length === 0 && (
             <p className="text-xs text-muted-foreground/70 mt-1 max-w-sm">
-              Create your first batch from the Batch Calendar — it will appear here with its own leads screen.
+              Create your first batch from the Batch Calendar - it will appear here with its own leads screen.
             </p>
           )}
         </div>
@@ -422,7 +422,7 @@ function BatchCard({ batch, onOpen }: { batch: TrainingBatchRow; onOpen: () => v
 }
 
 // ============================================================
-// Screen 2 — ONE BATCH: its own screen with its own leads
+// Screen 2 - ONE BATCH: its own screen with its own leads
 // ============================================================
 function BatchScreen({ batch, onBack }: { batch: TrainingBatchRow; onBack: () => void }) {
   const queryClient = useQueryClient()
@@ -557,7 +557,7 @@ function BatchScreen({ batch, onBack }: { batch: TrainingBatchRow; onBack: () =>
                 </p>
                 {leads.length === 0 && (
                   <p className="text-xs text-muted-foreground/70 mt-1 max-w-xs">
-                    Copy the Apps Script from the Lead Capture panel into your Google Form — every submission lands here instantly.
+                    Copy the Apps Script from the Lead Capture panel into your Google Form - every submission lands here instantly.
                   </p>
                 )}
               </div>
@@ -704,9 +704,9 @@ function BatchLeadDialog({ lead, batchId, onClose, onUpdated }: { lead: BatchLea
         <div className="space-y-3 py-2">
           <div className="grid grid-cols-2 gap-3">
             <InfoRow icon={Phone} label="WhatsApp" value={lead.whatsappNumber} link={`https://wa.me/${lead.whatsappNumber.replace(/[^0-9]/g, "")}`} />
-            <InfoRow icon={Briefcase} label="Job role" value={lead.jobRole || "—"} />
-            <InfoRow icon={User} label="Professional status" value={lead.professionalStatus || "—"} />
-            <InfoRow icon={Linkedin} label="LinkedIn" value={lead.linkedinProfile ? "View profile" : "—"} link={lead.linkedinProfile || undefined} />
+            <InfoRow icon={Briefcase} label="Job role" value={lead.jobRole || " - "} />
+            <InfoRow icon={User} label="Professional status" value={lead.professionalStatus || " - "} />
+            <InfoRow icon={Linkedin} label="LinkedIn" value={lead.linkedinProfile ? "View profile" : " - "} link={lead.linkedinProfile || undefined} />
           </div>
 
           <div className="border-t border-border/60 pt-3">
@@ -768,7 +768,7 @@ function InfoRow({ icon: Icon, label, value, link }: { icon: any; label: string;
 }
 
 // ============================================================
-// CaptureSetup — Google Form URL + VISIBLE copy-paste Apps Script
+// CaptureSetup - Google Form URL + VISIBLE copy-paste Apps Script
 // ============================================================
 function CaptureSetup({ batch }: { batch: TrainingBatchRow }) {
   const queryClient = useQueryClient()
@@ -797,7 +797,7 @@ function CaptureSetup({ batch }: { batch: TrainingBatchRow }) {
     }
   }
 
-  // The script itself — fetched as JSON so it can be SHOWN inline.
+  // The script itself - fetched as JSON so it can be SHOWN inline.
   const { data: scriptData, isLoading: scriptLoading, error: scriptError } = useQuery<AppsScriptPayload>({
     queryKey: ["admin-batch-hub", "apps-script", batch.id],
     queryFn: () => api(`/api/admin/training-batches/${batch.id}/apps-script?format=json`),
@@ -836,14 +836,14 @@ function CaptureSetup({ batch }: { batch: TrainingBatchRow }) {
         </div>
       </div>
 
-      {/* ── Apps Script — FULLY VISIBLE for copy-paste ── */}
+      {/* ── Apps Script - FULLY VISIBLE for copy-paste ── */}
       <div className="rounded-2xl border border-border/60 bg-card/40 p-4 space-y-3">
         <div>
           <h2 className="text-sm font-semibold flex items-center gap-2">
             <FileCode className="h-4 w-4 text-violet-300" /> Lead Capture Script
           </h2>
           <p className="text-[11px] text-muted-foreground mt-1">
-            Pre-configured for <span className="text-foreground font-medium">{batch.name || batch.certification}</span> — batch ID is baked in, nothing to edit. Paste it into the form's Script Editor.
+            Pre-configured for <span className="text-foreground font-medium">{batch.name || batch.certification}</span> - batch ID is baked in, nothing to edit. Paste it into the form's Script Editor.
           </p>
         </div>
 
@@ -855,7 +855,7 @@ function CaptureSetup({ batch }: { batch: TrainingBatchRow }) {
           <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 text-xs text-amber-200/90">
             <p className="font-semibold flex items-center gap-1.5"><XCircle className="h-3.5 w-3.5" /> Webhook secret not configured</p>
             <p className="mt-1 text-amber-200/70">
-              Set <span className="font-mono">CRM_WEBHOOK_SECRET</span> in Admin → Settings, then reopen this screen — the script will appear here.
+              Set <span className="font-mono">CRM_WEBHOOK_SECRET</span> in Admin → Settings, then reopen this screen - the script will appear here.
             </p>
           </div>
         ) : scriptError || !scriptData ? (
@@ -884,7 +884,7 @@ function CaptureSetup({ batch }: { batch: TrainingBatchRow }) {
                   <CopyBtn
                     text={scriptData.script}
                     label="Copy script"
-                    copiedLabel="Script copied — paste it into the Google Form Script Editor"
+                    copiedLabel="Script copied - paste it into the Google Form Script Editor"
                     size="sm"
                   />
                 </div>
@@ -923,7 +923,7 @@ function CaptureSetup({ batch }: { batch: TrainingBatchRow }) {
                 <li className="flex gap-2"><span className="text-violet-300 font-mono">2.</span> Add the 5 questions listed above (exact titles make the mapping bulletproof)</li>
                 <li className="flex gap-2"><span className="text-violet-300 font-mono">3.</span> 3-dot menu → <span className="text-foreground">Script editor</span> → delete default code → paste the copied script → Save</li>
                 <li className="flex gap-2"><span className="text-violet-300 font-mono">4.</span> Run <span className="font-mono text-foreground">setupTriggers</span> once and grant permissions</li>
-                <li className="flex gap-2"><span className="text-violet-300 font-mono">5.</span> Optional: run <span className="font-mono text-foreground">testWebhook</span> — a test lead should appear in the list on the left</li>
+                <li className="flex gap-2"><span className="text-violet-300 font-mono">5.</span> Optional: run <span className="font-mono text-foreground">testWebhook</span> - a test lead should appear in the list on the left</li>
                 <li className="flex gap-2"><span className="text-violet-300 font-mono">6.</span> Copy the form URL into the Google Form field above → Save</li>
               </ol>
             </details>

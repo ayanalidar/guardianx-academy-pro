@@ -4,7 +4,7 @@ import * as React from "react"
 import { motion, useInView, useMotionValue, useSpring, useTransform, useScroll, AnimatePresence } from "framer-motion"
 
 /* ============================================================
-   ScrollReveal — fade + slide up on scroll into view
+   ScrollReveal - fade + slide up on scroll into view
    ============================================================ */
 export function ScrollReveal({
   children,
@@ -39,7 +39,7 @@ export function ScrollReveal({
 }
 
 /* ============================================================
-   Stagger — stagger children reveal
+   Stagger - stagger children reveal
    ============================================================ */
 export function Stagger({
   children,
@@ -100,7 +100,7 @@ export function StaggerItem({
 }
 
 /* ============================================================
-   TextReveal — word-by-word text reveal
+   TextReveal - word-by-word text reveal
    ============================================================ */
 export function TextReveal({
   text,
@@ -153,7 +153,7 @@ export function TextReveal({
 }
 
 /* ============================================================
-   MagneticButton — cursor-following magnetic effect
+   MagneticButton - cursor-following magnetic effect
    ============================================================ */
 export function MagneticButton({
   children,
@@ -204,7 +204,7 @@ export function MagneticButton({
 }
 
 /* ============================================================
-   Parallax — scroll-based parallax movement
+   Parallax - scroll-based parallax movement
    ============================================================ */
 export function Parallax({
   children,
@@ -230,7 +230,7 @@ export function Parallax({
 }
 
 /* ============================================================
-   Counter — animated number count-up
+   Counter - animated number count-up
    ============================================================ */
 export function Counter({
   value,
@@ -273,7 +273,7 @@ export function Counter({
 }
 
 /* ============================================================
-   CursorGlow — cursor-responsive lighting on hover
+   CursorGlow - cursor-responsive lighting on hover
    ============================================================ */
 export function CursorGlow({
   children,
@@ -315,7 +315,7 @@ export function CursorGlow({
 }
 
 /* ============================================================
-   FadeIn — simple fade in on mount
+   FadeIn - simple fade in on mount
    ============================================================ */
 export function FadeIn({
   children,
@@ -341,7 +341,7 @@ export function FadeIn({
 }
 
 /* ============================================================
-   ScaleIn — scale + fade in on mount
+   ScaleIn - scale + fade in on mount
    ============================================================ */
 export function ScaleIn({
   children,
@@ -365,7 +365,7 @@ export function ScaleIn({
 }
 
 /* ============================================================
-   AnimatedSection — section wrapper with scroll-triggered reveal
+   AnimatedSection - section wrapper with scroll-triggered reveal
    ============================================================ */
 export function AnimatedSection({
   children,

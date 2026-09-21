@@ -1,5 +1,5 @@
 /**
- * GuardianX Academy — Google Forms Webhook Script
+ * GuardianX Academy - Google Forms Webhook Script
  * 
  * HOW TO SET UP:
  * 1. Create a Google Form at https://forms.new
@@ -18,7 +18,7 @@
  * 7. Your form responses will now automatically sync to GuardianX CRM
  * 
  * WEBHOOK URL: https://academy.guardianx.cloud/api/crm/webhook
- * WEBHOOK TOKEN: (SECRET) — ask the platform admin for the current value of
+ * WEBHOOK TOKEN: (SECRET) - ask the platform admin for the current value of
  *   CRM_WEBHOOK_SECRET and paste it below. Never commit real tokens to git.
  */
 
@@ -49,7 +49,7 @@ function setupTriggers() {
 }
 
 /**
- * BACKFILL — run this ONCE to sync ALL existing form responses
+ * BACKFILL - run this ONCE to sync ALL existing form responses
  * (Apps Script triggers only fire on NEW submissions, so responses
  * collected before setup never reach the CRM). Run it from the
  * Apps Script editor: select backfillAllResponses → Run.
@@ -150,7 +150,7 @@ function onFormSubmit(e) {
 }
 
 /**
- * Test function — run this manually to test the webhook
+ * Test function - run this manually to test the webhook
  */
 function testWebhook() {
   var testLead = {

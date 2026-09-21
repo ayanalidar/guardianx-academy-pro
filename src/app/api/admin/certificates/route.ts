@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { requireAdmin } from "@/lib/session"
 
-// GET /api/admin/certificates — list all certificates platform-wide
+// GET /api/admin/certificates - list all certificates platform-wide
 export async function GET(req: NextRequest) {
   const user = await requireAdmin()
   if (user instanceof NextResponse) return user

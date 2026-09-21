@@ -1,12 +1,12 @@
 "use client"
 
 /**
- * OnboardingChecklist — first-login welcome + achievement checklist.
+ * OnboardingChecklist - first-login welcome + achievement checklist.
  *
  * Shows on the student dashboard while onboarding isn't complete:
  *   - Greeting banner with the user's name.
  *   - Checklist derived from REAL account state (enrollments, lessons,
- *     profile completeness) — no fake data.
+ *     profile completeness) - no fake data.
  *   - Overall completion shown as an animated ProgressRing.
  *   - Dismissible (persists in localStorage) once the user is done with it;
  *     auto-hides permanently when every step is complete.
@@ -72,7 +72,7 @@ export function OnboardingChecklist() {
     {
       id: "enroll",
       label: "Enroll in your first course",
-      description: "Pick a path — CEH, SOC Analyst or Blue Team fundamentals.",
+      description: "Pick a path - CEH, SOC Analyst or Blue Team fundamentals.",
       done: enrollments.length > 0,
       action: () => navigate({ name: "catalog" }),
     },
@@ -139,7 +139,7 @@ export function OnboardingChecklist() {
             You're rank <span className="font-mono text-foreground">RECRUIT</span>.
             {steps.length - doneCount > 0
               ? ` ${steps.length - doneCount} step${steps.length - doneCount === 1 ? "" : "s"} to your first promotion:`
-              : " Everything below is already done — nice work!"}
+              : " Everything below is already done - nice work!"}
           </p>
 
           <ul className="grid sm:grid-cols-2 gap-1.5">
@@ -185,7 +185,7 @@ export function OnboardingChecklist() {
 
           {doneCount === steps.length && (
             <p className="text-xs text-emerald-300 mt-2 flex items-center gap-1.5">
-              <Target className="size-3.5" aria-hidden /> All steps complete — promotion unlocked!
+              <Target className="size-3.5" aria-hidden /> All steps complete - promotion unlocked!
             </p>
           )}
         </div>

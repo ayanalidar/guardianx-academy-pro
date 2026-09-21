@@ -4,7 +4,7 @@
  * The Course model stores the five "course extras" lists (whatYouWillLearn,
  * prerequisites, whoShouldAttend, toolsCovered, careerOutcomes) as
  * JSON-encoded string arrays in TEXT columns. These helpers are the single
- * place that knows the encoding — editors encode, readers parse.
+ * place that knows the encoding - editors encode, readers parse.
  *
  * Design notes:
  * - JSON (not comma-separated like `tags`) because the items are full
@@ -104,7 +104,7 @@ export function normalizeCourseListInput(raw: unknown): string {
       const parsed = JSON.parse(value)
       if (Array.isArray(parsed)) return encodeCourseList(parsed)
     } catch {
-      // Not valid JSON — treat as newline text below.
+      // Not valid JSON - treat as newline text below.
     }
   }
   return encodeCourseList(value.split("\n"))

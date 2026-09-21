@@ -5,7 +5,7 @@ import { useAppStore, type View } from "@/store/app-store"
 import { viewToPath } from "@/lib/url-router"
 
 /**
- * NavLink — a REAL anchor (`<a href>`) that navigates the SPA without a
+ * NavLink - a REAL anchor (`<a href>`) that navigates the SPA without a
  * full reload.
  *
  * Why not a plain `<button onClick={navigate}>`? Buttons broke:

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/session"
 
-// GET — student fetches submissions assigned to them for peer review.
+// GET - student fetches submissions assigned to them for peer review.
 // Lazily selects up to `assignment.peerReviewCount` random other students'
 // submissions (excluding their own and ones they've already reviewed).
 // Returns: assignment context + to-review submissions + completed reviews.

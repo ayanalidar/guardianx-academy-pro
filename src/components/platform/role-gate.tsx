@@ -1,7 +1,7 @@
 "use client"
 
 /**
- * RoleGate — client-side RBAC wrapper for role-restricted SPA views.
+ * RoleGate - client-side RBAC wrapper for role-restricted SPA views.
  *
  * The API layer already enforces permissions server-side (requireRole /
  * requireAdmin return 401/403), but without a client gate a student who
@@ -50,7 +50,7 @@ export function roleHomeView(role?: string | null): View {
 }
 
 /* ============================================================
-   AccessDeniedPanel — branded restricted screen
+   AccessDeniedPanel - branded restricted screen
    ============================================================ */
 
 export function AccessDeniedPanel({
@@ -83,7 +83,7 @@ export function AccessDeniedPanel({
         </h1>
         <p className="text-muted-foreground mb-6">
           {area} is only available to {needsAdmin ? "platform administrators" : "instructors and administrators"}.
-          Your account is signed in as a different role — head back to your own dashboard; everything meant for you lives there.
+          Your account is signed in as a different role - head back to your own dashboard; everything meant for you lives there.
         </p>
         <div className="flex flex-col items-center gap-4">
           <button
@@ -107,7 +107,7 @@ export function AccessDeniedPanel({
 }
 
 /* ============================================================
-   RoleGate — render children only for allowed roles
+   RoleGate - render children only for allowed roles
    ============================================================ */
 
 export function RoleGate({

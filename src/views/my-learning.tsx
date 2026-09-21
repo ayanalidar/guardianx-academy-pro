@@ -54,7 +54,7 @@ export function MyLearningView() {
     enabled: !!user,
   })
 
-  // Recommended courses — published courses the user has NOT enrolled in.
+  // Recommended courses - published courses the user has NOT enrolled in.
   // Fetched in parallel; we slice to 6 in the UI.
   const { data: recData, isLoading: recLoading } = useQuery<{ courses: CourseItem[] }>({
     queryKey: ["courses", "recommended", user?.id],
@@ -522,7 +522,7 @@ function EmptyLearningState() {
 }
 
 /* ============================================================
-   RecommendedCoursesSection — courses the user hasn't enrolled in
+   RecommendedCoursesSection - courses the user hasn't enrolled in
    ============================================================ */
 function RecommendedCoursesSection({
   courses,
@@ -539,7 +539,7 @@ function RecommendedCoursesSection({
         <div className="flex items-end justify-between mb-8 pb-4 border-b border-border/60">
           <div>
             <p className="text-[10px] font-mono text-amber-400 tracking-[0.3em] mb-1">
-              03 — RECOMMENDED FOR YOU
+              03 - RECOMMENDED FOR YOU
             </p>
             <h2 className="text-2xl lg:text-3xl font-bold tracking-tight">
               Keep the momentum going
@@ -595,7 +595,7 @@ function RecommendedCoursesSection({
 }
 
 /* ============================================================
-   RecommendedCourseCard — compact premium card with Enroll CTA
+   RecommendedCourseCard - compact premium card with Enroll CTA
    ============================================================ */
 function RecommendedCourseCard({ course: c }: { course: CourseItem }) {
   const { navigate } = useAppStore()
@@ -617,7 +617,7 @@ function RecommendedCourseCard({ course: c }: { course: CourseItem }) {
       >
         <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-amber-500/40 via-amber-500/10 to-transparent" />
 
-        {/* Header — thumbnail/code + level badge */}
+        {/* Header - thumbnail/code + level badge */}
         <div className="flex items-start justify-between mb-4">
           {c.thumbnail ? (
             <div className="h-12 w-12 rounded-lg overflow-hidden border border-border">

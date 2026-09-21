@@ -16,7 +16,7 @@ async function seedWeeklyChallenge() {
 
   await db.weeklyChallenge.create({
     data: {
-      title: "Week 18 — SSRF via PDF Renderer",
+      title: "Week 18 - SSRF via PDF Renderer",
       description:
         "A document-conversion service exposes an internal endpoint that fetches URLs server-side. Pivot through it to access the metadata service and recover the secret flag.\n\nTarget: https://labs.academy.guardianx.cloud/weekly-18\nCategory: Server-Side Request Forgery\nDifficulty: Medium",
       category: "web",
@@ -33,14 +33,14 @@ async function seedWeeklyChallenge() {
   // Also create a couple of past challenges for the history view
   await db.weeklyChallenge.create({
     data: {
-      title: "Week 17 — JWT Algorithm Confusion",
+      title: "Week 17 - JWT Algorithm Confusion",
       description:
         "A REST API accepts JWTs signed with either RS256 or HS256. Exploit the algorithm confusion attack to forge an admin token and capture the flag.",
       category: "crypto",
       difficulty: "hard",
       flag: "FLAG{weekly_jwt_alg_confusion}",
       points: 750,
-      hint: "Convert the server's RSA public key to HMAC secret — many libraries accept this.",
+      hint: "Convert the server's RSA public key to HMAC secret - many libraries accept this.",
       startAt: inDays(-14),
       endAt: inDays(-7),
       isActive: false,
@@ -49,7 +49,7 @@ async function seedWeeklyChallenge() {
 
   await db.weeklyChallenge.create({
     data: {
-      title: "Week 16 — ICMP Exfiltration",
+      title: "Week 16 - ICMP Exfiltration",
       description:
         "Malware is leaking data over ICMP. Analyze the provided .pcap and reassemble the exfiltrated flag.",
       category: "forensics",
@@ -185,7 +185,7 @@ export async function POST(req: NextRequest) {
   const submittedFlag = flag.trim()
   const correct = submittedFlag === challenge.flag
 
-  // Upsert (unique challenge+user) — only first attempt counts
+  // Upsert (unique challenge+user) - only first attempt counts
   const existing = await db.weeklyChallengeSubmission.findUnique({
     where: { challengeId_userId: { challengeId, userId: user.id } },
   })
@@ -212,7 +212,7 @@ export async function POST(req: NextRequest) {
     correct: sub.correct,
     message: sub.correct
       ? `Flag accepted! You earned ${challenge.points} points.`
-      : "Incorrect flag. Try again — your single attempt is now used.",
+      : "Incorrect flag. Try again - your single attempt is now used.",
     score: sub.correct ? challenge.points : 0,
   })
 }

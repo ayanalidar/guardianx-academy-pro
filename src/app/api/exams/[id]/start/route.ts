@@ -6,7 +6,7 @@ export const runtime = "nodejs"
 
 /**
  * POST /api/exams/[id]/start
- * AUTHENTICATED — start a new exam attempt.
+ * AUTHENTICATED - start a new exam attempt.
  *
  * - Validates the exam exists and is published.
  * - Enforces maxAttempts (count completed attempts).
@@ -24,7 +24,7 @@ export const runtime = "nodejs"
  *   `ExamAttempt.shuffleMap` so the submit route can map the client's
  *   selected index back to the original index before comparing to the
  *   stored `correctAnswer`.
- * - NEVER returns correct answers — only `question` + `options`.
+ * - NEVER returns correct answers - only `question` + `options`.
  */
 export async function POST(
   _req: Request,
@@ -61,7 +61,7 @@ export async function POST(
     return NextResponse.json({ error: "Exam not found." }, { status: 404 })
   }
 
-  // Look for an existing in-progress attempt — resume instead of creating new
+  // Look for an existing in-progress attempt - resume instead of creating new
   const inProgress = await db.examAttempt.findFirst({
     where: { userId: user.id, examId: exam.id, status: "in-progress" },
     orderBy: { createdAt: "desc" },
@@ -220,7 +220,7 @@ function safeParse<T>(raw: string | null | undefined, fallback: T): T {
   }
 }
 
-/** Fisher-Yates shuffle — returns a new shuffled array (does not mutate input). */
+/** Fisher-Yates shuffle - returns a new shuffled array (does not mutate input). */
 function fisherYates<T>(arr: readonly T[]): T[] {
   const a = [...arr]
   for (let i = a.length - 1; i > 0; i--) {
@@ -231,7 +231,7 @@ function fisherYates<T>(arr: readonly T[]): T[] {
 }
 
 /**
- * buildShuffleMap — derives a `ShuffleMap` for this attempt.
+ * buildShuffleMap - derives a `ShuffleMap` for this attempt.
  *
  * - If `shuffleQuestions` is true, the question IDs are shuffled via
  *   Fisher-Yates. Otherwise they're kept in their natural order.
@@ -267,7 +267,7 @@ function buildShuffleMap(
 }
 
 /**
- * buildClientQuestions — applies a ShuffleMap to the raw question set and
+ * buildClientQuestions - applies a ShuffleMap to the raw question set and
  * returns the question payload for the client (no correctAnswer).
  *
  * The options are reordered so the displayed option at position N is the

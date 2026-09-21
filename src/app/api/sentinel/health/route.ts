@@ -5,7 +5,7 @@ export const runtime = "nodejs"
 export async function GET() {
   // Auth-optional: uptime monitors ping this unauthenticated, so anonymous
   // callers get status booleans ONLY. The detailed per-service latencies and
-  // row counts (users/courses/leads…) — genuine recon value — are included
+  // row counts (users/courses/leads…) - genuine recon value - are included
   // for admins only.
   const user = await getCurrentUser().catch(() => null)
   const isAdmin = !!user && (user.role === "ADMIN" || user.role === "SUPER_ADMIN" || user.role === "INSTRUCTOR")
@@ -41,7 +41,7 @@ export async function GET() {
   } catch {
     services.push({ name: "Lab Orchestrator", status: "down", latency: -1, detail: "unreachable" })
   }
-  // Email (configuration check — no test send)
+  // Email (configuration check - no test send)
   try {
     const { getSettings } = await import("@/lib/settings")
     const s = await getSettings(["SMTP_HOST", "SMTP_USER"])
@@ -53,7 +53,7 @@ export async function GET() {
 
   const overall = services.every(s => s.status === "operational") ? "operational" : services.some(s => s.status === "down") ? "down" : "degraded"
   if (!isAdmin) {
-    // Minimal public shape — statuses only, no counts, no latencies
+    // Minimal public shape - statuses only, no counts, no latencies
     return NextResponse.json({
       overall,
       services: services.map((s) => ({ name: s.name, status: s.status })),

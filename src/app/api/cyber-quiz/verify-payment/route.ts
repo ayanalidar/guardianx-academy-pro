@@ -50,7 +50,7 @@ export const POST = withErrorHandler(async (req) => {
   }
   // Object-level authz: only the buyer may verify payment for this order
   if (order.userId && order.userId !== user.id) {
-    return NextResponse.json({ error: "Forbidden — order belongs to another user" }, { status: 403 })
+    return NextResponse.json({ error: "Forbidden - order belongs to another user" }, { status: 403 })
   }
   if (order.status === "paid") {
     return NextResponse.json({ error: "Order already paid", alreadyPaid: true }, { status: 400 })
@@ -70,7 +70,7 @@ export const POST = withErrorHandler(async (req) => {
     }
   } else if (process.env.PAYMENT_MOCK_MODE === "true" && process.env.NODE_ENV !== "production") {
     // Explicit mock mode, dev only
-    console.warn("[cyber-quiz/verify-payment] PAYMENT_MOCK_MODE=true — accepting unverified payment (dev only)")
+    console.warn("[cyber-quiz/verify-payment] PAYMENT_MOCK_MODE=true - accepting unverified payment (dev only)")
   } else {
     // No secret + no explicit dev mock flag → REFUSE. Prevents a misconfigured
     // production deploy from silently issuing paid certificates for free.
@@ -102,7 +102,7 @@ export const POST = withErrorHandler(async (req) => {
     return NextResponse.json({ error: "Linked attempt not found" }, { status: 500 })
   }
   if (!attempt.passed) {
-    return NextResponse.json({ error: "Attempt did not pass — cannot issue certificate" }, { status: 400 })
+    return NextResponse.json({ error: "Attempt did not pass - cannot issue certificate" }, { status: 400 })
   }
 
   // Check if a cert already exists for this attempt (idempotency)
@@ -118,7 +118,7 @@ export const POST = withErrorHandler(async (req) => {
   const seq = randomBytes(3).toString("hex").toUpperCase() // 6 hex chars = 16.7M combos/year
   const credentialId = `GX-QUIZ-${year}-${seq}`
 
-  // Tamper-evident verification hash — keyed HMAC-SHA256 (was: unkeyed SHA-256
+  // Tamper-evident verification hash - keyed HMAC-SHA256 (was: unkeyed SHA-256
   // over guessable fields, forgeable by anyone who knew the inputs).
   const verificationHash = createHmac("sha256", await getSigningSecret())
     .update(`${credentialId}|${attempt.id}|${order.id}|${attempt.guestEmail || order.user.email}|${attempt.percentage}`)

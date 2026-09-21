@@ -1,14 +1,14 @@
 /* ============================================================
-   IndexNow — instant search-engine notification.
+   IndexNow - instant search-engine notification.
 
    IndexNow (indexnow.org) is supported by Bing, Naver, Yandex,
    Seznam and (via Bing) DuckDuckGo-ish endpoints. Submitting a
-   URL list tells participating crawlers "these changed — recrawl
+   URL list tells participating crawlers "these changed - recrawl
    now" instead of waiting days/weeks for organic discovery.
 
    Ownership is proven by a key file served at:
      https://academy.guardianx.cloud/<INDEXNOW_KEY>.txt
-   (static file in public/ — must contain exactly the key string)
+   (static file in public/ - must contain exactly the key string)
    ============================================================ */
 
 import { SITE_URL } from "@/lib/site-url";
@@ -19,7 +19,7 @@ const INDEXNOW_ENDPOINT = "https://api.indexnow.org/indexnow";
 
 /**
  * Ping IndexNow with a batch of URLs (absolute). Fire-and-forget
- * safe: never throws — returns a compact status object for the
+ * safe: never throws - returns a compact status object for the
  * report UI instead. Skips silently when there are no URLs.
  */
 export async function pingIndexNow(
@@ -57,7 +57,7 @@ export async function pingIndexNow(
       ok: res.ok || res.status === 202,
       note:
         res.status === 403
-          ? "Key pending first validation — search engines will validate the key file, then future pings are instant."
+          ? "Key pending first validation - search engines will validate the key file, then future pings are instant."
           : undefined,
     };
   } catch (e) {
@@ -65,7 +65,7 @@ export async function pingIndexNow(
       submitted: abs.length,
       status: null,
       ok: false,
-      note: `Ping failed (${e instanceof Error ? e.message : "network"}) — URLs are still crawlable, retry next time.`,
+      note: `Ping failed (${e instanceof Error ? e.message : "network"}) - URLs are still crawlable, retry next time.`,
     };
   }
 }

@@ -151,7 +151,7 @@ export function InvoiceGeneratorView() {
   const [currency, setCurrency] = React.useState("INR")
   const [gstSplit, setGstSplit] = React.useState(true) // CGST + SGST split for India
 
-  // Bank details — GuardianX official banking
+  // Bank details - GuardianX official banking
   const [bankName, setBankName] = React.useState("Jammu & Kashmir Bank")
   const [accountName, setAccountName] = React.useState("GuardianX")
   const [accountNumber, setAccountNumber] = React.useState("0778040100005715")
@@ -166,7 +166,7 @@ export function InvoiceGeneratorView() {
     "1. Training includes instructor-led sessions, study materials, and lab access.\n2. Certification exam fee is separate unless stated.\n3. Cancellation: 50% refund if cancelled 7+ days before start. No refund within 7 days.\n4. GuardianX Academy is not liable for third-party certification exam outcomes.",
   )
 
-  // Saved invoices — persisted in the DB via /api/invoices (was: React state,
+  // Saved invoices - persisted in the DB via /api/invoices (was: React state,
   // lost on every refresh).
   const invoicesQuery = useQuery<{ invoices: SavedInvoice[] }>({
     queryKey: ["invoices"],
@@ -228,7 +228,7 @@ export function InvoiceGeneratorView() {
   }
 
   // ---------------------------------------------------------------------------
-  // PDF export — native vector A4 (src/lib/invoice-pdf.ts). Replaces the old
+  // PDF export - native vector A4 (src/lib/invoice-pdf.ts). Replaces the old
   // html2canvas screenshot pipeline that produced a blurry dark-theme card
   // floating in the middle of a landscape page. The new document is full-A4
   // portrait, print-grade (vector text), light theme, with the same brand.
@@ -267,7 +267,7 @@ export function InvoiceGeneratorView() {
       let svg = document.querySelector("#upi-qr-holder svg")?.outerHTML
       if (!svg) return null
       // React omits xmlns when hydrating JSX-created SVGs; standalone image
-      // decoding REQUIRES it — inject before wrapping into a data URL.
+      // decoding REQUIRES it - inject before wrapping into a data URL.
       if (!svg.includes("xmlns=")) svg = svg.replace("<svg", '<svg xmlns="http://www.w3.org/2000/svg"')
       const svgUrl = `data:image/svg+xml;base64,${btoa(unescape(encodeURIComponent(svg)))}`
       const img = new Image()
@@ -283,7 +283,7 @@ export function InvoiceGeneratorView() {
       ctx.drawImage(img, 0, 0, 512, 512)
       return canvas.toDataURL("image/png")
     } catch (e) {
-      console.warn("[invoice-pdf] QR rasterization failed — continuing without QR", e)
+      console.warn("[invoice-pdf] QR rasterization failed - continuing without QR", e)
       return null
     }
   }
@@ -293,7 +293,7 @@ export function InvoiceGeneratorView() {
    *
    *  CRITICAL: the canvas is pre-filled with the exact violet (#2E1065) the
    *  shield sits on in the PDF header chip. This flattens alpha to fully
-   *  opaque — jsPDF then embeds the PNG WITHOUT an /SMask object. Chrome's
+   *  opaque - jsPDF then embeds the PNG WITHOUT an /SMask object. Chrome's
    *  print / Save-as-PDF renderer drops SMask'd images, which made the logo
    *  vanish in "Print → Save as PDF" output (screen rendering was fine).
    *  Transparent pixels become chip-violet and blend invisibly into the chip
@@ -313,7 +313,7 @@ export function InvoiceGeneratorView() {
       ctx.drawImage(img, 0, 0, 256, 256)
       return canvas.toDataURL("image/png")
     } catch (e) {
-      console.warn("[invoice-pdf] logo load failed — falling back to drawn mark", e)
+      console.warn("[invoice-pdf] logo load failed - falling back to drawn mark", e)
       return null
     }
   }
@@ -329,7 +329,7 @@ export function InvoiceGeneratorView() {
       toast.info(`Generating ${pdfTheme === "dark" ? "cyber screen-style" : "print-style"} A4 PDF…`)
       const pdf = await generateInvoicePdf()
       pdf.save(`${invoiceNumber || "invoice"}.pdf`)
-      toast.success(`A4 PDF downloaded — ${pdfTheme === "dark" ? "cyber dark" : "print light"} theme, vector quality`)
+      toast.success(`A4 PDF downloaded - ${pdfTheme === "dark" ? "cyber dark" : "print light"} theme, vector quality`)
     } catch (err: any) {
       console.error("[invoice-pdf]", err)
       toast.error(err?.message || "Failed to generate PDF")
@@ -341,7 +341,7 @@ export function InvoiceGeneratorView() {
     // the async PDF build (font fetch + QR/logo raster can exceed 5s) loses
     // transient activation and gets popup-blocked, silently pushing people
     // into Ctrl+P of the app page instead of the vector A4 document.
-    // NOTE: do NOT document.write a placeholder into the tab — a written
+    // NOTE: do NOT document.write a placeholder into the tab - a written
     // about:blank document silently REFUSES the later blob: navigation
     // (verified empirically: the tab stays stuck on about:blank forever).
     const win = window.open("", "_blank")
@@ -368,7 +368,7 @@ export function InvoiceGeneratorView() {
         document.body.appendChild(frame)
         setTimeout(() => frame.remove(), 120000)
       } else {
-        toast.error("Popup blocked — allow popups to use Print, or use Generate PDF")
+        toast.error("Popup blocked - allow popups to use Print, or use Generate PDF")
       }
     } catch (err: any) {
       win?.close()
@@ -464,7 +464,7 @@ export function InvoiceGeneratorView() {
     return `${c.symbol}${amount.toLocaleString(c.locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
   }
 
-  // Mini dashboard stats — computed from the DB-backed invoice list
+  // Mini dashboard stats - computed from the DB-backed invoice list
   const totalInvoices = savedInvoices.length
   const pendingAmount = savedInvoices
     .filter((i) => i.status === "Sent" || i.status === "Overdue")
@@ -531,7 +531,7 @@ export function InvoiceGeneratorView() {
               className="flex items-center rounded-lg border border-zinc-700/60 overflow-hidden h-8"
               role="group"
               aria-label="PDF style"
-              title={pdfTheme === "dark" ? "Cyber screen style — great for sharing (heavy on ink)" : "Print style — ink-friendly white paper"}
+              title={pdfTheme === "dark" ? "Cyber screen style - great for sharing (heavy on ink)" : "Print style - ink-friendly white paper"}
             >
               <button
                 type="button"
@@ -629,7 +629,7 @@ export function InvoiceGeneratorView() {
               </div>
             ) : savedInvoices.length === 0 ? (
               <p className="text-xs text-muted-foreground py-4 text-center">
-                No invoices saved yet — fill in the details and click <span className="font-medium text-foreground">Save</span>.
+                No invoices saved yet - fill in the details and click <span className="font-medium text-foreground">Save</span>.
               </p>
             ) : (
               <div className="space-y-2 max-h-64 overflow-y-auto pr-1">
@@ -919,7 +919,7 @@ export function InvoiceGeneratorView() {
               <div className="gx-corner-glows" aria-hidden />
               {/* Aurora glass header */}
               <div className="relative">
-                {/* Slim accent edge (static — no pulse, keeps it premium) */}
+                {/* Slim accent edge (static - no pulse, keeps it premium) */}
                 <div className="h-1 w-full bg-gradient-to-r from-cyan-400 via-violet-500 to-fuchsia-500" />
                 {/* Header */}
                 <div className="relative p-6 sm:p-8 overflow-hidden">
@@ -954,7 +954,7 @@ export function InvoiceGeneratorView() {
                     <div className="text-right">
                       <div className="text-4xl sm:text-5xl font-bold tracking-[0.14em] text-gradient-premium">INVOICE</div>
                       <div className="text-sm text-violet-200/90 font-mono mt-1.5">{invoiceNumber}</div>
-                      {/* Status stamp — rubber-stamp treatment */}
+                      {/* Status stamp - rubber-stamp treatment */}
                       <div className="mt-4">
                         {(() => {
                           const StatusIcon = STATUS_CONFIG[status].icon
@@ -971,7 +971,7 @@ export function InvoiceGeneratorView() {
                 </div>
               </div>
 
-              {/* Bill To + Dates — frosted panels */}
+              {/* Bill To + Dates - frosted panels */}
               <div className="grid sm:grid-cols-2 gap-4 p-6 sm:p-8 pt-2">
                 <div className="gx-glass p-5">
                   <p className="gx-label">Bill To</p>
@@ -1021,7 +1021,7 @@ export function InvoiceGeneratorView() {
                 </div>
               </div>
 
-              {/* Line items table — frosted panel */}
+              {/* Line items table - frosted panel */}
               <div className="px-6 sm:px-8 pb-2">
                 <div className="gx-glass p-4 sm:p-5">
                 <table className="w-full">
@@ -1059,7 +1059,7 @@ export function InvoiceGeneratorView() {
 
                 {/* Totals + QR */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4 px-6 sm:px-8">
-                  {/* Payment QR — real UPI QR code with invoice amount */}
+                  {/* Payment QR - real UPI QR code with invoice amount */}
                   <div className="order-2 sm:order-1">
                     <div className="gx-glass p-4">
                       <div className="flex items-start gap-3">
@@ -1135,7 +1135,7 @@ export function InvoiceGeneratorView() {
                   </div>
                 </div>
 
-              {/* Bank details + Signature — frosted panels */}
+              {/* Bank details + Signature - frosted panels */}
               <div className="grid sm:grid-cols-2 gap-4 px-6 sm:px-8 pb-4">
                 <div className="gx-glass p-5">
                   <p className="gx-label mb-2 flex items-center gap-1.5">
@@ -1202,7 +1202,7 @@ export function InvoiceGeneratorView() {
         </div>
       </div>
 
-      {/* Ctrl+P fallback styles — the dedicated Print button produces the real
+      {/* Ctrl+P fallback styles - the dedicated Print button produces the real
           vector A4 PDF; these only style a raw browser print of the app page. */}
       <style jsx global>{`
         @media print {
@@ -1235,7 +1235,7 @@ export function InvoiceGeneratorView() {
             print-color-adjust: exact !important;
           }
           /* CSS filters (the logo's drop-shadow glow) can blank <img> elements
-             in Chrome's print renderer — strip them for print output. */
+             in Chrome's print renderer - strip them for print output. */
           #invoice-preview img {
             filter: none !important;
           }

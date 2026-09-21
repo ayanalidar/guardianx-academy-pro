@@ -5,7 +5,7 @@ import { logAction } from "@/lib/audit"
 import { ensureTable } from "@/lib/db-safe"
 import { COURSE_LIST_FIELDS, normalizeCourseListInput } from "@/lib/course-lists"
 
-// GET /api/admin/courses — list all courses with enrollment counts, module counts, lesson counts
+// GET /api/admin/courses - list all courses with enrollment counts, module counts, lesson counts
 export const GET = withErrorHandler(async (req: NextRequest) => {
   const user = await requireAdmin()
   if (user instanceof NextResponse) return user
@@ -110,7 +110,7 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
   return NextResponse.json({ courses: result, total: result.length, degraded })
 })
 
-// POST /api/admin/courses — create a new course (ADMIN only)
+// POST /api/admin/courses - create a new course (ADMIN only)
 export const POST = withErrorHandler(async (req: NextRequest) => {
   const user = await requireAdmin()
   if (user instanceof NextResponse) return user
@@ -138,7 +138,7 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
   }
 
   // Course extras lists (whatYouWillLearn, prerequisites, whoShouldAttend,
-  // toolsCovered, careerOutcomes) — accepted as arrays, newline text, or
+  // toolsCovered, careerOutcomes) - accepted as arrays, newline text, or
   // stored JSON; normalized to encoded JSON arrays.
   const extrasData = Object.fromEntries(
     COURSE_LIST_FIELDS.map(({ key }) => [key, normalizeCourseListInput((body as any)[key])])
@@ -167,13 +167,13 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
 
   // Self-heal: sync the Course table to the current schema first (Prisma
   // always sends required-with-default columns like whatYouWillLearn on
-  // INSERT — a drifted DB fails every create until those columns exist).
+  // INSERT - a drifted DB fails every create until those columns exist).
   await ensureTable("Course")
 
   // Full create writes every current-schema column (course-extras lists,
   // instructorId, …). On drifted databases this throws P2022 and the admin
   // cannot upload at all. Fallback: discover which Course columns exist and
-  // write only those — the course still gets created; missing extras stay
+  // write only those - the course still gets created; missing extras stay
   // empty until the schema is synced (prisma db push).
   let course: any
   try {

@@ -3,7 +3,7 @@ import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/session"
 import { createNotification } from "@/lib/notifications"
 
-// POST — submit a peer review for a submission.
+// POST - submit a peer review for a submission.
 // Body: { rating (1-5), feedback, rubricScores? }
 // Creates a PeerReview record (deduped by @@unique([submissionId, reviewerId])).
 // Sends a notification to the reviewed user.

@@ -15,7 +15,7 @@ async function loadOwnedAssignment(id: string, user: { id: string; role: string 
   return assignment
 }
 
-// GET — get one assignment with submissions count
+// GET - get one assignment with submissions count
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const user = await requireRole(["INSTRUCTOR", "ADMIN", "SUPER_ADMIN"])
@@ -43,7 +43,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   })
 }
 
-// PATCH — update assignment
+// PATCH - update assignment
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const user = await requireRole(["INSTRUCTOR", "ADMIN", "SUPER_ADMIN"])
@@ -108,7 +108,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   return NextResponse.json({ assignment: updated })
 }
 
-// DELETE — delete assignment
+// DELETE - delete assignment
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const user = await requireRole(["INSTRUCTOR", "ADMIN", "SUPER_ADMIN"])

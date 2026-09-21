@@ -4,7 +4,7 @@ import { withErrorHandler } from "@/lib/session"
 
 export const runtime = "nodejs"
 
-/* GET /api/blog/[slug] — public single blog post.
+/* GET /api/blog/[slug] - public single blog post.
  *  - Returns the post with its author.
  *  - Increments `views` (best-effort, fire-and-forget).
  *  - Also returns up to 4 related posts (same category, excluding self).
@@ -26,7 +26,7 @@ export const GET = withErrorHandler(
     db.blogPost
       .update({ where: { id: post.id }, data: { views: { increment: 1 } } })
       .catch(() => {
-        /* swallow — views are best-effort */
+        /* swallow - views are best-effort */
       })
 
     // Related posts (same category, excluding self), published only

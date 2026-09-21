@@ -104,7 +104,7 @@ function deriveDays(schedule: string): number[] {
   // Explicit weekend markers
   if (s.includes("sat")) days.add(6)
   if (s.includes("sun")) days.add(0)
-  // Weekdays — match any of Mon/Tue/Wed/Thu/Fri tokens (avoid false-positive
+  // Weekdays - match any of Mon/Tue/Wed/Thu/Fri tokens (avoid false-positive
   // from "Saturday/Sunday" by checking weekday tokens specifically)
   if (/\bmon\b|\bmon[-,]/.test(s)) days.add(1)
   if (/\btue\b|\btue[-,]/.test(s)) days.add(2)
@@ -184,7 +184,7 @@ export function BatchCalendarView() {
   const [submitting, setSubmitting] = React.useState(false)
 
   /* ----------------------------- DB query ----------------------------- */
-  // staleTime: 60s — repeat visits are instant (data is cached for 1 minute).
+  // staleTime: 60s - repeat visits are instant (data is cached for 1 minute).
   // The first compile of the API route is unavoidably slow on Turbopack, so the
   // skeleton + spinner below gives the user immediate visual feedback.
   const { data, isLoading, isError, error, isFetching } = useQuery<{ batches: TrainingBatch[]; count: number }>({
@@ -195,8 +195,8 @@ export function BatchCalendarView() {
     queryFn: async () => {
       const res = await fetch("/api/admin/training-batches")
       if (!res.ok) {
-        if (res.status === 401) throw new Error("Unauthorized — please sign in as an admin")
-        if (res.status === 403) throw new Error("Forbidden — admin role required")
+        if (res.status === 401) throw new Error("Unauthorized - please sign in as an admin")
+        if (res.status === 403) throw new Error("Forbidden - admin role required")
         throw new Error("Failed to load batches")
       }
       return res.json()
@@ -374,7 +374,7 @@ export function BatchCalendarView() {
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
         {/* ----------------------------- loading state ----------------------------- */}
-        {/* Immediate, friendly loading state — never a blank page. Shown both on
+        {/* Immediate, friendly loading state - never a blank page. Shown both on
             the first load (isLoading) and on background re-fetches (isFetching). */}
         {(isLoading || isFetching) && (
           <div className="space-y-4">
@@ -689,7 +689,7 @@ export function BatchCalendarView() {
               <Pencil className="h-5 w-5 text-amber-400" /> Edit Batch
             </DialogTitle>
             <DialogDescription>
-              {editingBatch ? `${editingBatch.certification} — ${editingBatch.name}` : "Update batch details."}
+              {editingBatch ? `${editingBatch.certification} - ${editingBatch.name}` : "Update batch details."}
             </DialogDescription>
           </DialogHeader>
           <BatchFormFields form={form} setForm={setForm} />
@@ -730,7 +730,7 @@ export function BatchCalendarView() {
 }
 
 /* ---------------------------------------------------------------- *
- *  Form fields — shared between Create + Edit dialogs              *
+ *  Form fields - shared between Create + Edit dialogs              *
  * ---------------------------------------------------------------- */
 function BatchFormFields({
   form,
@@ -762,7 +762,7 @@ function BatchFormFields({
         <Input
           value={form.schedule}
           onChange={(e) => setForm({ ...form, schedule: e.target.value })}
-          placeholder="e.g. Sat + Sun, 7:00 PM – 9:00 PM IST"
+          placeholder="e.g. Sat + Sun, 7:00 PM-9:00 PM IST"
         />
       </div>
       <div className="grid grid-cols-2 gap-3">

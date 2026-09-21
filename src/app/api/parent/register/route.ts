@@ -18,7 +18,7 @@ export const runtime = "nodejs"
  *  - Rate limited per IP.
  *
  * A single student can have multiple parent/guardian accounts linked
- * (e.g. mother + father) — each must be approved separately.
+ * (e.g. mother + father) - each must be approved separately.
  */
 
 const schema = z.object({
@@ -35,7 +35,7 @@ const schema = z.object({
   studentEmail: z.string().email("Valid student email required"),
 })
 
-// Rate limit — 5 registrations / 10 min / IP
+// Rate limit - 5 registrations / 10 min / IP
 const RATE_WINDOW = 10 * 60 * 1000
 const RATE_MAX = 5
 const rateMap = new Map<string, { count: number; resetAt: number }>()
@@ -85,7 +85,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Look up the student — but NEVER reveal whether the account exists
+    // Look up the student - but NEVER reveal whether the account exists
     // (anti-enumeration: same message + comparable work factor either way).
     const student = await db.user.findUnique({
       where: { email: studentEmail.toLowerCase() },
@@ -132,7 +132,7 @@ export async function POST(req: NextRequest) {
       const { sendEmail } = await import("@/lib/email")
       await sendEmail({
         to: student.email,
-        subject: "Parent/guardian link request — action needed",
+        subject: "Parent/guardian link request - action needed",
         body: `Hi ${student.name},\n\n${name} (${relationship}) requested to link a parent/guardian account to your GuardianX profile.\n\nIf this is expected, log in and open your Profile → "Parent Link Requests" to approve it. If you don't recognise this request, simply ignore it (it expires in 7 days) or reject it.\n\nThe GuardianX Team`,
         type: "notification",
         userId: student.id,
@@ -141,7 +141,7 @@ export async function POST(req: NextRequest) {
       // non-fatal
     }
 
-    // NOTE: no parent token is returned here — the portal unlocks only
+    // NOTE: no parent token is returned here - the portal unlocks only
     // after the student approves.
     return NextResponse.json(
       {

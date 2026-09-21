@@ -4,7 +4,7 @@ import { requireRole } from "@/lib/session"
 import { sendEmail } from "@/lib/email"
 import { createNotification } from "@/lib/notifications"
 
-// POST — grade a submission.
+// POST - grade a submission.
 // Body: { grade (0-100), feedback, rubricScores? (JSON array) }
 // Sets gradedAt, gradedBy, status "graded". Sends email + notification to student.
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -54,7 +54,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     if (submission.user) {
       await sendEmail({
         to: submission.user.email,
-        subject: `📝 Graded — ${submission.assignment.title}`,
+        subject: `📝 Graded - ${submission.assignment.title}`,
         body: `Hi ${submission.user.name},
 
 Your submission for "${submission.assignment.title}" has been graded.

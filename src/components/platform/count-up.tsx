@@ -1,7 +1,7 @@
 "use client"
 
 /**
- * CountUp — animated number that counts up when scrolled into view.
+ * CountUp - animated number that counts up when scrolled into view.
  *
  * Used for stat tiles (hero stats, dashboards) so key metrics feel alive.
  * Renders a plain <span> with tabular-nums; formatting (commas, suffix)

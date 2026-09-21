@@ -15,7 +15,7 @@ async function loadOwnedRubric(id: string, user: { id: string; role: string }) {
   return rubric
 }
 
-// GET — get rubric with criteria
+// GET - get rubric with criteria
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const user = await requireRole(["INSTRUCTOR", "ADMIN", "SUPER_ADMIN"])
@@ -38,7 +38,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   return NextResponse.json({ rubric })
 }
 
-// PATCH — update rubric (title, description) AND replace criteria (delete old, insert new)
+// PATCH - update rubric (title, description) AND replace criteria (delete old, insert new)
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const user = await requireRole(["INSTRUCTOR", "ADMIN", "SUPER_ADMIN"])
@@ -113,7 +113,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   return NextResponse.json({ rubric })
 }
 
-// DELETE — delete rubric
+// DELETE - delete rubric
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const user = await requireRole(["INSTRUCTOR", "ADMIN", "SUPER_ADMIN"])

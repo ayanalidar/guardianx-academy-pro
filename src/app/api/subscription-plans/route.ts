@@ -4,7 +4,7 @@ import { withErrorHandler } from "@/lib/session"
 
 export const runtime = "nodejs"
 
-/* GET /api/subscription-plans — public.
+/* GET /api/subscription-plans - public.
  * Returns all active subscription plans ordered by `order` asc.
  * If no plans exist in the DB, returns a sensible default set so the
  * public pricing page always has something to show. */

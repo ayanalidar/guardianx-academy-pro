@@ -4,7 +4,7 @@ import { requireAdmin, withErrorHandler } from "@/lib/session"
 
 export const runtime = "nodejs"
 
-/* GET /api/admin/revenue — ADMIN only.
+/* GET /api/admin/revenue - ADMIN only.
  * Returns the revenue analytics payload:
  *   - totalRevenue        sum of all paid orders' finalAmount
  *   - thisMonthRevenue    sum of paid orders created in the current calendar month
@@ -25,7 +25,7 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
   const isExport = new URL(req.url).searchParams.get("export") === "1"
   const orderTake = isExport ? 5000 : undefined
 
-  // Pull all paid orders in one query and aggregate in JS — orders table
+  // Pull all paid orders in one query and aggregate in JS - orders table
   // is small enough (per the PAYMENT-COUPON-SEARCH worklog) that this is
   // faster than 5 separate SQL aggregations.
   const paidOrders = await db.order.findMany({
@@ -97,7 +97,7 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
   const recentOrders = paidOrders.slice(0, orderTake ?? 20).map((o) => ({
     id: o.id,
     createdAt: o.createdAt.toISOString(),
-    userName: o.user?.name ?? "—",
+    userName: o.user?.name ?? " - ",
     userEmail: o.user?.email ?? null,
     courseTitle: o.course?.title ?? null,
     courseShortName: o.course?.shortName ?? null,
@@ -109,7 +109,7 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
   }))
 
   // ----- coupon usage stats -----
-  // Aggregate per-couponCode (from the orders table) — gives us real
+  // Aggregate per-couponCode (from the orders table) - gives us real
   // redemption counts + total discount given + net revenue impact.
   const couponAgg = new Map<string, {
     code: string

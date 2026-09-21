@@ -11,11 +11,11 @@ import { captureServerError } from "@/lib/sentry-report"
  *   ADMIN_EMAILS = admin@academy.guardianx.cloud, other@domain
  *
  * The first time a listed account signs in (or any session check runs for
- * it), its role is upgraded to SUPER_ADMIN — full platform privileges —
+ * it), its role is upgraded to SUPER_ADMIN - full platform privileges - 
  * and the change PERSISTS in the database. Idempotent: the write only
  * happens while the role is still below SUPER_ADMIN, so it costs nothing
  * on every other request. Removing the env var later does NOT demote
- * the account (by design — promotion is a one-way bootstrap).
+ * the account (by design - promotion is a one-way bootstrap).
  */
 const BOOTSTRAP_ADMIN_EMAILS = (process.env.ADMIN_EMAILS || "")
   .split(",")
@@ -41,7 +41,7 @@ const USER_SELECT = {
  * Per-lambda in-memory cache for getCurrentUser().
  *
  * Every authenticated API request used to pay a `user.findUnique` round
- * trip on top of session decoding — significant when the DB is distant and
+ * trip on top of session decoding - significant when the DB is distant and
  * the lambda is warm (the common case within a single page load, where a
  * dozen API calls each re-resolve the SAME user). A short 30s TTL keeps
  * role/permission changes effectively real-time while eliminating the
@@ -60,7 +60,7 @@ function userFromCache(id: string) {
 
 function userToCache(id: string, user: any) {
   _userCache.set(id, { user, expiresAt: Date.now() + USER_CACHE_TTL })
-  // Bound the map defensively (tiny — one entry per active user per lambda).
+  // Bound the map defensively (tiny - one entry per active user per lambda).
   if (_userCache.size > 500) {
     const now = Date.now()
     for (const [k, v] of _userCache) {
@@ -72,7 +72,7 @@ function userToCache(id: string, user: any) {
 export async function getCurrentUser() {
   // Dynamic options: same DB-backed provider config as the auth route handler.
   // The secret is identical (requireSecret("NEXTAUTH_SECRET")) so JWT decoding
-  // is unaffected — only the provider list differs, which getServerSession
+  // is unaffected - only the provider list differs, which getServerSession
   // does not need.
   const session = await getServerSession(await getAuthOptions())
   if (!session?.user) return null
@@ -103,7 +103,7 @@ export async function getCurrentUser() {
       // drift on a stale remote DB). The next session read retries.
     }
   }
-  // A user row that vanished mid-session must NOT be pinned in cache —
+  // A user row that vanished mid-session must NOT be pinned in cache - 
   // only cache the found shape so the next request re-checks the DB.
   if (user) userToCache(userId, user)
   return user
@@ -113,7 +113,7 @@ export type SafeUser = Awaited<ReturnType<typeof getCurrentUser>>
 export type AuthUser = NonNullable<SafeUser>
 
 /**
- * requireRole(roles) — server-side RBAC gate for API routes.
+ * requireRole(roles) - server-side RBAC gate for API routes.
  *
  * Usage:
  *   const user = await requireRole(["ADMIN"])
@@ -146,7 +146,7 @@ export async function requireAdmin(): Promise<AuthUser | NextResponse> {
 }
 
 /**
- * withErrorHandler() — higher-order function that wraps an API route handler
+ * withErrorHandler() - higher-order function that wraps an API route handler
  * with try/catch to prevent Prisma/DB stack traces from leaking to clients.
  *
  * On unhandled errors, returns a generic 500 with no stack trace.
@@ -179,7 +179,7 @@ export function withErrorHandler<T extends any[]>(
           stack: typeof error?.stack === "string" ? error.stack.slice(0, 1500) : undefined,
         },
       )
-      // Return a generic 500 — never leak the stack trace
+      // Return a generic 500 - never leak the stack trace
       return NextResponse.json(
         { error: "Internal server error" },
         { status: 500 }
@@ -189,7 +189,7 @@ export function withErrorHandler<T extends any[]>(
 }
 
 /**
- * readJsonBody() — parse a request body as JSON with size + shape validation.
+ * readJsonBody() - parse a request body as JSON with size + shape validation.
  *
  * Returns `{ data, error }`:
  *   - on success, `data` is the parsed object and `error` is null.
@@ -244,7 +244,7 @@ export async function readJsonBody<T = unknown>(
 }
 
 /**
- * In-memory rate limiter — single-instance only.
+ * In-memory rate limiter - single-instance only.
  *
  * For serverless / multi-instance deployments, replace with a Redis-backed
  * limiter (Upstash Ratelimit). The function signature is intentionally
@@ -255,7 +255,7 @@ export async function readJsonBody<T = unknown>(
  *   if (!ok) return NextResponse.json({ error: "Too many requests" }, { status: 429 })
  *
  * Identity keys: use a stable prefix + IP + (optional) user ID. Don't use
- * the bare IP — Cloudflare/Vercel can mask it. Prefer `x-forwarded-for`'s
+ * the bare IP - Cloudflare/Vercel can mask it. Prefer `x-forwarded-for`'s
  * first hop + a route-specific prefix.
  */
 type RateLimitEntry = { count: number; resetAt: number }

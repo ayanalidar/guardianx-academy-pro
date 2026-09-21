@@ -14,7 +14,7 @@ import {
 } from "lucide-react"
 
 /* ============================================================
-   /event/<slug> — public event detail (master-prompt §36)
+   /event/<slug> - public event detail (master-prompt §36)
    ============================================================ */
 
 interface EventDetail {
@@ -311,7 +311,7 @@ function Fact({ icon: Icon, label, value, tint }: { icon: React.ComponentType<{ 
 }
 
 /* ============================================================
-   RegisterCard — registration flow for the event detail page.
+   RegisterCard - registration flow for the event detail page.
    - Logged-out users see "Sign in to register".
    - Logged-in users see "Register for this event". On success,
      the card flips to a "You're registered!" confirmation with an
@@ -326,7 +326,7 @@ function RegisterCard({ event }: { event: EventDetail }) {
   const [result, setResult] = React.useState<RegisterResponse | null>(null)
   const [error, setError] = React.useState<string | null>(null)
 
-  // Local count state — we keep it in sync with the server response so the
+  // Local count state - we keep it in sync with the server response so the
   // "X people registered" counter ticks up immediately after a successful
   // registration without requiring a full refetch of the event.
   const [liveRegistered, setLiveRegistered] = React.useState(event.registered)

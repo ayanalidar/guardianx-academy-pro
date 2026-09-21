@@ -5,7 +5,7 @@ import { getCurrentUser } from "@/lib/session"
 export const runtime = "nodejs"
 
 // ============================================================
-// CTF Competition detail — challenges + live leaderboard
+// CTF Competition detail - challenges + live leaderboard
 // GET: competition with challenges + teams ranked
 // ============================================================
 
@@ -48,7 +48,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
       score: t.score,
       rank: i + 1,
       memberCount: t.members.length,
-      captainName: t.members.find((m) => m.role === "captain")?.user.name ?? t.members[0]?.user.name ?? "—",
+      captainName: t.members.find((m) => m.role === "captain")?.user.name ?? t.members[0]?.user.name ?? " - ",
       isMine: t.id === myTeam?.id,
     }))
 

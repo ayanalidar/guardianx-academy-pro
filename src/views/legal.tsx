@@ -59,7 +59,7 @@ const LEGAL_NAV: LegalNavItem[] = [
 const PAGE_META: Record<LegalPageType, { title: string; subtitle: string; lastUpdated: string; icon: React.ComponentType<{ className?: string }>; accent: string }> = {
   about: {
     title: "About GuardianX Academy",
-    subtitle: "Building Tomorrow's Cyber Guardians — one student, one campus, one certification at a time.",
+    subtitle: "Building Tomorrow's Cyber Guardians - one student, one campus, one certification at a time.",
     lastUpdated: "January 15, 2025",
     icon: Building2,
     accent: "emerald",
@@ -282,7 +282,7 @@ function AboutContent() {
           <h2 className="text-3xl md:text-4xl font-bold mb-4 text-holo">Building Tomorrow&apos;s Cyber Guardians</h2>
           <p className="text-muted-foreground text-base md:text-lg leading-relaxed max-w-3xl">
             GuardianX Academy was founded with a single, urgent mission: to close the global cyber
-            security talent gap by making world-class training accessible to every learner — whether
+            security talent gap by making world-class training accessible to every learner - whether
             they&apos;re a student on a university campus or a working professional leveling up from
             home. We blend rigorous certification curricula with hands-on, real-world labs to forge
             practitioners, not just certificate-holders.
@@ -294,14 +294,14 @@ function AboutContent() {
         <p>
           To democratize cyber security education by delivering industry-aligned certification
           training through both in-premises batches (at schools, colleges, and universities) and
-          virtual cohorts for individual learners — equipping every student with the skills,
+          virtual cohorts for individual learners - equipping every student with the skills,
           confidence, and verifiable credentials to defend the digital world.
         </p>
       </Section>
 
       <Section id="vision" title="Our Vision" icon={Eye} accent="cyan">
         <p>
-          A world where every organization — regardless of size or sector — can find skilled cyber
+          A world where every organization - regardless of size or sector - can find skilled cyber
           security professionals, and where every learner has a clear, affordable path to a cyber
           career. We envision 100,000+ certified Guardians by 2030, defending critical
           infrastructure, governments, and businesses across the globe.
@@ -311,10 +311,10 @@ function AboutContent() {
       <Section id="values" title="Our Values" icon={Heart} accent="violet">
         <div className="grid sm:grid-cols-2 gap-4 mt-2">
           {[
-            { icon: Shield, title: "Integrity First", desc: "We hold ourselves to the highest ethical standards. Hackers we train are guardians, not attackers — sworn to use skills lawfully and defensively." },
-            { icon: FlaskConical, title: "Practice over Theory", desc: "Real Docker containers, real exploits, real flags. We don't just teach concepts — we put a terminal in your hands from day one." },
+            { icon: Shield, title: "Integrity First", desc: "We hold ourselves to the highest ethical standards. Hackers we train are guardians, not attackers - sworn to use skills lawfully and defensively." },
+            { icon: FlaskConical, title: "Practice over Theory", desc: "Real Docker containers, real exploits, real flags. We don't just teach concepts - we put a terminal in your hands from day one." },
             { icon: Users, title: "Accessible to All", desc: "Cyber security shouldn't be gated by geography or income. We partner with campuses worldwide and offer scholarships to underrepresented talent." },
-            { icon: Award, title: "Outcomes over Promises", desc: "Our north star is job placement — 94% of certified Guardians land cyber roles within 6 months. We measure success by careers launched." },
+            { icon: Award, title: "Outcomes over Promises", desc: "Our north star is job placement - 94% of certified Guardians land cyber roles within 6 months. We measure success by careers launched." },
             { icon: Brain, title: "Always Learning", desc: "Threats evolve daily. So do our courses. We update content monthly and add new labs as new vulnerabilities emerge in the wild." },
             { icon: Globe, title: "Community-Driven", desc: "15,000+ Guardians strong. Peer mentorship, discussion forums, and a lifelong alumni network that has your back." },
           ].map((v, i) => (
@@ -388,31 +388,31 @@ function AboutContent() {
       <Section id="story" title="The GuardianX Story" icon={Rocket} accent="emerald">
         <div className="space-y-4 mt-2">
           <div className="border-l-2 border-emerald-500/30 pl-4 py-1">
-            <div className="text-xs font-mono text-emerald-400 mb-1">2021 — THE SPARK</div>
+            <div className="text-xs font-mono text-emerald-400 mb-1">2021 - THE SPARK</div>
             <p className="text-sm text-muted-foreground leading-relaxed">
               Our founder, then a CISO at a Fortune 500 company, watched helplessly as their
               security team couldn&apos;t fill 12 open positions for over a year. The talent gap
-              wasn&apos;t abstract — it was a national security risk. GuardianX Academy was born
+              wasn&apos;t abstract - it was a national security risk. GuardianX Academy was born
               that night.
             </p>
           </div>
           <div className="border-l-2 border-cyan-500/30 pl-4 py-1">
-            <div className="text-xs font-mono text-cyan-400 mb-1">2022 — FIRST CAMPUS</div>
+            <div className="text-xs font-mono text-cyan-400 mb-1">2022 - FIRST CAMPUS</div>
             <p className="text-sm text-muted-foreground leading-relaxed">
-              Launched our first in-premises cohort at a partner university — 40 students, 6
+              Launched our first in-premises cohort at a partner university - 40 students, 6
               certifications, 100% pass rate. The model worked. We scaled to 10 campuses in 8 months.
             </p>
           </div>
           <div className="border-l-2 border-violet-500/30 pl-4 py-1">
-            <div className="text-xs font-mono text-violet-400 mb-1">2023 — DOCKER LABS LAUNCH</div>
+            <div className="text-xs font-mono text-violet-400 mb-1">2023 - DOCKER LABS LAUNCH</div>
             <p className="text-sm text-muted-foreground leading-relaxed">
               Built our proprietary Docker-based lab platform with xterm.js in-browser terminals.
-              Every student now gets real, isolated Kali attack boxes and vulnerable target machines —
+              Every student now gets real, isolated Kali attack boxes and vulnerable target machines - 
               no setup required.
             </p>
           </div>
           <div className="border-l-2 border-amber-500/30 pl-4 py-1">
-            <div className="text-xs font-mono text-amber-400 mb-1">2024 — PROCTORED EXAMS</div>
+            <div className="text-xs font-mono text-amber-400 mb-1">2024 - PROCTORED EXAMS</div>
             <p className="text-sm text-muted-foreground leading-relaxed">
               Introduced the industry&apos;s most rigorous online proctoring system: fullscreen
               lockdown, tab-switch detection, randomized question banks, and auto-void on violation.
@@ -420,7 +420,7 @@ function AboutContent() {
             </p>
           </div>
           <div className="border-l-2 border-emerald-500/30 pl-4 py-1">
-            <div className="text-xs font-mono text-emerald-400 mb-1">2025 — 15,000+ GUARDIANS</div>
+            <div className="text-xs font-mono text-emerald-400 mb-1">2025 - 15,000+ GUARDIANS</div>
             <p className="text-sm text-muted-foreground leading-relaxed">
               Today, GuardianX Academy serves 15,000+ students across 50+ partner campuses with 27
               certification tracks and 31 hands-on labs. And we&apos;re just getting started.
@@ -468,11 +468,11 @@ function PrivacyContent() {
           "IP address, browser type, operating system, and device identifiers",
           "Pages visited, click patterns, and session duration (anonymized analytics)",
           "Cookies and similar tracking technologies (see our Cookie Policy)",
-          "Exam proctoring data: webcam snapshots, screen recordings (only during proctored exams — see below)",
+          "Exam proctoring data: webcam snapshots, screen recordings (only during proctored exams - see below)",
         ]} />
         <h4 className="text-sm font-semibold text-foreground mt-4 mb-2">Payment Information</h4>
         <BulletList items={[
-          "Billing name, address, and email (processed by our payment provider — we never store full card numbers)",
+          "Billing name, address, and email (processed by our payment provider - we never store full card numbers)",
           "Transaction history and invoice records for accounting purposes",
         ]} />
       </Section>
@@ -485,11 +485,11 @@ function PrivacyContent() {
           "Tracking learning progress, calculating scores, and issuing verifiable certificates",
           "Detecting and preventing fraud, cheating on exams, and abuse of our lab infrastructure",
           "Sending transactional emails (enrollment confirmations, exam results, certificate issuance)",
-          "Sending newsletters and promotional communications (only if you opt in — unsubscribe anytime)",
+          "Sending newsletters and promotional communications (only if you opt in - unsubscribe anytime)",
           "Improving our courses, labs, and platform based on aggregated learning analytics",
           "Complying with legal obligations and cooperating with law enforcement when required",
         ]} />
-        <Callout title="Proctored exam data — special category" type="warning">
+        <Callout title="Proctored exam data - special category" type="warning">
           During proctored examinations, we temporarily collect webcam snapshots and screen activity
           to verify your identity and detect academic dishonesty. This data is retained for 90 days
           post-exam for appeals review, then permanently deleted. You consent to this collection
@@ -502,7 +502,7 @@ function PrivacyContent() {
         <BulletList accent="violet" items={[
           <><strong>Performance of a contract:</strong> Processing your data to deliver courses, labs, and certifications you&apos;ve enrolled in.</>,
           <><strong>Legitimate interests:</strong> Fraud prevention, platform security, and improving our services (balanced against your privacy rights).</>,
-          <><strong>Consent:</strong> For marketing communications, optional cookies, and proctored exam monitoring — withdrawn anytime.</>,
+          <><strong>Consent:</strong> For marketing communications, optional cookies, and proctored exam monitoring - withdrawn anytime.</>,
           <><strong>Legal obligation:</strong> Retaining financial records and responding to lawful requests from authorities.</>,
         ]} />
       </Section>
@@ -517,9 +517,9 @@ function PrivacyContent() {
           </button>.
         </p>
         <BulletList accent="amber" items={[
-          "Essential cookies (required for login and platform functionality — cannot be disabled)",
-          "Preference cookies (theme, language — stored locally, never sent to servers)",
-          "Analytics cookies (anonymized usage data — opt-out available)",
+          "Essential cookies (required for login and platform functionality - cannot be disabled)",
+          "Preference cookies (theme, language - stored locally, never sent to servers)",
+          "Analytics cookies (anonymized usage data - opt-out available)",
           "We do NOT use third-party advertising cookies or sell your data to advertisers",
         ]} />
       </Section>
@@ -596,9 +596,9 @@ function PrivacyContent() {
         <p>We implement industry-leading technical and organizational safeguards:</p>
         <BulletList items={[
           "All data in transit is encrypted via TLS 1.3 (HTTPS)",
-          "Passwords hashed with bcrypt (12 rounds) — never stored in plaintext",
+          "Passwords hashed with bcrypt (12 rounds) - never stored in plaintext",
           "Database access restricted to authorized personnel with multi-factor authentication",
-          "Lab Docker containers run on isolated networks — no cross-tenant communication",
+          "Lab Docker containers run on isolated networks - no cross-tenant communication",
           "Proctored exam recordings encrypted at rest with AES-256",
           "Regular security audits and penetration testing of our platform",
           "Incident response plan with 72-hour breach notification (GDPR-compliant)",
@@ -628,7 +628,7 @@ function PrivacyContent() {
         <Card className="p-4 glass-card mt-2">
           <div className="space-y-1 text-sm">
             <div><span className="text-muted-foreground">Email:</span> <a href="mailto:privacy@guardianx.io" className="text-emerald-400 hover:underline">privacy@guardianx.io</a></div>
-            <div><span className="text-muted-foreground">Mail:</span> GuardianX Academy — Privacy Office, Attn: Data Protection Officer</div>
+            <div><span className="text-muted-foreground">Mail:</span> GuardianX Academy - Privacy Office, Attn: Data Protection Officer</div>
             <div><span className="text-muted-foreground">Response time:</span> Within 30 days (GDPR), 45 days (CCPA)</div>
           </div>
         </Card>
@@ -659,7 +659,7 @@ function TermsContent() {
           "You must provide accurate, current, and complete information during registration",
           "You are solely responsible for maintaining the confidentiality of your password",
           "You must be at least 16 years old (or have parental consent for school cohorts)",
-          "One account per person — sharing accounts is prohibited and may result in termination",
+          "One account per person - sharing accounts is prohibited and may result in termination",
           "You must notify us immediately of any unauthorized access to your account",
           "We reserve the right to suspend accounts with suspicious or fraudulent activity",
         ]} />
@@ -691,7 +691,7 @@ function TermsContent() {
           "Content is licensed to you for personal, non-commercial educational use during your active enrollment",
           "You may NOT redistribute, republish, or commercially exploit any course materials",
           "Certificates earned remain your property, but the GuardianX brand and verify ID are licensed",
-          "Lab flags are unique per session and are considered trade secrets — sharing them voids your certificate",
+          "Lab flags are unique per session and are considered trade secrets - sharing them voids your certificate",
         ]} />
         <h4 className="text-sm font-semibold text-foreground mt-4 mb-2">Your Content</h4>
         <BulletList accent="amber" items={[
@@ -701,7 +701,7 @@ function TermsContent() {
         ]} />
         <h4 className="text-sm font-semibold text-foreground mt-4 mb-2">Third-Party Materials</h4>
         <BulletList accent="amber" items={[
-          "We reference open-source projects like PayloadsAllTheThings — those retain their original licenses",
+          "We reference open-source projects like PayloadsAllTheThings - those retain their original licenses",
           "Certification names (CEH, CISSP, CCNA, etc.) are trademarks of their respective owners",
           "GuardianX Academy is an independent training provider and is not affiliated with these certifying bodies unless explicitly stated",
         ]} />
@@ -710,7 +710,7 @@ function TermsContent() {
       <Section id="prohibited" title="5. Prohibited Activities" icon={AlertTriangle} accent="red">
         <p>The following activities are strictly prohibited and will result in immediate termination:</p>
         <BulletList accent="red" items={[
-          "Cheating on exams — including screen sharing, using AI assistants, or having another person take your exam",
+          "Cheating on exams - including screen sharing, using AI assistants, or having another person take your exam",
           "Attempting to brute-force, scan, or attack proctoring infrastructure",
           "Extracting or exfiltrating other users&apos; data from lab environments",
           "Using the platform to recruit for, plan, or coordinate illegal cyber attacks",
@@ -720,13 +720,13 @@ function TermsContent() {
         ]} />
       </Section>
 
-      <Section id="labs" title="6. Hands-on Labs — Special Terms" icon={Terminal} accent="violet">
+      <Section id="labs" title="6. Hands-on Labs - Special Terms" icon={Terminal} accent="violet">
         <p>By using GuardianX labs, you acknowledge and agree:</p>
         <BulletList accent="violet" items={[
-          "Lab Docker containers are ephemeral — destroyed at session end (60-minute TTL). Don&apos;t store personal data in them.",
-          "Container networks are isolated — you cannot and must not attempt to reach other tenants or the host system",
-          "Lab flags are dynamically generated per session — they are non-transferable and non-shareable",
-          "Lab infrastructure is provided &quot;as is&quot; — we are not liable for lost work due to container restarts",
+          "Lab Docker containers are ephemeral - destroyed at session end (60-minute TTL). Don&apos;t store personal data in them.",
+          "Container networks are isolated - you cannot and must not attempt to reach other tenants or the host system",
+          "Lab flags are dynamically generated per session - they are non-transferable and non-shareable",
+          "Lab infrastructure is provided &quot;as is&quot; - we are not liable for lost work due to container restarts",
           "Misuse of lab environments (e.g., cryptojacking, hosting illegal content) results in permanent ban and legal action",
           "Lab access may be rate-limited to ensure fair resource allocation across all students",
         ]} />
@@ -736,25 +736,25 @@ function TermsContent() {
         <BulletList accent="amber" items={[
           "Proctored exams require webcam access, fullscreen mode, and stable internet",
           "Tab-switching, copy/paste, opening new windows, or exiting fullscreen auto-voids the exam",
-          "Randomized question banks mean no two exams are identical — sharing answers is futile",
+          "Randomized question banks mean no two exams are identical - sharing answers is futile",
           "Recorded proctoring data is reviewed for violations; flagged exams are voided and fees are non-refundable",
           "Appeals for voided exams must be submitted within 7 days via the Contact page",
-          "Certifications are only issued after passing the proctored final exam — no exceptions",
+          "Certifications are only issued after passing the proctored final exam - no exceptions",
         ]} />
       </Section>
 
       <Section id="payments" title="8. Payments, Billing & Subscriptions" icon={CreditCard} accent="teal">
         <BulletList accent="teal" items={[
           "Course fees, exam fees, and subscription prices are displayed at checkout in your local currency",
-          "Payments are processed by our PCI-DSS compliant payment provider — we never see or store your full card number",
+          "Payments are processed by our PCI-DSS compliant payment provider - we never see or store your full card number",
           "Subscriptions auto-renew unless cancelled at least 24 hours before the renewal date",
-          "Refunds are governed by our Refund Policy — see the dedicated Refund Policy page",
+          "Refunds are governed by our Refund Policy - see the dedicated Refund Policy page",
           "We reserve the right to change pricing with 30 days&apos; advance notice to existing subscribers",
         ]} />
       </Section>
 
       <Section id="liability" title="9. Disclaimer & Limitation of Liability" icon={Shield} accent="cyan">
-        <Callout title="Important — please read">
+        <Callout title="Important - please read">
           GuardianX Academy is an educational platform. We do not guarantee certification pass
           rates, job placement, or specific career outcomes. Your success depends on your effort.
         </Callout>
@@ -762,8 +762,8 @@ function TermsContent() {
           "The platform is provided &quot;as is&quot; and &quot;as available&quot; without warranties of any kind",
           "We are not liable for indirect, incidental, or consequential damages arising from platform use",
           "Our total liability for any claim is limited to the amount you paid us in the preceding 12 months",
-          "We are not responsible for lost lab work due to infrastructure failures — save your notes externally",
-          "You are solely responsible for how you apply skills learned here — we are not liable for your actions",
+          "We are not responsible for lost lab work due to infrastructure failures - save your notes externally",
+          "You are solely responsible for how you apply skills learned here - we are not liable for your actions",
         ]} />
       </Section>
 
@@ -777,7 +777,7 @@ function TermsContent() {
 
       <Section id="termination" title="11. Termination" icon={AlertTriangle} accent="red">
         <BulletList accent="red" items={[
-          "You may delete your account at any time from Profile Settings — this action is irreversible",
+          "You may delete your account at any time from Profile Settings - this action is irreversible",
           "We may suspend or terminate your account for violations of these Terms, with or without notice",
           "Upon termination, your access to courses, labs, and certificates is immediately revoked",
           "Certificates earned before termination remain valid (subject to the revocation clause below)",
@@ -807,7 +807,7 @@ function TermsContent() {
         <Card className="p-4 glass-card">
           <div className="space-y-1 text-sm">
             <div><span className="text-muted-foreground">Email:</span> <a href="mailto:legal@guardianx.io" className="text-emerald-400 hover:underline">legal@guardianx.io</a></div>
-            <div><span className="text-muted-foreground">Mail:</span> GuardianX Academy — Legal Department</div>
+            <div><span className="text-muted-foreground">Mail:</span> GuardianX Academy - Legal Department</div>
             <div><span className="text-muted-foreground">Response time:</span> Within 7 business days</div>
           </div>
         </Card>
@@ -824,7 +824,7 @@ function FaqContent() {
       accent: "emerald",
       faqs: [
         { q: "What certification courses does GuardianX Academy offer?", a: "We offer 27 industry-recognized certification tracks across 8 categories: Ethical Hacking (CEH, OSCP, eJPT, PNPT), Networking (CCNA, CCNP, Network+, JNCIA), Web Security (WAPT, OSWE, Burp Suite), System Administration (RHCSA, RHCE, LPIC-1), Security Management (CISSP, CISM, CISA, ISO 27001), Identity & Access (CyberArk, SailPoint, Okta), Cloud Security (AWS Security, Azure SC-900, CCSP), and Forensics & Blue Team (GCFA, CySA+, BTL1)." },
-        { q: "How long does each course take to complete?", a: "Course duration varies by certification: foundational courses (CCNA, RHCSA, LPIC-1) typically take 25–30 hours, intermediate (CEH, WAPT, Burp Suite) 35–45 hours, and advanced (CISSP, OSCP, CCNP) 60–80 hours. You can learn at your own pace — there's no deadline. Most students complete one certification every 2–3 months." },
+        { q: "How long does each course take to complete?", a: "Course duration varies by certification: foundational courses (CCNA, RHCSA, LPIC-1) typically take 25-30 hours, intermediate (CEH, WAPT, Burp Suite) 35-45 hours, and advanced (CISSP, OSCP, CCNP) 60-80 hours. You can learn at your own pace - there's no deadline. Most students complete one certification every 2-3 months." },
         { q: "Do I need prior experience to enroll?", a: "No. We have beginner-friendly tracks (Network+, RHCSA, SC-900, BTL1) that assume zero prior cyber security knowledge. Our courses are structured with prerequisites clearly marked, so you always know what's needed before enrolling. We also offer a free 'Cyber Foundations' intro course for absolute beginners." },
         { q: "Are course materials included in the fee?", a: "Yes. Every enrollment includes lifetime access to video lessons, PDF study materials, downloadable notes, interactive quizzes, hands-on labs, and the proctored final exam. There are no hidden fees or paywalls for course content." },
         { q: "Can I download course materials for offline study?", a: "PDF study guides and your personal notes are downloadable. Video lessons stream online only (to prevent piracy). Lab environments require an active internet connection since they're hosted in Docker containers on our infrastructure." },
@@ -835,12 +835,12 @@ function FaqContent() {
       icon: Terminal,
       accent: "violet",
       faqs: [
-        { q: "How do the Docker labs work?", a: "Each lab spins up dedicated Docker containers for you: typically a vulnerable target machine and a Kali Linux attack box, connected via an isolated network. You access the Kali box via xterm.js terminal right in your browser — no setup needed. Containers auto-destroy at session end (60-minute TTL) for security and resource fairness." },
-        { q: "Do I need a powerful computer to run labs?", a: "No! Labs run on our cloud infrastructure, not your machine. You only need a modern browser and a stable internet connection. Even a Chromebook works perfectly — all heavy lifting (Docker, Kali tools, vulnerable apps) happens on our servers." },
+        { q: "How do the Docker labs work?", a: "Each lab spins up dedicated Docker containers for you: typically a vulnerable target machine and a Kali Linux attack box, connected via an isolated network. You access the Kali box via xterm.js terminal right in your browser - no setup needed. Containers auto-destroy at session end (60-minute TTL) for security and resource fairness." },
+        { q: "Do I need a powerful computer to run labs?", a: "No! Labs run on our cloud infrastructure, not your machine. You only need a modern browser and a stable internet connection. Even a Chromebook works perfectly - all heavy lifting (Docker, Kali tools, vulnerable apps) happens on our servers." },
         { q: "How many labs are available?", a: "We currently offer 31 hands-on labs covering SQL injection, XSS, SSRF, command injection, JWT attacks, Log4Shell, IDOR, path traversal, privilege escalation, reverse engineering crackmes, nmap scanning, and more. New labs are added monthly as new vulnerabilities emerge." },
         { q: "What if I get stuck on a lab?", a: "Every lab includes a 'Hints' section with progressive nudges (without spoiling the answer). You can also post in the course-specific discussion forum where peers and instructors help. For deeper help, join a Live Session or reach out via the Community tab." },
-        { q: "Are lab flags the same for everyone?", a: "No. Flags are dynamically generated per session — they're cryptographically random and unique to your container instance. This means you can't Google the answer or copy a friend's flag. You must actually exploit the vulnerability to retrieve your unique flag." },
-        { q: "Can I keep my lab work after the session ends?", a: "Lab containers are destroyed at TTL (60 minutes) or when you end the session. Save any notes, screenshots, or write-ups externally (we recommend a markdown notes app). The lab challenge itself remains accessible — you can restart it anytime to practice again." },
+        { q: "Are lab flags the same for everyone?", a: "No. Flags are dynamically generated per session - they're cryptographically random and unique to your container instance. This means you can't Google the answer or copy a friend's flag. You must actually exploit the vulnerability to retrieve your unique flag." },
+        { q: "Can I keep my lab work after the session ends?", a: "Lab containers are destroyed at TTL (60 minutes) or when you end the session. Save any notes, screenshots, or write-ups externally (we recommend a markdown notes app). The lab challenge itself remains accessible - you can restart it anytime to practice again." },
       ],
     },
     {
@@ -852,7 +852,7 @@ function FaqContent() {
         { q: "What happens if I fail an exam?", a: "You can retake any proctored exam up to 3 times within 90 days of your first attempt (free of charge for course enrollees). After 3 attempts, a small fee applies for additional retakes. We provide a detailed weakness report after each attempt so you know what to study." },
         { q: "Are GuardianX certificates recognized by employers?", a: "Yes. Our certificates are verifiable via a unique verify ID and include your proctored exam score. We work directly with hiring partners across the industry. Additionally, many of our courses prepare you for industry-standard certifications (CEH, CISSP, CCNA, etc.) which you can then take with the official certifying body." },
         { q: "Can I get a PDF copy of my certificate?", a: "Absolutely. Once you pass a proctored exam, you can download a beautifully designed PDF certificate with your name, certification, score, issue date, and a unique verify ID. You can also share a public verification link on LinkedIn." },
-        { q: "How long are certificates valid?", a: "GuardianX certificates don't expire — they represent that you demonstrated mastery at the time of issuance. However, we recommend recertifying every 3 years as the cyber security landscape evolves. Many industry certs (CEH, CISSP) require CPE credits to maintain — we provide ongoing learning content to earn those." },
+        { q: "How long are certificates valid?", a: "GuardianX certificates don't expire - they represent that you demonstrated mastery at the time of issuance. However, we recommend recertifying every 3 years as the cyber security landscape evolves. Many industry certs (CEH, CISSP) require CPE credits to maintain - we provide ongoing learning content to earn those." },
         { q: "What if my exam was voided unfairly?", a: "You can appeal any voided exam within 7 days via the Contact page. Our proctoring team reviews the recording and activity logs. If the violation was a false positive (e.g., a browser crash), we'll reset your exam attempt free of charge." },
       ],
     },
@@ -861,10 +861,10 @@ function FaqContent() {
       icon: Radio,
       accent: "red",
       faqs: [
-        { q: "What are Live Sessions?", a: "Live Sessions are real-time, instructor-led workshops where the instructor shares their screen and voice with attendees. You can ask questions via chat, and the instructor can hand over presenter control to a student for demonstrations. Powered by WebRTC peer-to-peer — low latency, high quality." },
-        { q: "Are Live Sessions recorded?", a: "Yes. All Live Sessions are recorded and made available to enrolled students within 24 hours. You can revisit them anytime. Recordings are gated to enrolled students only — they're not publicly streamable." },
-        { q: "Do I need a webcam or microphone to attend?", a: "A microphone is optional — you can use text chat for questions. A webcam is only required if you want to volunteer as a co-presenter (with instructor permission). Most students attend with audio-only or text-chat mode." },
-        { q: "What if I miss a Live Session?", a: "No problem. The recording will be available in your course dashboard within 24 hours. We also post a summary and any resources/links mentioned. Live Sessions are supplementary — course completion doesn't require live attendance." },
+        { q: "What are Live Sessions?", a: "Live Sessions are real-time, instructor-led workshops where the instructor shares their screen and voice with attendees. You can ask questions via chat, and the instructor can hand over presenter control to a student for demonstrations. Powered by WebRTC peer-to-peer - low latency, high quality." },
+        { q: "Are Live Sessions recorded?", a: "Yes. All Live Sessions are recorded and made available to enrolled students within 24 hours. You can revisit them anytime. Recordings are gated to enrolled students only - they're not publicly streamable." },
+        { q: "Do I need a webcam or microphone to attend?", a: "A microphone is optional - you can use text chat for questions. A webcam is only required if you want to volunteer as a co-presenter (with instructor permission). Most students attend with audio-only or text-chat mode." },
+        { q: "What if I miss a Live Session?", a: "No problem. The recording will be available in your course dashboard within 24 hours. We also post a summary and any resources/links mentioned. Live Sessions are supplementary - course completion doesn't require live attendance." },
       ],
     },
     {
@@ -873,10 +873,10 @@ function FaqContent() {
       accent: "cyan",
       faqs: [
         { q: "How can my school/college/university partner with GuardianX?", a: "Visit our Partners page and submit the partnership inquiry form. Our partnerships team will reach out within 5 business days to schedule a discovery call. We offer custom cohort pricing, dedicated instructor assignment, branded certificates, and progress reporting for institutional administrators." },
-        { q: "What does an in-premises cohort look like?", a: "We send certified instructors to your campus for the duration of the cohort (typically 4–12 weeks). We provide all lab infrastructure remotely — your campus only needs a computer lab with internet access. We handle enrollment, assessments, and certification. You handle the room and the students." },
+        { q: "What does an in-premises cohort look like?", a: "We send certified instructors to your campus for the duration of the cohort (typically 4-12 weeks). We provide all lab infrastructure remotely - your campus only needs a computer lab with internet access. We handle enrollment, assessments, and certification. You handle the room and the students." },
         { q: "Do you offer virtual cohorts for institutions?", a: "Yes. For institutions that prefer remote delivery, we offer live virtual cohorts with the same instructor-led model. Students join via our platform; instructors teach remotely. This is popular for distributed student populations and corporate L&D programs." },
-        { q: "Can institutions get progress reports for their students?", a: "Absolutely. Partner institutions get an admin dashboard showing aggregated and individual student progress: lessons completed, quiz scores, lab challenges solved, exam results, and certifications earned. We respect student privacy — individual data is only shared with the institution the student is enrolled under." },
-        { q: "What's the minimum cohort size for partnership?", a: "We typically require a minimum of 15 students per cohort for in-premises delivery (to justify instructor travel). Virtual cohorts can be smaller — minimum 8 students. For larger cohorts (50+), we offer volume discounts and dedicated scheduling." },
+        { q: "Can institutions get progress reports for their students?", a: "Absolutely. Partner institutions get an admin dashboard showing aggregated and individual student progress: lessons completed, quiz scores, lab challenges solved, exam results, and certifications earned. We respect student privacy - individual data is only shared with the institution the student is enrolled under." },
+        { q: "What's the minimum cohort size for partnership?", a: "We typically require a minimum of 15 students per cohort for in-premises delivery (to justify instructor travel). Virtual cohorts can be smaller - minimum 8 students. For larger cohorts (50+), we offer volume discounts and dedicated scheduling." },
       ],
     },
     {
@@ -886,8 +886,8 @@ function FaqContent() {
       faqs: [
         { q: "Is there a free trial?", a: "Yes! Sign up for free and get instant access to a starter set of lessons, our 'Cyber Foundations' intro course, and a sample of beginner labs. No credit card required. Upgrade anytime to unlock full courses, all labs, and proctored exams." },
         { q: "What payment methods do you accept?", a: "We accept all major credit/debit cards (Visa, Mastercard, American Express, Discover), UPI (for India-based students), PayPal, and bank transfers for institutional partnerships. Cryptocurrency payments are coming soon." },
-        { q: "Can I get a refund if I'm not satisfied?", a: "Yes — see our Refund Policy for full details. Briefly: 14-day no-questions-asked refunds for unused course access, pro-rated refunds within 30 days, and exam fees are non-refundable once you start the exam." },
-        { q: "Do you offer scholarships or financial aid?", a: "Yes. We have a needs-based scholarship program covering 50–100% of course fees for underrepresented students. We also offer discounts for veterans, students from developing nations, and group enrollments. Apply via the Contact page." },
+        { q: "Can I get a refund if I'm not satisfied?", a: "Yes - see our Refund Policy for full details. Briefly: 14-day no-questions-asked refunds for unused course access, pro-rated refunds within 30 days, and exam fees are non-refundable once you start the exam." },
+        { q: "Do you offer scholarships or financial aid?", a: "Yes. We have a needs-based scholarship program covering 50-100% of course fees for underrepresented students. We also offer discounts for veterans, students from developing nations, and group enrollments. Apply via the Contact page." },
         { q: "Can I cancel my subscription anytime?", a: "Yes. Subscriptions can be cancelled anytime from your account settings. You keep access until the end of your current billing period. No cancellation fees. Re-activating later restores your progress and certifications." },
       ],
     },
@@ -896,8 +896,8 @@ function FaqContent() {
       icon: Server,
       accent: "violet",
       faqs: [
-        { q: "What are the system requirements?", a: "A modern browser (Chrome 90+, Firefox 88+, Edge 90+, Safari 14+), stable internet (5 Mbps+ recommended for video), and a webcam for proctored exams. No software installation required — everything runs in the browser, including the xterm.js terminal for labs." },
-        { q: "Does the platform work on mobile devices?", a: "Yes, the platform is fully responsive — you can watch lessons, read PDFs, take quizzes, and participate in discussions on mobile. Hands-on labs (with terminal) require a desktop or tablet with a keyboard due to terminal interactions. Proctored exams require desktop." },
+        { q: "What are the system requirements?", a: "A modern browser (Chrome 90+, Firefox 88+, Edge 90+, Safari 14+), stable internet (5 Mbps+ recommended for video), and a webcam for proctored exams. No software installation required - everything runs in the browser, including the xterm.js terminal for labs." },
+        { q: "Does the platform work on mobile devices?", a: "Yes, the platform is fully responsive - you can watch lessons, read PDFs, take quizzes, and participate in discussions on mobile. Hands-on labs (with terminal) require a desktop or tablet with a keyboard due to terminal interactions. Proctored exams require desktop." },
         { q: "How do I report a bug or technical issue?", a: "Use the Contact page or email support@guardianx.io. Include screenshots, your browser version, and steps to reproduce. Our engineering team responds within 24 hours (often much faster)." },
         { q: "Is my data secure on GuardianX?", a: "Yes. All data is encrypted in transit (TLS 1.3) and at rest (AES-256). Passwords are hashed with bcrypt. Lab Docker containers run on isolated networks. We undergo regular security audits. See our Privacy Policy for full details." },
       ],
@@ -913,7 +913,7 @@ function FaqContent() {
         </button>{" "}
         or email{" "}
         <a href="mailto:support@guardianx.io" className="text-emerald-400 hover:underline">support@guardianx.io</a>{" "}
-        — we respond within 24 hours.
+ - we respond within 24 hours.
       </Callout>
 
       {faqGroups.map((group, gi) => {
@@ -968,12 +968,12 @@ function RefundContent() {
         <h4 className="text-sm font-semibold text-foreground mb-2">14-Day No-Questions-Asked</h4>
         <BulletList items={[
           "Full refund within 14 days of purchase, provided you have NOT started the proctored final exam",
-          "No justification required — just email refunds@guardianx.io with your order ID",
-          "Refund processed within 5–7 business days to your original payment method",
+          "No justification required - just email refunds@guardianx.io with your order ID",
+          "Refund processed within 5-7 business days to your original payment method",
         ]} />
         <h4 className="text-sm font-semibold text-foreground mt-4 mb-2">30-Day Pro-Rated</h4>
         <BulletList items={[
-          "Between 15–30 days after purchase, you're eligible for a 50% refund if less than 50% of course content is completed",
+          "Between 15-30 days after purchase, you're eligible for a 50% refund if less than 50% of course content is completed",
           "If more than 50% of content is completed, the course is considered &quot;consumed&quot; and is non-refundable",
           "Course completion is measured by lessons marked complete, not by time spent",
         ]} />
@@ -981,7 +981,7 @@ function RefundContent() {
         <BulletList items={[
           "No refunds are available 30+ days after purchase, regardless of completion status",
           "However, you retain lifetime access to the course materials you paid for",
-          "If you&apos;re dissatisfied, contact us — we may offer course credit toward a different track",
+          "If you&apos;re dissatisfied, contact us - we may offer course credit toward a different track",
         ]} />
       </Section>
 
@@ -1003,14 +1003,14 @@ function RefundContent() {
       <Section id="subscriptions" title="3. Subscription Cancellation" icon={CreditCard} accent="cyan">
         <h4 className="text-sm font-semibold text-foreground mb-2">Monthly Subscriptions</h4>
         <BulletList accent="cyan" items={[
-          "Cancel anytime from your account settings — no fees, no questions",
+          "Cancel anytime from your account settings - no fees, no questions",
           "You retain full access until the end of your current billing period",
           "No pro-rated refund for the unused portion of the current month",
           "Future billing stops immediately upon cancellation",
         ]} />
         <h4 className="text-sm font-semibold text-foreground mt-4 mb-2">Annual Subscriptions</h4>
         <BulletList accent="cyan" items={[
-          "Cancel anytime — future renewal is stopped",
+          "Cancel anytime - future renewal is stopped",
           "Pro-rated refund available within the first 30 days (full refund minus 1 month&apos;s fee)",
           "After 30 days: Pro-rated refund minus a 15% administrative fee, calculated on remaining months",
           "If you&apos;ve completed any proctored exam during the subscription, the exam fee is deducted from any refund",
@@ -1019,7 +1019,7 @@ function RefundContent() {
 
       <Section id="institutional" title="4. Institutional & Cohort Refunds" icon={Building2} accent="violet">
         <BulletList accent="violet" items={[
-          "Institutional contracts have custom refund terms negotiated during partnership — refer to your contract",
+          "Institutional contracts have custom refund terms negotiated during partnership - refer to your contract",
           "Standard cohort policy: 100% refund if cancelled 30+ days before cohort start, 50% within 30 days, 0% after start",
           "Student drop-outs within an active cohort: Refunds handled per the institution&apos;s agreement with GuardianX",
           "Materials already delivered (printed books, custom labs) are deducted from any refund",
@@ -1031,8 +1031,8 @@ function RefundContent() {
           "Email refunds@guardianx.io with your order ID, course/exam name, and reason for refund (optional)",
           "Include &quot;Refund Request&quot; in the subject line for faster processing",
           "Our team responds within 2 business days with approval or follow-up questions",
-          "Approved refunds are processed to your original payment method within 5–7 business days",
-          "Bank processing times may add 3–5 additional days for the refund to appear on your statement",
+          "Approved refunds are processed to your original payment method within 5-7 business days",
+          "Bank processing times may add 3-5 additional days for the refund to appear on your statement",
         ]} />
       </Section>
 
@@ -1049,7 +1049,7 @@ function RefundContent() {
 
       <Section id="chargebacks" title="7. Chargebacks & Disputes" icon={Scale} accent="amber">
         <p>
-          We encourage you to contact us first — chargebacks harm both parties and delay resolution.
+          We encourage you to contact us first - chargebacks harm both parties and delay resolution.
           If you initiate a chargeback with your bank or card issuer without first contacting
           GuardianX Academy:
         </p>
@@ -1064,7 +1064,7 @@ function RefundContent() {
 
       <Section id="legal-rights" title="8. Your Statutory Rights" icon={Scale} accent="emerald">
         <p>
-          Some jurisdictions provide statutory refund rights that cannot be waived — for example,
+          Some jurisdictions provide statutory refund rights that cannot be waived - for example,
           the EU&apos;s 14-day cooling-off period for digital content (with explicit consent to
           waive) and US state-level consumer protection laws. Nothing in this policy limits any
           non-waivable statutory rights you may have.
@@ -1075,7 +1075,7 @@ function RefundContent() {
         <Card className="p-4 glass-card">
           <div className="space-y-1 text-sm">
             <div><span className="text-muted-foreground">Email:</span> <a href="mailto:refunds@guardianx.io" className="text-emerald-400 hover:underline">refunds@guardianx.io</a></div>
-            <div><span className="text-muted-foreground">Mail:</span> GuardianX Academy — Refunds Department</div>
+            <div><span className="text-muted-foreground">Mail:</span> GuardianX Academy - Refunds Department</div>
             <div><span className="text-muted-foreground">Response time:</span> Within 2 business days</div>
           </div>
         </Card>
@@ -1092,10 +1092,10 @@ function CookiesContent() {
       accent: "emerald",
       purpose: "Required for the platform to function. Cannot be disabled.",
       examples: [
-        "session_id — keeps you logged in",
-        "csrf_token — protects against cross-site request forgery",
-        "auth_token — NextAuth.js session token",
-        "theme_preference — remembers dark/light mode",
+        "session_id - keeps you logged in",
+        "csrf_token - protects against cross-site request forgery",
+        "auth_token - NextAuth.js session token",
+        "theme_preference - remembers dark/light mode",
       ],
       duration: "Session / 30 days",
     },
@@ -1105,9 +1105,9 @@ function CookiesContent() {
       accent: "cyan",
       purpose: "Remember your settings and personalize your experience.",
       examples: [
-        "language — interface language preference",
-        "sidebar_collapsed — UI layout preference",
-        "last_view — remembers your last dashboard tab",
+        "language - interface language preference",
+        "sidebar_collapsed - UI layout preference",
+        "last_view - remembers your last dashboard tab",
       ],
       duration: "1 year",
     },
@@ -1117,9 +1117,9 @@ function CookiesContent() {
       accent: "violet",
       purpose: "Help us understand how the platform is used so we can improve it. Anonymized.",
       examples: [
-        "_ga — Google Analytics anonymous visitor ID",
-        "platform_usage — aggregated feature usage metrics",
-        "page_views — anonymous page view counts",
+        "_ga - Google Analytics anonymous visitor ID",
+        "platform_usage - aggregated feature usage metrics",
+        "page_views - anonymous page view counts",
       ],
       duration: "2 years",
     },
@@ -1129,8 +1129,8 @@ function CookiesContent() {
       accent: "amber",
       purpose: "Used only if you opt in. We don't use third-party advertising cookies.",
       examples: [
-        "newsletter_subscribed — flags if you've opted into emails",
-        "email_preferences — which email categories you want",
+        "newsletter_subscribed - flags if you've opted into emails",
+        "email_preferences - which email categories you want",
       ],
       duration: "Until unsubscribe",
     },
@@ -1149,7 +1149,7 @@ function CookiesContent() {
           Cookies are small text files stored on your device when you visit a website. They allow
           the site to remember your actions and preferences over time, making your experience
           smoother and more personalized. GuardianX Academy also uses <strong>local storage</strong>{" "}
-          and <strong>session storage</strong> — similar browser-based storage that serves the same
+          and <strong>session storage</strong> - similar browser-based storage that serves the same
           purpose but with larger capacity.
         </p>
       </Section>
@@ -1190,9 +1190,9 @@ function CookiesContent() {
           We minimize third-party cookies. The only third-party cookies that may be set are:
         </p>
         <BulletList accent="teal" items={[
-          "Google Analytics (_ga, _gid) — anonymized usage analytics. You can opt out via browser Do Not Track or our preference center.",
-          "Payment processor cookies — set only during checkout flow, on their domain. We have no access to these.",
-          "YouTube embeds (in some lessons) — may set cookies if you click play. Consider using youtube-nocookie.com mode (we do by default).",
+          "Google Analytics (_ga, _gid) - anonymized usage analytics. You can opt out via browser Do Not Track or our preference center.",
+          "Payment processor cookies - set only during checkout flow, on their domain. We have no access to these.",
+          "YouTube embeds (in some lessons) - may set cookies if you click play. Consider using youtube-nocookie.com mode (we do by default).",
         ]} />
         <Callout title="What we DON'T use" type="warning">
           We do NOT use advertising cookies (Google Ads, Facebook Pixel, etc.). We do NOT use
@@ -1207,14 +1207,14 @@ function CookiesContent() {
           "Firefox: Settings → Privacy & Security → Cookies and Site Data",
           "Safari: Preferences → Privacy → Cookies and website data",
           "Edge: Settings → Cookies and site permissions",
-          "All browsers support 'Incognito' / 'Private Browsing' mode — cookies are cleared when you close the window",
+          "All browsers support 'Incognito' / 'Private Browsing' mode - cookies are cleared when you close the window",
         ]} />
         <h4 className="text-sm font-semibold text-foreground mt-4 mb-2">On GuardianX Academy</h4>
         <BulletList accent="cyan" items={[
           "Essential cookies cannot be disabled (the platform won't function without them)",
           "Analytics cookies can be disabled via your Profile Settings → Privacy tab",
           "Marketing emails can be unsubscribed via the link in any marketing email",
-          "Clearing your browser cookies will sign you out — you'll need to log in again",
+          "Clearing your browser cookies will sign you out - you'll need to log in again",
         ]} />
       </Section>
 
@@ -1222,7 +1222,7 @@ function CookiesContent() {
         <p>
           We respect Do Not Track signals. If your browser sends a DNT header, we will not set
           non-essential cookies (analytics, marketing). Essential cookies required for login and
-          platform functionality will still be set — you cannot use the platform without them.
+          platform functionality will still be set - you cannot use the platform without them.
         </p>
       </Section>
 
@@ -1238,7 +1238,7 @@ function CookiesContent() {
         <Card className="p-4 glass-card">
           <div className="space-y-1 text-sm">
             <div><span className="text-muted-foreground">Email:</span> <a href="mailto:privacy@guardianx.io" className="text-emerald-400 hover:underline">privacy@guardianx.io</a></div>
-            <div><span className="text-muted-foreground">Mail:</span> GuardianX Academy — Privacy Office</div>
+            <div><span className="text-muted-foreground">Mail:</span> GuardianX Academy - Privacy Office</div>
             <div><span className="text-muted-foreground">Response time:</span> Within 7 business days</div>
           </div>
         </Card>
@@ -1253,7 +1253,7 @@ function ConductContent() {
       <Callout title="Our community standard" type="info">
         GuardianX Academy trains cyber security <strong>defenders</strong>. This Code of Conduct
         establishes the standards of behavior, academic integrity, and ethical use of skills for
-        everyone in our community — students, instructors, partners, and staff. By participating,
+        everyone in our community - students, instructors, partners, and staff. By participating,
         you agree to uphold these standards.
       </Callout>
 
@@ -1263,7 +1263,7 @@ function ConductContent() {
             { icon: Shield, title: "Defend, Don't Attack", desc: "Skills learned here are for protection. Using them offensively against systems you don't own or lack permission to test is strictly forbidden." },
             { icon: Users, title: "Respect Everyone", desc: "Discrimination, harassment, or hostility based on race, gender, sexuality, religion, nationality, or ability is not tolerated." },
             { icon: Award, title: "Earn It Honestly", desc: "Certifications are valuable because they're earned. Cheating devalues everyone's achievements and will not be tolerated." },
-            { icon: Brain, title: "Stay Curious, Stay Humble", desc: "Cyber security is vast — no one knows it all. Ask questions, share knowledge, and lift others up." },
+            { icon: Brain, title: "Stay Curious, Stay Humble", desc: "Cyber security is vast - no one knows it all. Ask questions, share knowledge, and lift others up." },
             { icon: Globe, title: "Be a Force for Good", desc: "Use your skills to make the digital world safer. Report vulnerabilities responsibly. Mentor newcomers." },
             { icon: Lock, title: "Protect Confidentiality", desc: "Don't share lab flags, exam questions, or proprietary materials. Respect the trust placed in our community." },
           ].map((p, i) => (
@@ -1282,12 +1282,12 @@ function ConductContent() {
         <p>As a GuardianX Academy community member, you are expected to:</p>
         <BulletList accent="cyan" items={[
           "Treat instructors, peers, and staff with respect, patience, and kindness",
-          "Engage in discussions constructively — share knowledge, ask thoughtful questions",
-          "Respect diverse viewpoints and experience levels — we all started as beginners",
+          "Engage in discussions constructively - share knowledge, ask thoughtful questions",
+          "Respect diverse viewpoints and experience levels - we all started as beginners",
           "Use real names and accurate identities in your profile",
           "Give credit when sharing resources, code snippets, or techniques from others",
           "Report violations of this Code when you witness them (anonymously if preferred)",
-          "Help new students feel welcome — answer questions in forums even if they seem basic",
+          "Help new students feel welcome - answer questions in forums even if they seem basic",
           "Keep discussions on-topic and avoid spamming or self-promotion (unless in designated areas)",
         ]} />
       </Section>
@@ -1318,7 +1318,7 @@ function ConductContent() {
           "Not plagiarize course content or claim others' work as your own",
         ]} />
         <Callout title="Why this matters" type="warning">
-          Certificates earned through cheating harm everyone — they devalue the credentials of
+          Certificates earned through cheating harm everyone - they devalue the credentials of
           honest students and create risk for employers who trust our certifications. We aggressively
           investigate and void fraudulent certificates.
         </Callout>
@@ -1327,13 +1327,13 @@ function ConductContent() {
       <Section id="anti-cheating" title="5. Anti-Cheating Policy" icon={Crosshair} accent="amber">
         <h4 className="text-sm font-semibold text-foreground mb-2">Proctoring Safeguards</h4>
         <BulletList accent="amber" items={[
-          "Fullscreen lockdown — exiting fullscreen auto-voids the exam",
-          "Tab-switch detection — switching tabs or windows is logged; 3+ switches auto-voids",
-          "Copy/paste blocking — clipboard operations are intercepted during exams",
-          "Randomized question banks — no two exams are identical",
-          "Webcam identity verification — periodic snapshots compared to your profile photo",
-          "Screen activity monitoring — suspicious patterns flagged for review",
-          "Time-stamped logs — every action during an exam is recorded for appeals",
+          "Fullscreen lockdown - exiting fullscreen auto-voids the exam",
+          "Tab-switch detection - switching tabs or windows is logged; 3+ switches auto-voids",
+          "Copy/paste blocking - clipboard operations are intercepted during exams",
+          "Randomized question banks - no two exams are identical",
+          "Webcam identity verification - periodic snapshots compared to your profile photo",
+          "Screen activity monitoring - suspicious patterns flagged for review",
+          "Time-stamped logs - every action during an exam is recorded for appeals",
         ]} />
         <h4 className="text-sm font-semibold text-foreground mt-4 mb-2">Consequences of Cheating</h4>
         <BulletList accent="amber" items={[
@@ -1374,7 +1374,7 @@ function ConductContent() {
         <BulletList accent="cyan" items={[
           "Email conduct@guardianx.io with details, screenshots, or evidence",
           "Use the 'Report' button on any forum post, lab session, or live session",
-          "Reports can be made anonymously — we protect whistleblowers",
+          "Reports can be made anonymously - we protect whistleblowers",
           "All reports are reviewed within 48 hours by our Conduct Review Committee",
           "False or malicious reports are themselves a violation and will be investigated",
         ]} />
@@ -1418,7 +1418,7 @@ function ConductContent() {
         <Card className="p-4 glass-card">
           <div className="space-y-1 text-sm">
             <div><span className="text-muted-foreground">Email:</span> <a href="mailto:conduct@guardianx.io" className="text-emerald-400 hover:underline">conduct@guardianx.io</a></div>
-            <div><span className="text-muted-foreground">Mail:</span> GuardianX Academy — Conduct Review Committee</div>
+            <div><span className="text-muted-foreground">Mail:</span> GuardianX Academy - Conduct Review Committee</div>
             <div><span className="text-muted-foreground">Response time:</span> Within 48 hours</div>
           </div>
         </Card>
@@ -1505,7 +1505,7 @@ export function LegalPage({ pageType }: LegalPageProps) {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
             <div>
               <div className="text-sm font-semibold mb-1">Questions about this policy?</div>
-              <p className="text-xs text-muted-foreground">Our team is here to help — reach out anytime.</p>
+              <p className="text-xs text-muted-foreground">Our team is here to help - reach out anytime.</p>
             </div>
             <div className="flex flex-wrap gap-2">
               <Button variant="outline" size="sm" className="glass-card border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10" onClick={() => navigate({ name: "contact" })}>

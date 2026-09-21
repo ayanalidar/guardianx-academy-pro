@@ -35,7 +35,7 @@ const ICONS: Record<string, LucideIcon> = {
   PlayCircle, Radar, Radio, Rocket, Route, ScanLine, School, Server, Shield,
   ShieldAlert, ShieldCheck, Sparkles, Star, Swords, Target, Terminal,
   Tv, Twitter, Users, Wifi, Wrench, Youtube, Zap, TrendingUp, Trophy,
-  // Aliases — lucide-react renamed some icons. Map old names → current
+  // Aliases - lucide-react renamed some icons. Map old names → current
   // component so DB rows that store the legacy name still resolve.
   CloudShield: CloudCog,
 }

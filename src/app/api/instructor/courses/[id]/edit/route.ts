@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { requireRole } from "@/lib/session"
 
-// Update a course (instructor only — must own the course)
+// Update a course (instructor only - must own the course)
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const user = await requireRole(["INSTRUCTOR", "ADMIN", "SUPER_ADMIN"])

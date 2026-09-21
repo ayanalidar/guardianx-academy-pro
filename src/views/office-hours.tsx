@@ -344,7 +344,7 @@ function SlotCard({
           <div className="flex items-center gap-2">
             <Clock className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
             <span>
-              {start.time} – {end.time}
+              {start.time}-{end.time}
               <span className="text-muted-foreground ml-1.5 font-mono text-xs">
                 ({formatDuration(slot.startAt, slot.endAt)})
               </span>
@@ -472,7 +472,7 @@ function BookSlotDialog({
                 </div>
                 <div className="flex items-center gap-2">
                   <Clock className="h-3 w-3 text-muted-foreground" />
-                  {start.time} – {end.time}
+                  {start.time}-{end.time}
                 </div>
                 {slot.location && (
                   <div className="flex items-center gap-2">
@@ -644,7 +644,7 @@ function BookingCard({ booking }: { booking: OfficeHourBooking }) {
             <div className="flex items-center gap-2 flex-wrap mb-1.5">
               <span className="font-medium text-sm">{start.date}</span>
               <span className="text-sm text-muted-foreground font-mono">
-                {start.time} – {end.time}
+                {start.time}-{end.time}
               </span>
               <Badge
                 variant="outline"

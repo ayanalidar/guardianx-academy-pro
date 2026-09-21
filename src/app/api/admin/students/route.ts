@@ -4,7 +4,7 @@ import { requireAdmin, withErrorHandler } from "@/lib/session"
 
 export const runtime = "nodejs"
 
-// GET /api/admin/students — list all users with role STUDENT.
+// GET /api/admin/students - list all users with role STUDENT.
 // Supports `?q=` search (by email/name) and `?page=` pagination (50/page).
 // Returns each student with computed stats: enrollmentCount, completedCount,
 // labCount, certCount, and avgProgress (across all their enrollments).
@@ -18,7 +18,7 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
   const pageSize = 50
 
   // Optional course filter (kept for backwards compat with the view's `course`
-  // query param — we filter by enrollments.courseId when set).
+  // query param - we filter by enrollments.courseId when set).
   const course = url.searchParams.get("course")?.trim() || undefined
 
   const where: {
@@ -34,7 +34,7 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
   }
   // Course filter: the param is a real Course id (the view's dropdown is fed
   // from /api/admin/courses). When set, only students actually enrolled in
-  // that course are listed — previously the filter only zeroed stats while
+  // that course are listed - previously the filter only zeroed stats while
   // still listing every student.
   if (course) {
     where.enrollments = { some: { courseId: course } }
@@ -96,7 +96,7 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
       level: u.level,
       streak: u.streak,
       createdAt: u.createdAt,
-      // Computed stats — the admin-student-progress view reads `enrollments`,
+      // Computed stats - the admin-student-progress view reads `enrollments`,
       // `labsCompleted`, `progress`. We expose both verbose (enrollmentCount,
       // completedCount, labCount, certCount) and view-friendly aliases.
       enrollmentCount,

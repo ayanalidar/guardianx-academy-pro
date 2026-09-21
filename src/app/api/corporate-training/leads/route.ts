@@ -6,7 +6,7 @@ import { notifyAdmins, leadNotificationEmailTemplate } from "@/lib/email"
 export const runtime = "nodejs"
 
 /* POST /api/corporate-training/leads
- * Public endpoint — anyone can submit a corporate training inquiry.
+ * Public endpoint - anyone can submit a corporate training inquiry.
  * Rate-limited in-memory per IP (5 submissions per 10 minutes).
  *
  * Body: {
@@ -15,7 +15,7 @@ export const runtime = "nodejs"
  *   workEmail: string (required, valid email)
  *   phone: string (required, 10-digit Indian mobile or +91)
  *   teamSize: "1-10" | "11-50" | "51-200" | "200+" (required)
- *   trainingInterest: string (required — comma-separated codes)
+ *   trainingInterest: string (required - comma-separated codes)
  *   timeline?: "immediate" | "1-3 months" | "exploring"
  *   message?: string
  * }
@@ -109,7 +109,7 @@ export const POST = withErrorHandler(async (req) => {
 
   // --- email notification to admins ---
   await notifyAdmins(
-    `New Corporate Training Lead — ${companyName}`,
+    `New Corporate Training Lead - ${companyName}`,
     leadNotificationEmailTemplate("Corporate Training Lead", [
       { label: "Company", value: companyName.trim() },
       { label: "Contact", value: contactName.trim() },
@@ -117,8 +117,8 @@ export const POST = withErrorHandler(async (req) => {
       { label: "Phone", value: cleanPhone },
       { label: "Team size", value: teamSize },
       { label: "Interest", value: trainingInterest.trim() },
-      { label: "Timeline", value: timeline || "—" },
-      { label: "Message", value: message?.trim() || "—" },
+      { label: "Timeline", value: timeline || " - " },
+      { label: "Message", value: message?.trim() || " - " },
     ])
   )
 

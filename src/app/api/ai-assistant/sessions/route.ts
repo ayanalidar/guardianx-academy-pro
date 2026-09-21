@@ -5,7 +5,7 @@ import { getCurrentUser } from "@/lib/session"
 export const runtime = "nodejs"
 
 // ============================================================
-// AI Learning Assistant — list the current user's chat sessions
+// AI Learning Assistant - list the current user's chat sessions
 // Optional ?sessionId=... returns full messages for that session
 // ============================================================
 

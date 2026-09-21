@@ -3,7 +3,7 @@ import { db } from "@/lib/db"
 
 export const runtime = "nodejs"
 
-// GET /api/instructors/[id] — public. Returns a single instructor's full profile
+// GET /api/instructors/[id] - public. Returns a single instructor's full profile
 // + assigned courses + assigned training batches.
 export async function GET(
   _req: Request,

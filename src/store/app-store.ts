@@ -184,7 +184,7 @@ if (typeof window !== "undefined") {
   const onUrlChange = () => {
     const next = readViewFromUrl()
     const current = useAppStore.getState().view
-    // Only update if the parsed view actually differs — avoids loops
+    // Only update if the parsed view actually differs - avoids loops
     if (JSON.stringify(next) !== JSON.stringify(current)) {
       useAppStore.setState({ view: next, sidebarOpen: false })
       window.dispatchEvent(new CustomEvent("guardianx-navigate", { detail: next }))

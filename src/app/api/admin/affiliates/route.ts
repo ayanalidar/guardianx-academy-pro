@@ -4,7 +4,7 @@ import { requireAdmin, withErrorHandler } from "@/lib/session"
 
 export const runtime = "nodejs"
 
-/* GET /api/admin/affiliates — ADMIN only.
+/* GET /api/admin/affiliates - ADMIN only.
  * Returns all affiliate records with the linked user's name/email + stats.
  * Sorted by createdAt desc (newest affiliates first). */
 export const GET = withErrorHandler(async () => {

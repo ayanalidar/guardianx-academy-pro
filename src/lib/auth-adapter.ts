@@ -4,7 +4,7 @@
  * WHY THIS EXISTS
  * ---------------
  * next-auth v4 HARD-REQUIRES an adapter whenever the Email (magic link)
- * provider is registered — assertConfig() returns MissingAdapter otherwise,
+ * provider is registered - assertConfig() returns MissingAdapter otherwise,
  * and that failure breaks EVERY auth endpoint (including plain email +
  * password login) with the built-in "Server error / There is a problem
  * with the server configuration." page. Commit 03c571a made the Email
@@ -13,11 +13,11 @@
  *
  * This adapter satisfies that requirement while keeping our architecture
  * intact:
- *   - Sessions stay JWT (strategy: "jwt") — the session-store methods are
+ *   - Sessions stay JWT (strategy: "jwt") - the session-store methods are
  *     never called by next-auth in that mode and are deliberately absent
  *     / no-op.
  *   - Users live in our existing `User` table (required `passwordHash`,
- *     role, etc.) — we map to/from next-auth's AdapterUser shape here so
+ *     role, etc.) - we map to/from next-auth's AdapterUser shape here so
  *     the rest of the app never has to care.
  *   - We intentionally DO NOT persist OAuth accounts (no Account table):
  *     getUserByAccount() always returns null and linkAccount() is a no-op.
@@ -32,7 +32,7 @@
  *   credentials   → none (authorize() is fully responsible)
  *   session (jwt) → none
  *   (*) createUser is only reached if the signIn callback didn't already
- *       create the user — implemented defensively anyway.
+ *       create the user - implemented defensively anyway.
  */
 
 import type {
@@ -46,7 +46,7 @@ import { db } from "@/lib/db"
 
 /**
  * Sentinel password hash for accounts created by the adapter (OAuth /
- * magic-link only). The plaintext is never stored or used — the hash just
+ * magic-link only). The plaintext is never stored or used - the hash just
  * satisfies the NOT NULL constraint and makes credentials login for these
  * accounts impossible. Random per call so attackers can't identify
  * OAuth-only accounts by a constant hash prefix.
@@ -67,7 +67,7 @@ function toAdapterUser(user: {
     id: user.id,
     email: user.email,
     // next-auth types this as Date | null; we don't track email
-    // verification on our User model — null is the honest value.
+    // verification on our User model - null is the honest value.
     emailVerified: null,
     name: user.name,
     image: user.avatar,
@@ -77,7 +77,7 @@ function toAdapterUser(user: {
 export const prismaAuthAdapter: Adapter = {
   /**
    * Create a user from an OAuth/magic-link profile. Only fields next-auth
-   * supplies (email, name, image) exist — everything our schema requires
+   * supplies (email, name, image) exist - everything our schema requires
    * gets safe defaults so first-time social logins land as STUDENTs.
    */
   async createUser(profile) {
@@ -107,10 +107,10 @@ export const prismaAuthAdapter: Adapter = {
 
   /**
    * We never persisted OAuth accounts (no Account table), so an account
-   * lookup can never match — returning null tells next-auth to resolve
+   * lookup can never match - returning null tells next-auth to resolve
    * the user by email instead, which is exactly what the pre-adapter
    * signIn-callback flow did. Updating this comment? Update
-   * allowDangerousEmailAccountLinking's comment in auth.ts too — the two
+   * allowDangerousEmailAccountLinking's comment in auth.ts too - the two
    * together preserve the historical access semantics.
    */
   async getUserByAccount() {
@@ -119,7 +119,7 @@ export const prismaAuthAdapter: Adapter = {
 
   /**
    * Our User model has no `emailVerified` column, so the patch next-auth
-   * sends (emailVerified stamp) is a no-op — but name/avatar updates are
+   * sends (emailVerified stamp) is a no-op - but name/avatar updates are
    * applied when present. MUST return the (possibly unchanged) user:
    * next-auth uses the return value for the session JWT.
    */
@@ -138,7 +138,7 @@ export const prismaAuthAdapter: Adapter = {
     await db.user.delete({ where: { id } })
   },
 
-  /** No-op — we don't persist provider accounts (see getUserByAccount). */
+  /** No-op - we don't persist provider accounts (see getUserByAccount). */
   async linkAccount() {
     return undefined as never
   },
@@ -168,11 +168,11 @@ export const prismaAuthAdapter: Adapter = {
    */
   async createVerificationToken({ identifier, token, expires }) {
     // Fire-and-forget cleanup of stale tokens (single-instance ok; worst
-    // case on serverless is a slightly bigger table — never an error).
+    // case on serverless is a slightly bigger table - never an error).
     try {
       await db.verificationToken.deleteMany({ where: { expires: { lt: new Date() } } })
     } catch {
-      // ignore cleanup failures — never block the login email
+      // ignore cleanup failures - never block the login email
     }
     await db.verificationToken.create({
       data: { identifier: identifier.toLowerCase(), token, expires },
@@ -183,8 +183,8 @@ export const prismaAuthAdapter: Adapter = {
   /**
    * Single-use consume: delete the row and return it ATOMICALLY (Prisma's
    * delete returns the deleted record; a missing row throws P2025 → null).
-   * Returning null — or a row whose `expires` has passed, which next-auth
-   * checks itself — makes next-auth bounce the visitor to the "link no
+   * Returning null - or a row whose `expires` has passed, which next-auth
+   * checks itself - makes next-auth bounce the visitor to the "link no
    * longer valid" page instead of logging them in.
    */
   async useVerificationToken({ identifier, token }) {
@@ -196,7 +196,7 @@ export const prismaAuthAdapter: Adapter = {
       })
       return row as AdapterVerificationToken
     } catch {
-      // P2025 (not found) or transient DB error — treat as invalid token
+      // P2025 (not found) or transient DB error - treat as invalid token
       return null
     }
   },

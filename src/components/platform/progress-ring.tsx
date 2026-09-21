@@ -1,7 +1,7 @@
 "use client"
 
 /**
- * ProgressRing — animated circular progress indicator.
+ * ProgressRing - animated circular progress indicator.
  *
  * Used on dashboards/profile where a percentage deserves more presence
  * than a flat bar. Animates stroke-dashoffset when scrolled into view;
@@ -13,7 +13,7 @@ import { useInView, useReducedMotion } from "framer-motion"
 import { cn } from "@/lib/utils"
 
 interface ProgressRingProps {
-  /** 0–100 */
+  /** 0-100 */
   value: number
   size?: number // px
   strokeWidth?: number

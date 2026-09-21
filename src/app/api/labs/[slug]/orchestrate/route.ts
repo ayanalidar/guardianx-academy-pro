@@ -4,9 +4,9 @@ import { getCurrentUser, rateLimit, getClientIp } from "@/lib/session"
 import { awardXp, XP_REWARDS } from "@/lib/gamification"
 import { ORCHESTRATOR_URL, signOrchestratorRequest } from "@/lib/orchestrator"
 
-// Lab orchestration endpoint — connects to the lab-orchestrator mini-service.
+// Lab orchestration endpoint - connects to the lab-orchestrator mini-service.
 // All requests are HMAC-signed with LAB_SHARED_SECRET (see src/lib/orchestrator.ts).
-// SECURITY: session.dynamicFlag is NEVER returned to the browser — it is
+// SECURITY: session.dynamicFlag is NEVER returned to the browser - it is
 // server-side data used only by /api/labs/[slug]/submit for validation.
 // Handles: start, stop, extend, reset lab sessions
 
@@ -184,7 +184,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
         data: { dynamicFlag: resetData.newFlag },
       })
 
-      // SECURITY: the new flag is stored server-side only — it is never
+      // SECURITY: the new flag is stored server-side only - it is never
       // echoed to the client.
       return NextResponse.json({ ok: true })
     } catch (err: any) {

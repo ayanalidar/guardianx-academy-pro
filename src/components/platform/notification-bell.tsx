@@ -12,7 +12,7 @@ import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 
 /* ============================================================
-   NotificationBell — bell icon with dropdown notification center
+   NotificationBell - bell icon with dropdown notification center
    ------------------------------------------------------------
    - Fetches /api/notifications (auth-aware; empty for logged-out)
    - Shows unread count badge with a subtle pulse

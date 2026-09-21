@@ -15,11 +15,11 @@ import {
 } from "lucide-react"
 
 /* ============================================================
-   /cert/<slug> — SEO landing page per certification.
+   /cert/<slug> - SEO landing page per certification.
 
    Receives a `certSlug` prop (e.g. "ceh", "cissp", "ccna",
    "security-plus") and renders a rich landing page with:
-     1. Hero — name, exam code, passing score, duration, body
+     1. Hero - name, exam code, passing score, duration, body
      2. Courses that prepare for this cert
      3. Upcoming training batches
      4. FAQ
@@ -40,7 +40,7 @@ export interface CertLandingViewProps {
  * GuardianX prepares learners for. Used for the hero section (exam code,
  * passing score, duration) + FAQ + meta description. For unknown slugs we
  * synthesize a sensible fallback from the slug itself so the page still
- * renders fully — the courses/batches sections are always DB-driven.
+ * renders fully - the courses/batches sections are always DB-driven.
  * --------------------------------------------------------------------------- */
 interface CertMeta {
   slug: string
@@ -68,9 +68,9 @@ const CERT_DB: Record<string, CertMeta> = {
     questions: "125 MCQs",
     level: "Intermediate",
     shortDescription:
-      "Master the tools, techniques, and mindset of a black-hat hacker — then turn them defensive. The CEH curriculum covers reconnaissance, scanning, exploitation, malware, social engineering, and countermeasures across 20 domains.",
+      "Master the tools, techniques, and mindset of a black-hat hacker - then turn them defensive. The CEH curriculum covers reconnaissance, scanning, exploitation, malware, social engineering, and countermeasures across 20 domains.",
     metaDescription:
-      "Prepare for the EC-Council Certified Ethical Hacker (CEH v13) exam with GuardianX — instructor-led training, hands-on cyber labs, mock exams, and an exam voucher.",
+      "Prepare for the EC-Council Certified Ethical Hacker (CEH v13) exam with GuardianX - instructor-led training, hands-on cyber labs, mock exams, and an exam voucher.",
     accent: "violet",
     faqs: [
       {
@@ -94,12 +94,12 @@ const CERT_DB: Record<string, CertMeta> = {
     body: "ISC2",
     passingScore: "700 / 1000",
     duration: "4 hours",
-    questions: "100–150 (CAT)",
+    questions: "100-150 (CAT)",
     level: "Advanced",
     shortDescription:
-      "The gold standard for security leadership. CISSP validates your expertise across 8 domains of the CBK — from security & risk management to software development security.",
+      "The gold standard for security leadership. CISSP validates your expertise across 8 domains of the CBK - from security & risk management to software development security.",
     metaDescription:
-      "Prepare for ISC2 CISSP with GuardianX — 8-domain CBK coverage, instructor-led cohorts, scenario labs, and an exam-style question bank with detailed explanations.",
+      "Prepare for ISC2 CISSP with GuardianX - 8-domain CBK coverage, instructor-led cohorts, scenario labs, and an exam-style question bank with detailed explanations.",
     accent: "emerald",
     faqs: [
       {
@@ -108,11 +108,11 @@ const CERT_DB: Record<string, CertMeta> = {
       },
       {
         q: "Is CISSP a management or technical cert?",
-        a: "CISSP is management-oriented. It is designed for security leaders, architects, and senior practitioners — not for hands-on keyboard hacking.",
+        a: "CISSP is management-oriented. It is designed for security leaders, architects, and senior practitioners - not for hands-on keyboard hacking.",
       },
       {
         q: "How is the CISSP exam structured?",
-        a: "CISSP uses Computerized Adaptive Testing (CAT) for the English version — between 100 and 150 questions, with a 3-hour time limit. A passing score is 700 out of 1000.",
+        a: "CISSP uses Computerized Adaptive Testing (CAT) for the English version - between 100 and 150 questions, with a 3-hour time limit. A passing score is 700 out of 1000.",
       },
     ],
   },
@@ -123,12 +123,12 @@ const CERT_DB: Record<string, CertMeta> = {
     body: "Cisco",
     passingScore: "825 / 1000",
     duration: "2 hours",
-    questions: "100–105 MCQs",
+    questions: "100-105 MCQs",
     level: "Beginner",
     shortDescription:
-      "The foundation of a networking career. CCNA covers IP connectivity, security fundamentals, automation, and programmability — the launching pad for every Cisco path.",
+      "The foundation of a networking career. CCNA covers IP connectivity, security fundamentals, automation, and programmability - the launching pad for every Cisco path.",
     metaDescription:
-      "Prepare for the Cisco CCNA 200-301 exam with GuardianX — instructor-led training, real Cisco IOS labs, subnetting drills, and 500+ practice questions.",
+      "Prepare for the Cisco CCNA 200-301 exam with GuardianX - instructor-led training, real Cisco IOS labs, subnetting drills, and 500+ practice questions.",
     accent: "cyan",
     faqs: [
       {
@@ -155,9 +155,9 @@ const CERT_DB: Record<string, CertMeta> = {
     questions: "90 MCQ + PBQs",
     level: "Beginner",
     shortDescription:
-      "The global entry point to cybersecurity. Security+ covers threats, attacks, vulnerabilities, architecture, operations, and program management — DoD 8570 compliant.",
+      "The global entry point to cybersecurity. Security+ covers threats, attacks, vulnerabilities, architecture, operations, and program management - DoD 8570 compliant.",
     metaDescription:
-      "Prepare for CompTIA Security+ SY0-701 with GuardianX — instructor-led training, performance-based questions, hands-on labs, and 600+ practice questions.",
+      "Prepare for CompTIA Security+ SY0-701 with GuardianX - instructor-led training, performance-based questions, hands-on labs, and 600+ practice questions.",
     accent: "amber",
     faqs: [
       {
@@ -170,7 +170,7 @@ const CERT_DB: Record<string, CertMeta> = {
       },
       {
         q: "Is Security+ DoD 8570 compliant?",
-        a: "Yes. Security+ satisfies the DoD 8570.01-M IAT Level II and IAM Level I requirements — making it a must-have for US federal roles.",
+        a: "Yes. Security+ satisfies the DoD 8570.01-M IAT Level II and IAM Level I requirements - making it a must-have for US federal roles.",
       },
     ],
   },
@@ -232,20 +232,20 @@ function metaFor(slug: string): CertMeta {
   return {
     slug,
     name: `${pretty} Certification Training`,
-    examCode: "—",
+    examCode: " - ",
     body: "Industry Body",
-    passingScore: "—",
-    duration: "—",
-    questions: "—",
+    passingScore: " - ",
+    duration: " - ",
+    questions: " - ",
     level: "Intermediate",
     shortDescription:
       "Prepare for this certification with GuardianX's instructor-led training, hands-on labs, and mock exam practice.",
-    metaDescription: `Prepare for the ${pretty} certification with GuardianX — instructor-led training, hands-on labs, and mock exams.`,
+    metaDescription: `Prepare for the ${pretty} certification with GuardianX - instructor-led training, hands-on labs, and mock exams.`,
     accent: "violet",
     faqs: [
       {
         q: "How long is the training?",
-        a: "Most cohorts run 4–8 weeks with weekend or evening schedules. We also have self-paced tracks available.",
+        a: "Most cohorts run 4-8 weeks with weekend or evening schedules. We also have self-paced tracks available.",
       },
       {
         q: "Is an exam voucher included?",
@@ -253,7 +253,7 @@ function metaFor(slug: string): CertMeta {
       },
       {
         q: "Do you offer placement support?",
-        a: "Yes — our career planner, resume builder, and mock interview tools are included with every enrollment.",
+        a: "Yes - our career planner, resume builder, and mock interview tools are included with every enrollment.",
       },
     ],
   }
@@ -330,7 +330,7 @@ export function CertLandingView({ certSlug }: CertLandingViewProps) {
     tag.setAttribute("content", meta.metaDescription)
   }, [meta])
 
-  // Courses that prepare for this cert — uses the public /api/courses?q= endpoint
+  // Courses that prepare for this cert - uses the public /api/courses?q= endpoint
   // with the slug as the search query. Falls back to a slug-keyword query.
   const { data: courseData, isLoading: coursesLoading } = useQuery<{ courses: CourseItem[] }>({
     queryKey: ["cert-courses", certSlug],
@@ -343,7 +343,7 @@ export function CertLandingView({ certSlug }: CertLandingViewProps) {
     staleTime: 60_000,
   })
 
-  // Training batches — public list. We filter on the client to the ones whose
+  // Training batches - public list. We filter on the client to the ones whose
   // `certification` field references this cert (substring match against meta.slug
   // OR meta.name OR meta.body).
   const { data: batchData } = useQuery<{ batches: Batch[] }>({
@@ -357,7 +357,7 @@ export function CertLandingView({ certSlug }: CertLandingViewProps) {
     staleTime: 60_000,
   })
 
-  // Certifications list — used for the "related certifications" rail
+  // Certifications list - used for the "related certifications" rail
   const { data: certListData } = useQuery<{ certifications: CertListItem[] }>({
     queryKey: ["cert-list"],
     queryFn: async () => {
@@ -586,7 +586,7 @@ export function CertLandingView({ certSlug }: CertLandingViewProps) {
                     </span>
                     <span className="flex items-center gap-1.5">
                       <Star className="h-3 w-3 text-amber-300" />
-                      {c.rating != null ? Number(c.rating).toFixed(1) : "—"}
+                      {c.rating != null ? Number(c.rating).toFixed(1) : " - "}
                     </span>
                     <span className="flex items-center gap-1.5">
                       <Users className="h-3 w-3" />

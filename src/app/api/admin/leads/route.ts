@@ -3,8 +3,8 @@ import { db } from "@/lib/db"
 import { requireAdmin, withErrorHandler } from "@/lib/session"
 
 const LEAD_STATUSES = ["New", "Contacted", "Qualified", "Proposal", "Negotiation", "Converted", "Lost"]
-const LEAD_TYPES = ["Individual", "School", "College", "University", "Corporate", "Partner", "Workshop", "CTF", "Webinar"]
-const LEAD_SOURCES = ["Google Form", "Contact Form", "Manual", "Referral"]
+const LEAD_TYPES = ["Individual", "School", "College", "University", "Corporate", "Partner", "Workshop", "CTF", "Webinar", "Job Application"]
+const LEAD_SOURCES = ["Google Form", "Contact Form", "Manual", "Referral", "Hiring Page"]
 
 function computeLeadScore(lead: {
   type: string
@@ -26,6 +26,7 @@ function computeLeadScore(lead: {
     CTF: 8,
     Webinar: 5,
     Individual: 5,
+    "Job Application": 12,
   }
   score += typeMap[lead.type] ?? 5
   // Source scoring
@@ -34,6 +35,7 @@ function computeLeadScore(lead: {
     Referral: 20,
     "Contact Form": 10,
     Manual: 5,
+    "Hiring Page": 10,
   }
   score += sourceMap[lead.source] ?? 5
   // Contact completeness
@@ -54,7 +56,7 @@ function computeLeadScore(lead: {
   return Math.min(100, score)
 }
 
-// GET /api/admin/leads — list leads + compute scores + stats
+// GET /api/admin/leads - list leads + compute scores + stats
 export const GET = withErrorHandler(async (req: NextRequest) => {
   const currentUser = await requireAdmin()
   if (currentUser instanceof NextResponse) return currentUser
@@ -63,14 +65,17 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
   const status = url.searchParams.get("status")
   const q = url.searchParams.get("q")?.trim() || undefined
   const source = url.searchParams.get("source")
+  const type = url.searchParams.get("type")
 
   const where: {
     status?: string
     source?: string
+    type?: string
     OR?: Array<Record<string, { contains: string }>>
   } = {}
   if (status && status !== "all") where.status = status
   if (source && source !== "all") where.source = source
+  if (type && type !== "all") where.type = type
   if (q) {
     where.OR = [
       { name: { contains: q } },
@@ -121,7 +126,7 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
     bySource[l.source] = (bySource[l.source] ?? 0) + 1
   }
 
-  // Avg time to convert (rough — uses updatedAt of converted leads vs createdAt)
+  // Avg time to convert (rough - uses updatedAt of converted leads vs createdAt)
   const convertedLeads = await db.lead.findMany({
     where: { status: "Converted" },
     select: { createdAt: true, updatedAt: true },
@@ -153,7 +158,7 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
   })
 })
 
-// POST /api/admin/leads — create a new lead manually
+// POST /api/admin/leads - create a new lead manually
 export const POST = withErrorHandler(async (req: NextRequest) => {
   const currentUser = await requireAdmin()
   if (currentUser instanceof NextResponse) return currentUser

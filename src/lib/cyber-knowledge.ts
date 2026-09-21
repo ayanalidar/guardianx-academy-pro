@@ -1,5 +1,5 @@
 /**
- * GuardianX AI Course Architect — Cybersecurity Domain Knowledge Base.
+ * GuardianX AI Course Architect - Cybersecurity Domain Knowledge Base.
  *
  * Single source of domain expertise injected into the architect agent's
  * system prompt (see /api/ai/course-architect). For every category the
@@ -175,7 +175,7 @@ export const CYBER_DOMAINS: Record<string, CyberDomainKnowledge> = {
     labs: [
       "Build a complete mini-ISMS for a fictional SaaS: scope statement, asset register, risk register with 10+ assessed risks, and SoA",
       "Perform a gap assessment of a case-study company against ISO 27001 Annex A and produce a prioritised remediation roadmap",
-      "Run a tabletop: ransomware destroys primary DC — walk BIA→RTO/RPO→comms plan→lessons-learned artifact",
+      "Run a tabletop: ransomware destroys primary DC - walk BIA→RTO/RPO→comms plan→lessons-learned artifact",
       "Draft the evidence pack for one SOC 2 criterion (access reviews): sampling logic, screenshots, tickets, retention",
     ],
     certs: ["ISO 27001 Lead Implementer / Lead Auditor", "CISSP", "CISM", "CRISC", "CISA"],
@@ -186,7 +186,7 @@ export const CYBER_DOMAINS: Record<string, CyberDomainKnowledge> = {
     key: "Identity & Access",
     name: "Identity & Access Management (IAM)",
     summary:
-      "Identity as the new perimeter: directory services, SSO, federation, MFA, privileged access and identity governance — with attack perspective (kerberoasting, token theft, MFA fatigue) because IAM is both the control plane and the top breach vector.",
+      "Identity as the new perimeter: directory services, SSO, federation, MFA, privileged access and identity governance - with attack perspective (kerberoasting, token theft, MFA fatigue) because IAM is both the control plane and the top breach vector.",
     coreTopics: [
       "Identity lifecycle: joiner-mover-leaver, authoritative sources, provisioning/deprovisioning automation",
       "Authentication primitives: passwords→passwordless (FIDO2/WebAuthn, passkeys), OTP (TOTP vs HOTP), push MFA and its fatigue/push-bombing risks",
@@ -240,7 +240,7 @@ export const CYBER_DOMAINS: Record<string, CyberDomainKnowledge> = {
       "Ship Terraform with 10 seeded issues, gate the pipeline with Checkov, then refactor to a clean plan",
       "Design a multi-account landing zone skeleton with SCP guardrails (region deny, root MFA enforce, CMK rotation)",
     ],
-    certs: ["AWS Certified Security – Specialty", "AZ-500", "CCSP", "CCSK", "GCP Professional Cloud Security Engineer"],
+    certs: ["AWS Certified Security-Specialty", "AZ-500", "CCSP", "CCSK", "GCP Professional Cloud Security Engineer"],
     roles: ["Cloud Security Engineer", "Cloud Security Architect", "DevSecOps Engineer (Cloud)", "CSPM Analyst"],
   },
 
@@ -268,7 +268,7 @@ export const CYBER_DOMAINS: Record<string, CyberDomainKnowledge> = {
     labs: [
       "Take a vulnerable repo from zero to gated pipeline: SAST + SCA + secret scan + signed image, with a policy dashboard",
       "Exploit a classic 'pwn request' on a forked Actions repo, then fix with OIDC + environment protection + workflow pinning",
-      "Build a Kyverno policy pack: verify image signatures, block latest tags, require resource limits — then test bypass attempts",
+      "Build a Kyverno policy pack: verify image signatures, block latest tags, require resource limits - then test bypass attempts",
       "Create a Falco rule to alert on a reverse shell inside a pod and route it to a Slack/ PagerDuty channel in the lab",
     ],
     certs: ["Certified DevSecOps Professional", "CKS (Certified Kubernetes Security Specialist)", "GitHub Advanced Security", "CSSLP"],
@@ -300,7 +300,7 @@ export const CYBER_DOMAINS: Record<string, CyberDomainKnowledge> = {
       "Blue-team a simulated intrusion VM: triage Sysmon+auth logs, reconstruct the attack timeline, produce an IR report with IoCs",
       "Write 5 KQL/SPL detection rules for ATT&CK techniques (T1059, T1053, T1003, T1021, T1071) and validate with atomic red team",
       "Run a phishing response: analyze a live-style campaign sample, detonate safely, purge across a test tenant, close with comms artifacts",
-      "Tabletop: business-email-compromise leads to fraudulent payment — decide containment, recovery, legal notification steps under time pressure",
+      "Tabletop: business-email-compromise leads to fraudulent payment - decide containment, recovery, legal notification steps under time pressure",
     ],
     certs: ["GCIA", "GCIH", "CySA+", "BTL1", "E_CIrt"],
     roles: ["SOC Analyst (Tier 1/2)", "Incident Responder", "Detection Engineer", "Threat Hunter"],
@@ -321,7 +321,7 @@ export const CYBER_DOMAINS: Record<string, CyberDomainKnowledge> = {
       "Timeline building: plaso/log2timeline super-timelines, artifact correlation across sources, timestomping detection ($FN vs $SI)",
       "Mobile forensics overview: logical vs physical acquisition, iOS/Android key artifacts",
       "Network forensics: PCAP analysis, flow records, DNS tunneling detection, TLS fingerprint context",
-      "Anti-forensics: encryption, wiping patterns, timestomping, alternate data streams — and counter-techniques",
+      "Anti-forensics: encryption, wiping patterns, timestomping, alternate data streams - and counter-techniques",
       "Reporting: findings tied to artifacts, confidence levels, reproducibility, expert-witness basics",
     ],
     tools: ["Autopsy", "FTK Imager", "Volatility 3", "KAPE", "Plaso/log2timeline", "Timeline Explorer", "Registry Explorer", "Sleuth Kit", "X-Ways (overview)", "Cellebrite (overview)"],
@@ -340,7 +340,7 @@ export const CYBER_DOMAINS: Record<string, CyberDomainKnowledge> = {
     key: "Malware Analysis",
     name: "Malware Analysis & Reverse Engineering",
     summary:
-      "From triage to deep RE: safely detonating samples, static analysis, disassembly and decompilation, unpacking, behavior analysis and IoC/YARA authoring — turning malware into detections and threat intel.",
+      "From triage to deep RE: safely detonating samples, static analysis, disassembly and decompilation, unpacking, behavior analysis and IoC/YARA authoring - turning malware into detections and threat intel.",
     coreTopics: [
       "Safe lab design: isolated VMs, snapshots, INetSim/FakeNet, no production leakage, malware opsec",
       "Triage workflow: hashes, fuzzy hashing (ssdeep/tlsh), packer/capability detection (DIE, CAPA), strings/imports triage",
@@ -402,7 +402,7 @@ export const CYBER_DOMAINS: Record<string, CyberDomainKnowledge> = {
     key: "General",
     name: "Cybersecurity Foundations",
     summary:
-      "The security canon every specialist needs: the CIA triad and beyond, core control families, crypto basics, network/app/cloud exposure surfaces, and how attackers and defenders operate — the vocabulary on which every GuardianX course builds.",
+      "The security canon every specialist needs: the CIA triad and beyond, core control families, crypto basics, network/app/cloud exposure surfaces, and how attackers and defenders operate - the vocabulary on which every GuardianX course builds.",
     coreTopics: [
       "Security principles: CIA triad, AAA, least privilege, defense in depth, separation of duties, keep-it-simple",
       "Threat landscape: malware classes, phishing/social engineering, insider risk, supply chain, the modern breach lifecycle",
@@ -433,7 +433,7 @@ export const CYBER_DOMAINS: Record<string, CyberDomainKnowledge> = {
     key: "Cryptography",
     name: "Applied Cryptography & PKI",
     summary:
-      "Crypto that engineers can reason about: primitives, protocol construction, PKI operations, and the failure classes (padding oracles, nonce reuse, misconfigured TLS) seen in real breaches — implementation-aware, not math-paper-deep.",
+      "Crypto that engineers can reason about: primitives, protocol construction, PKI operations, and the failure classes (padding oracles, nonce reuse, misconfigured TLS) seen in real breaches - implementation-aware, not math-paper-deep.",
     coreTopics: [
       "Symmetric primitives: AES modes (GCM vs CBC vs ECB failures), ChaCha20, block vs stream tradeoffs",
       "Hashing & integrity: SHA-2/3, HMAC, length-extension attacks, password storage (Argon2/bcrypt/scrypt parameters)",
@@ -493,7 +493,7 @@ export const CYBER_DOMAINS: Record<string, CyberDomainKnowledge> = {
     key: "Wireless Security",
     name: "Wi-Fi, RF & Wireless Infrastructure Security",
     summary:
-      "Offensive and defensive wireless: 802.11 attack and defense (WPA2/WPA3-Enterprise, PMKID, evil twin, rogue AP hunting), RF fundamentals (SDR, signal capture), Bluetooth/BLE weaknesses, and the enterprise controls that survive contact with real attackers — 802.1X, WPA3-SAE, wireless IDS/IPS and RF survey methodology.",
+      "Offensive and defensive wireless: 802.11 attack and defense (WPA2/WPA3-Enterprise, PMKID, evil twin, rogue AP hunting), RF fundamentals (SDR, signal capture), Bluetooth/BLE weaknesses, and the enterprise controls that survive contact with real attackers - 802.1X, WPA3-SAE, wireless IDS/IPS and RF survey methodology.",
     coreTopics: [
       "802.11 protocol fundamentals: frames, beacons, association, 4-way handshake, PMK/PTK key hierarchy",
       "WPA2-PSK cracking: handshake capture with hcxdumptool, PMKID attack, Hashcat mask/rule attacks on captured hashes",
@@ -520,19 +520,19 @@ export const CYBER_DOMAINS: Record<string, CyberDomainKnowledge> = {
 
   "Social Engineering": {
     key: "Social Engineering",
-    name: "Human-Layer Security — Phishing, Vishing & Social Engineering Defense",
+    name: "Human-Layer Security - Phishing, Vishing & Social Engineering Defense",
     summary:
-      "The human attack surface: phishing/vishing/smishing operations run lawfully and defensively, pretext development, psychology of influence, assessment with GoPhish-style controlled simulations, and the defensive stack that actually moves the needle — email authentication (SPF/DKIM/DMARC), gateway tuning, phishing-resistant MFA (FIDO2), report-button culture and metrics that measure resilience rather than shame.",
+      "The human attack surface: phishing/vishing/smishing operations run lawfully and defensively, pretext development, psychology of influence, assessment with GoPhish-style controlled simulations, and the defensive stack that actually moves the needle - email authentication (SPF/DKIM/DMARC), gateway tuning, phishing-resistant MFA (FIDO2), report-button culture and metrics that measure resilience rather than shame.",
     coreTopics: [
       "Influence psychology: Cialdini principles, urgency/authority triggers, and why training-only approaches fail",
       "Phishing operation lifecycle (authorized): target recon, pretext design, infrastructure (GoPhish, domains, tracking), execution, metrics",
       "Vishing/smishing/deepfake voice: pretexts, VOIP setup for authorized labs, AI voice-clone risk awareness",
-      "Email authentication deep dive: SPF, DKIM, DMARC (p=none→quarantine→reject), BIMI, ARC — and how attackers abuse lookalikes",
+      "Email authentication deep dive: SPF, DKIM, DMARC (p=none→quarantine→reject), BIMI, ARC - and how attackers abuse lookalikes",
       "Gateway & mailbox defenses: EOP/Proofpoint-style rules, attachment detonation, URL rewriting, impersonation protection",
-      "Phishing-resistant MFA: FIDO2/WebAuthn vs push-bombing vs OTP — MFA fatigue attacks and number matching",
+      "Phishing-resistant MFA: FIDO2/WebAuthn vs push-bombing vs OTP - MFA fatigue attacks and number matching",
       "Detection & response: anomaly signals, report-button telemetry, automated containment of confirmed phish",
       "Security awareness program design: role-based scenarios, just-in-time coaching, measuring resilience (report rate, click trend, dwell time)",
-      "Physical social engineering (authorized engagements): badge cloning awareness, tailgating, drop-box USBs — and the controls",
+      "Physical social engineering (authorized engagements): badge cloning awareness, tailgating, drop-box USBs - and the controls",
       "Insider-risk overlap: data exfiltration indicators, DLP touchpoints, HR/legal coordination",
     ],
     tools: ["GoPhish", "Mailcow/postfix (lab mail)", "SPF/DKIM/DMARC inspectors (dmarcian, MXToolbox)", "Evilginx-style proxies (awareness)", "VOIP lab stack (Asterisk)", "HaveIBeenPwned-style recon", "Modlishka (awareness)"],
@@ -555,7 +555,7 @@ export const CYBER_DOMAINS: Record<string, CyberDomainKnowledge> = {
     coreTopics: [
       "IT vs OT fundamentals: availability-safety triangle, real-time constraints, legacy Windows/embedded estates",
       "Purdue Enterprise Reference Architecture: levels 0-3/DMZ, zone & conduit segmentation (IEC 62443)",
-      "Industrial protocols on the wire: Modbus/TCP, DNP3, S7comm, EtherNet/IP, OPC UA — replay/injection realities",
+      "Industrial protocols on the wire: Modbus/TCP, DNP3, S7comm, EtherNet/IP, OPC UA - replay/injection realities",
       "Historic incidents as teaching cases: Stuxnet, Industroyer/CrashOverride, TRITON/TRISIS, Pipedream/Incontroller",
       "MITRE ATT&CK for ICS: techniques, data sources, detection engineering for OT protocols",
       "Passive OT monitoring: Deep Packet Inspection with Zeek ICS scripts, Nozomi/Claroty-style asset discovery concepts",
@@ -588,7 +588,7 @@ export const EXTRA_DOMAIN_KEYS = [
   "Cryptography",
 ] as const
 
-/** Never-fail domain resolution — unknown categories get a synthesised entry. */
+/** Never-fail domain resolution - unknown categories get a synthesised entry. */
 export function resolveDomain(category: string | null | undefined): CyberDomainKnowledge {
   const key = (category || "").trim()
   if (key && CYBER_DOMAINS[key]) return CYBER_DOMAINS[key]
@@ -632,7 +632,7 @@ export function resolveDomain(category: string | null | undefined): CyberDomainK
 export function domainKnowledgeBlock(category: string | null | undefined): string {
   const d = resolveDomain(category)
   const list = (arr: string[]) => arr.map((x) => `  - ${x}`).join("\n")
-  return `DOMAIN EXPERTISE — ${d.name}
+  return `DOMAIN EXPERTISE - ${d.name}
 ${d.summary}
 
 Core topics you teach fluently in this domain:
@@ -653,7 +653,7 @@ export function domainCatalog(): string {
 }
 
 /* ============================================================
-   Expert lens — the senior-practitioner layer.
+   Expert lens - the senior-practitioner layer.
    For each domain: HOW an expert approaches the work
    (methodology), the wrong ideas students bring
    (misconceptions the agent must actively correct), and the
@@ -670,51 +670,51 @@ export interface DomainExpertLens {
 export const DOMAIN_EXPERT_LENS: Record<string, DomainExpertLens> = {
   "Ethical Hacking": {
     methodology: [
-      "Evidence-first testing: every claimed finding carries a reproduction path, screenshot/output evidence and a severity rationale — an unproven finding is an opinion.",
+      "Evidence-first testing: every claimed finding carries a reproduction path, screenshot/output evidence and a severity rationale - an unproven finding is an opinion.",
       "Kill-chain ordered operations: recon → enumerate → prioritise (CVSS + business context) → exploit → post-exploit → report; each stage gates the next.",
       "Assume-detection mindset: for every action, note the telemetry it generates (EDR, Sysmon, NetFlow) so the report can also teach the defenders.",
     ],
     misconceptions: [
-      "Thinking a tool run equals a pentest — tools enumerate; the engineer's chaining, context and report are the deliverable.",
+      "Thinking a tool run equals a pentest - tools enumerate; the engineer's chaining, context and report are the deliverable.",
       "Believing 'root on one box' ends the engagement: value is demonstrated by pivoting to tier-0 assets and business impact.",
       "Assuming exploits are plug-and-play: public PoCs frequently need safe modification and environment awareness.",
     ],
     interviewProbes: [
       "Walk me through your last full-scope engagement end-to-end, including the finding you were proudest of and why it mattered to the business.",
-      "You get a shell on a workstation inside an enterprise network — what are your first five actions and why that order?",
+      "You get a shell on a workstation inside an enterprise network - what are your first five actions and why that order?",
       "How do you safely modify a public exploit, and how do you verify it will not take the target down?",
     ],
   },
   Networking: {
     methodology: [
       "Layered diagnosis: physical → L2 → L3 → L4 → application; never jump to 'restart the firewall' before the path is proven with tcpdump/traceroute evidence.",
-      "Packet-level truth: if the logs disagree with the wire capture, the wire wins — teach students to read handshakes, TTLs and retransmissions.",
+      "Packet-level truth: if the logs disagree with the wire capture, the wire wins - teach students to read handshakes, TTLs and retransmissions.",
       "Design reviews start with trust boundaries: every interface, VLAN and tunnel is a policy question, not a config line.",
     ],
     misconceptions: [
-      "Confusing NAT with a security control — it obscures addressing but is not a segmentation policy.",
+      "Confusing NAT with a security control - it obscures addressing but is not a segmentation policy.",
       "Believing a VLAN tag implies isolation without an enforced ACL/L3 boundary behind it.",
       "Assuming TLS on the wire means the endpoint is trustworthy.",
     ],
     interviewProbes: [
-      "A user says 'the network is slow' — walk me through your end-to-end diagnostic from the wall port to the application.",
+      "A user says 'the network is slow' - walk me through your end-to-end diagnostic from the wall port to the application.",
       "Where exactly would you place a WAF, an IDS and a jump host in a segmented design, and what does each buy you?",
       "Explain what a TCP retransmission storm tells you that CPU graphs cannot.",
     ],
   },
   "Web Security": {
     methodology: [
-      "Spec-driven testing: map every behaviour against the WSTG checklist and the application's own intended state machine — bugs hide where the two disagree.",
+      "Spec-driven testing: map every behaviour against the WSTG checklist and the application's own intended state machine - bugs hide where the two disagree.",
       "Exploit chains over single bugs: a self-XSS plus a login CSRF can outperform one lonely RCE; always hunt for combinable weaknesses.",
       "Fix-verification loop: every finding ends with a re-test that proves the remediation actually kills the exploit path.",
     ],
     misconceptions: [
-      "Believing HTTPS means the site is secure — transport privacy has nothing to do with authorization logic.",
+      "Believing HTTPS means the site is secure - transport privacy has nothing to do with authorization logic.",
       "Equating a scanner's green board with safety: Burp/ZAP miss logic flaws, IDOR chains and business-logic abuse by design.",
-      "Trusting client-side validation as a control — the server is the only enforcement point that counts.",
+      "Trusting client-side validation as a control - the server is the only enforcement point that counts.",
     ],
     interviewProbes: [
-      "A web app has MFA, HTTPS and a WAF — give me three realistic attack paths that still work.",
+      "A web app has MFA, HTTPS and a WAF - give me three realistic attack paths that still work.",
       "How do you test for IDOR methodically without spraying thousands of requests?",
       "Explain a time you chained two low-severity findings into something critical.",
     ],
@@ -726,12 +726,12 @@ export const DOMAIN_EXPERT_LENS: Record<string, DomainExpertLens> = {
       "Change is the risk window: patching cadences, rollback plans and maintenance windows are part of the security design, not overhead.",
     ],
     misconceptions: [
-      "Assuming antivirus equals endpoint security — identity hygiene, local admin rights and patching move the needle far more.",
+      "Assuming antivirus equals endpoint security - identity hygiene, local admin rights and patching move the needle far more.",
       "Believing servers 'drift randomly': drift comes from unmanaged change, which is a process failure, not a mystery.",
       "Treating the sudoers file or local admin group as set-and-forget when they are the crown jewels of privilege escalation.",
     ],
     interviewProbes: [
-      "You inherit 200 unpatched servers with no inventory — what do you do in the first week?",
+      "You inherit 200 unpatched servers with no inventory - what do you do in the first week?",
       "How would you harden a Linux web server that must run a legacy PHP 5 app?",
       "Explain your rollback plan when a Tuesday patch cycle breaks production.",
     ],
@@ -739,16 +739,16 @@ export const DOMAIN_EXPERT_LENS: Record<string, DomainExpertLens> = {
   "Security Management": {
     methodology: [
       "Risk-led governance: inventory → risk register → treatment decisions → control mapping → evidence; frameworks (ISO 27001, NIST CSF) structure the conversation, they are not the goal.",
-      "Metrics that change behaviour: mean-time-to-patch, phishing report rate, control coverage — vanity dashboards are compliance theatre.",
+      "Metrics that change behaviour: mean-time-to-patch, phishing report rate, control coverage - vanity dashboards are compliance theatre.",
       "Policy without enforcement is fiction: every policy statement needs an owning control, a technical or procedural verification, and an audit trail.",
     ],
     misconceptions: [
-      "Equating certification with security — an ISMS can pass audit while critical risks stay untreated.",
+      "Equating certification with security - an ISMS can pass audit while critical risks stay untreated.",
       "Believing zero risk is achievable: the job is informed risk acceptance at the right leadership level.",
-      "Assuming awareness training alone prevents incidents — it shifts probabilities, controls decide outcomes.",
+      "Assuming awareness training alone prevents incidents - it shifts probabilities, controls decide outcomes.",
     ],
     interviewProbes: [
-      "The board asks 'are we secure?' — what do you actually present and from which data?",
+      "The board asks 'are we secure?' - what do you actually present and from which data?",
       "A critical risk has no budget: walk me through the acceptance and monitoring you would put around it.",
       "How do you keep an ISO 27001 ISMS alive between surveillance audits?",
     ],
@@ -756,33 +756,33 @@ export const DOMAIN_EXPERT_LENS: Record<string, DomainExpertLens> = {
   "Identity & Access": {
     methodology: [
       "Identity is the new perimeter: map every service account, API key and federation trust as lovingly as you map user accounts.",
-      "Least privilege as a lifecycle: JIT elevation, access reviews, joiner-mover-leaver automation — standing privileges are debt.",
+      "Least privilege as a lifecycle: JIT elevation, access reviews, joiner-mover-leaver automation - standing privileges are debt.",
       "Assume credential theft: design for phishing-resistant factors, conditional access and impossible-travel detection, not password rotation theatre.",
     ],
     misconceptions: [
-      "Believing MFA solves everything: push-fatigue, SIM-swap and AiTM proxy kits defeat weak factors — FIDO2 or nothing for tier-0.",
-      "Confusing authentication with authorization — who you are is not what you may do.",
+      "Believing MFA solves everything: push-fatigue, SIM-swap and AiTM proxy kits defeat weak factors - FIDO2 or nothing for tier-0.",
+      "Confusing authentication with authorization - who you are is not what you may do.",
       "Assuming service accounts 'are fine' because nobody logs into them interactively.",
     ],
     interviewProbes: [
       "Design the access model for a tier-0 admin: from workstation to domain controller, every hop and every control.",
-      "You find a service account with domain admin from 2016 — what is your remediation and communication plan?",
+      "You find a service account with domain admin from 2016 - what is your remediation and communication plan?",
       "How would you detect an AiTM phishing proxy stealing session tokens in your tenant?",
     ],
   },
   "Cloud Security": {
     methodology: [
-      "Control-plane first: who can create/modify IAM, networking and compute defines the blast radius — review the control plane before chasing workloads.",
+      "Control-plane first: who can create/modify IAM, networking and compute defines the blast radius - review the control plane before chasing workloads.",
       "Guardrails over gates: SCPs/Azure Policy/Org policies make the insecure path impossible instead of auditing it afterwards.",
-      "Assume public: every storage, queue and endpoint is internet-scannable until proven otherwise — continuously prove otherwise.",
+      "Assume public: every storage, queue and endpoint is internet-scannable until proven otherwise - continuously prove otherwise.",
     ],
     misconceptions: [
-      "Believing the shared responsibility model ends at 'provider handles security' — IAM misconfig is always yours.",
+      "Believing the shared responsibility model ends at 'provider handles security' - IAM misconfig is always yours.",
       "Treating cloud like a virtual datacenter: identical VPCs and logs everywhere ignore managed-service identities and metadata APIs (SSRF → role theft).",
-      "Assuming private subnets are unreachable — egress paths and VPC endpoints decide that.",
+      "Assuming private subnets are unreachable - egress paths and VPC endpoints decide that.",
     ],
     interviewProbes: [
-      "An S3 bucket with PII goes public — walk me from detection through containment to the permanent control that prevents recurrence.",
+      "An S3 bucket with PII goes public - walk me from detection through containment to the permanent control that prevents recurrence.",
       "How does an SSRF in an EC2 app become a full account takeover, and what breaks that chain?",
       "What would your SCP/Policy guardrail set contain on day one in a new AWS org?",
     ],
@@ -790,33 +790,33 @@ export const DOMAIN_EXPERT_LENS: Record<string, DomainExpertLens> = {
   DevSecOps: {
     methodology: [
       "Shift-left with teeth: SAST/DAST/SCA/IaC scanning in CI only counts when findings block merges or auto-file tickets with owners.",
-      "Pipeline is production: CI runners, registries and deploy keys are tier-0 assets — protect them like domain controllers.",
+      "Pipeline is production: CI runners, registries and deploy keys are tier-0 assets - protect them like domain controllers.",
       "Provenance and SBOM: signed images (cosign), attested builds and an SBOM you can query when the next log4j lands.",
     ],
     misconceptions: [
-      "Believing a weekly SCA scan is supply-chain security — dependencies need SBOMs, signing and rapid-rebuild drills.",
-      "Assuming developers will 'own security' because a dashboard exists — the platform team must make the secure path the default.",
+      "Believing a weekly SCA scan is supply-chain security - dependencies need SBOMs, signing and rapid-rebuild drills.",
+      "Assuming developers will 'own security' because a dashboard exists - the platform team must make the secure path the default.",
       "Equating secrets in vaults with secrets hygiene: rotation, short-lived credentials and scan-for-drift matter more.",
     ],
     interviewProbes: [
       "Design the CI/CD security controls for a fintech deploying 50 times a day.",
-      "log4shell hits at 9am — what does your SBOM/registry tooling let you do by noon?",
-      "A developer needs a long-lived AWS key 'just for this one job' — what do you offer instead?",
+      "log4shell hits at 9am - what does your SBOM/registry tooling let you do by noon?",
+      "A developer needs a long-lived AWS key 'just for this one job' - what do you offer instead?",
     ],
   },
   "Incident Response": {
     methodology: [
-      "Stabilise before you investigate: containment scope decisions are business decisions — document them live with timestamps.",
+      "Stabilise before you investigate: containment scope decisions are business decisions - document them live with timestamps.",
       "One evidence chain: acquire → hash → log → analyse, with write-blockers and copies; the case dies with a broken chain of custody.",
       "Hypothesis-driven hunting: every indicator suggests a story; attack the story until it breaks or completes.",
     ],
     misconceptions: [
       "Believing reimaging is containment: without root-cause, the same access path re-enters the next image.",
-      "Assuming alerts equal incidents and incidents equal breaches — triage discipline exists to separate them.",
+      "Assuming alerts equal incidents and incidents equal breaches - triage discipline exists to separate them.",
       "Treating the tabletop as a checkbox: the plan that survives contact is the one with contacts, authority and out-of-band comms rehearsed.",
     ],
     interviewProbes: [
-      "Suspicious lsass access on a finance workstation at 2am — take me through your next 60 minutes.",
+      "Suspicious lsass access on a finance workstation at 2am - take me through your next 60 minutes.",
       "When do you pull the plug versus monitor, and who has authority to make that call?",
       "How do you keep IR comms working when you suspect the email tenant is compromised?",
     ],
@@ -829,13 +829,13 @@ export const DOMAIN_EXPERT_LENS: Record<string, DomainExpertLens> = {
     ],
     misconceptions: [
       "Believing 'the logs are gone' means no evidence: memory, USN journal, SRUM, prefetch, cloud audit trails persist.",
-      "Assuming tools like Autopsy output truth — parsers have bugs and anti-forensics plants artifacts.",
-      "Treating timestamps as absolute — timezone and clock-skew errors invent or destroy alibis.",
+      "Assuming tools like Autopsy output truth - parsers have bugs and anti-forensics plants artifacts.",
+      "Treating timestamps as absolute - timezone and clock-skew errors invent or destroy alibis.",
     ],
     interviewProbes: [
-      "You arrive on-site with a live, encrypted, powered-on laptop — what do you capture in what order and why?",
+      "You arrive on-site with a live, encrypted, powered-on laptop - what do you capture in what order and why?",
       "How would you prove (not speculate) that a USB device was attached and files copied?",
-      "A suspect wiped browsers but the box kept running — where else does web activity live?",
+      "A suspect wiped browsers but the box kept running - where else does web activity live?",
     ],
   },
   "Malware Analysis": {
@@ -847,27 +847,27 @@ export const DOMAIN_EXPERT_LENS: Record<string, DomainExpertLens> = {
     misconceptions: [
       "Believing packed/obfuscated means impossible: unpacking is a workflow (run, dump, rebuild imports), not black magic.",
       "Assuming a sandbox report is the full story: evasion-aware samples behave differently under monitoring.",
-      "Treating malware analysis as IOC harvesting — capabilities and TTPs drive detections longer than hashes do.",
+      "Treating malware analysis as IOC harvesting - capabilities and TTPs drive detections longer than hashes do.",
     ],
     interviewProbes: [
-      "A sample refuses to run in any sandbox — how do you approach it?",
+      "A sample refuses to run in any sandbox - how do you approach it?",
       "Walk me from a suspicious Word doc to YARA rules you would deploy enterprise-wide.",
       "What is the difference between staging, installation and C2 behaviours when you report to a SOC?",
     ],
   },
   "Threat Intelligence": {
     methodology: [
-      "Intelligence answers questions: start from the consumer's decision (patch now? block? hunt?) and work backwards — collecting everything is collecting nothing.",
+      "Intelligence answers questions: start from the consumer's decision (patch now? block? hunt?) and work backwards - collecting everything is collecting nothing.",
       "Finish the pyramid: map IOCs upward to TTPs and campaigns so detections outlive infrastructure rotation.",
       "Adversary emulation feedback loop: every intel product should end as a detection, a hunt package or an engineering ticket.",
     ],
     misconceptions: [
-      "Equating feeds with intelligence — raw IOCs without context and confidence are noise with a API bill.",
+      "Equating feeds with intelligence - raw IOCs without context and confidence are noise with a API bill.",
       "Believing APT attribution matters to defenders more than TTPs: you cannot block a nation-state's name.",
-      "Assuming intel is a SOC-only product — risk, fraud and executive teams are consumers too.",
+      "Assuming intel is a SOC-only product - risk, fraud and executive teams are consumers too.",
     ],
     interviewProbes: [
-      "A new ransomware crew targets your sector — what intelligence product do you deliver, to whom, by when?",
+      "A new ransomware crew targets your sector - what intelligence product do you deliver, to whom, by when?",
       "How do you measure whether your threat intel program is worth its cost?",
       "Take one ATT&CK technique and show how you would go from report to working detection.",
     ],
@@ -875,16 +875,16 @@ export const DOMAIN_EXPERT_LENS: Record<string, DomainExpertLens> = {
   Cryptography: {
     methodology: [
       "Never roll your own: primitive selection comes from standards and libraries (libsodium, platform APIs); the engineering is in protocol and key management.",
-      "Threat-model the key lifecycle: generation, storage, rotation, revocation — most real failures live there, not in the math.",
+      "Threat-model the key lifecycle: generation, storage, rotation, revocation - most real failures live there, not in the math.",
       "Prove implementations in tests: known-answer tests, fuzzing parsers, constant-time checks for anything touching secrets.",
     ],
     misconceptions: [
-      "Believing 'AES-256' is a security claim — modes, nonces and key handling decide everything (GCM nonce reuse is catastrophic).",
+      "Believing 'AES-256' is a security claim - modes, nonces and key handling decide everything (GCM nonce reuse is catastrophic).",
       "Confusing encoding (base64) or hashing (SHA) with encryption.",
       "Assuming longer keys fix design flaws: ECB and MD5 stay broken at any length.",
     ],
     interviewProbes: [
-      "You need encrypted search over user records — walk me through the trade-offs you would evaluate.",
+      "You need encrypted search over user records - walk me through the trade-offs you would evaluate.",
       "Why is GCM nonce reuse worse than CBC IV reuse, and how do libraries prevent both?",
       "Design the key rotation plan for a service encrypting data at rest with customer-managed keys.",
     ],
@@ -896,9 +896,9 @@ export const DOMAIN_EXPERT_LENS: Record<string, DomainExpertLens> = {
       "Assess the fleet, not just the app: an MDM baseline review often finds higher risk than any single APK.",
     ],
     misconceptions: [
-      "Believing app-store review means security — it is a malware scan and checklist, not a penetration test.",
+      "Believing app-store review means security - it is a malware scan and checklist, not a penetration test.",
       "Assuming iOS is 'safe by default': Keychain misuse, weak ATS exceptions and jailbroken fleets negate platform promises.",
-      "Treating obfuscation (ProGuard) as encryption — the binary still runs on an attacker-controlled device.",
+      "Treating obfuscation (ProGuard) as encryption - the binary still runs on an attacker-controlled device.",
     ],
     interviewProbes: [
       "How would you test a banking app end-to-end with only a rooted device and a proxy?",
@@ -909,50 +909,50 @@ export const DOMAIN_EXPERT_LENS: Record<string, DomainExpertLens> = {
   "Wireless Security": {
     methodology: [
       "Survey before you attack: channel map, client inventory and AP fleet baseline turn wireless testing from noise into findings.",
-      "Enterprise first: the WPA2/WPA3-Enterprise EAP negotiation is where real networks fail — certificate validation and rogue RADIUS.",
+      "Enterprise first: the WPA2/WPA3-Enterprise EAP negotiation is where real networks fail - certificate validation and rogue RADIUS.",
       "Pair every attack with its detection: a PMKID crack demo ends with the WIPS signature and 802.1X design that kills it.",
     ],
     misconceptions: [
-      "Believing hiding SSIDs or MAC filtering adds meaningful security — both are trivia-level bypasses.",
+      "Believing hiding SSIDs or MAC filtering adds meaningful security - both are trivia-level bypasses.",
       "Assuming WPA3 means done: transition mode re-enables downgrade games and enterprise deployment is where the risk lives.",
       "Treating guest Wi-Fi as isolated until proven: client-to-client forwarding and flat VLANs are the classic fail.",
     ],
     interviewProbes: [
-      "You are asked to secure a conference venue Wi-Fi for 2000 attendees — design it.",
+      "You are asked to secure a conference venue Wi-Fi for 2000 attendees - design it.",
       "How does an evil twin defeat a validated enterprise EAP-TLS network, and what stops it?",
       "What wireless telemetry would you ship to your SIEM and what hunts would you run on it?",
     ],
   },
   "Social Engineering": {
     methodology: [
-      "Metrics over fear: report rate, click-rate trend and time-to-report measure resilience — shaming users kills reporting culture.",
+      "Metrics over fear: report rate, click-rate trend and time-to-report measure resilience - shaming users kills reporting culture.",
       "Control-pair every simulation: each authorized campaign must end with a technical control test (DMARC, gateway, MFA) not just a user test.",
       "Pretext realism with ethics: authorized scenarios only, no real credentials harvested, instant disclosure and data destruction.",
     ],
     misconceptions: [
-      "Believing annual training prevents phishing — in-the-moment coaching and easy reporting beat annual slide decks.",
+      "Believing annual training prevents phishing - in-the-moment coaching and easy reporting beat annual slide decks.",
       "Assuming MFA stops phishing: OTP and push are phishable; FIDO2 and number matching are the bar.",
       "Treating users as the 'weakest link' instead of the sensors you armed badly.",
     ],
     interviewProbes: [
-      "Click rate is down but credential compromises are up — what is actually happening and what do you change?",
+      "Click rate is down but credential compromises are up - what is actually happening and what do you change?",
       "Design the DMARC rollout for a company with marketing vendors sending on its behalf.",
       "How would you defend the CFO against a deepfake voice authorization request?",
     ],
   },
   "OT/ICS Security": {
     methodology: [
-      "Safety outranks security findings: no active scans or writes against live PLCs without engineer sign-off — the lab simulates, the plant never experiments.",
+      "Safety outranks security findings: no active scans or writes against live PLCs without engineer sign-off - the lab simulates, the plant never experiments.",
       "Passive-first visibility: mirror SPAN ports and fingerprint assets with Zeek/GRASSMARLIN before anyone touches a device.",
-      "Segment by zones and conduits: IEC 62443 design reviews beat scanning — most OT incidents are IT-side lateral movement into flat networks.",
+      "Segment by zones and conduits: IEC 62443 design reviews beat scanning - most OT incidents are IT-side lateral movement into flat networks.",
     ],
     misconceptions: [
       "Believing air-gaps exist: vendor remote access, USB media and business-data historians connect everything.",
       "Assuming IT patching cadences apply: firmware cycles are shutdown-window events requiring compensating controls.",
-      "Treating OT devices as unpatchable black boxes — monitoring, segmentation and egress control carry the load instead.",
+      "Treating OT devices as unpatchable black boxes - monitoring, segmentation and egress control carry the load instead.",
     ],
     interviewProbes: [
-      "IT detects ransomware spreading toward the plant floor — what are your first three moves and what must you NOT do?",
+      "IT detects ransomware spreading toward the plant floor - what are your first three moves and what must you NOT do?",
       "How do you build an OT asset inventory without active scanning?",
       "Walk me through zoning a mid-size food-plant network to IEC 62443 principles.",
     ],
@@ -961,7 +961,7 @@ export const DOMAIN_EXPERT_LENS: Record<string, DomainExpertLens> = {
     methodology: [
       "Fundamentals compound: CIA triad, least privilege, defense in depth and complete mediation solve most novel scenarios students will meet.",
       "Teach the transferable loop: model the threat → pick the control → verify it works → monitor for decay.",
-      "Vocabulary precision: attack vs vulnerability vs threat vs risk — interviews and audits punish loose language.",
+      "Vocabulary precision: attack vs vulnerability vs threat vs risk - interviews and audits punish loose language.",
     ],
     misconceptions: [
       "Believing security is a product you buy rather than a property you engineer and operate.",
@@ -970,20 +970,20 @@ export const DOMAIN_EXPERT_LENS: Record<string, DomainExpertLens> = {
     ],
     interviewProbes: [
       "Explain defense in depth with a concrete control stack for one realistic asset.",
-      "What is the difference between a threat, a vulnerability and a risk — with an example of each?",
+      "What is the difference between a threat, a vulnerability and a risk - with an example of each?",
       "How do you decide between mitigating, transferring or accepting a risk?",
     ],
   },
 }
 
-/** Senior-practitioner lens block for prompts — empty string for unknown domains. */
+/** Senior-practitioner lens block for prompts - empty string for unknown domains. */
 export function domainExpertLens(category: string | null | undefined): string {
   const d = resolveDomain(category)
   const lens = DOMAIN_EXPERT_LENS[d.key]
   if (!lens) return ""
   const list = (arr: string[]) => arr.map((x) => `  - ${x}`).join("\n")
   return `
-EXPERT LENS — how a senior ${d.key} practitioner works:
+EXPERT LENS - how a senior ${d.key} practitioner works:
 Methodology:
 ${list(lens.methodology)}
 Misconceptions you must actively correct in learners:

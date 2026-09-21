@@ -35,7 +35,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
         })
       : []
 
-  // Also return candidate prerequisites — other courses owned by the instructor
+  // Also return candidate prerequisites - other courses owned by the instructor
   // (or all courses for admins) so the UI can present a picker.
   const candidates = await db.course.findMany({
     where: {

@@ -70,7 +70,7 @@ import {
   UPCOMING_BATCHES,
   SCHEDULES,
   METHODOLOGY_STEPS,
-  // INSTRUCTORS removed — now fetched from /api/instructors (real DB data)
+  // INSTRUCTORS removed - now fetched from /api/instructors (real DB data)
   type TechnologyPartner,
   type PlatformStat,
   type LearningPathRow,
@@ -423,7 +423,7 @@ export function HomeView() {
         almostFull: (b.seats - (b.enrolled ?? 0)) <= 2 || b.status === "Almost Full",
       }))
     }
-    // Static fallback — already has `almostFull`.
+    // Static fallback - already has `almostFull`.
     return UPCOMING_BATCHES as unknown as TrainingBatchRow[]
   }, [batchesData])
 
@@ -1671,7 +1671,7 @@ export function HomeView() {
                 {(() => {
                   const lo = rankRows[0]?.xpThreshold ?? 0
                   const hi = rankRows[rankRows.length - 1]?.xpThreshold ?? 100000
-                  return `${lo.toLocaleString()}–${hi.toLocaleString()} XP`
+                  return `${lo.toLocaleString()}-${hi.toLocaleString()} XP`
                 })()}{" "}
                 EACH
               </span>

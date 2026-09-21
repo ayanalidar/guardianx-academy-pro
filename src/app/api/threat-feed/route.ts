@@ -78,7 +78,7 @@ const SEED_THREATS = [
     affectedSystems: "Node.js projects using npm",
   },
   {
-    title: "Chrome zero-day actively exploited — update to v131 immediately",
+    title: "Chrome zero-day actively exploited - update to v131 immediately",
     description:
       "Google has patched a high-severity type confusion vulnerability in Chrome's V8 engine. Active exploitation has been observed in targeted attacks against journalists and dissidents. Update to Chrome 131.0.6778.70+.",
     severity: "high",
@@ -157,7 +157,7 @@ const SEED_THREATS = [
   {
     title: "LinkedIn scraping operation exposed 220M profiles",
     description:
-      "A dataset containing 220M scraped LinkedIn profiles (including emails, job titles, and employers) was offered for sale on a dark web marketplace. No breach of LinkedIn's infrastructure occurred — data was scraped via automation.",
+      "A dataset containing 220M scraped LinkedIn profiles (including emails, job titles, and employers) was offered for sale on a dark web marketplace. No breach of LinkedIn's infrastructure occurred - data was scraped via automation.",
     severity: "low",
     category: "breach",
     source: "Recorded Future",
@@ -295,7 +295,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
     if (!["ADMIN", "SUPER_ADMIN", "INSTRUCTOR"].includes(user.role)) {
-      return NextResponse.json({ error: "Forbidden — admin only" }, { status: 403 })
+      return NextResponse.json({ error: "Forbidden - admin only" }, { status: 403 })
     }
 
     const body = await req.json()

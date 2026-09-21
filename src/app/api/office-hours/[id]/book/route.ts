@@ -84,13 +84,13 @@ export async function POST(
       : `Chat session${slot.location ? ` on ${slot.location}` : ""}`
 
   const timeStr = new Date(slot.startAt).toLocaleString()
-  const courseInfo = slot.course ? ` for ${slot.course.shortName} — ${slot.course.title}` : ""
+  const courseInfo = slot.course ? ` for ${slot.course.shortName} - ${slot.course.title}` : ""
 
   // Email + notification to student
   if (student) {
     await sendEmail({
       to: student.email,
-      subject: `Office hours confirmed — ${timeStr}`,
+      subject: `Office hours confirmed - ${timeStr}`,
       body: `Hi ${student.name},
 
 Your office hours session with ${slot.instructor.name}${courseInfo} has been booked.
@@ -103,7 +103,7 @@ Topic: ${topic || "(no topic provided)"}
 ${notes ? `Notes: ${notes}` : ""}
 
 See you there!
-— GuardianX Academy`,
+ - GuardianX Academy`,
       type: "office_hours",
       userId: user.id,
     })
@@ -112,7 +112,7 @@ See you there!
   // Email + notification to instructor
   await sendEmail({
     to: slot.instructor.email,
-    subject: `New office hours booking — ${student?.name ?? "A student"}`,
+    subject: `New office hours booking - ${student?.name ?? "A student"}`,
     body: `Hi ${slot.instructor.name},
 
 ${student?.name ?? "A student"} booked your office hours slot${courseInfo}.
@@ -124,7 +124,7 @@ ${meetingDetail}
 Topic: ${topic || "(no topic provided)"}
 ${notes ? `Notes from student: ${notes}` : ""}
 
-— GuardianX Academy`,
+ - GuardianX Academy`,
     type: "office_hours",
     userId: slot.instructor.id,
   })

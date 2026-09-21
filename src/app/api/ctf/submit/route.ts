@@ -90,7 +90,7 @@ export async function POST(req: NextRequest) {
 
   return NextResponse.json({
     correct: true,
-    message: "Already solved — no additional points awarded.",
+    message: "Already solved - no additional points awarded.",
     score: membership.team.score,
   })
 }

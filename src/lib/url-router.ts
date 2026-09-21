@@ -1,7 +1,7 @@
 /**
  * Path-based URL router for GuardianX Academy.
  *
- * NOTE: deliberately NOT "use client" — this module contains pure mapping
+ * NOTE: deliberately NOT "use client" - this module contains pure mapping
  * functions that are ALSO called from server components (the catch-all
  * bridge `src/app/[...gx]/page.tsx` and `batches/[slug]` use pathToView /
  * viewTitle / viewDescription for SSR + metadata). A "use client" directive
@@ -17,13 +17,13 @@
  * open-in-new-tab and analytics. This module now maps every Zustand
  * `View` to a REAL path (`/skill-assessments`) and back:
  *
- *   viewToPath(view)   — View → canonical URL path (used by navigate())
- *   pathToView(path)   — URL path → View (used on load, popstate, bridge page)
- *   hashToView(hash)   — LEGACY `#/...` → View (one-time redirect on load)
+ *   viewToPath(view) - View → canonical URL path (used by navigate())
+ *   pathToView(path) - URL path → View (used on load, popstate, bridge page)
+ *   hashToView(hash) - LEGACY `#/...` → View (one-time redirect on load)
  *
  * Views that have dedicated Next.js pages (e.g. /courses, /blog/<slug>)
  * map to those real routes; everything else is served by the catch-all
- * bridge page `src/app/[...gx]/page.tsx` which hydrates the SPA store —
+ * bridge page `src/app/[...gx]/page.tsx` which hydrates the SPA store - 
  * so every view gets a real, shareable, crawlable URL with zero view
  * rewrites.
  */
@@ -164,7 +164,7 @@ export function pathToView(pathWithSearch: string): View | null {
   }
   // /verify, /verify/<id>, /verify?credentialId=<id>, /verify?id=<id>
   // (CyberQuizCertificate rows store verificationUrl with ?id=, and the
-  // homepage verify card uses ?certificateId= — all must resolve.)
+  // homepage verify card uses ?certificateId= - all must resolve.)
   if (parts[0] === "verify") {
     const credentialId =
       parts[1] ?? search.get("credentialId") ?? search.get("id") ?? search.get("certificateId") ?? undefined
@@ -179,14 +179,14 @@ export function pathToView(pathWithSearch: string): View | null {
   if (parts[0] === "instructor-dashboard" && !parts[1]) return { name: "instructor" }
   if (parts[0] === "school-dashboard" && !parts[1]) return { name: "school" }
   if (parts[0] === "admin-dashboard" && !parts[1]) return { name: "admin" }
-  // /instructor/<id> (legacy detail) — "/instructor" alone → dashboard
+  // /instructor/<id> (legacy detail) - "/instructor" alone → dashboard
   if (parts[0] === "instructor") {
     if (parts[1]) return { name: "instructor-detail", instructorId: parts[1] }
     return { name: "instructor" }
   }
   if (parts[0] === "school" && !parts[1]) return { name: "school" }
   if (parts[0] === "admin" && !parts[1]) return { name: "admin" }
-  // /batches/<slug> (batch detail — real page + SPA view)
+  // /batches/<slug> (batch detail - real page + SPA view)
   if (parts[0] === "batches" && parts[1]) {
     return { name: "batch-detail", batchSlug: parts[1] }
   }
@@ -201,7 +201,7 @@ export function pathToView(pathWithSearch: string): View | null {
   if (parts[0] === "catalog" && !parts[1]) return { name: "catalog" }
   // /partners (legacy) → institutions
   if (parts[0] === "partners" && !parts[1]) return { name: "institutions" }
-  // Legacy "my learning" URL variants people type by hand — the canonical
+  // Legacy "my learning" URL variants people type by hand - the canonical
   // path is /learning, but these must resolve (not 404) for robustness.
   if (parts.length === 1 && (parts[0] === "my-learning" || parts[0] === "my-courses")) {
     return { name: "learning" }
@@ -264,7 +264,7 @@ export function pathToView(pathWithSearch: string): View | null {
 export function hashToView(hash: string): View {
   const raw = hash.replace(/^#/, "")
   if (!raw || raw === "/") return { name: "home" }
-  // Delegate to the path parser — the hash body used the same grammar
+  // Delegate to the path parser - the hash body used the same grammar
   // (e.g. "#/course/<id>", "#/verify?credentialId=x").
   const parsed = pathToView(raw)
   return parsed ?? { name: "home" }
@@ -273,7 +273,7 @@ export function hashToView(hash: string): View {
 /* ------------------------------ URL side-effects ------------------------- */
 
 /** Push a view into the address bar as a REAL path (history.pushState),
- *  without triggering Next.js navigation — the SPA store drives rendering. */
+ *  without triggering Next.js navigation - the SPA store drives rendering. */
 export function pushViewToUrl(view: View) {
   if (typeof window === "undefined") return
   const url = viewToPath(view)
@@ -339,7 +339,7 @@ const VIEW_TITLES: Partial<Record<View["name"], string>> = {
   events: "Events & Workshops",
   blog: "Security Blog",
   pricing: "Pricing & Subscription Plans",
-  hiring: "Hiring — Cybersecurity Job Openings Worldwide",
+  hiring: "Hiring · Cybersecurity Jobs Worldwide",
   "admin-hiring": "Hiring & Job Openings",
   contact: "Contact Us",
   certificates: "My Certificates",
@@ -406,6 +406,6 @@ export function viewTitle(view: View): string {
 export function viewDescription(view: View): string {
   const t = VIEW_TITLES[view.name]
   return t
-    ? `${t} — GuardianX Academy, hands-on cybersecurity training with live instructors, real labs and industry certifications.`
-    : "GuardianX Academy — hands-on cybersecurity training with live instructors, real labs and industry certifications."
+    ? `${t} - GuardianX Academy, hands-on cybersecurity training with live instructors, real labs and industry certifications.`
+    : "GuardianX Academy - hands-on cybersecurity training with live instructors, real labs and industry certifications."
 }

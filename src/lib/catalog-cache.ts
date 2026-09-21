@@ -1,7 +1,7 @@
 "use client"
 
 /**
- * LocalStorage-backed catalog cache — the "last good catalog" snapshot.
+ * LocalStorage-backed catalog cache - the "last good catalog" snapshot.
  *
  * Why: a momentary network blip (preview-proxy hiccup, watchdog repair
  * restart, tunnel jitter) used to blank the course catalog behind an
@@ -37,7 +37,7 @@ function writeMap(map: CacheMap) {
   try {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(map))
   } catch {
-    // Quota exceeded / private mode — the cache is best-effort, ignore.
+    // Quota exceeded / private mode - the cache is best-effort, ignore.
   }
 }
 

@@ -66,7 +66,7 @@ const WHAT_YOU_GET = [
   {
     icon: FileBadge,
     title: "Progress Report",
-    desc: "A visually-rich report card showing your strength across 8 cyber domains — like the ones colleges issue, but digital.",
+    desc: "A visually-rich report card showing your strength across 8 cyber domains - like the ones colleges issue, but digital.",
     color: "text-cyan-300",
     bg: "bg-cyan-500/10",
   },
@@ -101,7 +101,7 @@ const DOMAINS = [
 const FAQS = [
   {
     q: "Who is this quiz for?",
-    a: "Everyone — students, working professionals, parents, small business owners. If you use the internet, this quiz helps you understand your current cyber awareness level. No technical background required for Easy mode.",
+    a: "Everyone - students, working professionals, parents, small business owners. If you use the internet, this quiz helps you understand your current cyber awareness level. No technical background required for Easy mode.",
   },
   {
     q: "Is the quiz free?",
@@ -109,15 +109,15 @@ const FAQS = [
   },
   {
     q: "What score do I need to pass?",
-    a: "You need 50% (15 out of 30 correct) to pass. If you don't pass, you can retake the quiz — different questions each time since they're drawn randomly from a 100-question pool.",
+    a: "You need 50% (15 out of 30 correct) to pass. If you don't pass, you can retake the quiz - different questions each time since they're drawn randomly from a 100-question pool.",
   },
   {
     q: "How long do I have?",
-    a: "30 minutes for 30 questions — roughly 1 minute per question. A timer is visible during the quiz. If time runs out, your submitted answers are scored as-is.",
+    a: "30 minutes for 30 questions - roughly 1 minute per question. A timer is visible during the quiz. If time runs out, your submitted answers are scored as-is.",
   },
   {
     q: "Can I retake the quiz?",
-    a: "Yes — unlimited free retakes. Each attempt gets 30 random questions from the pool, so you'll see different questions on a retake. You only pay the ₹199 certificate fee once you pass.",
+    a: "Yes - unlimited free retakes. Each attempt gets 30 random questions from the pool, so you'll see different questions on a retake. You only pay the ₹199 certificate fee once you pass.",
   },
   {
     q: "What does the certificate look like?",
@@ -125,19 +125,19 @@ const FAQS = [
   },
   {
     q: "What's the progress report?",
-    a: "A visual report card showing your score in each of the 8 cyber domains (Phishing, Passwords, Social Engineering, Web Safety, Mobile Security, Data Privacy, Malware, Wi-Fi Safety). It includes a radar chart + per-domain commentary — so you know exactly where you're strong and where to improve.",
+    a: "A visual report card showing your score in each of the 8 cyber domains (Phishing, Passwords, Social Engineering, Web Safety, Mobile Security, Data Privacy, Malware, Wi-Fi Safety). It includes a radar chart + per-domain commentary - so you know exactly where you're strong and where to improve.",
   },
   {
     q: "Is the certificate verifiable by employers?",
-    a: "Yes. Every certificate has a unique credential ID (e.g. GX-QUIZ-2026-A1B2) + a verification URL. Anyone can verify it at guardianx.cloud/verify — no login needed.",
+    a: "Yes. Every certificate has a unique credential ID (e.g. GX-QUIZ-2026-A1B2) + a verification URL. Anyone can verify it at guardianx.cloud/verify - no login needed.",
   },
   {
     q: "How do I pay the ₹199 fee?",
-    a: "After you pass, you'll see a Pay ₹199 button. We use Razorpay — supports UPI, cards, net banking, and wallets. The certificate + progress report generate automatically within seconds of payment.",
+    a: "After you pass, you'll see a Pay ₹199 button. We use Razorpay - supports UPI, cards, net banking, and wallets. The certificate + progress report generate automatically within seconds of payment.",
   },
   {
     q: "Does the certificate expire?",
-    a: "No — the Cyber Security Foundation certificate has lifetime validity. Once issued, it's yours forever.",
+    a: "No - the Cyber Security Foundation certificate has lifetime validity. Once issued, it's yours forever.",
   },
 ]
 
@@ -148,7 +148,7 @@ export function CyberQuizLandingView() {
   const startQuiz = (difficulty: string) => {
     // The landing page is served from the static route /cyber-quiz which
     // doesn't participate in the SPA hash-routing ViewRouter. So we do a
-    // full navigation to the root with the runner hash — the root page
+    // full navigation to the root with the runner hash - the root page
     // (src/app/page.tsx) picks up the hash via hydrateFromHash() and
     // renders the CyberQuizRunnerView.
     window.location.href = `/#/cyber-quiz/start/${difficulty}`
@@ -184,7 +184,7 @@ export function CyberQuizLandingView() {
           </h1>
           <p className="text-base lg:text-lg text-muted-foreground max-w-2xl leading-relaxed mb-5">
             30 questions. 30 minutes. 8 cyber domains. Get a verifiable Cyber Security Foundation
-            certificate + a stunning progress report — shareable to LinkedIn + WhatsApp.
+            certificate + a stunning progress report - shareable to LinkedIn + WhatsApp.
           </p>
           <div className="flex flex-wrap items-center gap-3">
             <Button
@@ -235,7 +235,7 @@ export function CyberQuizLandingView() {
             Certificate + <span className="text-gradient-premium">progress report</span>.
           </h2>
           <p className="text-muted-foreground mb-6 max-w-2xl">
-            Pass the quiz, pay ₹199, and instantly receive both a verifiable certificate + a detailed progress report — like a college report card, but for cyber awareness.
+            Pass the quiz, pay ₹199, and instantly receive both a verifiable certificate + a detailed progress report - like a college report card, but for cyber awareness.
           </p>
           <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {WHAT_YOU_GET.map((item) => {

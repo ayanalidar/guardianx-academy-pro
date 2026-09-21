@@ -103,8 +103,8 @@ function computeLevelPalette(level: string) {
   return LEVEL_PALETTE[levelKey(level)] ?? DEFAULT_LEVEL_PALETTE
 }
 
-// GET /api/admin/training-batches — list ALL batches (incl. unpublished), ordered by order.
-// Uses `select` to return only the fields the admin batch calendar needs — drops the
+// GET /api/admin/training-batches - list ALL batches (incl. unpublished), ordered by order.
+// Uses `select` to return only the fields the admin batch calendar needs - drops the
 // 9 auto-computed color-class columns and the createdAt/updatedAt timestamps (which
 // the calendar never renders). This keeps the JSON payload lean.
 export const GET = withErrorHandler(async () => {
@@ -137,7 +137,7 @@ export const GET = withErrorHandler(async () => {
         _count: { select: { batchLeads: true } },
       },
     }),
-    // "New" (unworked) lead count per batch — shown as an attention badge.
+    // "New" (unworked) lead count per batch - shown as an attention badge.
     db.batchLead.groupBy({
       by: ["batchId"],
       where: { status: "New" },
@@ -156,7 +156,7 @@ export const GET = withErrorHandler(async () => {
   return NextResponse.json({ batches: batchesWithCounts, count: batchesWithCounts.length })
 })
 
-// POST /api/admin/training-batches — create a new training batch.
+// POST /api/admin/training-batches - create a new training batch.
 // Auto-computes cert / level color classes from the certification name + level.
 export const POST = withErrorHandler(async (req: NextRequest) => {
   const currentUser = await requireAdmin()

@@ -30,7 +30,7 @@ export function requireSecret(name: string): string {
     )
   }
 
-  // Dev mode — emit warning and use a per-process random fallback.
+  // Dev mode - emit warning and use a per-process random fallback.
   if (!cachedDevSecret) {
     // eslint-disable-next-line no-console
     console.warn(

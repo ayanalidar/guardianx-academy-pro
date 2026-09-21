@@ -1,7 +1,7 @@
 "use client"
 
 /**
- * certificate-pdf.ts — "Aurora Luxe" award-grade certificate document.
+ * certificate-pdf.ts - "Aurora Luxe" award-grade certificate document.
  *
  * Vector A4 LANDSCAPE certificate produced through the browser print pipeline
  * (same mechanism as before): we build a standalone HTML document, open it in
@@ -74,8 +74,8 @@ type ThemeAssets = {
 
 const THEME_ASSETS: Record<CertificatePdfTheme, ThemeAssets> = {
   phantom: {
-    gold: "#E11D2E", // frame rules — signal red
-    accent: "#F59E0B", // rosette second row — amber
+    gold: "#E11D2E", // frame rules - signal red
+    accent: "#F59E0B", // rosette second row - amber
     wm: "#FF3B3B", // fallback watermark stroke
     sealInk: "#2A0508",
     sealRing: "#7D0A16",
@@ -126,7 +126,7 @@ const PAGE_W = 297
 const PAGE_H = 210
 
 // ---------------------------------------------------------------------------
-// main export — signature is backward compatible: the options bag is optional
+// main export - signature is backward compatible: the options bag is optional
 // ---------------------------------------------------------------------------
 export async function downloadCertificatePDF(
   certificateId: string,
@@ -190,7 +190,7 @@ export async function downloadCertificatePDF(
 }
 
 // ---------------------------------------------------------------------------
-// logo auto-embed — fetches the brand PNG and converts it to a data-URL so the
+// logo auto-embed - fetches the brand PNG and converts it to a data-URL so the
 // standalone print window (document.write on about:blank) can render the REAL
 // GuardianX logo. Returns null on any failure (vector fallback kicks in).
 // ---------------------------------------------------------------------------
@@ -207,13 +207,13 @@ async function fetchLogoPngDataUrl(): Promise<string | null> {
       fr.readAsDataURL(blob)
     })
   } catch (e) {
-    console.warn("[certificate-pdf] logo fetch failed — using vector mark", e)
+    console.warn("[certificate-pdf] logo fetch failed - using vector mark", e)
     return null
   }
 }
 
 // ---------------------------------------------------------------------------
-// QR generation — rasterises qrcode.react's QRCodeSVG to a crisp PNG data-URL
+// QR generation - rasterises qrcode.react's QRCodeSVG to a crisp PNG data-URL
 // (same data-URL mechanism invoice-pdf.ts relies on, but self-contained so
 // callers don't have to pass one). Returns null on any failure.
 // ---------------------------------------------------------------------------
@@ -266,13 +266,13 @@ async function buildQrPngDataUrl(value: string): Promise<string | null> {
       host.remove()
     }
   } catch (e) {
-    console.warn("[certificate-pdf] QR generation failed — continuing without QR", e)
+    console.warn("[certificate-pdf] QR generation failed - continuing without QR", e)
     return null
   }
 }
 
 // ---------------------------------------------------------------------------
-// vector ornament helpers (all coordinates in mm — viewBox matches the page)
+// vector ornament helpers (all coordinates in mm - viewBox matches the page)
 // ---------------------------------------------------------------------------
 
 /** Engine-turned guilloché band + corner diamonds, drawn between the rules. */
@@ -366,7 +366,7 @@ function squiggleSvg(color: string): string {
 </svg>`
 }
 
-/** Decorative QR placeholder (finder squares only — deliberately unscannable). */
+/** Decorative QR placeholder (finder squares only - deliberately unscannable). */
 function qrPlaceholderSvg(): string {
   return `<svg viewBox="0 0 40 40" width="100%" height="100%" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" fill="none" stroke="#9CA3AF" stroke-width="1.4">
 <rect x="3" y="3" width="12" height="12" rx="2"/><rect x="25" y="3" width="12" height="12" rx="2"/><rect x="3" y="25" width="12" height="12" rx="2"/>
@@ -466,7 +466,7 @@ export function buildCertificateHTML(
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>GuardianX Certificate — ${recipient}</title>
+<title>GuardianX Certificate - ${recipient}</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   @page { size: A4 landscape; margin: 0; }
@@ -529,7 +529,7 @@ export function buildCertificateHTML(
   }
   @media screen { .cert { border-radius: 6px; box-shadow: 0 30px 90px rgba(0, 0, 0, 0.55); } }
 
-  /* fine noise grain — kills gradient banding */
+  /* fine noise grain - kills gradient banding */
   .grain {
     position: absolute; inset: 0; opacity: 0.16; pointer-events: none;
     background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='0.06'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
@@ -546,7 +546,7 @@ export function buildCertificateHTML(
     position: absolute; left: 50%; top: 53%; width: 120mm; height: 120mm;
     transform: translate(-50%, -50%); opacity: 0.06; pointer-events: none;
   }
-  /* static particle-logo dots version (phantom) — brighter than the stroke one */
+  /* static particle-logo dots version (phantom) - brighter than the stroke one */
   .wm.wm-dots { width: 132mm; height: 132mm; opacity: 0.17; }
 
   /* ============ phantom BLACKOPS overlays ============ */
@@ -752,7 +752,7 @@ function distinction(score: number): string {
 
 function fmtLongDate(iso: unknown): string {
   const d = iso ? new Date(iso as string) : null
-  if (!d || isNaN(d.getTime())) return "—"
+  if (!d || isNaN(d.getTime())) return " - "
   return d.toLocaleDateString("en-US", { year: "numeric", month: "long", day: "numeric" })
 }
 

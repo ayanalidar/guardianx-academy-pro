@@ -1,6 +1,6 @@
 /**
  * NOTE: deliberately NOT marked "use client". This module contains only
- * plain functions and a string constant — no components or hooks — so both
+ * plain functions and a string constant - no components or hooks - so both
  * server components (importing RESET_INLINE_SCRIPT) and client components
  * (importing resetOfflineData) can use it directly. Marking it "use client"
  * would turn every export into an opaque client reference on the server,
@@ -8,7 +8,7 @@
  */
 
 /**
- * Client-side offline-data reset — the self-service escape hatch.
+ * Client-side offline-data reset - the self-service escape hatch.
  *
  * Why: a browser tab that loaded a buggy build weeks ago can end up wedged
  * (old service worker + old caches + old localStorage keys). Every later fix
@@ -22,7 +22,7 @@
  *
  * Auth session cookies are intentionally left alone (NextAuth handles them;
  * clearing cookies here would log people out as a side effect of a UI fix).
- * After the sweep, the caller reloads/redirects — the next load is guaranteed
+ * After the sweep, the caller reloads/redirects - the next load is guaranteed
  * to be a fresh build with a fresh worker.
  */
 
@@ -45,7 +45,7 @@ function sweepStorage() {
       if (k && k.startsWith("gx-")) doomed.push(k)
     }
     doomed.forEach((k) => { try { ls.removeItem(k) } catch { /* ignore */ } })
-  } catch { /* storage blocked — nothing cached there anyway */ }
+  } catch { /* storage blocked - nothing cached there anyway */ }
 
   try {
     const ss = window.sessionStorage
@@ -71,7 +71,7 @@ async function sweepWorkersAndCaches() {
 
 /**
  * Full sweep. Resolves once every step has settled (or been skipped).
- * Does NOT navigate — the caller owns the redirect/reload.
+ * Does NOT navigate - the caller owns the redirect/reload.
  */
 export async function resetOfflineData(): Promise<void> {
   sweepStorage()

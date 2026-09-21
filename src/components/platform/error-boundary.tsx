@@ -24,7 +24,7 @@ export class ErrorBoundary extends React.Component<
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
     console.error("[ErrorBoundary] Caught error:", error, errorInfo)
     // Relay to Sentry (via /api/telemetry/client-error) when SENTRY_DSN is
-    // configured — rate-limited server-side, fire-and-forget.
+    // configured - rate-limited server-side, fire-and-forget.
     captureClientError(error?.message || "React render error", {
       stack: [error?.stack, errorInfo?.componentStack].filter(Boolean).join("\n"),
     })
@@ -65,7 +65,7 @@ export class ErrorBoundary extends React.Component<
               </button>
               <button
                 onClick={() => {
-                  // Full reload — also dismisses any stale service-worker
+                  // Full reload - also dismisses any stale service-worker
                   // state so the next load is guaranteed fresh.
                   window.location.reload()
                 }}

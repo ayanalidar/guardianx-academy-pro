@@ -5,7 +5,7 @@ import { logAction } from "@/lib/audit"
 import { ensureTable } from "@/lib/db-safe"
 import { COURSE_LIST_FIELDS, normalizeCourseListInput } from "@/lib/course-lists"
 
-// PATCH /api/admin/courses/[id] — update any course field (incl. published toggle)
+// PATCH /api/admin/courses/[id] - update any course field (incl. published toggle)
 export const PATCH = withErrorHandler(
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const { id } = await params
@@ -22,7 +22,7 @@ export const PATCH = withErrorHandler(
       thumbnail, published, instructorId,
     } = body as Record<string, unknown>
 
-    // Course extras lists — accepted as arrays, newline text, or stored JSON.
+    // Course extras lists - accepted as arrays, newline text, or stored JSON.
     const extrasData: Record<string, string> = {}
     for (const { key } of COURSE_LIST_FIELDS) {
       if ((body as Record<string, unknown>)[key] !== undefined) {
@@ -93,7 +93,7 @@ export const PATCH = withErrorHandler(
   },
 )
 
-// DELETE /api/admin/courses/[id] — cascade delete
+// DELETE /api/admin/courses/[id] - cascade delete
 export const DELETE = withErrorHandler(
   async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const { id } = await params

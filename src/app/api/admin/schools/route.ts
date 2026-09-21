@@ -4,7 +4,7 @@ import { requireAdmin, withErrorHandler } from "@/lib/session"
 
 export const runtime = "nodejs"
 
-/* GET /api/admin/schools — ADMIN only.
+/* GET /api/admin/schools - ADMIN only.
  * Returns a minimal list of all schools for use in admin dropdowns
  * (e.g. the Institution filter in the Generate Report dialog on the
  * Student Progress admin page).

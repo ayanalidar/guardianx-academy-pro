@@ -4,7 +4,7 @@ import { db } from "@/lib/db"
 import { requireAdmin, withErrorHandler } from "@/lib/session"
 import { logAction } from "@/lib/audit"
 
-// GET /api/admin/users/[id] — user details with enrollments, certificates, lab progress
+// GET /api/admin/users/[id] - user details with enrollments, certificates, lab progress
 export const GET = withErrorHandler(
   async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const { id } = await params
@@ -56,7 +56,7 @@ export const GET = withErrorHandler(
   },
 )
 
-// PATCH /api/admin/users/[id] — update user (name, role, title, bio, avatar, password)
+// PATCH /api/admin/users/[id] - update user (name, role, title, bio, avatar, password)
 export const PATCH = withErrorHandler(
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const { id } = await params
@@ -122,7 +122,7 @@ export const PATCH = withErrorHandler(
   },
 )
 
-// DELETE /api/admin/users/[id] — delete user (cascade via Prisma onDelete: Cascade relations)
+// DELETE /api/admin/users/[id] - delete user (cascade via Prisma onDelete: Cascade relations)
 export const DELETE = withErrorHandler(
   async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const { id } = await params

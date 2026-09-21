@@ -48,7 +48,7 @@ const STATS = [
 ]
 
 export function AuthScreen() {
-  // (next/navigation router is intentionally unused — navigation is SPA-side
+  // (next/navigation router is intentionally unused - navigation is SPA-side
   //  via the app store; see the session-changed note in handleLogin)
   const { navigate, pendingView, setPendingView } = useAppStore()
   const [loading, setLoading] = React.useState(false)
@@ -57,7 +57,7 @@ export function AuthScreen() {
 
   // Only show the "Sign in with Google" button when the Google provider is
   // actually registered server-side (Admin → Settings → Google OAuth, or env).
-  // Previously the button always showed — clicking it with no OAuth keys
+  // Previously the button always showed - clicking it with no OAuth keys
   // configured led to a NextAuth error page.
   const [googleEnabled, setGoogleEnabled] = React.useState(false)
   React.useEffect(() => {
@@ -70,7 +70,7 @@ export function AuthScreen() {
         }
       })
       .catch(() => {
-        /* provider list unavailable — keep the button hidden (safe default) */
+        /* provider list unavailable - keep the button hidden (safe default) */
       })
     return () => {
       cancelled = true
@@ -78,7 +78,7 @@ export function AuthScreen() {
   }, [])
 
   // Surface next-auth error redirects. When an OAuth flow fails, next-auth
-  // bounces back to the sign-in page with ?error=<code> — previously this was
+  // bounces back to the sign-in page with ?error=<code> - previously this was
   // swallowed and the failure looked completely silent to the user.
   const [authError, setAuthError] = React.useState<string | null>(null)
   React.useEffect(() => {
@@ -100,7 +100,7 @@ export function AuthScreen() {
       OAuthCreateAccount:
         "We could not create your account from the Google profile. Try email sign-in or contact the admin.",
       EmailSignin:
-        "The magic-link email could not be sent — double-check the address or contact the admin.",
+        "The magic-link email could not be sent - double-check the address or contact the admin.",
     }
     setAuthError(
       MESSAGES[raw] ||
@@ -246,7 +246,7 @@ export function AuthScreen() {
     }
     toast.success("Welcome back, Guardian!")
     // Tell the shell the session cookie just changed, then route. NOTE:
-    // router.refresh() was removed — it re-rendered the server bridge page
+    // router.refresh() was removed - it re-rendered the server bridge page
     // mid-navigation and remounted AppRoot with a stale initialView, which
     // bounced freshly-logged-in users back to home/login ("keeps logging
     // me off"). The shell now refetches the session via the
@@ -456,7 +456,7 @@ export function AuthScreen() {
                     <TabsTrigger value="register">Register</TabsTrigger>
                   </TabsList>
 
-                  {/* Contextual "log in to access X" banner — shown when the
+                  {/* Contextual "log in to access X" banner - shown when the
                       user was redirected here from a protected page. */}
                   {pendingLabel && (
                     <div className="mb-5 rounded-lg border border-violet-500/30 bg-violet-500/10 px-4 py-3 text-sm">
@@ -525,7 +525,7 @@ export function AuthScreen() {
                       </Button>
                     </form>
 
-                    {/* Sign in with Google — only when the provider is configured */}
+                    {/* Sign in with Google - only when the provider is configured */}
                     {googleEnabled && (
                     <div className="mt-4">
                       <div className="relative mb-3">

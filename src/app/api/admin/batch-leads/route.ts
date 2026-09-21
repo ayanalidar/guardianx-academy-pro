@@ -4,7 +4,7 @@ import { requireAdmin, withErrorHandler } from "@/lib/session"
 
 export const runtime = "nodejs"
 
-/* GET /api/admin/batch-leads — ADMIN-only. Returns the latest batch leads
+/* GET /api/admin/batch-leads - ADMIN-only. Returns the latest batch leads
  * across ALL batches (for push notifications). Limited to 5 most recent.
  */
 export const GET = withErrorHandler(async () => {

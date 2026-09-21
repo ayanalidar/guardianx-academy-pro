@@ -1,7 +1,7 @@
 "use client"
 
 /**
- * AdminHiringView — admin management for the /hiring page ("Hiring" tab).
+ * AdminHiringView - admin management for the /hiring page ("Hiring" tab).
  *
  * • Stats: active / draft / closed / countries / total applicants
  * • List of openings with search + status filter, quick status toggles
@@ -43,7 +43,7 @@ import { toast } from "sonner"
 import {
   Plus, Search, Globe2, MapPin, Home, Building2, Wallet, Users, Pencil,
   Trash2, Loader2, Briefcase, Eye, EyeOff, ExternalLink, RotateCcw,
-  Inbox, CheckCircle2,
+  Inbox, CheckCircle2, UserPlus, Mail, Phone, Link2, FileText, Clock,
 } from "lucide-react"
 
 // ============================================================
@@ -132,6 +132,7 @@ function deriveCountry(location: string): string {
 export function AdminHiringView() {
   const { navigate } = useAppStore()
   const queryClient = useQueryClient()
+  const [tab, setTab] = React.useState<"openings" | "applicants">("openings")
   const [search, setSearch] = React.useState("")
   const [statusFilter, setStatusFilter] = React.useState("all")
   const [editing, setEditing] = React.useState<AdminJob | null>(null)
@@ -184,13 +185,40 @@ export function AdminHiringView() {
             <Briefcase className="h-5 w-5 text-violet-300" /> Hiring & Job Openings
           </h1>
           <p className="text-xs text-muted-foreground mt-1">
-            Manage the openings shown on the public <button className="text-violet-300 hover:underline" onClick={() => navigate({ name: "hiring" })}>/hiring page</button> — post roles from anywhere in the world.
+            Manage the openings shown on the public <button className="text-violet-300 hover:underline" onClick={() => navigate({ name: "hiring" })}>/hiring page</button> - post roles from anywhere in the world.
           </p>
         </div>
         <Button className="bg-gradient-to-r from-violet-600 to-violet-500 text-white" onClick={() => setCreating(true)}>
           <Plus className="h-4 w-4 mr-1.5" /> Post a Job Opening
         </Button>
       </div>
+
+      {/* Tabs: Openings | Applicants */}
+      <div className="flex items-center gap-1.5">
+        {([
+          { id: "openings", label: "Openings", icon: Briefcase },
+          { id: "applicants", label: "Applicants", icon: UserPlus },
+        ] as const).map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            onClick={() => setTab(t.id)}
+            className={cn(
+              "inline-flex items-center gap-1.5 rounded-full border px-4 py-2 text-xs font-medium transition-colors",
+              tab === t.id
+                ? "border-violet-500/40 bg-violet-500/10 text-violet-200"
+                : "border-border/60 bg-card/40 text-muted-foreground hover:text-foreground"
+            )}
+          >
+            <t.icon className="h-3.5 w-3.5" /> {t.label}
+          </button>
+        ))}
+      </div>
+
+      {tab === "applicants" ? (
+        <ApplicantsPanel onOpenCrm={() => navigate({ name: "admin-lead-crm" })} />
+      ) : (
+      <>
 
       {/* Stats */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-2">
@@ -239,7 +267,7 @@ export function AdminHiringView() {
           {jobs.length === 0 && (
             <>
               <p className="text-xs text-muted-foreground/70 mt-1 max-w-sm">
-                Post your first opening — it goes live on the Hiring tab the moment you save it.
+                Post your first opening - it goes live on the Hiring tab the moment you save it.
               </p>
               <Button className="mt-4 bg-gradient-to-r from-violet-600 to-violet-500 text-white" size="sm" onClick={() => setCreating(true)}>
                 <Plus className="h-3.5 w-3.5 mr-1" /> Post a Job Opening
@@ -270,6 +298,8 @@ export function AdminHiringView() {
           onClose={() => { setCreating(false); setEditing(null) }}
           onSaved={() => { setCreating(false); setEditing(null); invalidate() }}
         />
+      )}
+      </>
       )}
     </div>
   )
@@ -352,7 +382,7 @@ function JobFormDialog({ job, onClose, onSaved }: { job: AdminJob | null; onClos
       return api("/api/admin/hiring/jobs", { method: "POST", body: JSON.stringify(payload) })
     },
     onSuccess: () => {
-      toast.success(isEdit ? "Opening updated" : "Opening posted — it's live on /hiring")
+      toast.success(isEdit ? "Opening updated" : "Opening posted - it's live on /hiring")
       onSaved()
     },
     onError: (e: any) => toast.error(e?.message || "Save failed"),
@@ -364,7 +394,7 @@ function JobFormDialog({ job, onClose, onSaved }: { job: AdminJob | null; onClos
     <Dialog open onOpenChange={(o) => !o && onClose()}>
       <DialogContent className="max-w-2xl max-h-[88vh] overflow-y-auto custom-scrollbar">
         <DialogHeader>
-          <DialogTitle>{isEdit ? `Edit — ${job!.title}` : "Post a Job Opening"}</DialogTitle>
+          <DialogTitle>{isEdit ? `Edit - ${job!.title}` : "Post a Job Opening"}</DialogTitle>
         </DialogHeader>
 
         <div className="space-y-4">
@@ -378,11 +408,11 @@ function JobFormDialog({ job, onClose, onSaved }: { job: AdminJob | null; onClos
           </div>
 
           <div className="grid sm:grid-cols-2 gap-3">
-            <Field label="Location * (City, Country — or “Remote — Worldwide”)">
+            <Field label="Location * (City, Country - or “Remote - Worldwide”)">
               <Input value={form.location} onChange={(e) => set("location", e.target.value)} placeholder="Dubai, UAE" />
             </Field>
             <Field label="Salary / compensation (display text)">
-              <Input value={form.salary} onChange={(e) => set("salary", e.target.value)} placeholder="$90,000 – $130,000" />
+              <Input value={form.salary} onChange={(e) => set("salary", e.target.value)} placeholder="$90,000-$130,000" />
             </Field>
           </div>
 
@@ -429,7 +459,7 @@ function JobFormDialog({ job, onClose, onSaved }: { job: AdminJob | null; onClos
             <Textarea value={form.description} onChange={(e) => set("description", e.target.value)} rows={5} placeholder="What the role is about, team, impact..." />
           </Field>
 
-          <Field label="Requirements (one per line — rendered as a checklist)">
+          <Field label="Requirements (one per line - rendered as a checklist)">
             <Textarea
               value={form.requirements}
               onChange={(e) => set("requirements", e.target.value)}
@@ -474,6 +504,197 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
     <div className="space-y-1.5">
       <Label className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground">{label}</Label>
       {children}
+    </div>
+  )
+}
+
+// ============================================================
+// Applicants panel - guest applications (no account) captured
+// on the public /hiring page, stored as Leads of type
+// "Job Application" (source "Hiring Page") and managed here or
+// in the full Lead CRM. PATCH /api/admin/leads/[id] supports
+// pipeline status updates with history logging.
+// ============================================================
+interface ApplicantLead {
+  id: string
+  name: string
+  email: string | null
+  phone: string | null
+  organization: string | null
+  type: string
+  status: string
+  source: string
+  score: number
+  notes: { id: string; content: string; createdAt: string; authorId: string | null }[]
+  createdAt: string
+}
+
+const APPLICANT_STATUSES = ["New", "Contacted", "Qualified", "Proposal", "Negotiation", "Converted", "Lost"]
+
+function parseApplicantNote(lead: ApplicantLead) {
+  const first = lead.notes?.[0]?.content || ""
+  const lines = first.split(/\r?\n/)
+  const after = (prefix: string) =>
+    lines.find((l) => l.startsWith(prefix))?.slice(prefix.length).trim() || ""
+  const noteIdx = lines.findIndex((l) => l.trim() === "Applicant note:")
+  return {
+    role: after("Role: "),
+    linkedin: after("LinkedIn / Portfolio: "),
+    applicantNote: noteIdx >= 0 ? lines.slice(noteIdx + 1).join("\n").trim() : "",
+    fullNote: first,
+  }
+}
+
+function statusTint(s: string): string {
+  const map: Record<string, string> = {
+    New: "text-violet-300 border-violet-500/30 bg-violet-500/10",
+    Contacted: "text-sky-300 border-sky-500/30 bg-sky-500/10",
+    Qualified: "text-cyan-300 border-cyan-500/30 bg-cyan-500/10",
+    Proposal: "text-amber-300 border-amber-500/30 bg-amber-500/10",
+    Negotiation: "text-orange-300 border-orange-500/30 bg-orange-500/10",
+    Converted: "text-emerald-300 border-emerald-500/30 bg-emerald-500/10",
+    Lost: "text-zinc-400 border-zinc-500/30 bg-zinc-500/10",
+  }
+  return map[s] || "text-zinc-300 border-zinc-500/30 bg-zinc-500/10"
+}
+
+function relTime(iso: string): string {
+  const d = Math.floor((Date.now() - new Date(iso).getTime()) / 86_400_000)
+  if (d < 1) return "today"
+  if (d === 1) return "yesterday"
+  if (d < 30) return `${d}d ago`
+  return new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short" })
+}
+
+function ApplicantsPanel({ onOpenCrm }: { onOpenCrm: () => void }) {
+  const queryClient = useQueryClient()
+  const [expanded, setExpanded] = React.useState<string | null>(null)
+
+  const { data, isLoading } = useQuery<{ leads: ApplicantLead[] }>({
+    queryKey: ["admin-hiring-applicants"],
+    queryFn: () => api(`/api/admin/leads?type=${encodeURIComponent("Job Application")}`),
+    refetchInterval: 60_000,
+  })
+  const leads = data?.leads ?? []
+
+  const statusMutation = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: string }) =>
+      api(`/api/admin/leads/${id}`, { method: "PATCH", body: JSON.stringify({ status }) }),
+    onSuccess: () => {
+      toast.success("Applicant status updated")
+      queryClient.invalidateQueries({ queryKey: ["admin-hiring-applicants"] })
+    },
+    onError: (e: any) => toast.error(e?.message || "Update failed"),
+  })
+
+  const counts = {
+    total: leads.length,
+    fresh: leads.filter((l) => l.status === "New").length,
+    active: leads.filter((l) => ["Contacted", "Qualified", "Proposal", "Negotiation"].includes(l.status)).length,
+    hired: leads.filter((l) => l.status === "Converted").length,
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* summary tiles */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+        <StatTile label="Total applicants" value={counts.total} tone="text-violet-300" />
+        <StatTile label="New" value={counts.fresh} tone="text-emerald-300" />
+        <StatTile label="In pipeline" value={counts.active} tone="text-sky-300" />
+        <StatTile label="Hired" value={counts.hired} tone="text-amber-300" />
+      </div>
+
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <p className="text-xs text-muted-foreground">
+          Applications from the public Hiring page arrive here instantly, no platform account needed. They also appear in the Lead / CRM pipeline.
+        </p>
+        <Button size="sm" variant="outline" onClick={onOpenCrm}>
+          Open Lead / CRM
+        </Button>
+      </div>
+
+      {isLoading ? (
+        <div className="space-y-2">
+          {[0, 1, 2].map((i) => <div key={i} className="h-16 rounded-xl border border-border/60 bg-card/30 animate-pulse" />)}
+        </div>
+      ) : leads.length === 0 ? (
+        <div className="rounded-2xl border border-dashed border-border/60 py-16 flex flex-col items-center text-center px-6">
+          <UserPlus className="h-10 w-10 text-muted-foreground/40 mb-3" />
+          <p className="text-sm font-medium text-muted-foreground">No applications yet</p>
+          <p className="text-xs text-muted-foreground/70 mt-1 max-w-md">
+            When someone applies on the /hiring page without an account, their application shows up here with their note, links and contact details.
+          </p>
+        </div>
+      ) : (
+        <div className="rounded-2xl border border-border/60 bg-card/40 divide-y divide-border/40 overflow-hidden">
+          {leads.map((lead) => {
+            const parsed = parseApplicantNote(lead)
+            const open = expanded === lead.id
+            return (
+              <div key={lead.id} className="p-4">
+                <div className="flex items-start justify-between gap-3 flex-wrap">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="text-sm font-semibold">{lead.name}</span>
+                      {parsed.role && (
+                        <Badge variant="outline" className="text-[10px] text-violet-300 border-violet-500/30 bg-violet-500/10">
+                          <Briefcase className="h-2.5 w-2.5 mr-0.5" /> {parsed.role}
+                        </Badge>
+                      )}
+                      <Badge variant="outline" className={cn("text-[10px]", statusTint(lead.status))}>
+                        {lead.status}
+                      </Badge>
+                    </div>
+                    <div className="flex items-center gap-3 flex-wrap mt-1.5 text-[11px] text-muted-foreground">
+                      {lead.email && (
+                        <a href={`mailto:${lead.email}`} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
+                          <Mail className="h-3 w-3" /> {lead.email}
+                        </a>
+                      )}
+                      {lead.phone && (
+                        <a href={`tel:${lead.phone}`} className="inline-flex items-center gap-1 hover:text-foreground transition-colors">
+                          <Phone className="h-3 w-3" /> {lead.phone}
+                        </a>
+                      )}
+                      {parsed.linkedin && /^https?:\/\//.test(parsed.linkedin) && (
+                        <a href={parsed.linkedin} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-violet-300 hover:text-violet-200 transition-colors">
+                          <Link2 className="h-3 w-3" /> Profile link
+                        </a>
+                      )}
+                      {lead.organization && (
+                        <span className="inline-flex items-center gap-1"><Building2 className="h-3 w-3" /> {lead.organization}</span>
+                      )}
+                      <span className="inline-flex items-center gap-1"><Clock className="h-3 w-3" /> applied {relTime(lead.createdAt)}</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <Select value={lead.status} onValueChange={(s) => statusMutation.mutate({ id: lead.id, status: s })}>
+                      <SelectTrigger className="w-[130px] h-8 text-[11px]">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {APPLICANT_STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    <button
+                      type="button"
+                      onClick={() => setExpanded(open ? null : lead.id)}
+                      className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      <FileText className="h-3 w-3" /> {open ? "Hide note" : "View note"}
+                    </button>
+                  </div>
+                </div>
+                {open && (
+                  <div className="mt-3 rounded-xl border border-border/50 bg-background/50 p-3 text-xs text-foreground/85 whitespace-pre-wrap leading-relaxed">
+                    {parsed.fullNote || "(no note attached)"}
+                  </div>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }

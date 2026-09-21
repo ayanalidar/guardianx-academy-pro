@@ -21,7 +21,7 @@ import {
 } from "lucide-react"
 
 /* ============================================================
-   Types — match the /api/admin/revenue response shape exactly.
+   Types - match the /api/admin/revenue response shape exactly.
    ============================================================ */
 interface MonthlyRevenuePoint { month: string; revenue: number; orders: number }
 interface TopCourse {
@@ -80,7 +80,7 @@ function relativeTime(iso: string): string {
   return d.toLocaleDateString(undefined, { month: "short", day: "numeric" })
 }
 
-// Course color palette — bar chart Cell fills. Indexed by the `color`
+// Course color palette - bar chart Cell fills. Indexed by the `color`
 // field on the Course row (e.g. "violet", "cyan", "amber", "emerald",
 // "rose"). Falls back to violet for unknown colors.
 const COURSE_BAR_COLORS: Record<string, string> = {
@@ -213,7 +213,7 @@ export function RevenueAnalyticsView() {
             <Skeleton className="h-64 w-full" />
           ) : (data?.monthlyRevenue?.length ?? 0) === 0 ? (
             <div className="h-64 flex items-center justify-center text-sm text-muted-foreground">
-              No paid orders yet — revenue will appear here once learners enroll in paid courses.
+              No paid orders yet - revenue will appear here once learners enroll in paid courses.
             </div>
           ) : (
             <ResponsiveContainer width="100%" height={260}>
@@ -317,7 +317,7 @@ export function RevenueAnalyticsView() {
                 </BarChart>
               </ResponsiveContainer>
             )}
-            {/* Compact list under the chart — course title + order count */}
+            {/* Compact list under the chart - course title + order count */}
             {!isLoading && (data?.topCourses?.length ?? 0) > 0 && (
               <div className="mt-4 space-y-2 border-t border-border/40 pt-3">
                 {data!.topCourses.map((c) => (
@@ -362,7 +362,7 @@ export function RevenueAnalyticsView() {
                             {c.code}
                           </Badge>
                           <div className="text-[9px] text-muted-foreground mt-1 font-mono">
-                            {c.type === "percentage" ? `${c.value}% off` : c.type === "fixed" ? `${formatINR(c.value ?? 0)} off` : "—"}
+                            {c.type === "percentage" ? `${c.value}% off` : c.type === "fixed" ? `${formatINR(c.value ?? 0)} off` : " - "}
                           </div>
                         </td>
                         <td className="py-2.5 text-right font-mono tabular-nums">{c.uses}</td>
@@ -433,12 +433,12 @@ export function RevenueAnalyticsView() {
                             <div className="text-[10px] text-muted-foreground font-mono">{o.courseShortName}</div>
                           </>
                         ) : (
-                          <span className="text-muted-foreground">—</span>
+                          <span className="text-muted-foreground"> - </span>
                         )}
                       </td>
                       <td className="px-4 py-3 text-right font-mono tabular-nums">{formatINRFull(o.amount)}</td>
                       <td className="px-4 py-3 text-right font-mono tabular-nums text-rose-300">
-                        {o.discount > 0 ? `-${formatINRFull(o.discount)}` : "—"}
+                        {o.discount > 0 ? `-${formatINRFull(o.discount)}` : " - "}
                       </td>
                       <td className="px-4 py-3 text-right font-mono tabular-nums text-emerald-300 font-semibold">{formatINRFull(o.finalAmount)}</td>
                       <td className="px-4 py-3">
@@ -447,7 +447,7 @@ export function RevenueAnalyticsView() {
                             {o.couponCode}
                           </Badge>
                         ) : (
-                          <span className="text-muted-foreground/50">—</span>
+                          <span className="text-muted-foreground/50"> - </span>
                         )}
                       </td>
                       <td className="px-4 py-3">
@@ -469,13 +469,13 @@ export function RevenueAnalyticsView() {
           )}
         </Card>
 
-        {/* Help footer — describes what the dashboard surfaces */}
+        {/* Help footer - describes what the dashboard surfaces */}
         <Card className="p-4 border-violet-500/20 bg-violet-500/5">
           <p className="text-xs text-muted-foreground">
             <span className="text-violet-300 font-semibold">LIVE DATA:</span> All figures are computed in real time from the
             <span className="font-mono"> Order</span> and <span className="font-mono">Coupon</span> tables. The revenue trend
             covers the last 12 calendar months; weekly figures use a rolling 7-day window. Coupon usage tracks
-            redemptions on successful (paid) orders — abandoned checkouts are not counted.
+            redemptions on successful (paid) orders - abandoned checkouts are not counted.
           </p>
         </Card>
       </div>
@@ -484,7 +484,7 @@ export function RevenueAnalyticsView() {
 }
 
 /* ============================================================
-   RevenueOverviewCards — 4 KPI cards
+   RevenueOverviewCards - 4 KPI cards
    ============================================================ */
 function RevenueOverviewCards({
   data, loading,
@@ -503,7 +503,7 @@ function RevenueOverviewCards({
   }[] = [
     {
       label: "Total Revenue",
-      value: data ? formatINRFull(data.totalRevenue) : "—",
+      value: data ? formatINRFull(data.totalRevenue) : " - ",
       icon: Wallet,
       color: "text-emerald-300",
       tint: "bg-emerald-500/10",
@@ -512,7 +512,7 @@ function RevenueOverviewCards({
     },
     {
       label: "This Month",
-      value: data ? formatINRFull(data.thisMonthRevenue) : "—",
+      value: data ? formatINRFull(data.thisMonthRevenue) : " - ",
       icon: IndianRupee,
       color: "text-violet-300",
       tint: "bg-violet-500/10",
@@ -521,7 +521,7 @@ function RevenueOverviewCards({
     },
     {
       label: "This Week",
-      value: data ? formatINRFull(data.thisWeekRevenue) : "—",
+      value: data ? formatINRFull(data.thisWeekRevenue) : " - ",
       icon: TrendingUp,
       color: "text-cyan-300",
       tint: "bg-cyan-500/10",
@@ -530,7 +530,7 @@ function RevenueOverviewCards({
     },
     {
       label: "Avg Order Value",
-      value: data ? formatINRFull(data.avgOrderValue) : "—",
+      value: data ? formatINRFull(data.avgOrderValue) : " - ",
       icon: Activity,
       color: "text-amber-300",
       tint: "bg-amber-500/10",

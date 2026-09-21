@@ -49,7 +49,7 @@ export const GET = withErrorHandler(async (req) => {
       },
     }),
     db.cyberQuizAttempt.count({ where }),
-    // Stats computed over ALL matching rows — previously the view derived
+    // Stats computed over ALL matching rows - previously the view derived
     // them from the capped 200-row page, which silently undercounted.
     db.cyberQuizAttempt.count({ where: { ...where, passed: true } }),
     db.cyberQuizAttempt.count({ where: { ...where, certificateId: { not: null } } }),

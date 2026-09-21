@@ -51,7 +51,7 @@ type AffiliateResponse = { affiliate: Affiliate | null }
  * ---------------------------------------------------------------- */
 function timeAgo(iso: string): string {
   const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return "—"
+  if (Number.isNaN(d.getTime())) return " - "
   const diff = Date.now() - d.getTime()
   const seconds = Math.floor(diff / 1000)
   if (seconds < 60) return "just now"
@@ -66,7 +66,7 @@ function timeAgo(iso: string): string {
 
 function fmtDate(iso: string): string {
   const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return "—"
+  if (Number.isNaN(d.getTime())) return " - "
   return d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })
 }
 
@@ -94,7 +94,7 @@ export function AffiliateView() {
     queryFn: async () => {
       const res = await fetch("/api/affiliate/me", { credentials: "include" })
       if (!res.ok) {
-        if (res.status === 401) throw new Error("Unauthorized — please sign in")
+        if (res.status === 401) throw new Error("Unauthorized - please sign in")
         const j = await res.json().catch(() => ({}))
         throw new Error(j.error || "Failed to load affiliate info")
       }
@@ -104,7 +104,7 @@ export function AffiliateView() {
 
   const affiliate = data?.affiliate ?? null
 
-  /* Referral link — points to the public track endpoint so clicks get
+  /* Referral link - points to the public track endpoint so clicks get
    * recorded before landing on the homepage. Built from window.origin
    * so it's shareable on social media, email signatures, etc. */
   const referralLink = React.useMemo(() => {
@@ -129,7 +129,7 @@ export function AffiliateView() {
       toast.success("Welcome to the GuardianX Affiliate Program!")
       queryClient.invalidateQueries({ queryKey: ["affiliate-me"] })
     } catch {
-      toast.error("Network error — please try again")
+      toast.error("Network error - please try again")
     } finally {
       setJoining(false)
     }
@@ -143,7 +143,7 @@ export function AffiliateView() {
       toast.success("Referral link copied to clipboard")
       setTimeout(() => setCopied(false), 2000)
     } catch {
-      toast.error("Could not copy — please copy manually")
+      toast.error("Could not copy - please copy manually")
     }
   }
 
@@ -221,7 +221,7 @@ export function AffiliateView() {
                   </h2>
                   <p className="text-sm text-muted-foreground max-w-xl leading-relaxed mb-6">
                     Share your unique referral link with friends, colleagues, and your network. You earn
-                    a commission on every paid enrollment that comes through your link — track clicks,
+                    a commission on every paid enrollment that comes through your link - track clicks,
                     signups, and conversions in real time.
                   </p>
                   <ul className="grid sm:grid-cols-2 gap-3 mb-6">
@@ -404,8 +404,8 @@ export function AffiliateView() {
                         <tr key={c.id} className="border-t border-border/30 hover:bg-muted/20">
                           <td className="py-2.5 px-5 text-xs text-muted-foreground whitespace-nowrap">{timeAgo(c.createdAt)}</td>
                           <td className="py-2.5 px-5 text-xs">{fmtUA(c.userAgent)}</td>
-                          <td className="py-2.5 px-5 text-xs font-mono text-muted-foreground">{c.ip || "—"}</td>
-                          <td className="py-2.5 px-5 text-xs font-mono text-muted-foreground">{c.courseId ? c.courseId.slice(-6) : "—"}</td>
+                          <td className="py-2.5 px-5 text-xs font-mono text-muted-foreground">{c.ip || " - "}</td>
+                          <td className="py-2.5 px-5 text-xs font-mono text-muted-foreground">{c.courseId ? c.courseId.slice(-6) : " - "}</td>
                         </tr>
                       ))}
                     </tbody>
@@ -422,7 +422,7 @@ export function AffiliateView() {
               <div className="grid sm:grid-cols-3 gap-4">
                 {[
                   { step: "1", title: "Share your link", desc: "Post it on social media, email signatures, your blog, or messaging apps." },
-                  { step: "2", title: "Track clicks", desc: "We log every click on your referral link — see activity in real time." },
+                  { step: "2", title: "Track clicks", desc: "We log every click on your referral link - see activity in real time." },
                   { step: "3", title: "Earn commission", desc: `Get ${affiliate.commissionRate}% of every paid enrollment from your link.` },
                 ].map((s) => (
                   <div key={s.step} className="rounded-lg border border-border/40 bg-muted/20 p-4">

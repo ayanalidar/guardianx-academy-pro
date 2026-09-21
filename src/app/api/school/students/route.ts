@@ -16,7 +16,7 @@ async function schoolAdminGuard() {
   const user = await getCurrentUser()
   if (!user) return { error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) }
   if (user.role !== "SCHOOL_ADMIN") {
-    return { error: NextResponse.json({ error: "Forbidden — SCHOOL_ADMIN only" }, { status: 403 }) }
+    return { error: NextResponse.json({ error: "Forbidden - SCHOOL_ADMIN only" }, { status: 403 }) }
   }
   if (!user.schoolId) {
     return { error: NextResponse.json({ error: "No school linked to this account" }, { status: 403 }) }
@@ -197,7 +197,7 @@ export async function POST(req: NextRequest) {
       // ensure role + schoolId are set
       if (existingUser.role !== "STUDENT" && existingUser.role !== "SCHOOL_ADMIN") {
         return NextResponse.json(
-          { error: `User already exists with role ${existingUser.role} — cannot add as student` },
+          { error: `User already exists with role ${existingUser.role} - cannot add as student` },
           { status: 400 }
         )
       }
@@ -256,7 +256,7 @@ export async function POST(req: NextRequest) {
       if (created && tempPassword) {
         await sendEmail({
           to: email,
-          subject: `Welcome to ${school.name} — GuardianX Academy`,
+          subject: `Welcome to ${school.name} - GuardianX Academy`,
           body: `Hi ${name},\n\nYou've been added as a student at ${school.name} (code: ${school.schoolCode}) on GuardianX Academy.\n\nYour temporary login credentials:\nEmail: ${email}\nPassword: ${tempPassword}\n\nPlease log in and change your password after your first sign-in.\n\nWelcome aboard!\nThe GuardianX Team`,
           type: "welcome",
           userId,
@@ -264,7 +264,7 @@ export async function POST(req: NextRequest) {
       } else {
         await sendEmail({
           to: email,
-          subject: `Added to ${school.name} — GuardianX Academy`,
+          subject: `Added to ${school.name} - GuardianX Academy`,
           body: `Hi ${name},\n\nYou've been added as a student at ${school.name} (code: ${school.schoolCode}) on GuardianX Academy. Log in with your existing credentials to continue.\n\nThe GuardianX Team`,
           type: "notification",
           userId,

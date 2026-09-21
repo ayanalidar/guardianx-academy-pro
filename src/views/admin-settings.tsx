@@ -32,12 +32,12 @@ const CATEGORIES = [
   { id: "payment", label: "Payment (Razorpay)", icon: CreditCard, color: "text-emerald-300", tint: "bg-emerald-500/10", border: "border-emerald-500/30" },
   { id: "email", label: "Email (SMTP)", icon: Mail, color: "text-cyan-300", tint: "bg-cyan-500/10", border: "border-cyan-500/30" },
   { id: "crm", label: "CRM Webhook", icon: LinkIcon, color: "text-violet-300", tint: "bg-violet-500/10", border: "border-violet-500/30" },
-  { id: "tracking", label: "Error Tracking (Sentry)", icon: ShieldAlert, color: "text-rose-300", tint: "bg-rose-500/10", border: "border-rose-500/30", note: "Takes effect immediately — unhandled errors are forwarded to Sentry" },
-  { id: "auth", label: "Google OAuth", icon: Settings, color: "text-blue-300", tint: "bg-blue-500/10", border: "border-blue-500/30", note: "Takes effect on the next login — no redeploy needed. The callback URL below MUST be registered in Google Cloud Console." },
+  { id: "tracking", label: "Error Tracking (Sentry)", icon: ShieldAlert, color: "text-rose-300", tint: "bg-rose-500/10", border: "border-rose-500/30", note: "Takes effect immediately - unhandled errors are forwarded to Sentry" },
+  { id: "auth", label: "Google OAuth", icon: Settings, color: "text-blue-300", tint: "bg-blue-500/10", border: "border-blue-500/30", note: "Takes effect on the next login - no redeploy needed. The callback URL below MUST be registered in Google Cloud Console." },
 ]
 
 // ---------------------------------------------------------------------------
-// Google OAuth redirect-URI setup panel — the #1 reason "Sign in with Google"
+// Google OAuth redirect-URI setup panel - the #1 reason "Sign in with Google"
 // fails with "Access blocked: This app's request is invalid" (Error 400:
 // redirect_uri_mismatch) is that the OAuth client in Google Cloud Console
 // doesn't have THIS deployment's callback URL registered. The exact values
@@ -48,7 +48,7 @@ function CopyRow({ label, value }: { label: string; value: string }) {
     navigator.clipboard
       .writeText(value)
       .then(() => toast.success("Copied to clipboard"))
-      .catch(() => toast.error("Couldn't copy — select the text manually"))
+      .catch(() => toast.error("Couldn't copy - select the text manually"))
   }
   return (
     <div className="flex items-center gap-2 rounded-lg border border-border/60 bg-background/60 px-3 py-2">
@@ -77,7 +77,7 @@ function GoogleRedirectSetup() {
         If sign-in fails with <span className="font-mono">"Access blocked: This app's request is invalid"</span> (Error 400:
         redirect_uri_mismatch), the OAuth client doesn't know this site's callback URL. Open your OAuth 2.0
         client in Google Cloud Console → APIs &amp; Services → Credentials and add BOTH values below. New
-        URIs can take 5–10 minutes to propagate. Every host you deploy on (this preview, your production
+        URIs can take 5-10 minutes to propagate. Every host you deploy on (this preview, your production
         domain, www / non-www) needs its own entry.
       </p>
       {callback ? (
@@ -87,7 +87,7 @@ function GoogleRedirectSetup() {
         </div>
       ) : (
         <p className="text-[10px] text-muted-foreground">
-          Open this page on the domain you want to configure — the exact values are host-specific.
+          Open this page on the domain you want to configure - the exact values are host-specific.
         </p>
       )}
       <a
@@ -129,7 +129,7 @@ export function AdminSettingsView() {
     mutationFn: (settings: Record<string, string>) =>
       api("/api/admin/settings", { method: "PUT", body: JSON.stringify({ settings }) }),
     onSuccess: (data: any) => {
-      toast.success(`Settings saved — ${data.updated} field(s) updated`)
+      toast.success(`Settings saved - ${data.updated} field(s) updated`)
       queryClient.invalidateQueries({ queryKey: ["admin-settings"] })
     },
     onError: (e: any) => toast.error(e?.message || "Save failed"),
@@ -142,7 +142,7 @@ export function AdminSettingsView() {
       if (data.ok) {
         let msg: string = data.message || "Test passed"
         if (type === "auth" && typeof window !== "undefined") {
-          msg += ` Sign-in callback for this domain: ${window.location.origin}/api/auth/callback/google — it must be registered as an Authorized redirect URI in Google Cloud Console.`
+          msg += ` Sign-in callback for this domain: ${window.location.origin}/api/auth/callback/google - it must be registered as an Authorized redirect URI in Google Cloud Console.`
         }
         toast.success(msg, { duration: 8000 })
       } else {
@@ -182,7 +182,7 @@ export function AdminSettingsView() {
     }
     // Guard against accidental wipes: clearing a configured field DELETES the
     // stored value on save (falls back to env vars). That was surprising once
-    // already — make it explicit.
+    // already - make it explicit.
     const cleared = settings.filter((s) => s.configured && (changed[s.key] ?? null) === "")
     if (cleared.length > 0) {
       const names = cleared.map((s) => s.label).join(", ")
@@ -210,7 +210,7 @@ export function AdminSettingsView() {
           <h1 className="text-2xl font-bold tracking-tight">Platform Settings</h1>
         </div>
         <p className="text-sm text-muted-foreground">
-          Configure integrations directly from the admin panel — every change takes effect immediately, no redeploy required. Use the Test button in each section to verify the saved credentials.
+          Configure integrations directly from the admin panel - every change takes effect immediately, no redeploy required. Use the Test button in each section to verify the saved credentials.
         </p>
       </div>
 

@@ -25,7 +25,7 @@ async function generateUniqueCode(baseName: string): Promise<string | null> {
   return null
 }
 
-/* POST /api/affiliate/join — auth required.
+/* POST /api/affiliate/join - auth required.
  * Creates an affiliate record for the current user with a unique code
  * generated from the user's name + random suffix.
  *
@@ -59,7 +59,7 @@ export const POST = withErrorHandler(async (req: Request) => {
       commissionRate = body.commissionRate
     }
   } catch {
-    // Empty body is fine — fall through to defaults
+    // Empty body is fine - fall through to defaults
   }
 
   const code = await generateUniqueCode(currentUser.name || "user")

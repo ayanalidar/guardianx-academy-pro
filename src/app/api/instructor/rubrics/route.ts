@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { requireRole } from "@/lib/session"
 
-// GET — list current instructor's rubrics (with criteria)
+// GET - list current instructor's rubrics (with criteria)
 export async function GET() {
   const user = await requireRole(["INSTRUCTOR", "ADMIN", "SUPER_ADMIN"])
   if (user instanceof NextResponse) return user
@@ -20,7 +20,7 @@ export async function GET() {
   return NextResponse.json({ rubrics })
 }
 
-// POST — create rubric with criteria
+// POST - create rubric with criteria
 // Body: { title, description, courseId?, criteria: [{ label, description, points, order }] }
 export async function POST(req: NextRequest) {
   const user = await requireRole(["INSTRUCTOR", "ADMIN", "SUPER_ADMIN"])

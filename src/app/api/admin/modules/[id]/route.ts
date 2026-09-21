@@ -24,7 +24,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   return NextResponse.json({ module: updated })
 }
 
-// Delete a module (and all its lessons via cascade) — admin only
+// Delete a module (and all its lessons via cascade) - admin only
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const user = await requireAdmin()

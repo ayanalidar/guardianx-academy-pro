@@ -45,7 +45,7 @@ export const PATCH = withErrorHandler(async (req, { params }: { params: Promise<
 })
 
 /* DELETE /api/admin/open-schooling/leads/[id]
- * ADMIN-only. Hard-deletes a lead (use sparingly — prefer marking as LOST).
+ * ADMIN-only. Hard-deletes a lead (use sparingly - prefer marking as LOST).
  */
 export const DELETE = withErrorHandler(async (_req, { params }: { params: Promise<{ id: string }> }) => {
   const currentUser = await requireAdmin()

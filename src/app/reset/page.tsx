@@ -8,13 +8,13 @@ export const metadata: Metadata = {
 }
 
 /**
- * /reset — self-service escape hatch for wedged browser sessions.
+ * /reset - self-service escape hatch for wedged browser sessions.
  *
  * If a user's tab is stuck on an old cached build (service worker holding
  * stale assets, dead chunk references, ghost catalog), sending them to
  * /reset wipes every client-side artifact and bounces them into a fresh
- * load. The heavy lifting runs as an inline script at HTML-parse time —
- * BEFORE React hydrates — so it completes even if the surrounding app
+ * load. The heavy lifting runs as an inline script at HTML-parse time - 
+ * BEFORE React hydrates - so it completes even if the surrounding app
  * never becomes interactive. The markup below is just the visible
  * acknowledgment plus a manual fallback link.
  */
@@ -26,7 +26,7 @@ export default function ResetPage() {
         dangerouslySetInnerHTML={{
           // Land on /diag?go=1 (a never-cached standalone page): it verifies the
           // delivered build matches origin and auto-continues to the catalog
-          // ONLY when everything is healthy — instead of blindly bouncing into
+          // ONLY when everything is healthy - instead of blindly bouncing into
           // a /courses URL the preview gateway may still serve from a stale pin.
           __html: `setTimeout(function(){try{location.replace("/diag?go=1&t="+Date.now())}catch(e){location.href="/diag"}},1200)`,
         }}

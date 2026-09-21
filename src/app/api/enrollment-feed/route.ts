@@ -5,7 +5,7 @@ import { cachedJson } from "@/lib/http-cache"
 export const runtime = "nodejs"
 
 /**
- * GET /api/enrollment-feed — public.
+ * GET /api/enrollment-feed - public.
  *
  * Returns the last 5 enrollments across all courses, anonymized:
  *   { firstName, city, courseTitle, courseShortName, timeAgo, color }

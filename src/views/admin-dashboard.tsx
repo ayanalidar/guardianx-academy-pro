@@ -522,7 +522,7 @@ function OverviewTab({ onGoTab }: { onGoTab?: (tab: AdminTab) => void }) {
         </ScrollReveal>
       </div>
 
-      {/* Quick actions — one-tap access to the most-used admin areas. Fills
+      {/* Quick actions - one-tap access to the most-used admin areas. Fills
           the empty band at the bottom of the Overview tab with useful nav
           instead of dead space. */}
       <QuickActions />
@@ -728,7 +728,7 @@ function UsersTab() {
       {data && data.totalPages > 1 && (
         <div className="flex items-center justify-between">
           <p className="text-xs text-muted-foreground">
-            Showing {(data.page - 1) * 50 + 1}–{Math.min(data.page * 50, data.total)} of {data.total}
+            Showing {(data.page - 1) * 50 + 1}-{Math.min(data.page * 50, data.total)} of {data.total}
           </p>
           <div className="flex items-center gap-1">
             <Button

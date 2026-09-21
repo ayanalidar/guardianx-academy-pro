@@ -29,7 +29,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
   if (existing) return NextResponse.json({ enrollment: existing })
 
   // Course Prerequisites: verify the student has completed all prerequisite courses
-  // prerequisiteIds is a newer column — skip the check entirely when absent.
+  // prerequisiteIds is a newer column - skip the check entirely when absent.
   let prereqIds: string[] = []
   try {
     const prereqRow = await db.course.findUnique({ where: { id }, select: { prerequisiteIds: true } })
@@ -89,7 +89,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
   const enrollment = await db.enrollment.create({
     data: { userId: user.id, courseId: id, lastAccessed: new Date() },
   })
-  // studentsCount is a newer column — on a drifted DB the increment fails,
+  // studentsCount is a newer column - on a drifted DB the increment fails,
   // but the enrollment itself must stand.
   try {
     await db.course.update({
@@ -97,7 +97,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
       data: { studentsCount: { increment: 1 } },
     })
   } catch {
-    // Counter sync skipped — schema drift. Not fatal.
+    // Counter sync skipped - schema drift. Not fatal.
   }
   const { awardXp, awardSpecificAchievement } = await import("@/lib/gamification")
   await awardXp(user.id, "course_enrolled", 25, id)
@@ -116,7 +116,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
   if (enrollUser) {
     await sendEmail({
       to: enrollUser.email,
-      subject: `📚 Enrolled — ${course.title}`,
+      subject: `📚 Enrolled - ${course.title}`,
       body: `Hi ${enrollUser.name},\n\nYou've successfully enrolled in "${course.title}" on GuardianX Academy.\n\nDive in and start learning. Your journey to becoming a cyber guardian starts now!\n\nThe GuardianX Team`,
       type: "notification",
       userId: user.id,

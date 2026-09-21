@@ -3,7 +3,7 @@
 import * as React from "react"
 
 /* ============================================================
-   useCurrency — fixed INR pricing
+   useCurrency - fixed INR pricing
    ------------------------------------------------------------
    The platform bills in INR only: every price stored in the
    database is an INR amount and every surface renders it with
@@ -35,7 +35,7 @@ export function useCurrency() {
     formatPrice,
     convertPrice,
     changeCurrency: React.useCallback((_code: string) => {
-      /* single-currency platform — no-op */
+      /* single-currency platform - no-op */
     }, []),
     isINR: true,
   }

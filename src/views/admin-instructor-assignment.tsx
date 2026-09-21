@@ -99,7 +99,7 @@ export function InstructorAssignmentView() {
     },
   })
 
-  // Use real instructors from the API. Never mask empty data with fake fallbacks —
+  // Use real instructors from the API. Never mask empty data with fake fallbacks - 
   // that would put non-existent IDs in the UI, causing 404s on delete. Instead we
   // render a friendly empty state when there are no real instructors yet.
   const apiInstructors = data?.instructors ?? []
@@ -142,7 +142,7 @@ export function InstructorAssignmentView() {
     onError: (err: Error) => toast.error(err.message),
   })
 
-  // Real training batches — the assignment target (TrainingBatch model)
+  // Real training batches - the assignment target (TrainingBatch model)
   const { data: batchesData, isLoading: batchesLoading } = useQuery<{
     batches: TrainingBatchRow[]
     count: number
@@ -156,7 +156,7 @@ export function InstructorAssignmentView() {
   })
   const batches = batchesData?.batches ?? []
 
-  // Assign instructor to a batch — PERSISTS via PATCH /api/admin/training-batches/[id]
+  // Assign instructor to a batch - PERSISTS via PATCH /api/admin/training-batches/[id]
   const assignMutation = useMutation({
     mutationFn: async ({ batchId, instructorId, instructorName }: { batchId: string; instructorId: string | null; instructorName: string | null }) => {
       const res = await fetch(`/api/admin/training-batches/${batchId}`, {
@@ -327,7 +327,7 @@ export function InstructorAssignmentView() {
                   {batches.length === 0 ? (
                     <tr>
                       <td colSpan={4} className="py-10 text-center text-sm text-muted-foreground">
-                        {batchesLoading ? "Loading batches…" : "No training batches yet — create one via Admin → Batch Calendar."}
+                        {batchesLoading ? "Loading batches…" : "No training batches yet - create one via Admin → Batch Calendar."}
                       </td>
                     </tr>
                   ) : (
@@ -339,7 +339,7 @@ export function InstructorAssignmentView() {
                             <div className="font-medium text-sm">{b.name || b.certification}</div>
                             <Badge variant="outline" className="text-[9px] mt-0.5">{b.certification}</Badge>
                           </td>
-                          <td className="py-3 px-4 text-sm text-muted-foreground"><Clock className="h-3 w-3 inline mr-1" />{b.schedule || "—"}</td>
+                          <td className="py-3 px-4 text-sm text-muted-foreground"><Clock className="h-3 w-3 inline mr-1" />{b.schedule || " - "}</td>
                           <td className="py-3 px-4">
                             <Select
                               value={b.instructorId ?? "__NONE__"}
@@ -673,7 +673,7 @@ function AddInstructorDialog({
 
           {/* Password */}
           <div>
-            <Label className="text-xs">Initial Password (required — min 6 characters)</Label>
+            <Label className="text-xs">Initial Password (required - min 6 characters)</Label>
             <Input type="text" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="e.g. Teach@2026" className="text-xs" />
           </div>
 

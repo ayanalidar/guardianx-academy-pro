@@ -3,12 +3,12 @@
 import * as React from "react"
 
 /**
- * VersionWatch — client-side self-healing for stale bundles.
+ * VersionWatch - client-side self-healing for stale bundles.
  *
  * Problem this solves: the app is a long-lived SPA (pushState navigation,
  * no reloads). After a server redeploy, every already-open browser tab
- * kept running the OLD JavaScript — old caching behavior, old views, old
- * bugs — while the server had moved on. Users saw symptoms like "courses
+ * kept running the OLD JavaScript - old caching behavior, old views, old
+ * bugs - while the server had moved on. Users saw symptoms like "courses
  * are gone" that had already been fixed server-side, because their tab
  * never picked up the fix.
  *
@@ -59,7 +59,7 @@ export function VersionWatch() {
         window.localStorage.setItem(STORE_KEY, buildId)
       } catch {
         consecutiveFailures += 1
-        // Server unreachable — nothing to do here; the host watchdog owns
+        // Server unreachable - nothing to do here; the host watchdog owns
         // restarts. When it comes back with the same buildId we simply
         // stop failing; if the restart shipped a NEW build, the next
         // successful check triggers the reload path above.

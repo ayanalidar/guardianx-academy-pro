@@ -7,7 +7,7 @@ async function schoolAdminGuard() {
   const user = await getCurrentUser()
   if (!user) return { error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) }
   if (user.role !== "SCHOOL_ADMIN") {
-    return { error: NextResponse.json({ error: "Forbidden — SCHOOL_ADMIN only" }, { status: 403 }) }
+    return { error: NextResponse.json({ error: "Forbidden - SCHOOL_ADMIN only" }, { status: 403 }) }
   }
   if (!user.schoolId) {
     return { error: NextResponse.json({ error: "No school linked to this account" }, { status: 403 }) }
@@ -76,7 +76,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Valid batch name is required" }, { status: 400 })
     }
 
-    // Verify all courseIds exist (soft check — accept unknown ones but log)
+    // Verify all courseIds exist (soft check - accept unknown ones but log)
     if (courseIds.length > 0) {
       const existing = await db.course.findMany({
         where: { id: { in: courseIds } },

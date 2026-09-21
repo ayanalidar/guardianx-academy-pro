@@ -4,7 +4,7 @@ import { db } from "@/lib/db"
 import { requireAdmin, requireRole, withErrorHandler } from "@/lib/session"
 import { logAction } from "@/lib/audit"
 
-// GET /api/admin/instructors — list all instructors with their profiles + workload
+// GET /api/admin/instructors - list all instructors with their profiles + workload
 export const GET = withErrorHandler(async () => {
   const currentUser = await requireRole(["INSTRUCTOR", "ADMIN", "SUPER_ADMIN"])
   if (currentUser instanceof NextResponse) return currentUser
@@ -54,7 +54,7 @@ export const GET = withErrorHandler(async () => {
   return NextResponse.json({ instructors: result, count: result.length })
 })
 
-// POST /api/admin/instructors — create a new instructor (User + InstructorProfile)
+// POST /api/admin/instructors - create a new instructor (User + InstructorProfile)
 export const POST = withErrorHandler(async (req: NextRequest) => {
   const currentUser = await requireAdmin()
   if (currentUser instanceof NextResponse) return currentUser
@@ -96,7 +96,7 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
   const existing = await db.user.findUnique({ where: { email: email.trim().toLowerCase() } })
   if (existing) return NextResponse.json({ error: "Email already in use" }, { status: 409 })
 
-  // Require a password — no hardcoded default (security fix: S27)
+  // Require a password - no hardcoded default (security fix: S27)
   if (!password || password.length < 6) {
     return NextResponse.json({ error: "Password is required (min 6 characters)" }, { status: 400 })
   }

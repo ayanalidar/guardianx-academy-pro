@@ -226,7 +226,7 @@ export function CyberQuizCertificateView() {
                     This is to certify that
                   </p>
 
-                  {/* Candidate name — script hero with gradient rule */}
+                  {/* Candidate name - script hero with gradient rule */}
                   <div className="gx-script text-3xl lg:text-5xl italic leading-tight" style={{ color: "var(--doc-ink)" }}>
                     {cert.candidateName}
                   </div>

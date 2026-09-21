@@ -22,7 +22,7 @@ export async function GET() {
       take: 10,
       select: { id: true, type: true, xp: true, meta: true, date: true, createdAt: true },
     }),
-    // All published labs (for skill profile — group by category, count solved vs total)
+    // All published labs (for skill profile - group by category, count solved vs total)
     db.lab.findMany({
       where: { published: true },
       select: {
@@ -54,7 +54,7 @@ export async function GET() {
     const d = new Date(today)
     d.setDate(d.getDate() - i)
     const ds = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`
-    // We only have the last 10 activities in memory — for a full 7-day chart
+    // We only have the last 10 activities in memory - for a full 7-day chart
     // we need a fresh DB query. Use a count + sum aggregation instead.
     weeklyXp.push({ date: ds, xp: 0, count: 0 })
   }
@@ -115,7 +115,7 @@ export async function GET() {
         userId: user.id,
         status: "scheduled",
         // Only attempts scheduled in the future
-        // (we don't have a scheduledAt column on ExamAttempt — we use
+        // (we don't have a scheduledAt column on ExamAttempt - we use
         // the createdAt + exam.duration for windowing. For now, surface
         // all scheduled attempts regardless of date.)
       },
@@ -175,7 +175,7 @@ export async function GET() {
 
   // ----- skill profile (labs solved per category) -----
   // Aggregate by category. Each Lab row's `progress` is the user's
-  // completed LabProgress on that lab (filtered above) — if it exists,
+  // completed LabProgress on that lab (filtered above) - if it exists,
   // the lab is "solved" by this user.
   const skillMap = new Map<string, { solved: number; total: number }>()
   for (const lab of allLabs) {

@@ -51,7 +51,7 @@ const DOMAIN_ICONS: Record<string, any> = {
 const DOMAIN_DESCRIPTIONS: Record<string, string> = {
   Phishing: "Detecting fraudulent emails, messages, and websites designed to steal credentials or install malware.",
   Passwords: "Creating, storing, and managing strong passwords. Understanding password managers, 2FA, and common password attacks.",
-  "Social Engineering": "Recognizing manipulation tactics — pretexting, baiting, tailgating, vishing, and business email compromise.",
+  "Social Engineering": "Recognizing manipulation tactics - pretexting, baiting, tailgating, vishing, and business email compromise.",
   "Web Safety": "Safe browsing, HTTPS, URL inspection, malicious downloads, browser security, and avoiding fake login pages.",
   "Mobile Security": "App permissions, sideloading risks, mobile malware, lost-device protection, and secure messaging.",
   "Data Privacy": "Personal data protection, GDPR/DPDP awareness, oversharing on social media, and data breach response.",

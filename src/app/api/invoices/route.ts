@@ -6,7 +6,7 @@ import { parseInvoicePayload, computeTotals } from "@/lib/invoice-utils"
 export const runtime = "nodejs"
 
 /**
- * GET /api/invoices — ADMIN. List saved invoices, newest first.
+ * GET /api/invoices - ADMIN. List saved invoices, newest first.
  * Capped at 500 rows; the generator view only needs the recent list.
  */
 export const GET = withErrorHandler(async () => {
@@ -21,10 +21,10 @@ export const GET = withErrorHandler(async () => {
 })
 
 /**
- * POST /api/invoices — ADMIN. Create a saved invoice.
+ * POST /api/invoices - ADMIN. Create a saved invoice.
  *
  * Money columns (subtotal/taxAmount/total) are ALWAYS recomputed server-side
- * from the validated line items + rates — the client payload can never
+ * from the validated line items + rates - the client payload can never
  * tamper with them. Duplicate invoice numbers return 409.
  */
 export const POST = withErrorHandler(async (req: NextRequest) => {

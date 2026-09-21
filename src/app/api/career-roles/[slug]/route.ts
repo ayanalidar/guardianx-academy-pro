@@ -5,7 +5,7 @@ export const runtime = "nodejs"
 
 /**
  * GET /api/career-roles/[slug]
- * Public — returns a single CareerPathRole by slug.
+ * Public - returns a single CareerPathRole by slug.
  */
 export async function GET(
   _req: Request,

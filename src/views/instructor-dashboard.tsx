@@ -212,7 +212,7 @@ function MyCoursesTab() {
   })
   const courses = data?.courses ?? []
 
-  // Categories that actually occur in the instructor's own catalog —
+  // Categories that actually occur in the instructor's own catalog - 
   // avoids a wall of empty filter chips for single-domain instructors.
   const activeCategories = React.useMemo(() => {
     const set = new Set<string>()
@@ -265,7 +265,7 @@ function MyCoursesTab() {
 
       {courses.length > 0 && (
         <div className="space-y-2.5">
-          {/* Search — essential once a catalog grows past a screenful */}
+          {/* Search - essential once a catalog grows past a screenful */}
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
             <Input

@@ -6,7 +6,7 @@ import { logAction } from "@/lib/audit";
 export const runtime = "nodejs";
 
 /* ============================================================
-   /api/admin/seo/meta  (GET + POST — ADMIN only)
+   /api/admin/seo/meta  (GET + POST - ADMIN only)
 
    Storage convention (SiteContent rows where page="seo"):
 
@@ -25,11 +25,11 @@ export const runtime = "nodejs";
          key     = "content"
 
    ----------------------------------------------------------
-   GET  — returns ALL SEO meta entries (page="seo").
+   GET - returns ALL SEO meta entries (page="seo").
           Response: { items: [{ id, section, key, value, updatedAt,
                                 updatedBy }], bySection: {...} }
 
-   POST — Body: { page, title, description, ogImage, keywords }
+   POST - Body: { page, title, description, ogImage, keywords }
           Upserts 4 rows (one per field) for section=<page>.
           Any field that is undefined / null is skipped (no
           overwrite with empty string).
@@ -50,7 +50,7 @@ function readStr(v: unknown): string {
   }
 }
 
-/** GET — ADMIN only. Returns all SEO meta rows. */
+/** GET - ADMIN only. Returns all SEO meta rows. */
 export const GET = withErrorHandler(async () => {
   const user = await requireAdmin();
   if (user instanceof NextResponse) return user;
@@ -80,7 +80,7 @@ export const GET = withErrorHandler(async () => {
   });
 });
 
-/** POST — ADMIN only. Body shapes documented at the top of the file. */
+/** POST - ADMIN only. Body shapes documented at the top of the file. */
 export const POST = withErrorHandler(async (req: NextRequest) => {
   const user = await requireAdmin();
   if (user instanceof NextResponse) return user;
@@ -154,7 +154,7 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
 
   if (upserts.length === 0) {
     return NextResponse.json(
-      { error: "No fields to upsert — supply at least one of title/description/ogImage/keywords/content." },
+      { error: "No fields to upsert - supply at least one of title/description/ogImage/keywords/content." },
       { status: 400 },
     );
   }

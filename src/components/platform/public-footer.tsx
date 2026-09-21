@@ -14,16 +14,16 @@ import { getCmsIcon } from "@/lib/cms-icons"
  * PublicFooter - 7-column LEGAL-inclusive structure per master-prompt §55.
  *
  * Columns:
- *   1. TRAINING     — Courses, Learning Paths, Upcoming Batches, Certifications, Mock Exams
- *   2. PRACTICE     — Labs, Cyber Range, CTF Arena, Challenges
- *   3. ASSESSMENT   — Proctored Exams, GuardianX Certifications, Certificate Verification
- *   4. INSTITUTIONS — Schools, Colleges, Universities, Corporate Training, Partner With Us
- *   5. COMPANY      — About, Instructors, Careers, Contact, Security
- *   6. RESOURCES    — Events, Workshops, Webinars, Help
- *   7. LEGAL        — Privacy, Terms, Refund Policy, Responsible Disclosure, Cookie Policy
+ *   1. TRAINING - Courses, Learning Paths, Upcoming Batches, Certifications, Mock Exams
+ *   2. PRACTICE - Labs, Cyber Range, CTF Arena, Challenges
+ *   3. ASSESSMENT - Proctored Exams, GuardianX Certifications, Certificate Verification
+ *   4. INSTITUTIONS - Schools, Colleges, Universities, Corporate Training, Partner With Us
+ *   5. COMPANY - About, Instructors, Careers, Contact, Security
+ *   6. RESOURCES - Events, Workshops, Webinars, Help
+ *   7. LEGAL - Privacy, Terms, Refund Policy, Responsible Disclosure, Cookie Policy
  *
- * Each link is a REAL anchor (`href` from viewToPath) — crawlable,
- * shareable, middle-click safe — with SPA click interception.
+ * Each link is a REAL anchor (`href` from viewToPath) - crawlable,
+ * shareable, middle-click safe - with SPA click interception.
  * Bottom bar (contact info + copyright + Privacy/Terms/Security buttons) is unchanged.
  */
 export function PublicFooter() {
@@ -32,8 +32,8 @@ export function PublicFooter() {
   /* --------------------------------------------------------------
    * CMS-driven copy (Admin → Content Studio → Global → Footer).
    * The 7 link columns below are structural navigation (kept in
-   * code); everything textual — CTA block, brand, contact info,
-   * social links, copyright — is CMS-editable with fallbacks.
+   * code); everything textual - CTA block, brand, contact info,
+   * social links, copyright - is CMS-editable with fallbacks.
    * -------------------------------------------------------------- */
   const cms = usePageContent("global")
   const cmsData = cms.data
@@ -113,7 +113,7 @@ export function PublicFooter() {
         { label: "About", view: { name: "impact" } },
         { label: "Instructors", view: { name: "instructors" } },
         { label: "Careers", view: { name: "career-planner" } },
-        { label: "Hiring — Job Openings", view: { name: "hiring" } },
+        { label: "Hiring - Job Openings", view: { name: "hiring" } },
         { label: "Contact", view: { name: "contact" } },
         { label: "Security", view: { name: "contact" } },
       ],
@@ -197,7 +197,7 @@ export function PublicFooter() {
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
               <span>System operational</span>
             </div>
-            {/* Social links — CMS-editable */}
+            {/* Social links - CMS-editable */}
             <div className="flex items-center gap-2 mt-4">
               {socialLinks.map((s) => {
                 const SocialIcon = getCmsIcon(s.icon)
@@ -246,7 +246,7 @@ export function PublicFooter() {
           ))}
         </div>
 
-        {/* Contact info + legal — bottom bar unchanged */}
+        {/* Contact info + legal - bottom bar unchanged */}
         <div className="mt-10 pt-6 border-t border-border/50 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
             {contactInfo.map((item, i) => {
@@ -269,7 +269,7 @@ export function PublicFooter() {
             <span className="opacity-30">·</span>
             <a
               href="/reset"
-              title="Clear cached pages, service workers, and stored snapshots — fixes stale views"
+              title="Clear cached pages, service workers, and stored snapshots - fixes stale views"
               className="hover:text-violet-300 transition-colors"
             >
               Reset offline data

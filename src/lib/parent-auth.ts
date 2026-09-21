@@ -2,7 +2,7 @@ import crypto from "crypto"
 import { requireSecret } from "@/lib/secrets"
 
 /**
- * Parent/Guardian Portal — token-based auth helper.
+ * Parent/Guardian Portal - token-based auth helper.
  *
  * Parent accounts live in their own `ParentAccount` table (separate from the
  * main `User` table used by NextAuth). To authenticate subsequent requests
@@ -12,7 +12,7 @@ import { requireSecret } from "@/lib/secrets"
  * Token format: `<base64url-payload>.<hex-hmac-sha256-signature>`
  *
  * NOTE: SECRET is resolved lazily via getSecret() so the module can be
- * imported at build time without throwing — the actual secret is only
+ * imported at build time without throwing - the actual secret is only
  * required when signParentToken / verifyParentToken is invoked at runtime.
  */
 
@@ -83,7 +83,7 @@ export function verifyParentToken(token?: string | null): ParentTokenPayload | n
   }
 }
 
-/** Extract a parent token from a Request — checks x-parent-token header then
+/** Extract a parent token from a Request - checks x-parent-token header then
  *  the `parent_token` query param as a fallback. */
 export function readParentToken(req: Request): string | null {
   const header = req.headers.get("x-parent-token")
@@ -93,7 +93,7 @@ export function readParentToken(req: Request): string | null {
     const q = url.searchParams.get("parent_token")
     if (q) return q
   } catch {
-    // ignore — non-parseable URL
+    // ignore - non-parseable URL
   }
   return null
 }

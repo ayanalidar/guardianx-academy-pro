@@ -3,7 +3,7 @@ import { z } from "zod"
 import { db } from "@/lib/db"
 import { sendEmail } from "@/lib/email"
 
-// Rate limiting — prevent spam abuse
+// Rate limiting - prevent spam abuse
 const RATE_LIMIT_WINDOW = 60 * 1000 // 1 minute
 const RATE_LIMIT_MAX = 3 // 3 messages per minute per IP
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
@@ -33,7 +33,7 @@ const contactSchema = z.object({
  * Saves the message as an EmailLog (type: "notification") and
  * sends a confirmation email back to the submitter.
  *
- * No auth required — this is a public form. Rate limited to prevent abuse.
+ * No auth required - this is a public form. Rate limited to prevent abuse.
  */
 export async function POST(req: NextRequest) {
   try {
@@ -84,12 +84,12 @@ export async function POST(req: NextRequest) {
         score: 20,
         history: { create: [{ fromStatus: null, toStatus: "New" }] },
       },
-    }).catch(() => null) // non-fatal — lead creation shouldn't break contact form
+    }).catch(() => null) // non-fatal - lead creation shouldn't break contact form
 
     // Send confirmation email to the submitter
     await sendEmail({
       to: email,
-      subject: `✓ We received your message — GuardianX Academy`,
+      subject: `✓ We received your message - GuardianX Academy`,
       body: `Hi ${name},\n\nThank you for reaching out to GuardianX Academy! We've received your message:\n\n"${subject}"\n\nOur team will review your inquiry and respond within 24 hours.\n\nCategory: ${safeCategory}\n\nBest regards,\nThe GuardianX Team\n\nacademy.guardianx.cloud`,
       type: "notification",
     })

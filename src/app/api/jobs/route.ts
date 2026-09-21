@@ -121,7 +121,7 @@ const SEED_JOBS = [
     location: "Remote (Global)",
     remote: true,
     type: "full-time",
-    salary: "$70,000 – $95,000",
+    salary: "$70,000-$95,000",
     description:
       "Produce finished threat intelligence reports on APT groups, ransomware ecosystems, and emerging TTPs. Source from open, deep, and dark-web collection.",
     requirements: "3+ years threat intel; strong OSINT skills; familiarity with MITRE ATT&CK and STIX/TAXII.",
@@ -275,7 +275,7 @@ export async function POST(req: NextRequest) {
     }
     if (!(user.role === "ADMIN" || user.role === "SUPER_ADMIN" || user.role === "INSTRUCTOR")) {
       return NextResponse.json(
-        { error: "Forbidden — admin/instructor only" },
+        { error: "Forbidden - admin/instructor only" },
         { status: 403 }
       )
     }

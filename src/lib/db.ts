@@ -9,19 +9,19 @@ import { PrismaClient } from '@prisma/client'
  * If we throw, the build fails.
  *
  * Fix: during build, return a placeholder URL. PrismaClient is
- * instantiated but never actually connects during build — it's only
+ * instantiated but never actually connects during build - it's only
  * imported for module evaluation. At runtime, the real DATABASE_URL
  * is set by Vercel's environment.
  */
 function resolveDatabaseUrl(): string {
   const shellUrl = process.env.DATABASE_URL
 
-  // Case 1: Real PostgreSQL URL available — use it.
+  // Case 1: Real PostgreSQL URL available - use it.
   if (shellUrl && !shellUrl.startsWith('file:')) {
     return shellUrl
   }
 
-  // Case 2: Try reading from .env file (local dev — shell has SQLite fallback)
+  // Case 2: Try reading from .env file (local dev - shell has SQLite fallback)
   if (typeof window !== 'undefined') {
     return shellUrl || 'postgresql://placeholder:placeholder@localhost:5432/placeholder'
   }
@@ -50,7 +50,7 @@ function resolveDatabaseUrl(): string {
   //   which is a deployment misconfiguration. The first DB query will fail
   //   with a clear Prisma connection error.
   if (process.env.NEXT_PHASE === 'phase-production-build' || !shellUrl) {
-    // Return a placeholder — PrismaClient accepts any valid connection string
+    // Return a placeholder - PrismaClient accepts any valid connection string
     // format. It won't connect until a query is actually run.
     return 'postgresql://placeholder:placeholder@localhost:5432/placeholder'
   }

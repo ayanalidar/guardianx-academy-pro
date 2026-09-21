@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { requireAdmin } from "@/lib/session"
 
-// PATCH /api/admin/certifications/[id] — update a certification
+// PATCH /api/admin/certifications/[id] - update a certification
 export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const user = await requireAdmin()
@@ -34,7 +34,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
   return NextResponse.json({ certification: updated })
 }
 
-// DELETE /api/admin/certifications/[id] — delete a certification
+// DELETE /api/admin/certifications/[id] - delete a certification
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const user = await requireAdmin()

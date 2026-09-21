@@ -3,14 +3,14 @@
  *
  * Goal: provide a single enforcement point for route-level auth + RBAC so
  * that individual API route handlers don't have to remember to call
- * `getCurrentUser()` / `requireRole()`. This is defense-in-depth — handlers
+ * `getCurrentUser()` / `requireRole()`. This is defense-in-depth - handlers
  * should STILL do their own fine-grained checks (e.g. "this order belongs
  * to this user"), but middleware catches the obvious "unauthenticated user
  * hits /api/admin/*" case globally.
  *
  * Auth model: NextAuth v4 with JWT strategy. The session token cookie is
  * named `next-auth.session-token` (dev) / `__Secure-next-auth.session-token`
- * (prod). We don't verify the JWT here — that's the route handler's job.
+ * (prod). We don't verify the JWT here - that's the route handler's job.
  * We just check that *a* session cookie is present. If absent, return 401
  * for API routes or redirect to / for non-API routes.
  *
@@ -31,7 +31,7 @@ const PROTECTED_API_PREFIXES: Array<[string, string[] | "any-auth"]> = [
   ["/api/instructor", ["INSTRUCTOR", "ADMIN", "SUPER_ADMIN"]],
   // School admin endpoints: SCHOOL_ADMIN + ADMIN/SUPER_ADMIN.
   ["/api/school", ["SCHOOL_ADMIN", "ADMIN", "SUPER_ADMIN"]],
-  // NOTE: /api/parent is intentionally NOT listed here — parents authenticate
+  // NOTE: /api/parent is intentionally NOT listed here - parents authenticate
   // with their own signed x-parent-token (src/lib/parent-auth.ts), not a
   // NextAuth session cookie, so requiring one here would 401 every parent
   // request. Parent routes perform their own token verification.
@@ -42,7 +42,7 @@ const PROTECTED_API_PREFIXES: Array<[string, string[] | "any-auth"]> = [
   ["/api/course-studio", ["INSTRUCTOR", "ADMIN", "SUPER_ADMIN"]],
   // AI course generator: any auth (rate-limited in handler).
   ["/api/ai-course-generator", "any-auth"],
-  // AI Course Architect: any auth — route itself enforces admin/instructor-owner.
+  // AI Course Architect: any auth - route itself enforces admin/instructor-owner.
   ["/api/ai/course-architect", "any-auth"],
   // Lab snapshots: any auth (user can only see their own snapshots).
   ["/api/lab-snapshots", "any-auth"],
@@ -169,13 +169,13 @@ function matchProtectedPrefix(
  * Next.js serves statically prerendered pages with
  * `Cache-Control: s-maxage=31536000` (one year, shared caches). Behind our
  * preview edge-gateway that is poison: the FIRST visit gets cached and every
- * later visitor — on every device — keeps receiving that same stale build
+ * later visitor - on every device - keeps receiving that same stale build
  * for a year, which is exactly the "no courses on any browser" incident.
  *
  * Policy:
  *  - HTML documents, API JSON, sw.js, RSC payloads: `private, no-cache,
- *    no-store` — always revalidate against the origin.
- *  - /_next/static/* and /_next/image: untouched — they are content-hashed
+ *    no-store` - always revalidate against the origin.
+ *  - /_next/static/* and /_next/image: untouched - they are content-hashed
  *    and safe to cache immutably (Next sets `public, max-age=31536000,
  *    immutable`).
  */
@@ -206,7 +206,7 @@ export function middleware(req: NextRequest) {
   const protectedMatch = matchProtectedPrefix(pathname)
   if (!protectedMatch) {
     // Not under a protected prefix. If it's in the public allowlist, allow.
-    // Otherwise, allow through — the route handler must do its own auth check.
+    // Otherwise, allow through - the route handler must do its own auth check.
     // (We intentionally don't 401 here to avoid breaking routes we forgot to
     // classify. The route handler is the source of truth for fine-grained
     // auth.)
@@ -222,7 +222,7 @@ export function middleware(req: NextRequest) {
   if (!token) {
     return withFreshnessHeaders(
       NextResponse.json(
-        { error: "Unauthorized — no session" },
+        { error: "Unauthorized - no session" },
         { status: 401 }
       )
     )
@@ -235,7 +235,7 @@ export function middleware(req: NextRequest) {
   // present but invalid, the handler's getCurrentUser() will return null
   // and the handler will return its own 401.
   //
-  // The `required` roles are checked in the handler via requireRole() —
+  // The `required` roles are checked in the handler via requireRole() - 
   // middleware can't easily decode the role from the JWT without the
   // secret and a decode library. (You could wire that up if you want
   // middleware-level RBAC, but it's a non-trivial perf hit per request.)

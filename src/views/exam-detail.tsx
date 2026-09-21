@@ -358,7 +358,7 @@ function ExamDetailPhase({
 }) {
   const { navigate } = useAppStore()
   const uc = exam.userContext
-  // NOTE: do NOT exclude hasInProgress here — when an attempt is in
+  // NOTE: do NOT exclude hasInProgress here - when an attempt is in
   // progress this same button becomes "Resume Attempt", and the start API
   // resumes it (resumed:true). The old `!uc.hasInProgress` clause disabled
   // the resume button forever, locking students out of interrupted exams.
@@ -940,7 +940,7 @@ function ExamRunner({ startData, onSubmit, onExit }: ExamRunnerProps) {
    * (b) streamed IMMEDIATELY to /api/exams/[id]/proctor-log which appends
    * it to the server-side ProctoringSession and voids the attempt when the
    * incident threshold is crossed. Previously flags lived only in React
-   * state and were flushed once at submit — any crash, tab close or failed
+   * state and were flushed once at submit - any crash, tab close or failed
    * submit silently lost ALL violations.
    */
   const queueRef = React.useRef<{ eventType: string; detail?: string }[]>([])
@@ -969,7 +969,7 @@ function ExamRunner({ startData, onSubmit, onExit }: ExamRunnerProps) {
         }
       }
     } catch {
-      // Network hiccup — leave the event at the head of the queue and retry
+      // Network hiccup - leave the event at the head of the queue and retry
       // on the next tick. Never let proctoring ingest break the exam.
     } finally {
       flushingRef.current = false
@@ -1089,7 +1089,7 @@ function ExamRunner({ startData, onSubmit, onExit }: ExamRunnerProps) {
     submitMutation.mutate(payload)
   }
 
-  // "Exit & Void" — actually void the attempt server-side (previously the
+  // "Exit & Void" - actually void the attempt server-side (previously the
   // dialog promised voiding but just navigated away, leaving the attempt
   // in-progress and discarding all recorded violations).
   const [voiding, setVoiding] = React.useState(false)
@@ -1102,7 +1102,7 @@ function ExamRunner({ startData, onSubmit, onExit }: ExamRunnerProps) {
       })
       toast.info("Your attempt has been voided.")
     } catch {
-      toast.error("Could not void the attempt on the server — abandoning anyway.")
+      toast.error("Could not void the attempt on the server - abandoning anyway.")
     }
     setVoiding(false)
     onExit()
@@ -1145,7 +1145,7 @@ function ExamRunner({ startData, onSubmit, onExit }: ExamRunnerProps) {
         toast.error("Proctoring flag: you exited fullscreen.")
       }
     }
-    // Copy / paste / cut — the classic answer-sharing vectors. The live
+    // Copy / paste / cut - the classic answer-sharing vectors. The live
     // runner previously had NO detectors for these, so violations the
     // student performed were never recorded anywhere.
     const handleCopy = (e: Event) => {
@@ -1598,7 +1598,7 @@ function ExamRunner({ startData, onSubmit, onExit }: ExamRunnerProps) {
         </Card>
       </div>
 
-      {/* Submit dialog — portalled INTO the fullscreen container: browsers
+      {/* Submit dialog - portalled INTO the fullscreen container: browsers
           render the fullscreen element in the top layer, so a body-level
           dialog would be invisible/unclickable during the exam. */}
       <Dialog open={showSubmitDialog} onOpenChange={setShowSubmitDialog}>
@@ -1662,7 +1662,7 @@ function ExamRunner({ startData, onSubmit, onExit }: ExamRunnerProps) {
         </DialogContent>
       </Dialog>
 
-      {/* Exit dialog — same fullscreen portal container as the submit dialog */}
+      {/* Exit dialog - same fullscreen portal container as the submit dialog */}
       <Dialog open={showExitDialog} onOpenChange={setShowExitDialog}>
         <DialogContent container={containerRef.current}>
           <DialogHeader>
@@ -1749,7 +1749,7 @@ function ExamResults({
   const voided = result.attempt.status === "voided"
   const [showReview, setShowReview] = React.useState(false)
 
-  // Proctoring report — read back what the server recorded during the
+  // Proctoring report - read back what the server recorded during the
   // attempt so the student sees the same log an administrator would.
   const { data: proctorData } = useQuery<{
     proctoring: { incidentCount: number; flags: { type: string; timestamp?: number; detail?: string }[] }
@@ -1823,7 +1823,7 @@ function ExamResults({
         </div>
       </motion.div>
 
-      {/* Proctoring summary — server-side record of every violation */}
+      {/* Proctoring summary - server-side record of every violation */}
       <Card className={cn("mt-5 p-6 border", incidentCount > 0 ? "border-rose-500/30 bg-rose-500/5" : "border-emerald-500/30 bg-emerald-500/5")}>
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-sm font-semibold flex items-center gap-2">

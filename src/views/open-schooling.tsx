@@ -57,7 +57,7 @@ const WHO_ITS_FOR = [
   {
     icon: RotateCcw,
     title: "School dropouts",
-    desc: "Complete your education on your own schedule. No need to rejoin regular school — study at home, appear for exams when ready.",
+    desc: "Complete your education on your own schedule. No need to rejoin regular school - study at home, appear for exams when ready.",
     color: "text-violet-300",
     bg: "bg-violet-500/10",
   },
@@ -78,7 +78,7 @@ const WHO_ITS_FOR = [
   {
     icon: ShieldCheck,
     title: "Failed regular boards",
-    desc: "Pass with a recognized equivalent certificate. Save a year — no need to repeat the full school term.",
+    desc: "Pass with a recognized equivalent certificate. Save a year - no need to repeat the full school term.",
     color: "text-emerald-300",
     bg: "bg-emerald-500/10",
   },
@@ -103,7 +103,7 @@ const STEPS = [
   {
     icon: Award,
     title: "Get your certificate",
-    desc: "Digital certificate issued via DigiLocker. Recognized by NEP 2020, COBSE — valid for higher education and government jobs.",
+    desc: "Digital certificate issued via DigiLocker. Recognized by NEP 2020, COBSE - valid for higher education and government jobs.",
   },
 ]
 
@@ -114,7 +114,7 @@ const FEE_ROWS = [
   { label: "Minimum subjects", secondary: "5 (incl. 1 language)", senior: "5 (incl. 1 language)" },
   { label: "Registration fee", secondary: "₹1,000 (valid 5 years)", senior: "₹1,000 (valid 5 years)" },
   { label: "Per-subject fee", secondary: "₹2,000", senior: "₹2,500" },
-  { label: "Exam fee per subject", secondary: "₹300 – ₹600", senior: "₹300 – ₹600" },
+  { label: "Exam fee per subject", secondary: "₹300-₹600", senior: "₹300-₹600" },
   { label: "Exam sessions", secondary: "January & July", senior: "January & July" },
   { label: "Validity", secondary: "5 years", senior: "5 years" },
   { label: "Recognition", secondary: "NEP 2020 · COBSE", senior: "NEP 2020 · COBSE" },
@@ -139,7 +139,7 @@ const FAQS = [
   },
   {
     q: "What if I fail a subject?",
-    a: "You can re-appear for that subject in the next exam cycle (January or July). Open schooling allows up to 4 attempts within the 5-year registration validity. You do not need to re-enrol — just pay the exam fee per subject again.",
+    a: "You can re-appear for that subject in the next exam cycle (January or July). Open schooling allows up to 4 attempts within the 5-year registration validity. You do not need to re-enrol - just pay the exam fee per subject again.",
   },
   {
     q: "Can I change subjects after registration?",
@@ -155,7 +155,7 @@ const FAQS = [
   },
   {
     q: "Do I need to attend any classes?",
-    a: "No. Open schooling is self-paced — you study on your own using the study material provided. However, GuardianX offers optional weekend doubt-clearing sessions (online + offline) for students who want extra help. These are free for students who register through us.",
+    a: "No. Open schooling is self-paced - you study on your own using the study material provided. However, GuardianX offers optional weekend doubt-clearing sessions (online + offline) for students who want extra help. These are free for students who register through us.",
   },
   {
     q: "Can I apply through GuardianX for NIOS too?",
@@ -211,7 +211,7 @@ export function OpenSchoolingView() {
             </h1>
             <p className="text-base lg:text-lg text-muted-foreground max-w-2xl leading-relaxed mb-5">
               Recognized by NEP 2020 · COBSE. Valid for higher education, government jobs, and all
-              entrance exams. Study at your pace — no need to attend regular school.
+              entrance exams. Study at your pace - no need to attend regular school.
             </p>
             <div className="flex flex-wrap items-center gap-3">
               <Button
@@ -342,7 +342,7 @@ export function OpenSchoolingView() {
         </section>
 
         {/* ====================================================
-            COURSES & FEES — comparison table
+            COURSES & FEES - comparison table
             ==================================================== */}
         <section className="py-8 lg:py-12 border-t border-border/40">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">

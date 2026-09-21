@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { requireAdmin } from "@/lib/session"
 
-// GET /api/admin/overview — platform-wide stats (ADMIN only)
+// GET /api/admin/overview - platform-wide stats (ADMIN only)
 export async function GET() {
   const user = await requireAdmin()
   if (user instanceof NextResponse) return user
@@ -65,7 +65,7 @@ export async function GET() {
   }
   for (const r of roleCounts) roleMap[r.role] = r._count._all
 
-  // Compute revenue: sum(price * enrollments) — free courses contribute 0
+  // Compute revenue: sum(price * enrollments) - free courses contribute 0
   const revenue = coursesForRevenue.reduce(
     (acc, c) => acc + (c.price || 0) * (c._count.enrollments || 0),
     0,

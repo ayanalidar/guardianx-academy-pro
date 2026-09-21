@@ -132,7 +132,7 @@ export function Whiteboard({
 
   // connect socket
   React.useEffect(() => {
-    // Whiteboard service URL — configurable (XTransformPort proxy was removed)
+    // Whiteboard service URL - configurable (XTransformPort proxy was removed)
     const WHITEBOARD_URL = process.env.NEXT_PUBLIC_WHITEBOARD_URL || "http://localhost:3006"
     const socket = io(WHITEBOARD_URL, { transports: ["websocket", "polling"] })
     socketRef.current = socket

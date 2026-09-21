@@ -8,7 +8,7 @@ import * as React from "react"
  * Why this exists: the site uses framer-motion reveals that keep content at
  * opacity: 0 until an IntersectionObserver fires. If hydration ever fails in
  * a user's browser (stale chunks, a mid-hydration crash, blocked JS), that
- * content would otherwise stay INVISIBLE FOREVER — pages look empty even
+ * content would otherwise stay INVISIBLE FOREVER - pages look empty even
  * though the server rendered everything (the "no courses" bug).
  *
  * globals.css arms a failsafe that forces all reveal targets visible when

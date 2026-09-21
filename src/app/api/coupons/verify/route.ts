@@ -4,7 +4,7 @@ import { withErrorHandler } from "@/lib/session"
 
 export const runtime = "nodejs"
 
-/* POST /api/coupons/verify  (PUBLIC — no auth required)
+/* POST /api/coupons/verify  (PUBLIC - no auth required)
  * ----------------------------------------------------
  * Accepts: { code, courseId?, amount }
  *

@@ -12,7 +12,7 @@ export const maxDuration = 300
 /**
  * POST /api/ai/course-architect
  *
- * The GuardianX AI Course Architect — a cybersecurity content agent with a
+ * The GuardianX AI Course Architect - a cybersecurity content agent with a
  * built-in multi-domain knowledge base (src/lib/cyber-knowledge.ts). It
  * authors everything a course page needs: long description, what-you-will-
  * learn, prerequisites, who-should-attend, tools-covered, career outcomes,
@@ -23,10 +23,10 @@ export const maxDuration = 300
  *        Everyone else     → 403 (surfaced as 404 "not found or not yours").
  *
  * Actions:
- *  blueprint         — generate the course-page sections + long description + tags
- *  curriculum        — generate a full in-depth module/lesson plan (JSON, not saved)
- *  lesson            — expand one existing lesson into full teaching content
- *  apply_curriculum  — create reviewed modules+lessons in the DB (append-only,
+ *  blueprint - generate the course-page sections + long description + tags
+ *  curriculum - generate a full in-depth module/lesson plan (JSON, not saved)
+ *  lesson - expand one existing lesson into full teaching content
+ *  apply_curriculum - create reviewed modules+lessons in the DB (append-only,
  *                      never deletes existing content)
  *
  * All generation is review-before-apply: the Studio dialogs show the result
@@ -37,7 +37,7 @@ type LessonType = "reading" | "pdf" | "video" | "lab"
 const LESSON_TYPES: LessonType[] = ["reading", "pdf", "video", "lab"]
 
 // ---------------------------------------------------------------------------
-// JSON extraction — handles ```json fences, prose wrappers, trailing commas
+// JSON extraction - handles ```json fences, prose wrappers, trailing commas
 // ---------------------------------------------------------------------------
 function extractJson(raw: string): any {
   if (!raw) throw new Error("empty AI response")
@@ -60,20 +60,20 @@ function extractJson(raw: string): any {
   throw new Error("AI did not return parseable JSON")
 }
 
-const MASTER_PERSONA = `You are the GuardianX Course Architect — a principal-level cybersecurity educator with 15+ years across offensive security, blue-team operations, cloud, GRC and every adjacent domain. You have taught thousands of engineers, authored certification programs and built hands-on labs in enterprise environments.
+const MASTER_PERSONA = `You are the GuardianX Course Architect - a principal-level cybersecurity educator with 15+ years across offensive security, blue-team operations, cloud, GRC and every adjacent domain. You have taught thousands of engineers, authored certification programs and built hands-on labs in enterprise environments.
 
 Your craft rules:
 - REAL-WORLD FIRST: every topic must connect to what practitioners actually do with actual tools, not academic definitions.
 - DEPTH OVER BREADTH: teach mechanisms (how the attack works at protocol/OS level, why the control fails), not buzzword lists.
 - FRAMEWORK-ANCHORED: map techniques to MITRE ATT&CK, OWASP, NIST CSF/800-53, CIS Controls or ISO 27001 where meaningful.
-- LAB-DRIVEN: cybersecurity is learned by doing — labs with clear objectives, environment, steps and verifiable deliverables.
+- LAB-DRIVEN: cybersecurity is learned by doing - labs with clear objectives, environment, steps and verifiable deliverables.
 - CAREER-HONEST: outcomes describe real market roles and the exact skills interviews probe.
 - ETHICS & SAFETY: content is for authorized defenders and testers; always frame offensive techniques with lawful-use context.
 
 You have expert command of these GuardianX domains:
 ${domainCatalog()}
 
-When a specific domain is provided below, draw on that domain's knowledge block — its tools, frameworks, lab patterns, certifications and career roles — as your authoritative reference, plus the EXPERT LENS (methodology, misconceptions to correct, interview probes) when one is supplied.`
+When a specific domain is provided below, draw on that domain's knowledge block - its tools, frameworks, lab patterns, certifications and career roles - as your authoritative reference, plus the EXPERT LENS (methodology, misconceptions to correct, interview probes) when one is supplied.`
 
 // ---------------------------------------------------------------------------
 // Per-action prompts
@@ -85,7 +85,7 @@ function blueprintPrompt(ctx: CourseContext): string {
 ${domainKnowledgeBlock(ctx.category)}
 ${domainExpertLens(ctx.category)}
 
-TASK: Author the public course-page content for this EXISTING course. The content must read like a senior practitioner wrote it — specific, tool-anchored, zero filler.
+TASK: Author the public course-page content for this EXISTING course. The content must read like a senior practitioner wrote it - specific, tool-anchored, zero filler.
 
 COURSE CONTEXT:
 - Title: ${ctx.title}
@@ -118,7 +118,7 @@ function curriculumPrompt(ctx: CourseContext, moduleCount: number, depth: string
 ${domainKnowledgeBlock(ctx.category)}
 ${domainExpertLens(ctx.category)}
 
-TASK: Design an in-depth, lab-heavy curriculum for this course. It will be APPENDED to the course's existing content, so cover the full arc of the domain — do not assume other modules exist.
+TASK: Design an in-depth, lab-heavy curriculum for this course. It will be APPENDED to the course's existing content, so cover the full arc of the domain - do not assume other modules exist.
 
 COURSE CONTEXT:
 - Title: ${ctx.title}
@@ -133,7 +133,7 @@ REQUIREMENTS:
 - ${depthGuide}
 - Lesson types: "reading" (theory/teaching), "lab" (hands-on), "video" (demo outline in content), "pdf" (reference material summary). Prefer reading + lab; sprinkle video for demos.
 - Realistic durationMin per lesson (reading 15-30, lab 45-90, video 10-20).
-- Lessons must teach SPECIFIC techniques with REAL tools — e.g. "Nmap SYN scan & service fingerprinting", not "Introduction to scanning".
+- Lessons must teach SPECIFIC techniques with REAL tools - e.g. "Nmap SYN scan & service fingerprinting", not "Introduction to scanning".
 - Module 1 lesson 1 is the course orientation → set "preview": true there (free preview lesson).
 - Map module themes to frameworks (MITRE ATT&CK tactics, OWASP categories, CIS controls) where natural.
 - Capstone/final module should be an integrative scenario or exam-prep module.
@@ -169,7 +169,7 @@ TASK: Expand ONE lesson into full teaching-grade content that a student can lear
 COURSE CONTEXT: "${ctx.title}" (${ctx.category}, ${ctx.level}, ${ctx.durationHours}h)
 MODULE: "${moduleTitle}"
 LESSON: "${lesson.title}" (type: ${lesson.type})
-CURRENT CONTENT (may be sparse — deepen, keep any correct specifics it already teaches):
+CURRENT CONTENT (may be sparse - deepen, keep any correct specifics it already teaches):
 """
 ${(lesson.content || "(empty)").slice(0, 4000)}
 """
@@ -207,7 +207,7 @@ TASK: You are the SYLLABUS AUDITOR. Below is the course's FULL current inventory
 1. Score 0-100 each: COVERAGE (breadth of the domain knowledge block actually taught), DEPTH (mechanism-level teaching vs topic listing), PRACTICALITY (hands-on lab ratio and real tool usage).
 2. List genuine STRENGTHS (be specific, cite module titles).
 3. List GAPS: domain core topics and standard tools that appear nowhere.
-4. Give PRIORITIZED RECOMMENDATIONS — concrete, buildable next steps. Each must name the exact artifact to create (module/lesson/lab) and why it matters for employability.
+4. Give PRIORITIZED RECOMMENDATIONS - concrete, buildable next steps. Each must name the exact artifact to create (module/lesson/lab) and why it matters for employability.
 
 COURSE: "${ctx.title}" (${ctx.category}, ${ctx.level}, ${ctx.durationHours}h)
 
@@ -237,13 +237,13 @@ ${domainExpertLens(ctx.category)}
 TASK: You are the ASSESSMENT BUILDER. Write ${count} exam-grade multiple-choice questions for the module "${moduleTitle}" of "${ctx.title}".
 
 MODULE LESSONS (questions must test what these teach):
-${lessonTitles.map((t) => `  - ${t}`).join("\n") || "  (module has no lessons yet — test the module theme itself)"}
+${lessonTitles.map((t) => `  - ${t}`).join("\n") || "  (module has no lessons yet - test the module theme itself)"}
 
 QUESTION CRAFT RULES:
 - One BEST answer; distractors must be plausible, same register/length, no joke options.
 - Test application and analysis, NOT trivia ("Which tool flag does X?" is banned).
 - Mix difficulty: ~30% easy (concept recall), ~50% medium (scenario application), ~20% hard (analysis/misconception correction).
-- Every question carries an explanation that TEACHES — why the key is right and what the distractors get wrong.
+- Every question carries an explanation that TEACHES - why the key is right and what the distractors get wrong.
 - Actively correct the domain misconceptions from the expert lens in at least 2 questions.
 
 Return JSON ONLY (no markdown fences, no commentary):
@@ -270,7 +270,7 @@ function curriculumCritiquePrompt(
 
 ${domainKnowledgeBlock(ctx.category)}
 
-TASK: You are the QUALITY REVIEWER in a two-agent pipeline. Critique this generated curriculum for "${ctx.title}" (${ctx.category}, ${ctx.level}). Score it honestly and find concrete fixes — do not rubber-stamp.
+TASK: You are the QUALITY REVIEWER in a two-agent pipeline. Critique this generated curriculum for "${ctx.title}" (${ctx.category}, ${ctx.level}). Score it honestly and find concrete fixes - do not rubber-stamp.
 
 MODULES SUBMITTED:
 ${modules.map((m, i) => `Module ${i + 1}: ${m.title}\n  Lessons: ${(m.lessons || []).map((l) => `${l.title} [${l.type}]`).join("; ") || "(none)"}`).join("\n")}
@@ -281,7 +281,7 @@ Return JSON ONLY:
 {
   "score": 0-100,
   "verdict": "one sentence",
-  "fixes": ["concrete, actionable fixes — e.g. rename Module 3 lesson 2 to a tool-specific title; add a lab to Module 1; drop X, overlap with Y"]
+  "fixes": ["concrete, actionable fixes - e.g. rename Module 3 lesson 2 to a tool-specific title; add a lab to Module 1; drop X, overlap with Y"]
 }`
 }
 
@@ -337,7 +337,7 @@ async function withFallback<T>(
       return {
         result: fallback(),
         source: "built-in",
-        warning: `AI service unavailable (${String(e?.message || e).slice(0, 140)}) — generated from the built-in GuardianX knowledge base instead.`,
+        warning: `AI service unavailable (${String(e?.message || e).slice(0, 140)}) - generated from the built-in GuardianX knowledge base instead.`,
       }
     }
   }
@@ -357,7 +357,7 @@ export async function POST(req: NextRequest) {
   const user = await getCurrentUser()
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   if (!rateLimit(`ai-architect:${user.id}`, { max: 10, windowMs: 10 * 60 * 1000 })) {
-    return NextResponse.json({ error: "Architect cooling down — try again in a few minutes." }, { status: 429 })
+    return NextResponse.json({ error: "Architect cooling down - try again in a few minutes." }, { status: 429 })
   }
 
   const body = await req.json().catch(() => null)
@@ -420,10 +420,10 @@ export async function POST(req: NextRequest) {
             const critiqueData = critique as { score?: number; verdict?: string; fixes?: unknown } | null
             const fixes: string[] = Array.isArray(critiqueData?.fixes) ? (critiqueData!.fixes as string[]).slice(0, 8).map(String) : []
             if (fixes.length) {
-              console.log(`[course-architect] critic score ${critiqueData?.score ?? "?"} — applying ${fixes.length} fixes`)
+              console.log(`[course-architect] critic score ${critiqueData?.score ?? "?"} - applying ${fixes.length} fixes`)
               const revisePrompt = `${curriculumPrompt(ctx, modules.length, depth, focusNotes)}
 
-IMPORTANT — REVISION PASS. A quality reviewer scored your draft ${critiqueData?.score ?? "?"}/100 and required these fixes (apply ALL of them, keep everything that was already good):
+IMPORTANT - REVISION PASS. A quality reviewer scored your draft ${critiqueData?.score ?? "?"}/100 and required these fixes (apply ALL of them, keep everything that was already good):
 ${fixes.map((f, i) => `${i + 1}. ${f}`).join("\n")}
 
 Return the FULL revised curriculum in the same JSON shape.`
@@ -661,7 +661,7 @@ Return the FULL revised curriculum in the same JSON shape.`
 
   // --------------------------- apply assessments ---------------------------
   if (action === "apply_assessments") {
-    // Creates a quiz (title "AI Assessment — <module>") on the chosen lesson
+    // Creates a quiz (title "AI Assessment - <module>") on the chosen lesson
     // and writes the reviewed questions. Mirrors ai-course-generator's write
     // shape (options joined with "|").
     const lessonId = String(body.lessonId || "")
@@ -679,7 +679,7 @@ Return the FULL revised curriculum in the same JSON shape.`
     }
 
     const MAX_QUESTIONS = 15
-    // Quiz.lessonId is @unique — one quiz per lesson. Surface a clean 409
+    // Quiz.lessonId is @unique - one quiz per lesson. Surface a clean 409
     // instead of a mystery 500 when the lesson already carries one.
     const existingQuiz = await db.quiz.findUnique({
       where: { lessonId },
@@ -692,7 +692,7 @@ Return the FULL revised curriculum in the same JSON shape.`
       )
     }
     const quiz = await db.quiz.create({
-      data: { lessonId, title: `AI Assessment — ${moduleTitle}` },
+      data: { lessonId, title: `AI Assessment - ${moduleTitle}` },
     })
     let written = 0
     for (const q of questions.slice(0, MAX_QUESTIONS)) {

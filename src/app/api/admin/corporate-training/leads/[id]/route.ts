@@ -4,8 +4,8 @@ import { requireAdmin, withErrorHandler } from "@/lib/session"
 
 export const runtime = "nodejs"
 
-/* PATCH /api/admin/corporate-training/leads/[id] — update status / admin notes
- * DELETE /api/admin/corporate-training/leads/[id] — hard delete
+/* PATCH /api/admin/corporate-training/leads/[id] - update status / admin notes
+ * DELETE /api/admin/corporate-training/leads/[id] - hard delete
  */
 export const PATCH = withErrorHandler(async (req, { params }: { params: Promise<{ id: string }> }) => {
   const currentUser = await requireAdmin()

@@ -39,7 +39,7 @@ async function seedPrograms() {
       platform: "Bugcrowd",
       url: "https://bugcrowd.com/medihealth",
       description:
-        "Test MediHealth's patient portal for HIPAA-impacting vulnerabilities. Strict scope — read the policy carefully before testing.",
+        "Test MediHealth's patient portal for HIPAA-impacting vulnerabilities. Strict scope - read the policy carefully before testing.",
       scope: "portal.medihealth.com, appointments API",
       rewardRange: "$500 - $20,000",
       difficulty: "hard",
@@ -94,7 +94,7 @@ async function seedPrograms() {
       platform: "GuardianX",
       url: "https://labs.academy.guardianx.cloud/bb/smarthome",
       description:
-        "IoT firmware bounty — looking for memory corruption, hardcoded creds, and insecure OTA update mechanisms.",
+        "IoT firmware bounty - looking for memory corruption, hardcoded creds, and insecure OTA update mechanisms.",
       scope: "firmware binary, OTA endpoints",
       rewardRange: "$300 - $12,000",
       difficulty: "hard",

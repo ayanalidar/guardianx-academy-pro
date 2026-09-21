@@ -1,16 +1,16 @@
 import { getSetting } from "@/lib/settings"
 
 /**
- * Lightweight Sentry reporter — no SDK required.
+ * Lightweight Sentry reporter - no SDK required.
  *
  * The SENTRY_DSN platform setting (Admin → Settings → Error Tracking) is
  * consumed HERE, which makes the setting real: unhandled API-route errors
  * and client-side React errors are forwarded to Sentry's Envelope API.
- * Zero dependencies, fire-and-forget, hard timeout — reporting can never
+ * Zero dependencies, fire-and-forget, hard timeout - reporting can never
  * break request handling.
  *
- * Server side: captureServerError() — called from withErrorHandler().
- * Client side: captureClientError() — POSTs a compact payload to
+ * Server side: captureServerError() - called from withErrorHandler().
+ * Client side: captureClientError() - POSTs a compact payload to
  *              /api/telemetry/client-error which forwards to Sentry with
  *              per-IP rate limiting (browsers can't hold the DSN secret).
  */
@@ -96,7 +96,7 @@ async function sendEnvelope(
 
 function generateEventId(): string {
   // 32 hex chars (Sentry expects a uuid-shaped id). crypto.randomUUID is
-  // available in Node 19+/all modern browsers — hex fallback covers the rest.
+  // available in Node 19+/all modern browsers - hex fallback covers the rest.
   if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
     return crypto.randomUUID().replace(/-/g, "")
   }
@@ -129,7 +129,7 @@ export async function captureServerError(
 }
 
 /**
- * Client-side capture — relays to /api/telemetry/client-error (rate-limited
+ * Client-side capture - relays to /api/telemetry/client-error (rate-limited
  * there). Fire-and-forget; silently ignores failures.
  */
 export function captureClientError(

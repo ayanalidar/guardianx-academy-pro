@@ -13,7 +13,7 @@ function slugify(s: string): string {
     .replace(/^-+|-+$/g, "")
 }
 
-/* PATCH /api/admin/blog/[id] — admin update. Accepts any subset of:
+/* PATCH /api/admin/blog/[id] - admin update. Accepts any subset of:
  * { title?, excerpt?, content?, category?, tags?, thumbnail?, published?, featured?, slug? }
  */
 export const PATCH = withErrorHandler(
@@ -84,7 +84,7 @@ export const PATCH = withErrorHandler(
   },
 )
 
-/* DELETE /api/admin/blog/[id] — hard delete. */
+/* DELETE /api/admin/blog/[id] - hard delete. */
 export const DELETE = withErrorHandler(
   async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const { id } = await params

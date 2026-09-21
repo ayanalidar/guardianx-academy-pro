@@ -4,7 +4,7 @@ import { requireAdmin, requireRole, withErrorHandler } from "@/lib/session"
 
 export const runtime = "nodejs"
 
-// GET /api/admin/training-batches/[id] — fetch a single training batch.
+// GET /api/admin/training-batches/[id] - fetch a single training batch.
 // Requires ADMIN or INSTRUCTOR.
 export const GET = withErrorHandler(
   async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
@@ -18,7 +18,7 @@ export const GET = withErrorHandler(
   },
 )
 
-// PATCH /api/admin/training-batches/[id] — update any fields on a training batch.
+// PATCH /api/admin/training-batches/[id] - update any fields on a training batch.
 // Requires ADMIN.
 const UPDATABLE_STRING_FIELDS = [
   "certification",
@@ -85,7 +85,7 @@ export const PATCH = withErrorHandler(
   },
 )
 
-// DELETE /api/admin/training-batches/[id] — delete a training batch.
+// DELETE /api/admin/training-batches/[id] - delete a training batch.
 // Requires ADMIN.
 export const DELETE = withErrorHandler(
   async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {

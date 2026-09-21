@@ -7,7 +7,7 @@ async function schoolAdminGuard() {
   const user = await getCurrentUser()
   if (!user) return { error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) }
   if (user.role !== "SCHOOL_ADMIN") {
-    return { error: NextResponse.json({ error: "Forbidden — SCHOOL_ADMIN only" }, { status: 403 }) }
+    return { error: NextResponse.json({ error: "Forbidden - SCHOOL_ADMIN only" }, { status: 403 }) }
   }
   if (!user.schoolId) {
     return { error: NextResponse.json({ error: "No school linked to this account" }, { status: 403 }) }

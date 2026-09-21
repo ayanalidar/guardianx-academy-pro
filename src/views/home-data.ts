@@ -9,7 +9,7 @@
  *
  * NOTE on `as const`:
  *   Several arrays use `as const` (either per-entry or at the array level).
- *   These assertions MUST be preserved verbatim — the home view relies on
+ *   These assertions MUST be preserved verbatim - the home view relies on
  *   the narrowed literal types they produce (e.g. the `View` literal union
  *   used in `INSTITUTION_TYPES[].view.name`).
  */
@@ -459,7 +459,7 @@ export const UPCOMING_BATCHES = [
   {
     certification: "CompTIA Security+",
     name: "Security+ Weekend Batch",
-    schedule: "Sat + Sun, 7:00 PM – 9:00 PM IST",
+    schedule: "Sat + Sun, 7:00 PM-9:00 PM IST",
     startDate: "October 12",
     mode: "Live Online",
     instructor: "Senior Cybersecurity Instructor",
@@ -478,7 +478,7 @@ export const UPCOMING_BATCHES = [
   {
     certification: "CEH (Certified Ethical Hacker)",
     name: "CEH Weekday Evening",
-    schedule: "Mon-Wed-Fri, 8:00 PM – 10:00 PM IST",
+    schedule: "Mon-Wed-Fri, 8:00 PM-10:00 PM IST",
     startDate: "October 20",
     mode: "Live Online",
     instructor: "Dr. Sarah Chen",
@@ -497,7 +497,7 @@ export const UPCOMING_BATCHES = [
   {
     certification: "CCNA",
     name: "CCNA Morning Batch",
-    schedule: "Tue-Thu, 7:00 AM – 9:00 AM IST",
+    schedule: "Tue-Thu, 7:00 AM-9:00 AM IST",
     startDate: "November 03",
     mode: "Live Online",
     instructor: "Raj Patel",
@@ -516,7 +516,7 @@ export const UPCOMING_BATCHES = [
   {
     certification: "CISSP",
     name: "CISSP Weekend Intensive",
-    schedule: "Sat-Sun, 10:00 AM – 1:00 PM IST",
+    schedule: "Sat-Sun, 10:00 AM-1:00 PM IST",
     startDate: "November 09",
     mode: "Live Online",
     instructor: "Alex Mercer",
@@ -538,42 +538,42 @@ export const SCHEDULES = [
   {
     icon: CalendarDays,
     type: "WEEKDAY",
-    example: "Mon-Wed-Fri · 8:00 PM – 10:00 PM",
+    example: "Mon-Wed-Fri · 8:00 PM-10:00 PM",
     color: "text-violet-300",
     tint: "bg-violet-500/10",
   },
   {
     icon: CalendarCheck,
     type: "WEEKEND",
-    example: "Sat + Sun · 10:00 AM – 1:00 PM",
+    example: "Sat + Sun · 10:00 AM-1:00 PM",
     color: "text-cyan-300",
     tint: "bg-cyan-500/10",
   },
   {
     icon: Sun,
     type: "MORNING",
-    example: "Tue-Thu · 7:00 AM – 9:00 AM",
+    example: "Tue-Thu · 7:00 AM-9:00 AM",
     color: "text-amber-300",
     tint: "bg-amber-500/10",
   },
   {
     icon: SunMedium,
     type: "AFTERNOON",
-    example: "Mon-Wed · 2:00 PM – 4:00 PM",
+    example: "Mon-Wed · 2:00 PM-4:00 PM",
     color: "text-emerald-300",
     tint: "bg-emerald-500/10",
   },
   {
     icon: Sunset,
     type: "EVENING",
-    example: "Mon-Fri · 7:00 PM – 9:00 PM",
+    example: "Mon-Fri · 7:00 PM-9:00 PM",
     color: "text-rose-300",
     tint: "bg-rose-500/10",
   },
   {
     icon: Moon,
     type: "LATE NIGHT",
-    example: "Mon-Thu · 10:00 PM – 12:00 AM",
+    example: "Mon-Thu · 10:00 PM-12:00 AM",
     color: "text-teal-300",
     tint: "bg-teal-500/10",
   },

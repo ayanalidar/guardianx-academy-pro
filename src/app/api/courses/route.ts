@@ -15,7 +15,7 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
 
   const currentUser = await getCurrentUser()
   // Session user is the source of truth: a stale client-supplied userId
-  // (or a forged one — IDOR) must not be able to read someone else's
+  // (or a forged one - IDOR) must not be able to read someone else's
   // enrollments. The param remains a fallback for anonymous callers.
   const userId = currentUser?.id || userIdParam
 
@@ -58,7 +58,7 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
     }
   }
 
-  // Full query — joins instructor, modules→lessons, enrollment counts. This
+  // Full query - joins instructor, modules→lessons, enrollment counts. This
   // is the shape the catalog UI expects, but it requires the CURRENT schema
   // (studentsCount, course.instructorId, module.lessons relations, …). On
   // deployments whose database was seeded from an older schema (e.g. Vercel
@@ -82,7 +82,7 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
     })
   } catch {
     degraded = true
-    // Tier 2 — SCHEMA-DISCOVERY fallback. Ask the database which Course
+    // Tier 2 - SCHEMA-DISCOVERY fallback. Ask the database which Course
     // columns actually exist, select only those (plus conditional relations
     // and ordering), so any historical schema version renders with maximum
     // data instead of crashing or rendering a stub list.
@@ -99,7 +99,7 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
     if (cols.has("published")) safeWhere.published = true
     if (category && category !== "All" && cols.has("category")) safeWhere.category = category
     if (level && level !== "All" && cols.has("level")) safeWhere.level = level
-    // NOTE: q-search intentionally skipped in degraded mode — the columns it
+    // NOTE: q-search intentionally skipped in degraded mode - the columns it
     // needs may not exist, and a working unfiltered list beats a 500.
 
     const WANTED = [
@@ -108,7 +108,7 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
       "studentsCount", "color", "thumbnail", "tags", "certBody", "createdAt",
     ]
     const select: Record<string, true> = {
-      // v1-era columns — present in every schema version this project had.
+      // v1-era columns - present in every schema version this project had.
       id: true, slug: true, title: true, description: true,
       category: true, level: true, price: true,
     }
@@ -130,7 +130,7 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
       if (Object.keys(include).length) tier2.include = include
       courses = await db.course.findMany(tier2)
     } catch {
-      // Tier 3 — bare minimum, guaranteed columns only. No filters.
+      // Tier 3 - bare minimum, guaranteed columns only. No filters.
       courses = await db.course.findMany({
         select: {
           id: true, slug: true, title: true, description: true,
@@ -142,7 +142,7 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
   }
 
   const result = courses.map((c) => {
-    // Degraded rows lack modules/lessons/enrollment — never crash the mapper.
+    // Degraded rows lack modules/lessons/enrollment - never crash the mapper.
     const lessonCount = Array.isArray(c.modules)
       ? c.modules.reduce((acc: number, m: any) => acc + (Array.isArray(m?.lessons) ? m.lessons.length : 0), 0)
       : 0
@@ -179,7 +179,7 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
 
   // Cache policy: the anonymous catalog payload (no session, no enrollment
   // personalization params) is identical for every visitor and changes only
-  // when admins edit courses — safe to edge-cache. Anything authenticated or
+  // when admins edit courses - safe to edge-cache. Anything authenticated or
   // enrollment-related must never be cached (per-user progress badges).
   const personalized = !!currentUser || enrolledOnly || status !== "all" || !!userIdParam
   if (personalized) {

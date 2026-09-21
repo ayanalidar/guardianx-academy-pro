@@ -62,7 +62,7 @@ export async function GET() {
       labProgress.reduce((s, p) => s + p.timeSpentMs / 1000, 0)
   )
 
-  // Skill radar — boosted by course category completion + lab category solved
+  // Skill radar - boosted by course category completion + lab category solved
   const radar = emptyRadar()
   for (const e of enrollments) {
     bumpRadar(radar, e.course.category, Math.round(e.progress / 12)) // up to ~8 pts per course
@@ -73,7 +73,7 @@ export async function GET() {
     else if (p.status === "in_progress") bumpRadar(radar, p.lab.category, 3)
   }
 
-  // Weekly activity — last 7 days, minutes proxy from activity.xp
+  // Weekly activity - last 7 days, minutes proxy from activity.xp
   const today = new Date()
   const weekly: { date: string; minutes: number }[] = []
   for (let i = 6; i >= 0; i--) {
@@ -87,7 +87,7 @@ export async function GET() {
     weekly.push({ date: iso, minutes: Math.min(240, dayMinutes) })
   }
 
-  // Peer comparison — percentiles
+  // Peer comparison - percentiles
   const allUsers = await db.user.findMany({ select: { xp: true, streak: true, level: true } })
   const sorted = [...allUsers].sort((a, b) => a.xp - b.xp)
   const myXp = user.xp ?? 0

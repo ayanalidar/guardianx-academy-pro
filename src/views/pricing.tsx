@@ -39,7 +39,7 @@ type Plan = {
 type PlansResponse = { plans: Plan[]; isDefault: boolean }
 
 /* ---------------------------------------------------------------- *
- *  Static config — icons + accent per plan name                     *
+ *  Static config - icons + accent per plan name                     *
  * ---------------------------------------------------------------- */
 const PLAN_VISUALS: Record<string, {
   icon: React.ComponentType<{ className?: string }>
@@ -82,14 +82,14 @@ function visualFor(name: string) {
 }
 
 /* ---------------------------------------------------------------- *
- *  Comparison table rows — kept concise per spec                    *
+ *  Comparison table rows - kept concise per spec                    *
  * ---------------------------------------------------------------- */
 const COMPARISON_ROWS: { label: string; values: (string | boolean)[] }[] = [
   { label: "Starter course access", values: ["5 courses", "All courses", "All + custom cohorts"] },
   { label: "Hands-on cyber labs", values: ["10 labs", "31+ labs", "31+ labs + dedicated"] },
   { label: "Proctored exam eligibility", values: [false, true, true] },
   { label: "Verifiable certificates", values: [false, true, true] },
-  { label: "AI Assistant queries", values: ["—", "200 / month", "Unlimited"] },
+  { label: "AI Assistant queries", values: [" - ", "200 / month", "Unlimited"] },
   { label: "Live sessions", values: ["Public only", "All sessions", "Priority + recordings"] },
   { label: "Dedicated instructor + mentor", values: [false, false, true] },
   { label: "Institution admin dashboard", values: [false, false, true] },
@@ -109,7 +109,7 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: "Are there any hidden fees?",
-    a: "No. The listed price is the monthly price in Indian Rupees (INR), inclusive of all taxes. Proctored exam fees are bundled into Pro and Enterprise — you don't pay extra per exam.",
+    a: "No. The listed price is the monthly price in Indian Rupees (INR), inclusive of all taxes. Proctored exam fees are bundled into Pro and Enterprise - you don't pay extra per exam.",
   },
   {
     q: "Do you offer student discounts?",
@@ -121,11 +121,11 @@ const FAQS: { q: string; a: string }[] = [
   },
   {
     q: "Is there a free trial?",
-    a: "The Free plan is permanently free — no trial period, no credit card required. Upgrade to Pro or Enterprise whenever you're ready to unlock the full catalog and proctored exams.",
+    a: "The Free plan is permanently free - no trial period, no credit card required. Upgrade to Pro or Enterprise whenever you're ready to unlock the full catalog and proctored exams.",
   },
   {
     q: "What happens to my certificates if I cancel?",
-    a: "Certificates you've already earned remain valid and verifiable forever. Cancellation only affects future course access — your past achievements are yours to keep.",
+    a: "Certificates you've already earned remain valid and verifiable forever. Cancellation only affects future course access - your past achievements are yours to keep.",
   },
 ]
 
@@ -147,7 +147,7 @@ export function PricingView() {
   })
 
   const plans = data?.plans ?? []
-  // Always render 3 columns even while loading — keeps the layout stable
+  // Always render 3 columns even while loading - keeps the layout stable
   const displayPlans = plans.length > 0 ? plans : []
 
   function handleChoose(plan: Plan) {
@@ -188,7 +188,7 @@ export function PricingView() {
           </h1>
           <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto leading-relaxed">
             Choose the plan that fits your journey. From free starter courses to enterprise-grade
-            cohort programs — no hidden fees, cancel anytime.
+            cohort programs - no hidden fees, cancel anytime.
           </p>
         </motion.div>
       </section>
@@ -330,7 +330,7 @@ export function PricingView() {
                             v ? (
                               <Check className="h-4 w-4 mx-auto text-emerald-400" />
                             ) : (
-                              <span className="text-muted-foreground/40">—</span>
+                              <span className="text-muted-foreground/40"> - </span>
                             )
                           ) : (
                             <span className="text-xs text-muted-foreground">{v}</span>

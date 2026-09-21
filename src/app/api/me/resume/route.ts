@@ -2,7 +2,7 @@ import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/session"
 
-// Returns the best "continue where you left off" lesson — the most recently
+// Returns the best "continue where you left off" lesson - the most recently
 // accessed lesson that isn't complete, falling back to the first incomplete
 // lesson in the most-recently-accessed enrolled course.
 export async function GET() {

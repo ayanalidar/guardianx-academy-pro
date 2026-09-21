@@ -7,7 +7,7 @@ export const runtime = "nodejs"
 
 /* POST /api/cyber-quiz/submit
  * Public endpoint (guest-friendly). Submits answers, computes score, creates
- * a CyberQuizAttempt. Does NOT reveal correctAnswer in the response — only
+ * a CyberQuizAttempt. Does NOT reveal correctAnswer in the response - only
  * the score + pass/fail + per-domain breakdown.
  *
  * Body: {
@@ -69,7 +69,7 @@ export const POST = withErrorHandler(async (req) => {
   const percentage = Math.round((correctCount / 30) * 100)
   const passed = percentage >= 50
 
-  // Resolve the current user (optional — guests can submit)
+  // Resolve the current user (optional - guests can submit)
   const currentUser = await getCurrentUser().catch(() => null)
 
   // Build the persisted answers array (store questionId + selected only)
@@ -96,7 +96,7 @@ export const POST = withErrorHandler(async (req) => {
   return NextResponse.json({
     attemptId: attempt.id,
     // HMAC-signed proof that this result belongs to whoever holds this
-    // response — lets guests (no session) fetch their own results without
+    // response - lets guests (no session) fetch their own results without
     // exposing PII to anyone who guesses the CUID.
     resultToken: signAttemptToken(attempt.id),
     score: correctCount,

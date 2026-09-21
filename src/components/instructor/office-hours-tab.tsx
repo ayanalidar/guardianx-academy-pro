@@ -135,7 +135,7 @@ function formatTimeRange(start: string, end: string) {
     d.toLocaleTimeString(undefined, { hour: "numeric", minute: "2-digit" })
   const durMin = Math.round((e.getTime() - s.getTime()) / 60000)
   const dur = durMin >= 60 ? `${Math.floor(durMin / 60)}h ${durMin % 60}m` : `${durMin}m`
-  return `${fmt(s)} – ${fmt(e)} (${dur})`
+  return `${fmt(s)}-${fmt(e)} (${dur})`
 }
 
 // ============================================================================

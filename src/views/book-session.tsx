@@ -218,7 +218,7 @@ const PERKS = [
   {
     icon: Radio,
     title: "Video · In-person · Chat",
-    desc: "Pick the format that fits the question — camera-on or quick text.",
+    desc: "Pick the format that fits the question - camera-on or quick text.",
     tint: "text-cyan-300",
     tintBg: "bg-cyan-500/10",
     border: "border-cyan-500/30",
@@ -274,7 +274,7 @@ export function BookSessionView() {
         <ScrollReveal delay={0.15}>
           <p className="text-muted-foreground max-w-2xl mb-10 text-base lg:text-lg leading-relaxed">
             Real-time help when you need it most. Reserve focused, individual time
-            with a GuardianX instructor — bring your questions, your code, or your
+            with a GuardianX instructor - bring your questions, your code, or your
             lab walkthrough, and leave with clarity.
           </p>
         </ScrollReveal>
@@ -301,7 +301,7 @@ export function BookSessionView() {
         </ScrollReveal>
 
         {/* ====================================================
-            AVAILABLE SLOTS — calendar grouped
+            AVAILABLE SLOTS - calendar grouped
             ==================================================== */}
         <AvailableSlotsSection />
 
@@ -342,7 +342,7 @@ function AvailableSlotsSection() {
         <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-4 mb-8 pb-4 border-b border-border/60">
           <div>
             <p className="text-[10px] font-mono text-violet-400 tracking-[0.3em] mb-1">
-              01 — UPCOMING SLOTS
+              01 - UPCOMING SLOTS
             </p>
             <h2 className="text-2xl lg:text-3xl font-bold tracking-tight">
               Pick a time that works for you
@@ -488,7 +488,7 @@ function EmptySlotsState({
           <p className="text-sm text-muted-foreground max-w-md mx-auto mb-6">
             {hasFilter
               ? "Try a different mode or clear the filter to see all available sessions."
-              : "Our instructors haven't opened any slots yet. Check back soon — new sessions appear here in real time."}
+              : "Our instructors haven't opened any slots yet. Check back soon - new sessions appear here in real time."}
           </p>
           {hasFilter && (
             <Button variant="outline" onClick={onReset} className="btn-premium">
@@ -563,7 +563,7 @@ function SlotCard({
           <div className="flex items-center gap-2">
             <Clock className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
             <span>
-              {start.time} – {end.time}
+              {start.time}-{end.time}
               <span className="text-muted-foreground ml-1.5 font-mono text-xs">
                 ({formatDuration(slot.startAt, slot.endAt)})
               </span>
@@ -696,7 +696,7 @@ function BookSlotDialog({
                 </div>
                 <div className="flex items-center gap-2">
                   <Clock className="h-3 w-3 text-muted-foreground" />
-                  {start.time} – {end.time}
+                  {start.time}-{end.time}
                 </div>
                 <div className="flex items-center gap-2">
                   <Users className="h-3 w-3 text-muted-foreground" />
@@ -743,7 +743,7 @@ function BookSlotDialog({
                 </div>
                 <div className="flex items-center gap-2">
                   <Clock className="h-3 w-3 text-muted-foreground" />
-                  {start.time} – {end.time}
+                  {start.time}-{end.time}
                 </div>
                 <div className="flex items-center gap-2">
                   <Users className="h-3 w-3 text-muted-foreground" />
@@ -755,7 +755,7 @@ function BookSlotDialog({
                 {slot.course && (
                   <div className="flex items-center gap-2">
                     <GraduationCap className="h-3 w-3 text-muted-foreground" />
-                    <span>{slot.course.shortName} — {slot.course.title}</span>
+                    <span>{slot.course.shortName} - {slot.course.title}</span>
                   </div>
                 )}
               </div>
@@ -772,7 +772,7 @@ function BookSlotDialog({
                 className="bg-background/50"
               />
               <p className="text-[10px] text-muted-foreground">
-                Optional — gives your instructor a heads-up.
+                Optional - gives your instructor a heads-up.
               </p>
             </div>
 
@@ -839,7 +839,7 @@ function MyBookingsSection() {
         <div className="flex items-end justify-between mb-8 pb-4 border-b border-border/60">
           <div>
             <p className="text-[10px] font-mono text-emerald-400 tracking-[0.3em] mb-1">
-              02 — YOUR BOOKINGS
+              02 - YOUR BOOKINGS
             </p>
             <h2 className="text-2xl lg:text-3xl font-bold tracking-tight">
               My Bookings
@@ -950,7 +950,7 @@ function BookingCard({ booking }: { booking: OfficeHourBooking }) {
             <div className="flex items-center gap-2 flex-wrap mb-1.5">
               <span className="font-medium text-sm">{start.date}</span>
               <span className="text-sm text-muted-foreground font-mono">
-                {start.time} – {end.time}
+                {start.time}-{end.time}
               </span>
               <Badge
                 variant="outline"

@@ -3,7 +3,7 @@ import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/session"
 import { sendEmail } from "@/lib/email"
 
-// POST — student submits an assignment.
+// POST - student submits an assignment.
 // Body: { content?, fileUrl? }
 // Mark late if past dueDate (only allowLate submissions accepted past due).
 // Create or update submission (unique per user+assignment).
@@ -99,7 +99,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     if (student) {
       await sendEmail({
         to: student.email,
-        subject: `✅ Submission received — ${assignment.title}`,
+        subject: `✅ Submission received - ${assignment.title}`,
         body: `Hi ${student.name},
 
 Your submission for "${assignment.title}" has been received${isLate ? " (marked as late)" : ""}.

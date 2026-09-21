@@ -81,7 +81,7 @@ const TAG_SIZE_BY_INDEX = [
 ]
 
 // ============================================================
-// Helper: useCountUp — requestAnimationFrame-based count-up
+// Helper: useCountUp - requestAnimationFrame-based count-up
 // ============================================================
 function useCountUp(target: number, durationMs = 1500, start = true): number {
   const [value, setValue] = React.useState(0)
@@ -109,7 +109,7 @@ function useCountUp(target: number, durationMs = 1500, start = true): number {
 }
 
 // ============================================================
-// Helper: AnimatedNumber — count-up triggered on scroll into view
+// Helper: AnimatedNumber - count-up triggered on scroll into view
 // ============================================================
 function AnimatedNumber({
   value,
@@ -140,7 +140,7 @@ function AnimatedNumber({
 }
 
 // ============================================================
-// Helper: SectionLabel — small mono label like "01 - OUTCOMES"
+// Helper: SectionLabel - small mono label like "01 - OUTCOMES"
 // ============================================================
 function SectionLabel({
   index,
@@ -160,7 +160,7 @@ function SectionLabel({
 }
 
 // ============================================================
-// Helper: HERO_ITEM — shared stagger variant for the hero column
+// Helper: HERO_ITEM - shared stagger variant for the hero column
 // ============================================================
 const HERO_ITEM: any = {
   hidden: { opacity: 0, y: 26 },
@@ -168,7 +168,7 @@ const HERO_ITEM: any = {
 }
 
 // ============================================================
-// Helper: Reveal — scroll-triggered entrance (fade + rise)
+// Helper: Reveal - scroll-triggered entrance (fade + rise)
 // ============================================================
 function Reveal({
   children,
@@ -195,7 +195,7 @@ function Reveal({
 }
 
 // ============================================================
-// Helper: ScrollProgress — fixed reading-progress bar (top of viewport)
+// Helper: ScrollProgress - fixed reading-progress bar (top of viewport)
 // ============================================================
 function ScrollProgress() {
   const { scrollYProgress } = useScroll()
@@ -210,12 +210,12 @@ function ScrollProgress() {
 }
 
 // ============================================================
-// Helper: StickySectionNav — in-page anchor nav with scroll-spy.
+// Helper: StickySectionNav - in-page anchor nav with scroll-spy.
 // Sits in a fixed band BELOW the shell header at every breakpoint:
-//   mobile  — under the fixed header (64px band  -> top-16)
-//   desktop — under the sticky h-12 top strip    -> top-12
+//   mobile - under the fixed header (64px band  -> top-16)
+//   desktop - under the sticky h-12 top strip    -> top-12
 // Solid opaque background so page cards never ghost through it,
-// and items are justified — evenly spread edge-to-edge on sm+.
+// and items are justified - evenly spread edge-to-edge on sm+.
 // ============================================================
 const SECTION_NAV_ITEMS = [
   { id: "gx-overview", label: "Overview" },
@@ -271,7 +271,7 @@ function StickySectionNav({ items }: { items: { id: string; label: string }[] })
 }
 
 // ============================================================
-// Helper: safeParseTags — comma-separated string -> string[]
+// Helper: safeParseTags - comma-separated string -> string[]
 // ============================================================
 function safeParseTags(tags?: string | null): string[] {
   if (!tags) return []
@@ -364,7 +364,7 @@ export function CourseDetailView() {
         value: data.value ?? 0,
         code: data.code ?? "",
       })
-      toast.success(`Coupon applied — ${data.type === "percentage" ? `${data.value}% off` : `₹${data.value} off`}`)
+      toast.success(`Coupon applied - ${data.type === "percentage" ? `${data.value}% off` : `₹${data.value} off`}`)
     },
     onError: (e: any) => {
       setCouponState({ status: "error", message: e.message || "Failed to apply coupon" })
@@ -381,7 +381,7 @@ export function CourseDetailView() {
         },
       ).then(async (createRes) => {
         if (createRes.mock) {
-          // Mock mode — no Razorpay keys configured
+          // Mock mode - no Razorpay keys configured
           const razorpayPaymentId = `pay_mock_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`
           const razorpaySignature = `sig_mock_${Math.random().toString(36).slice(2, 14)}`
           const verifyRes = await api<{ success: boolean; enrollment: any }>(
@@ -394,7 +394,7 @@ export function CourseDetailView() {
           return { ...verifyRes, paidAmount: createRes.amount }
         }
 
-        // Real Razorpay — load the SDK + open the checkout modal
+        // Real Razorpay - load the SDK + open the checkout modal
         await loadRazorpayScript()
         return new Promise<{ success: boolean; enrollment: any; paidAmount: number }>((resolve, reject) => {
           // @ts-ignore
@@ -436,7 +436,7 @@ export function CourseDetailView() {
         })
       }),
     onSuccess: (data) => {
-      toast.success("Payment successful! Enrolled — redirecting…")
+      toast.success("Payment successful! Enrolled - redirecting…")
       qc.invalidateQueries({ queryKey: ["course", courseId] })
       qc.invalidateQueries({ queryKey: ["courses"] })
       qc.invalidateQueries({ queryKey: ["me"] })
@@ -509,7 +509,7 @@ export function CourseDetailView() {
     )
   }
 
-  // Hard failure (both schema tiers exhausted, network down, etc.) — show a
+  // Hard failure (both schema tiers exhausted, network down, etc.) - show a
   // real error state instead of a blank page.
   if (isError) {
     return (
@@ -520,7 +520,7 @@ export function CourseDetailView() {
             <AlertTriangle className="h-12 w-12 text-amber-400 mx-auto mb-4" />
             <h1 className="text-2xl font-bold tracking-tight mb-2">Course couldn&rsquo;t load</h1>
             <p className="text-sm text-muted-foreground mb-8 max-w-md mx-auto leading-relaxed">
-              The server returned an error while fetching this course. If this persists, the platform database may still be syncing — the catalog itself remains available.
+              The server returned an error while fetching this course. If this persists, the platform database may still be syncing - the catalog itself remains available.
             </p>
             <div className="flex items-center justify-center gap-3 flex-wrap">
               <Button className="btn-premium bg-violet-600 hover:bg-violet-500 text-violet-50 border border-violet-500/30" onClick={() => refetch()}>
@@ -538,7 +538,7 @@ export function CourseDetailView() {
 
   if (!data) return null
   const { course, enrollment, lessonProgress, progressPct, totalLessons, completedLessons } = data
-  // Degraded payloads (schema-drift fallback) can lack modules — every
+  // Degraded payloads (schema-drift fallback) can lack modules - every
   // dereference below must use this normalized array, never course.modules.
   const courseModules: any[] = Array.isArray(course.modules) ? course.modules : []
   const isEnrolled = !!enrollment
@@ -584,7 +584,7 @@ export function CourseDetailView() {
     outcomes.push("Develop practical, hands-on skills through GuardianX lab exercises.")
   }
 
-  // Course extras — real, admin-authored content (Course Studio → Course Details).
+  // Course extras - real, admin-authored content (Course Studio → Course Details).
   // Empty lists mean the course was never authored with them; sections then fall
   // back to the derived content above / legacy placeholders.
   const whatYouWillLearn = parseCourseList((course as any).whatYouWillLearn)
@@ -602,7 +602,7 @@ export function CourseDetailView() {
 
       <div className="relative z-10">
         {/* ====================================================
-            1. HERO — cinematic course introduction (8/4 split)
+            1. HERO - cinematic course introduction (8/4 split)
             ==================================================== */}
         <section className="relative overflow-hidden">
           {/* Cinematic backdrop */}
@@ -641,7 +641,7 @@ export function CourseDetailView() {
             transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
           />
 
-          {/* Ghost shortName — giant outline text */}
+          {/* Ghost shortName - giant outline text */}
           <div
             aria-hidden
             className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[clamp(10rem,30vw,30rem)] font-bold tracking-[-0.08em] text-outline-violet opacity-20 pointer-events-none select-none leading-none whitespace-nowrap"
@@ -663,7 +663,7 @@ export function CourseDetailView() {
             </motion.button>
 
             <div className="grid lg:grid-cols-12 gap-8 lg:gap-12 items-start">
-              {/* Hero text — col 8 */}
+              {/* Hero text - col 8 */}
               <motion.div
                 className="lg:col-span-7 xl:col-span-8"
                 initial="hidden"
@@ -704,11 +704,11 @@ export function CourseDetailView() {
                   {course.description}
                 </motion.p>
 
-                {/* Meta chips — live-animated key numbers */}
+                {/* Meta chips - live-animated key numbers */}
                 <motion.div variants={HERO_ITEM} className="mt-7 flex items-center gap-2.5 flex-wrap">
                   <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-400/25 bg-amber-400/5 px-3.5 py-1.5 text-xs font-medium text-amber-200">
                     <Star className="h-3.5 w-3.5 text-amber-300 fill-amber-300" />
-                    {course.rating != null ? <AnimatedNumber value={Number(course.rating)} decimals={1} /> : "—"}
+                    {course.rating != null ? <AnimatedNumber value={Number(course.rating)} decimals={1} /> : " - "}
                     <span className="text-amber-200/50">/ 5</span>
                   </span>
                   <span className="inline-flex items-center gap-1.5 rounded-full border border-violet-400/25 bg-violet-400/5 px-3.5 py-1.5 text-xs font-medium text-violet-200">
@@ -742,7 +742,7 @@ export function CourseDetailView() {
                 </motion.div>
               </motion.div>
 
-              {/* Hero right column — enroll / progress card */}
+              {/* Hero right column - enroll / progress card */}
               <motion.div
                 className="lg:col-span-5 xl:col-span-4"
                 initial={{ opacity: 0, y: 30 }}
@@ -754,7 +754,7 @@ export function CourseDetailView() {
                   <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-violet-500/60 to-transparent" />
                   <div className="absolute -top-16 -right-16 w-40 h-40 bg-violet-500/10 blur-3xl rounded-full pointer-events-none" />
 
-                  {/* Text prerequisites — real, admin-authored (Course Studio) */}
+                  {/* Text prerequisites - real, admin-authored (Course Studio) */}
                   {prerequisiteTexts.length > 0 && (
                     <div className="mb-5 rounded-lg border border-cyan-500/25 bg-cyan-500/5 p-3">
                       <div className="flex items-center gap-1.5 text-[10px] font-medium text-cyan-300 mb-2 tracking-[0.2em] font-mono">
@@ -867,17 +867,17 @@ export function CourseDetailView() {
         </section>
 
         {/* ====================================================
-            1b. STICKY SECTION NAV — scroll-spy anchor bar
+            1b. STICKY SECTION NAV - scroll-spy anchor bar
             ==================================================== */}
         <StickySectionNav items={SECTION_NAV_ITEMS} />
 
         {/* ====================================================
-            2. STATS HERO BAR — 4 animated stat tiles with count-up
+            2. STATS HERO BAR - 4 animated stat tiles with count-up
             ==================================================== */}
         <StatsHeroBar course={course} />
 
         {/* ====================================================
-            3. METADATA STRIP — animated 7-column grid
+            3. METADATA STRIP - animated 7-column grid
             ==================================================== */}
         <section className="border-y border-border/60 bg-background/40 backdrop-blur">
           <div className="mx-auto max-w-[1400px] px-4 sm:px-8 lg:px-10 py-6 lg:py-8">
@@ -887,7 +887,7 @@ export function CourseDetailView() {
                   { label: "CATEGORY", icon: Layers, value: course.category },
                   { label: "LEVEL", icon: Target, value: course.level },
                   { label: "DURATION", icon: Clock, value: <AnimatedNumber value={course.durationHours ?? 0} suffix="h" /> },
-                  { label: "RATING", icon: Star, value: course.rating != null ? <AnimatedNumber value={Number(course.rating)} decimals={1} /> : "—" },
+                  { label: "RATING", icon: Star, value: course.rating != null ? <AnimatedNumber value={Number(course.rating)} decimals={1} /> : " - " },
                   { label: "STUDENTS", icon: Users, value: <AnimatedNumber value={course.studentsCount ?? 0} /> },
                   { label: "MODULES", icon: BookOpen, value: courseModules.length },
                   { label: "LESSONS", icon: FileText, value: <AnimatedNumber value={totalLessons} /> },
@@ -909,7 +909,7 @@ export function CourseDetailView() {
         </section>
 
         {/* ====================================================
-            4. WHAT YOU'LL ACHIEVE — visual achievement cards
+            4. WHAT YOU'LL ACHIEVE - visual achievement cards
             ==================================================== */}
         <div id="gx-overview" className="scroll-mt-28 lg:scroll-mt-24">
           <AchievementCollection course={course} outcomes={outcomes} whatYouWillLearn={whatYouWillLearn} toolsCovered={toolsCovered} careerOutcomes={careerOutcomes} />
@@ -999,7 +999,7 @@ export function CourseDetailView() {
         <SkillsTagCloud tags={course.tags} modules={courseModules} />
 
         {/* ====================================================
-            REVIEWS — kept from existing implementation
+            REVIEWS - kept from existing implementation
             ==================================================== */}
         <div id="gx-reviews" className="scroll-mt-28 lg:scroll-mt-24">
           <ReviewsSection courseId={course.id} isEnrolled={isEnrolled} />
@@ -1011,7 +1011,7 @@ export function CourseDetailView() {
         <RelatedCoursesCarousel courseId={course.id} navigate={navigate} />
 
         {/* ====================================================
-            19. FINAL CTA — atmospheric
+            19. FINAL CTA - atmospheric
             ==================================================== */}
         <section className="py-10 lg:py-14 border-t border-border/60 relative overflow-hidden">
           <div className="absolute inset-0">
@@ -1116,7 +1116,7 @@ export function CourseDetailView() {
       </div>
 
       {/* ====================================================
-          20. FLOATING ENROLL CTA — sticky bottom bar
+          20. FLOATING ENROLL CTA - sticky bottom bar
           ==================================================== */}
       <FloatingEnrollCTA
         course={course}
@@ -1140,7 +1140,7 @@ export function CourseDetailView() {
       />
 
       {/* ====================================================
-          21. CHECKOUT DIALOG — paid course enrollment
+          21. CHECKOUT DIALOG - paid course enrollment
           ==================================================== */}
       <CheckoutDialog
         open={checkoutOpen}
@@ -1159,7 +1159,7 @@ export function CourseDetailView() {
 }
 
 // ============================================================
-// 21b. CheckoutDialog — Razorpay-style payment dialog
+// 21b. CheckoutDialog - Razorpay-style payment dialog
 // ============================================================
 function CheckoutDialog({
   open,
@@ -1432,7 +1432,7 @@ function StatsHeroBar({ course }: { course: any }) {
 }
 
 // ============================================================
-// 4. WHAT YOU'LL ACHIEVE — Badge Collection
+// 4. WHAT YOU'LL ACHIEVE - Badge Collection
 // ============================================================
 function AchievementCollection({
   course,
@@ -1448,7 +1448,7 @@ function AchievementCollection({
   careerOutcomes: string[]
 }) {
   // Real, admin-authored "What you will learn" list (Course Studio → Course
-  // Details) — rendered as a checklist. Falls back to the derived cards below
+  // Details) - rendered as a checklist. Falls back to the derived cards below
   // for courses that were never authored with extras.
   if (whatYouWillLearn.length > 0) {
     return (
@@ -1531,7 +1531,7 @@ function AchievementCollection({
     cards.push({
       icon: Icon,
       title: `Master ${tag}`,
-      description: `Hands-on expertise in ${tag.toLowerCase()} — from fundamentals to advanced real-world scenarios.`,
+      description: `Hands-on expertise in ${tag.toLowerCase()} - from fundamentals to advanced real-world scenarios.`,
     })
   })
 
@@ -1637,7 +1637,7 @@ function SkillProgressionChart({ tags }: { tags?: string | null }) {
             <span className="text-gradient-premium"> after.</span>
           </h2>
           <p className="text-muted-foreground mt-6 leading-relaxed">
-            Watch your skill levels transform. Bars animate as you scroll — see the
+            Watch your skill levels transform. Bars animate as you scroll - see the
             measurable jump from beginner to practitioner.
           </p>
         </div>
@@ -1678,7 +1678,7 @@ function SkillProgressionChart({ tags }: { tags?: string | null }) {
                 </div>
               </div>
 
-              {/* After bar — animated */}
+              {/* After bar - animated */}
               <div>
                 <div className="flex items-center justify-between text-[10px] font-mono tracking-wider mb-1.5">
                   <span className="text-emerald-300">AFTER</span>
@@ -1734,7 +1734,7 @@ function CareerPathSection({
     Array.isArray(p.courses) && p.courses.includes(courseId)
   )
 
-  // Visual path nodes — Beginner → This Course → Advanced → Certification
+  // Visual path nodes - Beginner → This Course → Advanced → Certification
   const pathNodes = [
     { icon: Sparkles, label: "Beginner", sub: "Foundations", color: "text-emerald-300", border: "border-emerald-500/30", bg: "bg-emerald-500/10" },
     { icon: Target, label: "This Course", sub: courseLevel, color: "text-violet-300", border: "border-violet-500/40", bg: "bg-violet-500/10", highlight: true },
@@ -1758,7 +1758,7 @@ function CareerPathSection({
           </p>
         </div>
 
-        {/* Visual path — 4 nodes with arrows */}
+        {/* Visual path - 4 nodes with arrows */}
         <div className="relative">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 lg:gap-6 relative">
             {pathNodes.map((node, i) => (
@@ -1796,7 +1796,7 @@ function CareerPathSection({
             ))}
           </div>
 
-          {/* Connecting arrows — desktop only */}
+          {/* Connecting arrows - desktop only */}
           <div className="hidden lg:flex absolute top-1/2 -translate-y-1/2 left-0 right-0 pointer-events-none">
             {[25, 50, 75].map((left) => (
               <div key={left} className="absolute -translate-x-1/2" style={{ left: `${left}%` }}>
@@ -1859,7 +1859,7 @@ function CurriculumTimeline({
   totalLessons: number
   completedLessons: number
 }) {
-  // Degraded payloads can lack modules — normalize locally.
+  // Degraded payloads can lack modules - normalize locally.
   const courseModules: any[] = Array.isArray(course.modules) ? course.modules : []
   return (
     <section className="py-8 lg:py-10 border-t border-border/60 relative">
@@ -1891,9 +1891,9 @@ function CurriculumTimeline({
           </div>
         </div>
 
-        {/* Timeline wrapper — vertical connecting line on the left */}
+        {/* Timeline wrapper - vertical connecting line on the left */}
         <div className="relative">
-          {/* Vertical line — desktop only */}
+          {/* Vertical line - desktop only */}
           <div className="hidden lg:block absolute left-[26px] top-2 bottom-2 w-px bg-gradient-to-b from-violet-500/40 via-border/40 to-transparent" />
 
           <Accordion type="multiple" defaultValue={[courseModules[0]?.id]} className="space-y-4 lg:pl-0">
@@ -1913,7 +1913,7 @@ function CurriculumTimeline({
                   value={m.id}
                   className="group relative overflow-hidden rounded-2xl border border-border/60 bg-card/30 backdrop-blur transition-colors hover:border-violet-500/30 data-[state=open]:border-violet-500/40 lg:pl-12"
                 >
-                  {/* Timeline node — desktop only */}
+                  {/* Timeline node - desktop only */}
                   <div className="hidden lg:flex absolute left-[14px] top-7 z-10 h-6 w-6 items-center justify-center rounded-full border-2 border-violet-500/40 bg-card">
                     <div className={cn(
                       "h-2 w-2 rounded-full",
@@ -2040,7 +2040,7 @@ function FitChecklist({ level, category, whoShouldAttend }: { level: string; cat
       { text: "You want hands-on lab challenges with real-world complexity", icon: Rocket },
     )
     notFitItems.push(
-      { text: "You're new to cybersecurity — start with a Beginner course", icon: X },
+      { text: "You're new to cybersecurity - start with a Beginner course", icon: X },
       { text: "You're looking for foundational theory without lab work", icon: X },
     )
   }
@@ -2145,7 +2145,7 @@ function DifficultyMeter({ durationHours, modules }: { durationHours: number; mo
           </p>
         </div>
 
-        {/* Difficulty bar — gradient green → amber → orange → red */}
+        {/* Difficulty bar - gradient green → amber → orange → red */}
         <div className="rounded-2xl border border-border/60 bg-card/40 backdrop-blur p-6 lg:p-8">
           {/* Bar */}
           <div className="relative h-4 w-full rounded-full overflow-hidden bg-muted mb-2">
@@ -2599,7 +2599,7 @@ function InstructorSpotlight({ instructor, navigate }: { instructor: any; naviga
         </h2>
 
         <div className="grid lg:grid-cols-12 gap-4 lg:gap-6 items-start">
-          {/* Left — Big avatar + actions */}
+          {/* Left - Big avatar + actions */}
           <div className="lg:col-span-4">
             <div className="lg:sticky lg:top-8 rounded-2xl border border-border/60 bg-card/40 backdrop-blur p-6">
               <div className="flex flex-col items-center text-center">
@@ -2643,7 +2643,7 @@ function InstructorSpotlight({ instructor, navigate }: { instructor: any; naviga
             </div>
           </div>
 
-          {/* Right — Bio, expertise, certifications, stats */}
+          {/* Right - Bio, expertise, certifications, stats */}
           <div className="lg:col-span-8">
             {/* Bio */}
             {instructor.bio && (
@@ -2728,7 +2728,7 @@ function CertExamBlueprint({ course }: { course: any }) {
   const passingScore = 70
   const questionCount = Math.max(50, (course.modules?.length ?? 4) * 15)
 
-  // Domain weightings — based on module lesson counts
+  // Domain weightings - based on module lesson counts
   const modules = course.modules ?? []
   const totalLessons = modules.reduce((acc: number, m: any) => acc + (m.lessons?.length ?? 0), 0) || 1
   const domains = modules.slice(0, 6).map((m: any, i: number) => {
@@ -2765,7 +2765,7 @@ function CertExamBlueprint({ course }: { course: any }) {
         </div>
 
         <div className="grid lg:grid-cols-12 gap-4 lg:gap-6">
-          {/* Left — exam facts */}
+          {/* Left - exam facts */}
           <div className="lg:col-span-5">
             <div className="rounded-2xl border border-border/60 bg-card/40 backdrop-blur p-6">
               <div className="flex items-center gap-3 mb-6 pb-6 border-b border-border/40">
@@ -2816,7 +2816,7 @@ function CertExamBlueprint({ course }: { course: any }) {
             </div>
           </div>
 
-          {/* Right — domain weightings bar chart */}
+          {/* Right - domain weightings bar chart */}
           <div className="lg:col-span-7">
             <div className="rounded-2xl border border-border/60 bg-card/40 backdrop-blur p-6">
               <p className="text-[10px] font-mono text-amber-300 tracking-[0.2em] mb-4">DOMAIN WEIGHTINGS</p>
@@ -2867,7 +2867,7 @@ function PrerequisitesGraph({
   user: any
   navigate: any
 }) {
-  // "What this unlocks" — fetch the prerequisites graph (authenticated) and find courses that have THIS as a prerequisite
+  // "What this unlocks" - fetch the prerequisites graph (authenticated) and find courses that have THIS as a prerequisite
   const { data: graphData } = useQuery<{ nodes: GraphNode[]; edges: { from: string; to: string }[] }>({
     queryKey: ["prereq-graph-for-course", course.id],
     queryFn: () => api(`/api/prerequisites-graph`),
@@ -2892,11 +2892,11 @@ function PrerequisitesGraph({
             <span className="text-gradient-premium"> graph.</span>
           </h2>
           <p className="text-muted-foreground mt-6 leading-relaxed">
-            See where this course sits in your journey — what to take before, and what it unlocks next.
+            See where this course sits in your journey - what to take before, and what it unlocks next.
           </p>
         </div>
 
-        {/* Visual graph — 3 columns: prerequisites | this course | unlocks */}
+        {/* Visual graph - 3 columns: prerequisites | this course | unlocks */}
         <div className="grid lg:grid-cols-[1fr_auto_1fr] gap-6 lg:gap-10 items-center">
           {/* Prerequisites column */}
           <div>
@@ -2928,12 +2928,12 @@ function PrerequisitesGraph({
             ) : (
               <div className="rounded-xl border border-border/40 bg-card/20 p-4 text-center">
                 <Sparkles className="h-6 w-6 text-emerald-300/60 mx-auto mb-2" />
-                <p className="text-xs text-muted-foreground">No prerequisites — start here.</p>
+                <p className="text-xs text-muted-foreground">No prerequisites - start here.</p>
               </div>
             )}
           </div>
 
-          {/* Center — this course */}
+          {/* Center - this course */}
           <div className="flex justify-center my-6 lg:my-0">
             <div className="relative">
               {/* Arrows */}
@@ -3033,7 +3033,7 @@ function ActivityFeed({ courseId }: { courseId: string }) {
     <section className="py-8 lg:py-10 border-t border-border/60">
       <div className="mx-auto max-w-[1400px] px-4 sm:px-8 lg:px-10">
         <div className="grid lg:grid-cols-12 gap-10">
-          {/* Left — heading + stats */}
+          {/* Left - heading + stats */}
           <div className="lg:col-span-4">
             <SectionLabel index="13" className="text-emerald-300">LIVE FEED</SectionLabel>
             <h2 className="text-[clamp(2rem,4vw,3rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance mb-6">
@@ -3070,7 +3070,7 @@ function ActivityFeed({ courseId }: { courseId: string }) {
             </div>
           </div>
 
-          {/* Right — activity feed */}
+          {/* Right - activity feed */}
           <div className="lg:col-span-8">
             <div className="rounded-2xl border border-border/60 bg-card/40 backdrop-blur p-6">
               <p className="text-[10px] font-mono text-muted-foreground tracking-[0.2em] mb-5">RECENT ENROLLMENTS</p>
@@ -3151,7 +3151,7 @@ function SkillsTagCloud({ tags, modules }: { tags?: string | null; modules: any[
     if (match) {
       tagToModule.set(tag, match.title)
     } else if (modules.length > 0) {
-      // Fallback — cycle through modules
+      // Fallback - cycle through modules
       const idx = tagList.indexOf(tag) % modules.length
       tagToModule.set(tag, modules[idx].title)
     }
@@ -3296,7 +3296,7 @@ function RelatedCoursesCarousel({
                     onClick={() => navigate({ name: "course", courseId: c.id })}
                     className="relative w-full h-full text-left rounded-xl border border-border/60 bg-card/40 backdrop-blur overflow-hidden hover:border-violet-500/40 hover:bg-card/60 hover:shadow-[0_16px_40px_-24px_rgba(139,92,246,0.5)] transition-all"
                   >
-                    {/* Thumbnail — compact 16/9 */}
+                    {/* Thumbnail - compact 16/9 */}
                     <div className="relative aspect-[16/9] overflow-hidden">
                       <img
                         src={getCourseImage(c)}
@@ -3312,10 +3312,10 @@ function RelatedCoursesCarousel({
                       </div>
                       <div className="absolute top-2 right-2 flex items-center gap-1 px-1.5 py-0.5 rounded-full bg-background/80 backdrop-blur border border-border/40">
                         <Star className="h-2.5 w-2.5 text-amber-400 fill-amber-400" />
-                        <span className="text-[9px] font-mono tabular-nums">{c.rating != null ? Number(c.rating).toFixed(1) : "—"}</span>
+                        <span className="text-[9px] font-mono tabular-nums">{c.rating != null ? Number(c.rating).toFixed(1) : " - "}</span>
                       </div>
                     </div>
-                    {/* Body — compact */}
+                    {/* Body - compact */}
                     <div className="p-2.5 sm:p-3">
                       <p className="text-[8px] sm:text-[9px] font-mono text-violet-300 tracking-[0.18em] mb-1">{c.shortName}</p>
                       <h3 className="font-semibold text-[12px] sm:text-[13px] leading-snug mb-1.5 line-clamp-2 group-hover:text-violet-200 transition-colors min-h-[2.75em]">{c.title}</h3>
@@ -3337,7 +3337,7 @@ function RelatedCoursesCarousel({
 }
 
 // ============================================================
-// 20. FLOATING ENROLL CTA — sticky bottom bar
+// 20. FLOATING ENROLL CTA - sticky bottom bar
 // ============================================================
 function FloatingEnrollCTA({
   course,
@@ -3384,7 +3384,7 @@ function FloatingEnrollCTA({
                 </div>
               </div>
 
-              {/* Mobile — just title */}
+              {/* Mobile - just title */}
               <div className="sm:hidden flex-1 min-w-0">
                 <div className="text-sm font-semibold truncate">{course.title}</div>
                 <div className="text-[10px] font-mono text-muted-foreground tracking-wider">{course.shortName}</div>
@@ -3425,7 +3425,7 @@ function FloatingEnrollCTA({
 }
 
 // ============================================================
-// REVIEWS SECTION (existing — kept intact)
+// REVIEWS SECTION (existing - kept intact)
 // ============================================================
 interface Review {
   id: string
@@ -3617,7 +3617,7 @@ function ReviewsSection({ courseId, isEnrolled }: { courseId: string; isEnrolled
 }
 
 // ============================================================
-// BOOKMARK BUTTON (existing — kept intact)
+// BOOKMARK BUTTON (existing - kept intact)
 // ============================================================
 function BookmarkButton({ courseId }: { courseId: string }) {
   const { isBookmarked, toggleAsync, isAuthenticated } = useBookmarks()

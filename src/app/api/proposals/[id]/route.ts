@@ -5,11 +5,11 @@ import { requireAdmin, withErrorHandler, readJsonBody } from "@/lib/session"
 export const runtime = "nodejs"
 
 /**
- * /api/proposals/[id] — single saved proposal (Admin → Proposal Maker).
+ * /api/proposals/[id] - single saved proposal (Admin → Proposal Maker).
  *
- * GET    — fetch the full proposal (config JSON included) for loading.
- * PATCH  — update title/clientName/config.
- * DELETE — remove the saved proposal.
+ * GET - fetch the full proposal (config JSON included) for loading.
+ * PATCH - update title/clientName/config.
+ * DELETE - remove the saved proposal.
  *
  * Auth: ADMIN via requireAdmin().
  */

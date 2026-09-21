@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { requireAdmin } from "@/lib/session"
 
-// GET /api/admin/certifications — list all certifications (admin only)
+// GET /api/admin/certifications - list all certifications (admin only)
 export async function GET() {
   const user = await requireAdmin()
   if (user instanceof NextResponse) return user
@@ -14,7 +14,7 @@ export async function GET() {
   return NextResponse.json({ certifications: certs })
 }
 
-// POST /api/admin/certifications — create a new certification
+// POST /api/admin/certifications - create a new certification
 export async function POST(req: NextRequest) {
   const user = await requireAdmin()
   if (user instanceof NextResponse) return user

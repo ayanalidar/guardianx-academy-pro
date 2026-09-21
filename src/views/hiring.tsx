@@ -1,25 +1,28 @@
 "use client"
 
 /**
- * HiringView — public /hiring page ("Hiring" header tab).
+ * HiringView - public /hiring page ("Hiring" header tab). v2
  *
  * Sophisticated worldwide openings board:
- *   • Hero — headline, live stats (open roles / countries / remote share)
- *   • Filter bar — search, role-type chips, Remote-only toggle, country select
- *   • Openings grid — company tile, chips (type / remote / NEW), salary,
- *     skills preview, applicant count, "posted" relative time
- *   • Role detail dialog — full description, requirements, certs & skills,
- *     apply flow (logged-in users apply in one click; guests are sent to
- *     sign-in; 409 "already applied" handled gracefully)
+ *   - Aurora hero with the mission statement, animated live stats and a
+ *     dual-lane roles marquee covering nearly every role in technology
+ *   - Discipline explorer: 8 groups x 8 role families, click-to-filter
+ *   - Openings grid with sticky glass filter bar and spotlight hover cards
+ *   - Perks strip, referral CTA, and a rich detail dialog
+ *   - Apply flows: signed-in users apply in one click; GUESTS apply
+ *     directly without any account (name, email, phone, portfolio, note)
+ *     via POST /api/hiring/jobs/[id]/apply. Applications land in the
+ *     admin Lead CRM as type "Job Application".
  *
- * Data: GET /api/hiring/jobs (public, no auth). Apply: POST /api/jobs/[id]/apply
- * (existing student job-board endpoint, shared JobApplication records).
+ * Data: GET /api/hiring/jobs (public, no auth). SEO: client-injected
+ * JobPosting JSON-LD (ItemList) for crawlers.
  */
 
 import * as React from "react"
 import { useQuery, useMutation } from "@tanstack/react-query"
 import { motion } from "framer-motion"
 import { useAppStore } from "@/store/app-store"
+import { CountUp } from "@/components/platform/count-up"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Badge } from "@/components/ui/badge"
@@ -42,7 +45,9 @@ import { toast } from "sonner"
 import {
   Globe2, Search, MapPin, Home, Briefcase, Clock, Users, ArrowRight,
   X, CheckCircle2, BadgeCheck, Wallet, GraduationCap, Send, Loader2,
-  ListChecks, Building2, Sparkles,
+  ListChecks, Building2, Sparkles, Target, Wifi, Rocket, Mail, Phone,
+  Link2, Radar, Crosshair, ShieldCheck, Scale, Code2, CloudCog,
+  BrainCircuit, Users2,
 } from "lucide-react"
 
 // ============================================================
@@ -88,7 +93,17 @@ function typeTint(t: string): string {
   return map[t] || "text-zinc-300 border-zinc-500/30 bg-zinc-500/10"
 }
 
-/** Country / region label = text after the last comma ("Dubai, UAE" → "UAE"). */
+function schemaEmploymentType(t: string): string {
+  const map: Record<string, string> = {
+    "full-time": "FULL_TIME",
+    "part-time": "PART_TIME",
+    contract: "CONTRACTOR",
+    internship: "INTERN",
+  }
+  return map[t] || "OTHER"
+}
+
+/** Country / region label = text after the last comma ("Dubai, UAE" -> "UAE"). */
 function deriveCountry(location: string): string {
   const parts = (location || "").split(",").map((s) => s.trim()).filter(Boolean)
   return parts.length > 1 ? parts[parts.length - 1] : parts[0] || "Global"
@@ -117,6 +132,78 @@ function splitLines(s: string): string[] {
 }
 
 // ============================================================
+// Role taxonomy - nearly every role in technology
+// ============================================================
+const MARQUEE_A = [
+  "SOC Analyst", "Penetration Tester", "Security Architect", "DevSecOps Engineer",
+  "Cloud Security Engineer", "Threat Hunter", "Incident Responder", "GRC Analyst",
+  "Full-Stack Developer", "Data Scientist", "Machine Learning Engineer", "DevOps Engineer",
+  "Site Reliability Engineer", "Product Manager", "UX/UI Designer", "Data Engineer",
+  "IAM Engineer", "Malware Analyst", "Application Security Engineer", "Network Engineer",
+  "Digital Forensics Analyst", "Compliance Manager", "AI Engineer", "Platform Engineer",
+]
+
+const MARQUEE_B = [
+  "Red Team Operator", "Bug Bounty Hunter", "Detection Engineer", "Security Auditor",
+  "Frontend Engineer", "Backend Engineer", "Mobile Engineer", "Blockchain Developer",
+  "Embedded Engineer", "QA Automation Engineer", "Kubernetes Specialist", "Database Administrator",
+  "Privacy Officer", "Risk Analyst", "Cryptography Engineer", "Vulnerability Analyst",
+  "Cybersecurity Instructor", "Curriculum Designer", "Technical Writer", "Sales Engineer",
+  "Business Intelligence Analyst", "Analytics Engineer", "IT Support Specialist", "CISO",
+]
+
+const DISCIPLINES: { label: string; icon: React.ElementType; tint: string; roles: string[] }[] = [
+  {
+    label: "Security Operations",
+    icon: Radar,
+    tint: "text-violet-300 bg-violet-500/10 border-violet-500/25",
+    roles: ["SOC Analyst", "Threat Hunter", "Incident Responder", "Digital Forensics Analyst", "Malware Analyst", "Vulnerability Analyst", "Blue Team Analyst", "Detection Engineer"],
+  },
+  {
+    label: "Offensive Security",
+    icon: Crosshair,
+    tint: "text-rose-300 bg-rose-500/10 border-rose-500/25",
+    roles: ["Penetration Tester", "Red Team Operator", "Bug Bounty Hunter", "Exploit Developer", "Web Application Security", "Mobile Security Analyst", "Adversary Emulation Lead", "Social Engineering Specialist"],
+  },
+  {
+    label: "Security Engineering",
+    icon: ShieldCheck,
+    tint: "text-emerald-300 bg-emerald-500/10 border-emerald-500/25",
+    roles: ["Cybersecurity Engineer", "Security Architect", "DevSecOps Engineer", "Cloud Security Engineer", "Application Security Engineer", "IAM Engineer", "Network Security Engineer", "Cryptography Engineer"],
+  },
+  {
+    label: "Governance & Risk",
+    icon: Scale,
+    tint: "text-amber-300 bg-amber-500/10 border-amber-500/25",
+    roles: ["GRC Analyst", "Compliance Manager", "Risk Analyst", "Privacy Officer", "Security Auditor", "ISO 27001 Lead", "Policy Writer", "Third-Party Risk Analyst"],
+  },
+  {
+    label: "Software Engineering",
+    icon: Code2,
+    tint: "text-sky-300 bg-sky-500/10 border-sky-500/25",
+    roles: ["Full-Stack Developer", "Frontend Engineer", "Backend Engineer", "Mobile Engineer", "Blockchain Developer", "Embedded Engineer", "Game Developer", "QA Automation Engineer"],
+  },
+  {
+    label: "Cloud & Infrastructure",
+    icon: CloudCog,
+    tint: "text-cyan-300 bg-cyan-500/10 border-cyan-500/25",
+    roles: ["DevOps Engineer", "Site Reliability Engineer", "Platform Engineer", "Systems Administrator", "Network Engineer", "Kubernetes Specialist", "Database Administrator", "IT Support Specialist"],
+  },
+  {
+    label: "Data & AI",
+    icon: BrainCircuit,
+    tint: "text-fuchsia-300 bg-fuchsia-500/10 border-fuchsia-500/25",
+    roles: ["Data Scientist", "Data Engineer", "Data Analyst", "Machine Learning Engineer", "AI Engineer", "Business Intelligence Analyst", "Analytics Engineer", "Research Scientist"],
+  },
+  {
+    label: "Product, People & Training",
+    icon: Users2,
+    tint: "text-teal-300 bg-teal-500/10 border-teal-500/25",
+    roles: ["Product Manager", "Project Manager", "UX/UI Designer", "Technical Writer", "Sales Engineer", "Customer Success Manager", "Cybersecurity Instructor", "Curriculum Designer"],
+  },
+]
+
+// ============================================================
 // Root
 // ============================================================
 export function HiringView() {
@@ -127,8 +214,8 @@ export function HiringView() {
   const [countryFilter, setCountryFilter] = React.useState("all")
   const [selectedJob, setSelectedJob] = React.useState<PublicJob | null>(null)
 
-  // Session awareness (for the apply button state inside the dialog).
-  const [sessionUser, setSessionUser] = React.useState<{ name?: string; role?: string } | null>(null)
+  // Session awareness (signed-in users get the one-click apply path).
+  const [sessionUser, setSessionUser] = React.useState<{ name?: string; email?: string; role?: string } | null>(null)
   React.useEffect(() => {
     fetch("/api/auth/session", { credentials: "include" })
       .then((r) => r.json())
@@ -167,18 +254,45 @@ export function HiringView() {
     const openRoles = jobs.length
     const countryCount = countries.filter((c) => !/^remote/i.test(c)).length
     const remoteShare = openRoles > 0 ? Math.round((jobs.filter((j) => j.remote).length / openRoles) * 100) : 0
-    return { openRoles, countryCount, remoteShare }
+    const applications = jobs.reduce((sum, j) => sum + (j.applicants || 0), 0)
+    return { openRoles, countryCount, remoteShare, applications }
   }, [jobs, countries])
+
+  const filtersActive = search.trim() !== "" || typeFilter !== "all" || remoteOnly || countryFilter !== "all"
+
+  function clearFilters() {
+    setSearch("")
+    setTypeFilter("all")
+    setRemoteOnly(false)
+    setCountryFilter("all")
+  }
+
+  function searchFor(term: string) {
+    setSearch(term)
+    setTypeFilter("all")
+    setRemoteOnly(false)
+    setCountryFilter("all")
+    document.getElementById("openings")?.scrollIntoView({ behavior: "smooth" })
+  }
 
   return (
     <div className="min-h-screen">
       {/* ================= HERO ================= */}
-      <section className="relative overflow-hidden pt-28 pb-14 px-4 sm:px-6 lg:px-8">
-        {/* ambient glows */}
+      <section className="relative overflow-hidden pt-28 pb-16 px-4 sm:px-6 lg:px-8">
+        {/* aurora + grid backdrop */}
         <div aria-hidden className="pointer-events-none absolute inset-0">
-          <div className="absolute -top-32 left-1/2 -translate-x-1/2 h-80 w-[42rem] rounded-full bg-violet-600/15 blur-[110px]" />
-          <div className="absolute top-24 -left-24 h-64 w-64 rounded-full bg-emerald-500/10 blur-[90px]" />
-          <div className="absolute top-40 -right-20 h-64 w-64 rounded-full bg-sky-500/10 blur-[90px]" />
+          <div className="absolute -top-40 left-1/2 -translate-x-1/2 h-96 w-[52rem] rounded-full bg-violet-600/20 blur-[130px]" />
+          <div className="absolute top-20 -left-28 h-72 w-72 rounded-full bg-emerald-500/12 blur-[100px]" />
+          <div className="absolute top-32 -right-24 h-72 w-72 rounded-full bg-sky-500/12 blur-[100px]" />
+          <div className="absolute bottom-0 left-1/3 h-64 w-64 rounded-full bg-fuchsia-500/10 blur-[110px]" />
+          <div
+            className="absolute inset-0 [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,black_30%,transparent_75%)] opacity-[0.14]"
+            style={{
+              backgroundImage:
+                "linear-gradient(to right, rgb(148 163 184 / 0.5) 1px, transparent 1px), linear-gradient(to bottom, rgb(148 163 184 / 0.5) 1px, transparent 1px)",
+              backgroundSize: "56px 56px",
+            }}
+          />
         </div>
 
         <div className="relative mx-auto max-w-5xl text-center">
@@ -188,16 +302,19 @@ export function HiringView() {
             transition={{ duration: 0.5 }}
             className="inline-flex items-center gap-2 rounded-full border border-violet-500/30 bg-violet-500/10 px-4 py-1.5 text-xs font-medium text-violet-300"
           >
-            <Sparkles className="h-3.5 w-3.5" />
-            We're hiring around the world
-            <span className="h-1 w-1 rounded-full bg-violet-400 animate-pulse" />
+            <span className="relative flex h-2 w-2">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-60" />
+              <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+            </span>
+            Hiring worldwide, open roles in every timezone
+            <Sparkles className="h-3.5 w-3.5 text-violet-300" />
           </motion.div>
 
           <motion.h1
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55, delay: 0.06 }}
-            className="mt-5 text-4xl sm:text-5xl font-extrabold tracking-tight leading-[1.1]"
+            className="mt-6 text-4xl sm:text-6xl font-extrabold tracking-tight leading-[1.06]"
           >
             Build the future of{" "}
             <span className="bg-gradient-to-r from-violet-400 via-fuchsia-400 to-emerald-400 bg-clip-text text-transparent">
@@ -210,34 +327,55 @@ export function HiringView() {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.55, delay: 0.12 }}
-            className="mt-4 text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto leading-relaxed"
+            className="mt-5 text-sm sm:text-base text-muted-foreground max-w-2xl mx-auto leading-relaxed"
           >
             GuardianX and partner companies are hiring security engineers, instructors,
-            analysts and builders across every timezone. Find your next role below —
-            remote-first, globally distributed, mission-driven.
+            analysts and builders across every timezone. Find your next role below.
           </motion.p>
+
+          {/* trait chips */}
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.16 }}
+            className="mt-5 flex items-center justify-center gap-2 flex-wrap"
+          >
+            {[
+              { icon: Wifi, label: "Remote-first" },
+              { icon: Globe2, label: "Globally distributed" },
+              { icon: Target, label: "Mission-driven" },
+            ].map((t) => (
+              <span
+                key={t.label}
+                className="inline-flex items-center gap-1.5 rounded-full border border-border/60 bg-card/50 backdrop-blur px-3 py-1.5 text-[11px] font-medium text-foreground/80"
+              >
+                <t.icon className="h-3 w-3 text-violet-300" /> {t.label}
+              </span>
+            ))}
+          </motion.div>
 
           {/* live stats */}
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.55, delay: 0.18 }}
-            className="mt-8 flex items-center justify-center gap-3 flex-wrap"
+            transition={{ duration: 0.55, delay: 0.2 }}
+            className="mt-9 flex items-center justify-center gap-3 flex-wrap"
           >
-            <HeroStat icon={Briefcase} value={stats.openRoles} label={stats.openRoles === 1 ? "Open role" : "Open roles"} />
-            <HeroStat icon={Globe2} value={stats.countryCount} label={stats.countryCount === 1 ? "Country" : "Countries"} />
-            <HeroStat icon={Home} value={`${stats.remoteShare}%`} label="Remote-friendly" />
+            <HeroStat icon={Briefcase} value={<CountUp value={stats.openRoles} />} label={stats.openRoles === 1 ? "Open role" : "Open roles"} />
+            <HeroStat icon={Globe2} value={<CountUp value={stats.countryCount} />} label={stats.countryCount === 1 ? "Country" : "Countries"} />
+            <HeroStat icon={Home} value={<CountUp value={stats.remoteShare} suffix="%" />} label="Remote-friendly" />
+            <HeroStat icon={Users} value={<CountUp value={stats.applications} />} label="Applications" />
           </motion.div>
 
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.55, delay: 0.24 }}
-            className="mt-8 flex items-center justify-center gap-3 flex-wrap"
+            transition={{ duration: 0.55, delay: 0.26 }}
+            className="mt-9 flex items-center justify-center gap-3 flex-wrap"
           >
             <Button
               size="lg"
-              className="bg-gradient-to-r from-violet-600 to-violet-500 text-white h-11 px-6"
+              className="bg-gradient-to-r from-violet-600 to-violet-500 text-white h-11 px-7 shadow-[0_10px_40px_-10px_rgba(139,92,246,0.6)]"
               onClick={() => document.getElementById("openings")?.scrollIntoView({ behavior: "smooth" })}
             >
               Browse openings <ArrowRight className="h-4 w-4 ml-1.5" />
@@ -245,20 +383,93 @@ export function HiringView() {
             <Button
               size="lg"
               variant="outline"
-              className="h-11 px-6"
+              className="h-11 px-6 backdrop-blur"
               onClick={() => navigate({ name: "contact" })}
             >
               Don't see your role? Talk to us
             </Button>
           </motion.div>
         </div>
+
+        {/* dual-lane roles marquee */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.7, delay: 0.35 }}
+          className="relative mt-14 space-y-3 [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]"
+        >
+          <MarqueeRow items={MARQUEE_A} duration={52} />
+          <MarqueeRow items={MARQUEE_B} duration={64} reverse />
+        </motion.div>
+      </section>
+
+      {/* ================= DISCIPLINES ================= */}
+      <section id="disciplines" className="px-4 sm:px-6 lg:px-8 pb-20 scroll-mt-20">
+        <div className="mx-auto max-w-7xl">
+          <div className="text-center max-w-2xl mx-auto mb-8">
+            <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">
+              Hiring across almost every role in{" "}
+              <span className="bg-gradient-to-r from-violet-400 to-emerald-400 bg-clip-text text-transparent">technology</span>
+            </h2>
+            <p className="text-sm text-muted-foreground mt-2">
+              Tap a discipline to search live openings instantly. New roles are added across the stack every week.
+            </p>
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            {DISCIPLINES.map((group, gi) => (
+              <motion.div
+                key={group.label}
+                initial={{ opacity: 0, y: 14 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true, margin: "-40px" }}
+                transition={{ duration: 0.35, delay: Math.min(gi, 7) * 0.04 }}
+                className="rounded-2xl border border-border/60 bg-card/40 p-4 flex flex-col gap-3 hover:border-violet-500/30 transition-colors"
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className={cn("flex items-center justify-center h-9 w-9 rounded-xl border", group.tint)}>
+                    <group.icon className="h-[18px] w-[18px]" />
+                  </div>
+                  <h3 className="text-[13px] font-semibold leading-tight">{group.label}</h3>
+                </div>
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  {group.roles.map((role) => (
+                    <button
+                      key={role}
+                      type="button"
+                      onClick={() => searchFor(role)}
+                      className="rounded-full border border-border/50 bg-muted/20 px-2.5 py-1 text-[10.5px] text-muted-foreground transition-colors hover:border-violet-500/40 hover:bg-violet-500/10 hover:text-violet-200"
+                    >
+                      {role}
+                    </button>
+                  ))}
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
       </section>
 
       {/* ================= OPENINGS ================= */}
-      <section id="openings" className="px-4 sm:px-6 lg:px-8 pb-20 scroll-mt-20">
+      <section id="openings" className="px-4 sm:px-6 lg:px-8 pb-20 scroll-mt-16">
         <div className="mx-auto max-w-7xl space-y-6">
-          {/* Filter bar */}
-          <div className="rounded-2xl border border-border/60 bg-card/40 backdrop-blur p-4 space-y-3">
+          <div className="flex items-end justify-between gap-4 flex-wrap">
+            <div>
+              <h2 className="text-2xl sm:text-3xl font-bold tracking-tight">Open roles around the world</h2>
+              <p className="text-sm text-muted-foreground mt-1.5">
+                Every application goes straight to the hiring team. No account required.
+              </p>
+            </div>
+            <Badge variant="outline" className="text-[11px] text-emerald-300 border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5">
+              <span className="relative flex h-1.5 w-1.5 mr-1">
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
+              </span>
+              Live board
+            </Badge>
+          </div>
+
+          {/* Sticky glass filter bar */}
+          <div className="sticky top-[76px] z-30 rounded-2xl border border-border/60 bg-background/70 backdrop-blur-xl p-4 space-y-3 shadow-[0_10px_40px_-18px_rgba(0,0,0,0.6)]">
             <div className="flex flex-col lg:flex-row lg:items-center gap-3">
               <div className="relative flex-1 min-w-[200px]">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -270,7 +481,6 @@ export function HiringView() {
                 />
               </div>
               <div className="flex items-center gap-3 flex-wrap">
-                {/* Remote-only toggle */}
                 <button
                   type="button"
                   onClick={() => setRemoteOnly((v) => !v)}
@@ -292,6 +502,15 @@ export function HiringView() {
                     {countries.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                   </SelectContent>
                 </Select>
+                {filtersActive && (
+                  <button
+                    type="button"
+                    onClick={clearFilters}
+                    className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors"
+                  >
+                    <X className="h-3 w-3" /> Clear all
+                  </button>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-1.5 flex-wrap">
@@ -333,14 +552,18 @@ export function HiringView() {
               </h3>
               <p className="text-xs text-muted-foreground mt-1.5 max-w-sm">
                 {jobs.length === 0
-                  ? "New positions are posted regularly — check back soon, or send us your profile and we'll keep you in mind."
-                  : "Try widening your search — clear a filter or two and see what's out there."}
+                  ? "New positions are posted regularly. Check back soon, or send us your profile and we'll keep you in mind."
+                  : "Try widening your search. Clear a filter or two and see what's out there."}
               </p>
-              {jobs.length === 0 && (
-                <Button className="mt-5 bg-gradient-to-r from-violet-600 to-violet-500 text-white" size="sm" onClick={() => navigate({ name: "contact" })}>
-                  Send us your profile <ArrowRight className="h-3.5 w-3.5 ml-1" />
-                </Button>
-              )}
+              <Button
+                size="sm"
+                variant={jobs.length === 0 ? "default" : "outline"}
+                className={cn("mt-5", jobs.length === 0 && "bg-gradient-to-r from-violet-600 to-violet-500 text-white")}
+                onClick={() => (jobs.length === 0 ? navigate({ name: "contact" }) : clearFilters())}
+              >
+                {jobs.length === 0 ? "Send us your profile" : "Clear filters"}
+                <ArrowRight className="h-3.5 w-3.5 ml-1" />
+              </Button>
             </div>
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -352,6 +575,26 @@ export function HiringView() {
         </div>
       </section>
 
+      {/* ================= PERKS ================= */}
+      <section className="px-4 sm:px-6 lg:px-8 pb-20">
+        <div className="mx-auto max-w-7xl grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {[
+            { icon: Wifi, title: "Remote-first, always", desc: "Work from wherever you do your best work. Home or headquarters, both count.", tint: "text-emerald-300 bg-emerald-500/10 border-emerald-500/25" },
+            { icon: GraduationCap, title: "Learning budget", desc: "Free access to GuardianX certifications, labs and range time for you and yours.", tint: "text-violet-300 bg-violet-500/10 border-violet-500/25" },
+            { icon: Globe2, title: "A truly global team", desc: "Colleagues on every continent. Async by default, together when it matters.", tint: "text-sky-300 bg-sky-500/10 border-sky-500/25" },
+            { icon: Rocket, title: "Work that matters", desc: "Ship products and training that defend real organizations, every single day.", tint: "text-amber-300 bg-amber-500/10 border-amber-500/25" },
+          ].map((p) => (
+            <div key={p.title} className="rounded-2xl border border-border/60 bg-card/40 p-5 hover:border-violet-500/30 transition-colors">
+              <div className={cn("flex items-center justify-center h-10 w-10 rounded-xl border mb-3.5", p.tint)}>
+                <p.icon className="h-[18px] w-[18px]" />
+              </div>
+              <h3 className="text-sm font-semibold">{p.title}</h3>
+              <p className="text-xs text-muted-foreground mt-1.5 leading-relaxed">{p.desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {/* ================= BOTTOM CTA ================= */}
       <section className="px-4 sm:px-6 lg:px-8 pb-24">
         <div className="mx-auto max-w-5xl rounded-3xl border border-violet-500/25 bg-gradient-to-br from-violet-600/10 via-card/40 to-emerald-500/10 p-8 sm:p-10 text-center relative overflow-hidden">
@@ -359,7 +602,7 @@ export function HiringView() {
           <h2 className="relative text-xl sm:text-2xl font-bold">Great people know great people</h2>
           <p className="relative text-sm text-muted-foreground mt-2 max-w-xl mx-auto">
             Nothing fits right now? We keep talented people in mind for future openings.
-            Introduce yourself — or point a friend our way.
+            Introduce yourself, or point a friend our way.
           </p>
           <div className="relative mt-6 flex items-center justify-center gap-3 flex-wrap">
             <Button className="bg-gradient-to-r from-violet-600 to-violet-500 text-white" onClick={() => navigate({ name: "contact" })}>
@@ -372,11 +615,14 @@ export function HiringView() {
         </div>
       </section>
 
+      {/* ================= SEO: JobPosting JSON-LD ================= */}
+      <HiringJsonLd jobs={jobs} />
+
       {/* ================= DETAIL DIALOG ================= */}
       {selectedJob && (
         <JobDetailDialog
           job={selectedJob}
-          signedIn={!!sessionUser}
+          sessionUser={sessionUser}
           onClose={() => setSelectedJob(null)}
           onNeedSignIn={() => { setSelectedJob(null); navigate({ name: "login" }) }}
         />
@@ -388,15 +634,40 @@ export function HiringView() {
 // ============================================================
 // Pieces
 // ============================================================
-function HeroStat({ icon: Icon, value, label }: { icon: React.ElementType; value: number | string; label: string }) {
+function HeroStat({ icon: Icon, value, label }: { icon: React.ElementType; value: React.ReactNode; label: string }) {
   return (
-    <div className="flex items-center gap-2.5 rounded-2xl border border-border/60 bg-card/40 backdrop-blur px-4 py-2.5">
+    <div className="flex items-center gap-2.5 rounded-2xl border border-border/60 bg-card/40 backdrop-blur px-4 py-2.5 hover:border-violet-500/30 transition-colors">
       <div className="flex items-center justify-center h-8 w-8 rounded-xl bg-violet-500/10 text-violet-300">
         <Icon className="h-4 w-4" />
       </div>
       <div className="text-left">
         <div className="text-lg font-bold leading-none tabular-nums">{value}</div>
         <div className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mt-0.5">{label}</div>
+      </div>
+    </div>
+  )
+}
+
+function MarqueeRow({ items, duration, reverse = false }: { items: string[]; duration: number; reverse?: boolean }) {
+  const doubled = [...items, ...items]
+  return (
+    <div className="overflow-hidden">
+      <div
+        className={cn(
+          "flex w-max items-center gap-2.5 hover:[animation-play-state:paused]",
+          reverse ? "animate-[gx-marquee-reverse_linear_infinite]" : "animate-[gx-marquee_linear_infinite]"
+        )}
+        style={{ animationDuration: `${duration}s` }}
+      >
+        {doubled.map((role, i) => (
+          <span
+            key={`${role}-${i}`}
+            className="inline-flex items-center gap-2 whitespace-nowrap rounded-full border border-border/50 bg-card/40 backdrop-blur px-3.5 py-1.5 text-[11px] text-muted-foreground"
+          >
+            <span className="h-1 w-1 rounded-full bg-violet-400/70" />
+            {role}
+          </span>
+        ))}
       </div>
     </div>
   )
@@ -417,19 +688,38 @@ function CompanyTile({ job, size = "md" }: { job: PublicJob; size?: "md" | "lg" 
   )
 }
 
+/** Spotlight card: a radial glow follows the cursor (CSS vars set on move). */
 function JobCard({ job, index, onOpen }: { job: PublicJob; index: number; onOpen: () => void }) {
+  const ref = React.useRef<HTMLButtonElement>(null)
   const country = deriveCountry(job.location)
+
+  function onMove(e: React.MouseEvent) {
+    const el = ref.current
+    if (!el) return
+    const r = el.getBoundingClientRect()
+    el.style.setProperty("--sx", `${e.clientX - r.left}px`)
+    el.style.setProperty("--sy", `${e.clientY - r.top}px`)
+  }
+
   return (
     <motion.button
+      ref={ref}
       type="button"
       onClick={onOpen}
+      onMouseMove={onMove}
       initial={{ opacity: 0, y: 14 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-40px" }}
       transition={{ duration: 0.35, delay: Math.min(index, 5) * 0.04 }}
-      className="group text-left rounded-2xl border border-border/60 bg-card/40 p-5 flex flex-col gap-3 transition-all hover:border-violet-500/40 hover:bg-card/60 hover:shadow-[0_16px_50px_-20px_rgba(139,92,246,0.35)]"
+      className="group text-left rounded-2xl border border-border/60 bg-card/40 p-5 flex flex-col gap-3 transition-all hover:border-violet-500/40 hover:bg-card/60 hover:shadow-[0_16px_50px_-20px_rgba(139,92,246,0.35)] relative overflow-hidden"
     >
-      <div className="flex items-start justify-between gap-3">
+      {/* spotlight glow */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+        style={{ background: "radial-gradient(300px circle at var(--sx, 50%) var(--sy, 50%), rgba(139,92,246,0.13), transparent 65%)" }}
+      />
+      <div className="relative flex items-start justify-between gap-3">
         <CompanyTile job={job} />
         <div className="flex items-center gap-1.5 flex-wrap justify-end">
           {isNew(job.createdAt) && (
@@ -443,7 +733,7 @@ function JobCard({ job, index, onOpen }: { job: PublicJob; index: number; onOpen
         </div>
       </div>
 
-      <div className="min-w-0">
+      <div className="relative min-w-0">
         <h3 className="font-semibold text-[15px] leading-snug group-hover:text-violet-200 transition-colors line-clamp-2">{job.title}</h3>
         <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1.5 flex-wrap">
           <span className="inline-flex items-center gap-1"><Building2 className="h-3 w-3" /> {job.company}</span>
@@ -452,7 +742,7 @@ function JobCard({ job, index, onOpen }: { job: PublicJob; index: number; onOpen
         </p>
       </div>
 
-      <div className="flex items-center gap-1.5 flex-wrap">
+      <div className="relative flex items-center gap-1.5 flex-wrap">
         <Badge variant="outline" className={cn("text-[9px]", typeTint(job.type))}>{typeLabel(job.type)}</Badge>
         {job.salary && (
           <Badge variant="outline" className="text-[9px] text-zinc-300 border-zinc-500/30 bg-zinc-500/10">
@@ -462,7 +752,7 @@ function JobCard({ job, index, onOpen }: { job: PublicJob; index: number; onOpen
       </div>
 
       {job.requiredSkills.length > 0 && (
-        <div className="flex items-center gap-1.5 flex-wrap">
+        <div className="relative flex items-center gap-1.5 flex-wrap">
           {job.requiredSkills.slice(0, 3).map((s) => (
             <span key={s} className="rounded-md bg-muted/30 border border-border/40 px-1.5 py-0.5 text-[10px] text-muted-foreground">{s}</span>
           ))}
@@ -472,10 +762,13 @@ function JobCard({ job, index, onOpen }: { job: PublicJob; index: number; onOpen
         </div>
       )}
 
-      <div className="mt-auto pt-1 border-t border-border/40 flex items-center justify-between text-[10px] text-muted-foreground">
+      <div className="relative mt-auto pt-1 border-t border-border/40 flex items-center justify-between text-[10px] text-muted-foreground">
         <span className="flex items-center gap-2 flex-wrap">
           <span className="inline-flex items-center gap-1"><Globe2 className="h-3 w-3" /> {country}</span>
           <span className="inline-flex items-center gap-1"><Clock className="h-3 w-3" /> {timeAgo(job.createdAt)}</span>
+          {job.applicants > 0 && (
+            <span className="inline-flex items-center gap-1"><Users className="h-3 w-3" /> {job.applicants}</span>
+          )}
         </span>
         <span className="inline-flex items-center gap-1 font-medium text-violet-300 opacity-90 group-hover:opacity-100 transition-opacity">
           View role <ArrowRight className="h-3 w-3 group-hover:translate-x-0.5 transition-transform" />
@@ -485,24 +778,60 @@ function JobCard({ job, index, onOpen }: { job: PublicJob; index: number; onOpen
   )
 }
 
-function JobDetailDialog({ job, signedIn, onClose, onNeedSignIn }: { job: PublicJob; signedIn: boolean; onClose: () => void; onNeedSignIn: () => void }) {
+// ============================================================
+// Detail dialog: rich role view + dual apply flow
+// (signed-in: one-click via /api/jobs/[id]/apply; guests: direct
+// application without an account via /api/hiring/jobs/[id]/apply)
+// ============================================================
+function JobDetailDialog({
+  job,
+  sessionUser,
+  onClose,
+  onNeedSignIn,
+}: {
+  job: PublicJob
+  sessionUser: { name?: string; email?: string; role?: string } | null
+  onClose: () => void
+  onNeedSignIn: () => void
+}) {
+  const signedIn = !!sessionUser
   const [coverLetter, setCoverLetter] = React.useState("")
   const [showCover, setShowCover] = React.useState(false)
+  const [guestSent, setGuestSent] = React.useState(false)
+
+  // guest form state
+  const [gName, setGName] = React.useState("")
+  const [gEmail, setGEmail] = React.useState("")
+  const [gPhone, setGPhone] = React.useState("")
+  const [gLink, setGLink] = React.useState("")
+  const [gNote, setGNote] = React.useState("")
 
   const applyMutation = useMutation({
     mutationFn: async () => {
-      return api(`/api/jobs/${job.id}/apply`, {
-        method: "POST",
-        body: JSON.stringify({ coverLetter }),
-      })
+      return api(`/api/jobs/${job.id}/apply`, { method: "POST", body: JSON.stringify({ coverLetter }) })
     },
-    onSuccess: () => toast.success(`Application sent — good luck for ${job.title}!`),
+    onSuccess: () => toast.success(`Application sent. Good luck for ${job.title}!`),
     onError: (e: any) => {
       if (e?.status === 409) toast.info("You've already applied for this role.")
       else toast.error(e?.message || "Could not submit application")
     },
   })
 
+  const guestMutation = useMutation({
+    mutationFn: async () => {
+      return api(`/api/hiring/jobs/${job.id}/apply`, {
+        method: "POST",
+        body: JSON.stringify({ name: gName, email: gEmail, phone: gPhone, linkedin: gLink, note: gNote }),
+      })
+    },
+    onSuccess: () => setGuestSent(true),
+    onError: (e: any) => {
+      if (e?.status === 409) toast.info("You've already applied for this role with this email.")
+      else toast.error(e?.message || "Could not submit application")
+    },
+  })
+
+  const guestValid = gName.trim().length >= 2 && /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(gEmail.trim())
   const requirements = splitLines(job.requirements)
   const country = deriveCountry(job.location)
 
@@ -603,6 +932,9 @@ function JobDetailDialog({ job, signedIn, onClose, onNeedSignIn }: { job: Public
           <section className="rounded-xl border border-violet-500/25 bg-violet-500/5 p-4 space-y-3">
             {signedIn ? (
               <>
+                <p className="text-[11px] text-muted-foreground">
+                  Applying as <span className="text-foreground font-medium">{sessionUser?.name || "your GuardianX profile"}</span>
+                </p>
                 {!showCover ? (
                   <button
                     type="button"
@@ -630,14 +962,106 @@ function JobDetailDialog({ job, signedIn, onClose, onNeedSignIn }: { job: Public
                   Apply for this role
                 </Button>
               </>
+            ) : guestSent ? (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.96 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.3 }}
+                className="flex flex-col items-center text-center py-4"
+              >
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ type: "spring", stiffness: 260, damping: 18, delay: 0.08 }}
+                  className="flex items-center justify-center h-14 w-14 rounded-full bg-emerald-500/15 border border-emerald-500/30 mb-3"
+                >
+                  <CheckCircle2 className="h-7 w-7 text-emerald-400" />
+                </motion.div>
+                <h4 className="text-sm font-semibold">Application received</h4>
+                <p className="text-xs text-muted-foreground mt-1.5 max-w-sm leading-relaxed">
+                  Thanks {gName.trim().split(/\s+/)[0]}! Your application for{" "}
+                  <span className="text-foreground font-medium">{job.title}</span> is in. Our talent team reviews
+                  every application personally and will reach out at{" "}
+                  <span className="text-foreground font-medium">{gEmail.trim()}</span> if it's a match.
+                </p>
+                <Button size="sm" variant="outline" className="mt-4" onClick={onClose}>
+                  Browse more roles
+                </Button>
+              </motion.div>
             ) : (
               <>
-                <p className="text-xs text-muted-foreground">
-                  Applications go through your GuardianX profile — it takes a minute to sign in, and your certificates speak for you.
-                </p>
-                <Button className="w-full bg-gradient-to-r from-violet-600 to-violet-500 text-white" onClick={onNeedSignIn}>
-                  Sign in to apply <ArrowRight className="h-4 w-4 ml-1.5" />
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs font-medium">Apply directly, no account needed</p>
+                  <Badge variant="outline" className="text-[9px] text-emerald-300 border-emerald-500/30 bg-emerald-500/10">
+                    1 min
+                  </Badge>
+                </div>
+                <div className="grid gap-2.5 sm:grid-cols-2">
+                  <div className="relative">
+                    <Users className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                    <Input
+                      value={gName}
+                      onChange={(e) => setGName(e.target.value)}
+                      placeholder="Full name *"
+                      maxLength={100}
+                      className="pl-9 text-sm"
+                    />
+                  </div>
+                  <div className="relative">
+                    <Mail className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                    <Input
+                      type="email"
+                      value={gEmail}
+                      onChange={(e) => setGEmail(e.target.value)}
+                      placeholder="Email *"
+                      maxLength={200}
+                      className="pl-9 text-sm"
+                    />
+                  </div>
+                  <div className="relative">
+                    <Phone className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                    <Input
+                      value={gPhone}
+                      onChange={(e) => setGPhone(e.target.value)}
+                      placeholder="Phone (optional)"
+                      maxLength={30}
+                      className="pl-9 text-sm"
+                    />
+                  </div>
+                  <div className="relative">
+                    <Link2 className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                    <Input
+                      value={gLink}
+                      onChange={(e) => setGLink(e.target.value)}
+                      placeholder="LinkedIn or portfolio (optional)"
+                      maxLength={300}
+                      className="pl-9 text-sm"
+                    />
+                  </div>
+                </div>
+                <textarea
+                  value={gNote}
+                  onChange={(e) => setGNote(e.target.value)}
+                  rows={3}
+                  maxLength={3000}
+                  placeholder="Tell us why you're a great fit (optional)"
+                  className="w-full rounded-lg border border-border/60 bg-background/60 p-2.5 text-sm resize-none focus:outline-none focus:ring-1 focus:ring-violet-500/50"
+                />
+                <Button
+                  className="w-full bg-gradient-to-r from-violet-600 to-violet-500 text-white"
+                  disabled={!guestValid || guestMutation.isPending}
+                  onClick={() => guestMutation.mutate()}
+                >
+                  {guestMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin mr-1.5" /> : <Send className="h-4 w-4 mr-1.5" />}
+                  Submit application
                 </Button>
+                <p className="text-[10px] text-center text-muted-foreground">
+                  We reply from the hiring team inbox, no platform signup required.
+                  Have a GuardianX profile?{" "}
+                  <button type="button" onClick={onNeedSignIn} className="text-violet-300 hover:underline">
+                    Sign in to apply with your certificates
+                  </button>
+                </p>
               </>
             )}
           </section>
@@ -645,4 +1069,48 @@ function JobDetailDialog({ job, signedIn, onClose, onNeedSignIn }: { job: Public
       </DialogContent>
     </Dialog>
   )
+}
+
+// ============================================================
+// SEO: client-injected JobPosting JSON-LD (ItemList of JobPosting)
+// ============================================================
+function HiringJsonLd({ jobs }: { jobs: PublicJob[] }) {
+  React.useEffect(() => {
+    const prev = document.getElementById("gx-hiring-jsonld")
+    if (prev) prev.remove()
+    if (!jobs.length) return
+    const base =
+      (typeof window !== "undefined" && window.location.origin) ||
+      "https://academy.guardianx.cloud"
+    const data = {
+      "@context": "https://schema.org",
+      "@type": "ItemList",
+      itemListElement: jobs.slice(0, 30).map((j, i) => ({
+        "@type": "ListItem",
+        position: i + 1,
+        item: {
+          "@type": "JobPosting",
+          title: j.title,
+          description: j.description.slice(0, 2500),
+          datePosted: j.createdAt,
+          employmentType: schemaEmploymentType(j.type),
+          hiringOrganization: { "@type": "Organization", name: j.company },
+          jobLocation: {
+            "@type": "Place",
+            ...(j.remote ? { jobLocationType: "TELECOMMUTE" } : {}),
+            address: { "@type": "PostalAddress", addressLocality: j.location },
+          },
+          directApply: true,
+          url: `${base}/hiring`,
+        },
+      })),
+    }
+    const el = document.createElement("script")
+    el.type = "application/ld+json"
+    el.id = "gx-hiring-jsonld"
+    el.textContent = JSON.stringify(data)
+    document.head.appendChild(el)
+    return () => { el.remove() }
+  }, [jobs])
+  return null
 }

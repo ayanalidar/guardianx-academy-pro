@@ -5,7 +5,7 @@ import { requireAdmin, withErrorHandler } from "@/lib/session";
 export const runtime = "nodejs";
 
 /* ============================================================
-   /api/admin/seo/audit  (GET — ADMIN only)
+   /api/admin/seo/audit  (GET - ADMIN only)
 
    Runs a server-side audit of every public page that the
    GuardianX SPA can render (per PUBLIC_VIEWS in src/app/page.tsx)
@@ -25,7 +25,7 @@ export const runtime = "nodejs";
         GuardianCertification) for each dynamic page so we know
         its real title/description/OG image.
      4. Run a checklist of SEO rules per page and compute a
-        0–100 score (per page + rolled-up overall).
+        0-100 score (per page + rolled-up overall).
 
    Response shape (matches the task spec):
      {
@@ -57,7 +57,7 @@ const STATIC_PAGES: PublicPageDef[] = [
     name: "Homepage",
     pageKey: "home",
     url: "/",
-    defaultTitle: "GuardianX Academy — Cyber Security Training Operating System",
+    defaultTitle: "GuardianX Academy - Cyber Security Training Operating System",
     defaultDescription:
       "Master cybersecurity by actually breaking things. Real cyber range, hands-on labs, certification tracks, CTF arena, and career paths. Learn. Break. Defend. Prove.",
     minWords: 600,
@@ -66,9 +66,9 @@ const STATIC_PAGES: PublicPageDef[] = [
     name: "Impact",
     pageKey: "impact",
     url: "/#/impact",
-    defaultTitle: "Our Impact — GuardianX Academy",
+    defaultTitle: "Our Impact - GuardianX Academy",
     defaultDescription:
-      "Every number tells a story — learners who leveled up their careers, institutions that transformed their curriculum, and a community quietly making the digital world safer.",
+      "Every number tells a story - learners who leveled up their careers, institutions that transformed their curriculum, and a community quietly making the digital world safer.",
     minWords: 300,
   },
   {
@@ -77,32 +77,32 @@ const STATIC_PAGES: PublicPageDef[] = [
     url: "/#/contact",
     defaultTitle: "Contact GuardianX Academy",
     defaultDescription:
-      "Have questions about courses, partnerships, or anything else? Our team responds fast — reach out and we'll get back to you within 24 hours.",
+      "Have questions about courses, partnerships, or anything else? Our team responds fast - reach out and we'll get back to you within 24 hours.",
     minWords: 200,
   },
   {
-    name: "Institutions — Schools",
+    name: "Institutions - Schools",
     pageKey: "institutions-schools",
     url: "/#/institutions-schools",
-    defaultTitle: "Cyber Security Training for Schools — GuardianX Academy",
+    defaultTitle: "Cyber Security Training for Schools - GuardianX Academy",
     defaultDescription:
       "On-premises cyber security training for secondary schools. Dedicated login portal, age-appropriate curriculum, shared cyber range, and joint certifications.",
     minWords: 300,
   },
   {
-    name: "Institutions — Colleges",
+    name: "Institutions - Colleges",
     pageKey: "institutions-colleges",
     url: "/#/institutions-colleges",
-    defaultTitle: "Cyber Security Training for Colleges — GuardianX Academy",
+    defaultTitle: "Cyber Security Training for Colleges - GuardianX Academy",
     defaultDescription:
       "On-premises cyber security training for colleges and professional institutes. Dedicated login portal, lab access, and industry-recognized certifications.",
     minWords: 300,
   },
   {
-    name: "Institutions — Universities",
+    name: "Institutions - Universities",
     pageKey: "institutions-universities",
     url: "/#/institutions-universities",
-    defaultTitle: "Cyber Security Training for Universities — GuardianX Academy",
+    defaultTitle: "Cyber Security Training for Universities - GuardianX Academy",
     defaultDescription:
       "On-premises cyber security training for research universities. Dedicated cyber range, joint certifications, research-grade labs, and curriculum alignment.",
     minWords: 300,
@@ -111,25 +111,25 @@ const STATIC_PAGES: PublicPageDef[] = [
     name: "Course Catalog",
     pageKey: "catalog",
     url: "/#/catalog",
-    defaultTitle: "Course Catalog — GuardianX Academy",
+    defaultTitle: "Course Catalog - GuardianX Academy",
     defaultDescription:
-      "Browse 27+ certification tracks across ethical hacking, networking, web security, system administration, IAM, and cloud security — from beginner to advanced.",
+      "Browse 27+ certification tracks across ethical hacking, networking, web security, system administration, IAM, and cloud security - from beginner to advanced.",
     minWords: 250,
   },
   {
     name: "Training Batches",
     pageKey: "batches",
     url: "/#/batches",
-    defaultTitle: "Upcoming Training Batches — GuardianX Academy",
+    defaultTitle: "Upcoming Training Batches - GuardianX Academy",
     defaultDescription:
-      "Find upcoming live training batches for CEH, CCNA, RHCSA, CISSP, and more — with dates, instructors, mode, and availability.",
+      "Find upcoming live training batches for CEH, CCNA, RHCSA, CISSP, and more - with dates, instructors, mode, and availability.",
     minWords: 200,
   },
   {
     name: "Cyber Range",
     pageKey: "cyber-range",
     url: "/#/cyber-range",
-    defaultTitle: "Cyber Range — Live Attack & Defend — GuardianX Academy",
+    defaultTitle: "Cyber Range - Live Attack & Defend - GuardianX Academy",
     defaultDescription:
       "Train against real targets in a live cyber range. Docker-powered vulnerable systems you can attack, exploit, and defend. 31+ scenarios.",
     minWords: 250,
@@ -138,7 +138,7 @@ const STATIC_PAGES: PublicPageDef[] = [
     name: "Learning Paths",
     pageKey: "learning-paths",
     url: "/#/learning-paths",
-    defaultTitle: "Learning Paths — GuardianX Academy",
+    defaultTitle: "Learning Paths - GuardianX Academy",
     defaultDescription:
       "Guided multi-course learning paths that take you from beginner to job-ready. Each path includes hands-on labs, projects, and certifications.",
     minWords: 200,
@@ -147,16 +147,16 @@ const STATIC_PAGES: PublicPageDef[] = [
     name: "Skill Tree",
     pageKey: "skill-tree",
     url: "/#/skill-tree",
-    defaultTitle: "Skill Tree — GuardianX Academy",
+    defaultTitle: "Skill Tree - GuardianX Academy",
     defaultDescription:
-      "Visualize your cyber security skill tree. Unlock nodes by completing courses, labs, and certifications — and track progress to mastery.",
+      "Visualize your cyber security skill tree. Unlock nodes by completing courses, labs, and certifications - and track progress to mastery.",
     minWords: 150,
   },
   {
     name: "Proctored Exams",
     pageKey: "exams",
     url: "/#/exams",
-    defaultTitle: "Proctored Exams — GuardianX Academy",
+    defaultTitle: "Proctored Exams - GuardianX Academy",
     defaultDescription:
       "Schedule and take proctored certification exams. Identity-verified, browser-locked, and recorded for integrity. Verified digital certificates on pass.",
     minWords: 150,
@@ -165,7 +165,7 @@ const STATIC_PAGES: PublicPageDef[] = [
     name: "Credentials",
     pageKey: "credentials",
     url: "/#/credentials",
-    defaultTitle: "My Credentials — GuardianX Academy",
+    defaultTitle: "My Credentials - GuardianX Academy",
     defaultDescription:
       "View and verify your earned GuardianX credentials and industry certifications. Each credential is verifiable via a public URL.",
     minWords: 150,
@@ -174,7 +174,7 @@ const STATIC_PAGES: PublicPageDef[] = [
     name: "Support",
     pageKey: "support",
     url: "/#/support",
-    defaultTitle: "Support Center — GuardianX Academy",
+    defaultTitle: "Support Center - GuardianX Academy",
     defaultDescription:
       "Help articles, FAQ, and contact options for GuardianX Academy. Get help with courses, payments, certificates, and platform issues.",
     minWords: 150,
@@ -183,7 +183,7 @@ const STATIC_PAGES: PublicPageDef[] = [
     name: "Verify Credential",
     pageKey: "verify",
     url: "/#/verify",
-    defaultTitle: "Verify a Credential — GuardianX Academy",
+    defaultTitle: "Verify a Credential - GuardianX Academy",
     defaultDescription:
       "Verify the authenticity of any GuardianX-issued credential. Enter the credential ID to confirm its validity, recipient, and issue date.",
     minWords: 100,
@@ -192,25 +192,25 @@ const STATIC_PAGES: PublicPageDef[] = [
     name: "Instructors",
     pageKey: "instructors",
     url: "/#/instructors",
-    defaultTitle: "Instructors — GuardianX Academy",
+    defaultTitle: "Instructors - GuardianX Academy",
     defaultDescription:
-      "Meet the GuardianX instructors — industry practitioners in ethical hacking, network security, IAM, and cloud defense with years of field experience.",
+      "Meet the GuardianX instructors - industry practitioners in ethical hacking, network security, IAM, and cloud defense with years of field experience.",
     minWords: 200,
   },
   {
     name: "Events & Webinars",
     pageKey: "events",
     url: "/#/events",
-    defaultTitle: "Events & Webinars — GuardianX Academy",
+    defaultTitle: "Events & Webinars - GuardianX Academy",
     defaultDescription:
-      "Upcoming cyber security workshops, webinars, CTFs, bootcamps, and awareness sessions. Register online — most events are free.",
+      "Upcoming cyber security workshops, webinars, CTFs, bootcamps, and awareness sessions. Register online - most events are free.",
     minWords: 200,
   },
   {
     name: "Blog",
     pageKey: "blog",
     url: "/#/blog",
-    defaultTitle: "Blog — GuardianX Academy",
+    defaultTitle: "Blog - GuardianX Academy",
     defaultDescription:
       "Threat analysis, how-to guides, certification tips, and industry news from the GuardianX community of practitioners and instructors.",
     minWords: 200,
@@ -219,9 +219,9 @@ const STATIC_PAGES: PublicPageDef[] = [
     name: "Pricing",
     pageKey: "pricing",
     url: "/#/pricing",
-    defaultTitle: "Pricing — GuardianX Academy",
+    defaultTitle: "Pricing - GuardianX Academy",
     defaultDescription:
-      "Simple, transparent pricing for learners, teams, and institutions. Free to start — no credit card required. Pro and Enterprise plans available.",
+      "Simple, transparent pricing for learners, teams, and institutions. Free to start - no credit card required. Pro and Enterprise plans available.",
     minWords: 200,
   },
 ];
@@ -432,7 +432,7 @@ export const GET = withErrorHandler(async () => {
   }
 
   // ---- 2. Pull CMS content for each static page ----
-  // We fetch in parallel — Neon handles concurrent reads fine.
+  // We fetch in parallel - Neon handles concurrent reads fine.
   const staticCmsResults = await Promise.all(
     STATIC_PAGES.map((p) =>
       db.siteContent.findMany({ where: { page: p.pageKey } }).then((rows) => ({
@@ -529,7 +529,7 @@ export const GET = withErrorHandler(async () => {
       countWords(c.description) + countWords(c.longDescription);
     const title =
       seoIndex.get(`${pageKey}.title`) ||
-      `${c.title} (${c.shortName}) — GuardianX Academy`;
+      `${c.title} (${c.shortName}) - GuardianX Academy`;
     const description =
       seoIndex.get(`${pageKey}.description`) ||
       c.description ||
@@ -558,7 +558,7 @@ export const GET = withErrorHandler(async () => {
     const wordCount =
       countWords(b.title) + countWords(b.excerpt) + countWords(b.content);
     const title =
-      seoIndex.get(`${pageKey}.title`) || `${b.title} — GuardianX Academy Blog`;
+      seoIndex.get(`${pageKey}.title`) || `${b.title} - GuardianX Academy Blog`;
     const description =
       seoIndex.get(`${pageKey}.description`) || b.excerpt || "";
     const ogImage = seoIndex.get(`${pageKey}.ogImage`) || b.thumbnail;
@@ -585,7 +585,7 @@ export const GET = withErrorHandler(async () => {
       countWords(e.title) + countWords(e.description) +
       countWords(e.longDescription);
     const title =
-      seoIndex.get(`${pageKey}.title`) || `${e.title} — GuardianX Academy`;
+      seoIndex.get(`${pageKey}.title`) || `${e.title} - GuardianX Academy`;
     const description =
       seoIndex.get(`${pageKey}.description`) || e.description || "";
     const ogImage = seoIndex.get(`${pageKey}.ogImage`) || e.imageUrl;
@@ -613,7 +613,7 @@ export const GET = withErrorHandler(async () => {
       countWords(cert.domains) + countWords(cert.skills);
     const title =
       seoIndex.get(`${pageKey}.title`) ||
-      `${cert.name} Certification — GuardianX Academy`;
+      `${cert.name} Certification - GuardianX Academy`;
     const description =
       seoIndex.get(`${pageKey}.description`) || cert.description || "";
     const ogImage = seoIndex.get(`${pageKey}.ogImage`) || null;

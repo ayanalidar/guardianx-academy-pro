@@ -4,7 +4,7 @@ import * as React from "react"
 
 /**
  * Registers the GuardianX service worker for offline/PWA support.
- * Renders nothing — it's a side-effect only component.
+ * Renders nothing - it's a side-effect only component.
  */
 export function ServiceWorkerRegister() {
   React.useEffect(() => {
@@ -17,7 +17,7 @@ export function ServiceWorkerRegister() {
       navigator.serviceWorker
         .register("/sw.js", { scope: "/" })
         .catch(() => {
-          /* silent — PWA is an enhancement, not a hard requirement */
+          /* silent - PWA is an enhancement, not a hard requirement */
         })
     }
 

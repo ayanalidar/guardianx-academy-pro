@@ -7,13 +7,13 @@ import { Activity, Users, FlaskConical, Sparkles, MapPin } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 /* ============================================================
-   SocialProof — small live-activity widget for the homepage.
+   SocialProof - small live-activity widget for the homepage.
    Renders three things:
      1. "X students enrolled this week" (from /api/platform-stats)
      2. "Y labs solved today" (from /api/platform-stats)
      3. A rotating live enrollment notification toast
         (from /api/enrollment-feed)
-   The toast rotates every 10–15 seconds using framer-motion
+   The toast rotates every 10-15 seconds using framer-motion
    AnimatePresence for a smooth swap.
    ============================================================ */
 
@@ -69,7 +69,7 @@ export function SocialProof() {
 
   // Pull a "students enrolled this week" + "labs solved today" number.
   // We prefer manual stats (marketing estimate) over calculated ones,
-  // since the calculated learner_count is total — not weekly.
+  // since the calculated learner_count is total - not weekly.
   const stats = statsData?.stats ?? []
   const weeklyEnrollmentsStat =
     stats.find((s) => s.key === "weekly_enrollments" || /enrolled.*week|week.*enroll/i.test(s.label)) ??
@@ -78,7 +78,7 @@ export function SocialProof() {
     stats.find((s) => s.key === "labs_today" || /lab.*solved|solved.*today/i.test(s.label)) ??
     null
 
-  // Fallbacks — these are sensible marketing estimates that update as
+  // Fallbacks - these are sensible marketing estimates that update as
   // real platform stats get added via the CMS.
   const weeklyEnrollments = weeklyEnrollmentsStat?.value ?? "1,240"
   const labsToday = labsTodayStat?.value ?? "318"

@@ -11,7 +11,7 @@ export async function generateMetadata({ params }: Props) {
   const instructor = await db.user.findUnique({ where: { id }, select: { name: true, title: true, bio: true } })
   if (!instructor) return { title: "Instructor Not Found" }
   return {
-    title: `${instructor.name} — Cybersecurity Instructor`,
+    title: `${instructor.name} - Cybersecurity Instructor`,
     description: instructor.bio?.slice(0, 160) || instructor.title || `Learn from ${instructor.name} at GuardianX Academy.`,
     alternates: { canonical: `/instructors/${id}` },
   }

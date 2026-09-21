@@ -14,7 +14,7 @@ export const GET = withErrorHandler(async (_req: NextRequest, { params }: { para
     progress = await db.labProgress.findUnique({ where: { userId_labId: { userId: user.id, labId: lab.id } } })
   }
 
-  // SECURITY: the flag is NEVER shipped to the client — not even on the
+  // SECURITY: the flag is NEVER shipped to the client - not even on the
   // lab detail page. The client submits a guess to /api/labs/[slug]/submit
   // and the server tells it whether the guess was correct. Only after a
   // correct submission does the submit route echo the flag back for

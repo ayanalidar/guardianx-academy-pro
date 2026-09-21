@@ -48,7 +48,7 @@ interface LabData {
     category: string; difficulty: string; durationMin: number; points: number; tags: string
     scenario: string; objectives: string; hints: string; commands: string; color: string
     // NOTE: `flag` is intentionally omitted from the client type. The
-    // server never ships the flag in the lab detail response — it's only
+    // server never ships the flag in the lab detail response - it's only
     // returned from /api/labs/[slug]/submit after a correct submission
     // or a "reveal" action. See src/lib/safe-lab.ts (master-prompt §34, §80-81).
   }
@@ -618,7 +618,7 @@ function LabTerminal({ labSlug, labTitle, commands, started, done, onStart }: {
     },
   })
 
-  // "reveal" mutation — used by the simulated terminal when the user
+  // "reveal" mutation - used by the simulated terminal when the user
   // "finds" the flag through gameplay (e.g. types `cat /root/flag.txt`).
   // The server marks the lab complete and returns the flag for display,
   // WITHOUT ever shipping the flag to the client in the lab detail

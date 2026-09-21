@@ -1,7 +1,7 @@
 "use client"
 
 /**
- * AppRoot — the application shell decision layer, extracted from the old
+ * AppRoot - the application shell decision layer, extracted from the old
  * `src/app/page.tsx` so BOTH the root route (`/`) and the catch-all
  * bridge route (`/[...gx]`) share identical behavior:
  *
@@ -64,10 +64,10 @@ export function AppRoot({ initialView }: { initialView?: View }) {
   }, [])
 
   // Listen for navigation events. Re-check the session ONLY when we don't
-  // already have one — that is exactly the post-login flow (signIn() sets
+  // already have one - that is exactly the post-login flow (signIn() sets
   // the cookie, then auth-screen calls navigate()). Logged-in taps no
   // longer pay a serverless roundtrip per navigation.
-  // NOTE: the refetch is FORCED when we have no session yet — the 5s
+  // NOTE: the refetch is FORCED when we have no session yet - the 5s
   // throttle previously swallowed the post-login refetch (login → navigate
   // happened within 5s of the mount fetch), leaving `session` null and
   // bouncing the fresh-logged-in user back to the auth/home screens.
@@ -138,12 +138,12 @@ export function AppRoot({ initialView }: { initialView?: View }) {
         window.localStorage.setItem("gx_ref", ref)
       }
     } catch {
-      // localStorage may be unavailable (private mode) — non-fatal.
+      // localStorage may be unavailable (private mode) - non-fatal.
     }
   }, [])
 
   // Check the session ONCE on mount (via fetch instead of the useSession
-  // hook — avoids CLIENT_FETCH_ERROR blocking). Post-login refreshes are
+  // hook - avoids CLIENT_FETCH_ERROR blocking). Post-login refreshes are
   // handled by the navigate listener above; sign-out does a full reload.
   React.useEffect(() => {
     fetchSession()
@@ -213,10 +213,10 @@ export function AppRoot({ initialView }: { initialView?: View }) {
   }
 
   // Logged in: if user explicitly navigates to a public view, show it with public shell
-  // BUT: role separation — if the view is still the default "home", or a staff
+  // BUT: role separation - if the view is still the default "home", or a staff
   // member somehow landed on the student "dashboard", redirect to their
-  // role-appropriate dashboard. (Reverse cases — e.g. a student opening an
-  // admin view — are handled by RoleGate panels in the ViewRouter.)
+  // role-appropriate dashboard. (Reverse cases - e.g. a student opening an
+  // admin view - are handled by RoleGate panels in the ViewRouter.)
   if (session) {
     const role = (session as any)?.user?.role
     const roleHome: string = roleHomeFor(role)

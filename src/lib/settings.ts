@@ -1,13 +1,13 @@
 import { db } from "@/lib/db"
 
 /**
- * Platform Settings — admin-configurable values stored in the DB.
+ * Platform Settings - admin-configurable values stored in the DB.
  *
  * The admin enters Razorpay keys, SMTP settings, CRM webhook token, etc.
  * via the Platform Settings admin page. This helper reads from the DB
  * first, falls back to env vars if not found.
  *
- * In-memory cache: 5 minutes — avoids hitting the DB on every request.
+ * In-memory cache: 5 minutes - avoids hitting the DB on every request.
  */
 
 const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
@@ -35,7 +35,7 @@ export async function getSetting(key: string): Promise<string | null> {
     _cache.set(key, { value, expiresAt: Date.now() + CACHE_TTL })
     return value
   } catch {
-    // DB not available — fall back to env var
+    // DB not available - fall back to env var
     return process.env[key] || null
   }
 }
@@ -73,7 +73,7 @@ export async function getSettings(keys: string[]): Promise<Record<string, string
       _cache.set(key, { value, expiresAt: Date.now() + CACHE_TTL })
     }
   } catch {
-    // DB not available — fall back to env vars
+    // DB not available - fall back to env vars
     for (const key of uncached) {
       result[key] = process.env[key] || null
       _cache.set(key, { value: process.env[key] || null, expiresAt: Date.now() + CACHE_TTL })

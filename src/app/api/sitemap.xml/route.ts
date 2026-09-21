@@ -5,7 +5,7 @@ import { withErrorHandler } from "@/lib/session";
 export const runtime = "nodejs";
 
 /* ============================================================
-   /api/sitemap.xml  (GET — public, no auth)
+   /api/sitemap.xml  (GET - public, no auth)
 
    Generates a dynamic XML sitemap covering:
      - Homepage (/)
@@ -99,7 +99,7 @@ export const GET = withErrorHandler(async () => {
     });
   }
 
-  // 2. Dynamic content — wrapped in try/catch so the sitemap still works
+  // 2. Dynamic content - wrapped in try/catch so the sitemap still works
   //    even if the DB has issues. Static routes are always included.
   let courses: any[] = []
   let blogPosts: any[] = []
@@ -125,7 +125,7 @@ export const GET = withErrorHandler(async () => {
       }).catch(() => []),
     ])
   } catch (e) {
-    // DB failed — still return the static routes
+    // DB failed - still return the static routes
     console.error("[sitemap] DB query failed, returning static routes only")
   }
 

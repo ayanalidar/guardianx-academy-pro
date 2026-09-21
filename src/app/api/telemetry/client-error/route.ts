@@ -4,7 +4,7 @@ import { captureServerError } from "@/lib/sentry-report"
 export const runtime = "nodejs"
 
 /**
- * POST /api/telemetry/client-error — public error relay.
+ * POST /api/telemetry/client-error - public error relay.
  *
  * The browser can't hold the Sentry DSN (it's an admin secret), so client
  * errors (React error boundary, window handlers) are POSTed here and
@@ -13,7 +13,7 @@ export const runtime = "nodejs"
  * Abuse hardening (this endpoint is unauthenticated by design):
  *  - body capped at 4 KB
  *  - per-IP in-memory rate limit: 10 events / minute
- *  - nothing is stored in the DB — forwarding + console only
+ *  - nothing is stored in the DB - forwarding + console only
  *  - always responds { ok: true } so probes learn nothing
  */
 
@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
 
   console.warn("[client-error]", ip, url || "-", message)
 
-  // Forward to Sentry when configured — fire-and-forget, never block.
+  // Forward to Sentry when configured - fire-and-forget, never block.
   void captureServerError("client: " + message, {
     "client.url": url,
     "client.stack": stack,

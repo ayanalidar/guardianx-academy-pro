@@ -4,7 +4,7 @@ import { getCurrentUser } from "@/lib/session"
 
 export const runtime = "nodejs"
 
-// GET /api/cms/[page]/[section] — public.
+// GET /api/cms/[page]/[section] - public.
 // Returns { page, section, keys: { [key]: value } }
 export async function GET(
   _req: NextRequest,
@@ -32,7 +32,7 @@ export async function GET(
   })
 }
 
-// PATCH /api/cms/[page]/[section] — admin only. Single-item update.
+// PATCH /api/cms/[page]/[section] - admin only. Single-item update.
 // Body: { key, value }
 export async function PATCH(
   req: NextRequest,
@@ -67,8 +67,8 @@ export async function PATCH(
   return NextResponse.json({ item })
 }
 
-// DELETE /api/cms/[page]/[section] — admin only.
-// Body: { key } — required, which key to delete.
+// DELETE /api/cms/[page]/[section] - admin only.
+// Body: { key } - required, which key to delete.
 export async function DELETE(
   req: NextRequest,
   { params }: { params: Promise<{ page: string; section: string }> }

@@ -25,7 +25,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE_URL}/institutions/open-schooling`, lastModified: now, changeFrequency: "monthly", priority: 0.7 },
     { url: `${BASE_URL}/corporate-training`, lastModified: now, changeFrequency: "monthly", priority: 0.7 },
     { url: `${BASE_URL}/cyber-quiz`, lastModified: now, changeFrequency: "monthly", priority: 0.8 },
-    // Public SPA bridge routes (catch-all) — real crawlable URLs since the
+    // Public SPA bridge routes (catch-all) - real crawlable URLs since the
     // path-routing migration.
     { url: `${BASE_URL}/exams`, lastModified: now, changeFrequency: "weekly", priority: 0.7 },
     { url: `${BASE_URL}/credentials`, lastModified: now, changeFrequency: "monthly", priority: 0.6 },
@@ -65,7 +65,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
       entries.push({ url: `${BASE_URL}/cert/${encodeURIComponent(cert.slug)}`, lastModified: cert.updatedAt, changeFrequency: "monthly" as const, priority: 0.7 })
     }
   } catch (e) {
-    // DB failed — still return static routes
+    // DB failed - still return static routes
   }
 
   return entries

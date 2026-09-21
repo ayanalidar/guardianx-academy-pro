@@ -87,7 +87,7 @@ const SMS_FEATURES = [
   {
     icon: ShieldCheck,
     title: "Cyber Security Curriculum",
-    desc: "Grades 9–12 cyber security modules aligned with the school syllabus - digital safety, ethical hacking basics, careers.",
+    desc: "Grades 9-12 cyber security modules aligned with the school syllabus - digital safety, ethical hacking basics, careers.",
     color: "text-emerald-300",
     bg: "bg-emerald-500/10",
   },
@@ -98,7 +98,7 @@ const SMS_FEATURES = [
 // ============================================================
 const SCHOOL_CYBER_STAGES = [
   {
-    stage: "Grades 9–10",
+    stage: "Grades 9-10",
     title: "Digital Foundations",
     desc: "Build safe digital habits before students specialise. Hands-on labs reinforce every concept.",
     color: "text-cyan-300",
@@ -112,7 +112,7 @@ const SCHOOL_CYBER_STAGES = [
     ],
   },
   {
-    stage: "Grades 11–12",
+    stage: "Grades 11-12",
     title: "Cyber Security Elective",
     desc: "An academic elective aligned with STEM - prepares students for cyber degrees and certifications.",
     color: "text-emerald-300",
@@ -359,7 +359,7 @@ export function InstitutionsSchoolsView() {
               </h2>
               <p className="text-base text-muted-foreground mt-4">
                 A two-stage curriculum that grows with students - from safe digital habits in grade 9 to an
-                academic cyber security elective in grades 11–12.
+                academic cyber security elective in grades 11-12.
               </p>
             </motion.div>
 

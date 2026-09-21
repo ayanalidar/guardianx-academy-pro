@@ -445,7 +445,7 @@ function MetaRow({ icon: Icon, label, value }: { icon: any; label: string; value
 }
 
 /* ============================================================
-   CertificatePreviewModal — "BLACKOPS PHANTOM" certificate view
+   CertificatePreviewModal - "BLACKOPS PHANTOM" certificate view
    Red/black hacking-institute document: particle-logo watermark,
    HUD brackets, scanlines, terminal readout, real QR, full data.
    ============================================================ */
@@ -481,7 +481,7 @@ function hexFingerprint(seed: string, bytes = 22): string {
   return out.join(" ")
 }
 
-/** Score dial — circular HUD gauge with centered percentage. */
+/** Score dial - circular HUD gauge with centered percentage. */
 function ScoreDial({ value }: { value: number }) {
   const pct = Math.max(0, Math.min(100, value))
   const r = 26
@@ -627,7 +627,7 @@ function CertificatePreviewModal({
                 <div className="gx-aurora-mesh gx-grain relative h-full w-full overflow-hidden">
                   <div className="gx-corner-glows" />
 
-                  {/* Particle-logo watermark — the header particle mark, re-skinned red */}
+                  {/* Particle-logo watermark - the header particle mark, re-skinned red */}
                   <div className="absolute inset-0 z-0 flex items-center justify-center pointer-events-none">
                     <div className="opacity-[0.26] w-[58%] max-w-[460px] aspect-square flex items-center justify-center">
                       <ParticleLogo

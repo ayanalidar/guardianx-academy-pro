@@ -126,7 +126,7 @@ export function CyberQuizResultsView() {
             <h1 className="text-2xl font-bold mb-2">Not this time!</h1>
             <p className="text-sm text-muted-foreground">
               You needed 50% to pass. You scored <span className="font-semibold text-foreground">{attempt.percentage}%</span> ({attempt.score}/{attempt.totalQuestions}).
-              Don't worry — retake is free and questions are randomized each time.
+              Don't worry - retake is free and questions are randomized each time.
             </p>
           </motion.div>
 
@@ -193,7 +193,7 @@ function PassedResultsView({ attempt, attemptId }: { attempt: Attempt; attemptId
         // Auto-verify with mock payment IDs after a short delay (simulates user paying)
         setTimeout(() => verifyPayment(data.orderId, "pay_mock_" + Date.now(), "mock_sig_" + Date.now()), 1500)
       } else {
-        // Real Razorpay — load script + open modal
+        // Real Razorpay - load script + open modal
         loadRazorpayScript().then(() => {
           openRazorpayModal(data)
         }).catch(() => {
@@ -246,7 +246,7 @@ function PassedResultsView({ attempt, attemptId }: { attempt: Attempt; attemptId
   }
 
   const openRazorpayModal = (data: any) => {
-    // @ts-ignore — Razorpay is loaded via script tag
+    // @ts-ignore - Razorpay is loaded via script tag
     const rzp = new window.Razorpay({
       key: data.keyId,
       amount: data.amount * 100, // paise
@@ -289,7 +289,7 @@ function PassedResultsView({ attempt, attemptId }: { attempt: Attempt; attemptId
             </div>
             <h1 className="text-3xl font-bold mb-2">Certificate issued!</h1>
             <p className="text-sm text-muted-foreground mb-6 max-w-md mx-auto">
-              Your Cyber Security Foundation certificate is ready. View it, share it, download the PDF — or open your progress report.
+              Your Cyber Security Foundation certificate is ready. View it, share it, download the PDF - or open your progress report.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               <Button onClick={() => navigate({ name: "cyber-quiz-certificate", credentialId } as any)} size="lg" className="bg-gradient-to-r from-violet-600 to-violet-500 text-white">
@@ -410,7 +410,7 @@ function PassedResultsView({ attempt, attemptId }: { attempt: Attempt; attemptId
             <div className="text-center py-8">
               <Loader2 className="h-8 w-8 animate-spin text-violet-400 mx-auto mb-3" />
               <p className="text-sm text-muted-foreground">Opening secure payment...</p>
-              <p className="text-[10px] text-muted-foreground mt-1">Mock mode — auto-verifying in 1 second</p>
+              <p className="text-[10px] text-muted-foreground mt-1">Mock mode - auto-verifying in 1 second</p>
             </div>
           )}
 

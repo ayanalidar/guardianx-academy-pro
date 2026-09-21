@@ -32,7 +32,7 @@ export interface NavItem {
 
 // ============================================================
 // STUDENT nav items - shown ONLY to the STUDENT role.
-// Staff roles (ADMIN / INSTRUCTOR) get their own dedicated lists below —
+// Staff roles (ADMIN / INSTRUCTOR) get their own dedicated lists below - 
 // cross-role leakage (e.g. admins seeing "Parent Portal") is a bug, so
 // navForRole() no longer appends this list to staff navigation.
 // ============================================================
@@ -119,7 +119,7 @@ export const ADMIN_NAV: NavItem[] = [
   { label: "Settings", icon: Settings, view: { name: "admin-settings" } },
 ]
 
-/** Public marketing pages — available to everyone from the palette. */
+/** Public marketing pages - available to everyone from the palette. */
 export const PUBLIC_NAV: NavItem[] = [
   { label: "Home", icon: Shield, view: { name: "home" } },
   { label: "Courses", icon: BookOpen, view: { name: "catalog" } },
@@ -134,7 +134,7 @@ export const PUBLIC_NAV: NavItem[] = [
   { label: "Verify Certificate", icon: ShieldCheck, view: { name: "verify" } },
 ]
 
-/** Nav for a role — STRICT role separation: each role sees only its own list. */
+/** Nav for a role - STRICT role separation: each role sees only its own list. */
 export function navForRole(role?: string | null): NavItem[] {
   switch (role) {
     case "ADMIN":

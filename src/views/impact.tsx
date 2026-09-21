@@ -175,7 +175,7 @@ export function ImpactView() {
   const statsTitle = getContent(cmsData, "stats", "title", "Scale that creates real opportunity")
   const outcomesEyebrow = getContent(cmsData, "outcomes", "eyebrow", "CAREER OUTCOMES")
   const outcomesTitle = getContent(cmsData, "outcomes", "title", "Real results, real careers")
-  const outcomesDesc = getContent(cmsData, "outcomes", "description", "Measured impact on our learners' professional trajectories, tracked 6–12 months post-certification.")
+  const outcomesDesc = getContent(cmsData, "outcomes", "description", "Measured impact on our learners' professional trajectories, tracked 6-12 months post-certification.")
   const storiesEyebrow = getContent(cmsData, "stories", "eyebrow", "SUCCESS STORIES")
   const storiesTitle = getContent(cmsData, "stories", "title", "Learners who became guardians")
   const storiesDesc = getContent(cmsData, "stories", "description", "Real journeys from our community - verified by their certificates.")

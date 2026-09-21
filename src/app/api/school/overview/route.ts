@@ -2,12 +2,12 @@ import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/session"
 
-/** Shared guard for SCHOOL_ADMIN access — returns user + school, or an error response. */
+/** Shared guard for SCHOOL_ADMIN access - returns user + school, or an error response. */
 export async function getSchoolAdminContext() {
   const user = await getCurrentUser()
   if (!user) return { error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) }
   if (user.role !== "SCHOOL_ADMIN") {
-    return { error: NextResponse.json({ error: "Forbidden — SCHOOL_ADMIN only" }, { status: 403 }) }
+    return { error: NextResponse.json({ error: "Forbidden - SCHOOL_ADMIN only" }, { status: 403 }) }
   }
   if (!user.schoolId) {
     return { error: NextResponse.json({ error: "No school linked to this account" }, { status: 403 }) }
@@ -105,7 +105,7 @@ export async function GET() {
     attendanceSummary = { totalRecords: total, present, absent, late, excused, rate }
   }
 
-  // Enrollment trend — last 6 months (students joined per month)
+  // Enrollment trend - last 6 months (students joined per month)
   const now = new Date()
   const months: { key: string; label: string; count: number }[] = []
   for (let i = 5; i >= 0; i--) {

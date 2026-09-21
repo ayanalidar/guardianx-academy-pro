@@ -44,7 +44,7 @@ export const GET = withErrorHandler(async (req) => {
         verificationUrl: true,
       },
     }),
-    // Unfiltered total — "Total issued" must not shrink when searching
+    // Unfiltered total - "Total issued" must not shrink when searching
     db.cyberQuizCertificate.count({}),
   ])
 

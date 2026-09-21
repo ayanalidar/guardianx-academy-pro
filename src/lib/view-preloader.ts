@@ -1,21 +1,21 @@
 "use client"
 
 /**
- * ViewPreloader — makes SPA navigation feel instant.
+ * ViewPreloader - makes SPA navigation feel instant.
  *
  * Every ViewRouter view is a lazy `next/dynamic` chunk. Without warming,
  * the FIRST tap on a view pays a network roundtrip for its JS chunk
- * (on serverless CDNs that can be 300ms–2s) — this is why navigation
+ * (on serverless CDNs that can be 300ms-2s) - this is why navigation
  * used to feel slow.
  *
  * Two complementary strategies eliminate the wait:
  *
- *   1. IDLE PRELOAD — after the shell mounts, download every view chunk
+ *   1. IDLE PRELOAD - after the shell mounts, download every view chunk
  *      during browser idle time: the priority list first (the views a
  *      student/admin actually taps in the first minutes), then the rest,
  *      one chunk per idle callback so we never compete with interaction.
  *
- *   2. INTENT PREFETCH — hovering (desktop) or touching (mobile) any
+ *   2. INTENT PREFETCH - hovering (desktop) or touching (mobile) any
  *      internal link preloads that view's chunk immediately, giving the
  *      click a ~100-500ms head start even before the idle chain reaches it.
  *
@@ -143,7 +143,7 @@ const VIEW_NAME_TO_FILE: Record<string, string> = {
   "cms": "cms-dashboard",
 }
 
-/** Preload the chunk backing a store view name. Safe to call repeatedly —
+/** Preload the chunk backing a store view name. Safe to call repeatedly - 
  *  webpack memoizes the import and we dedupe in-flight calls too. */
 export function preloadView(viewName: string): void {
   const file = VIEW_NAME_TO_FILE[viewName] ?? viewName
@@ -191,7 +191,7 @@ export function startIdlePreload(): void {
 
   let i = 0
   const step = () => {
-    // stop eagerly if the user is on metered/hidden context — resume never
+    // stop eagerly if the user is on metered/hidden context - resume never
     if (i >= queue.length) return
     const importer = VIEW_IMPORTERS[queue[i++]]
     Promise.resolve()

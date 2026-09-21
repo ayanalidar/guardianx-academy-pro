@@ -75,9 +75,9 @@ export const POST = withErrorHandler(async (req) => {
         data: {
           email: email.trim().toLowerCase(),
           name: name.trim(),
-          passwordHash: "$2a$12$" + randomBytes(24).toString("hex"), // unusable random — login via Google/creds only
+          passwordHash: "$2a$12$" + randomBytes(24).toString("hex"), // unusable random - login via Google/creds only
           role: "STUDENT",
-          title: "Cyber Security Foundation — certificate holder",
+          title: "Cyber Security Foundation - certificate holder",
         },
       })
       userId = newUser.id
@@ -105,7 +105,7 @@ export const POST = withErrorHandler(async (req) => {
   if (isMock) {
     razorpayOrderId = "order_" + randomBytes(12).toString("hex")
   } else {
-    // Real Razorpay — create order via REST API
+    // Real Razorpay - create order via REST API
     const auth = Buffer.from(`${keyId}:${keySecret}`).toString("base64")
     const res = await fetch("https://api.razorpay.com/v1/orders", {
       method: "POST",

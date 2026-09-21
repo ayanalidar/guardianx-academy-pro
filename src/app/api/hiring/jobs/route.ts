@@ -3,7 +3,7 @@ import { db } from "@/lib/db"
 
 export const runtime = "nodejs"
 
-/* GET /api/hiring/jobs — PUBLIC. Feeds the /hiring page.
+/* GET /api/hiring/jobs - PUBLIC. Feeds the /hiring page.
  *
  * Returns ACTIVE job openings (the Hiring tab's "openings around the
  * world"). No auth, no user-specific data. Client-side filtering is done

@@ -45,13 +45,13 @@ export function AdminCyberQuizCertsView() {
   const validCount = certs.filter((c) => c.status !== "revoked").length
   const totalIssued = (data as any)?.total ?? certs.length
 
-  // Revoke / restore — persisted via PATCH; was impossible before (no route)
+  // Revoke / restore - persisted via PATCH; was impossible before (no route)
   const revokeMutation = useMutation({
     mutationFn: ({ id, status }: { id: string; status: "valid" | "revoked" }) =>
       api(`/api/admin/cyber-quiz/certificates/${id}`, { method: "PATCH", body: JSON.stringify({ status }) }),
     onSuccess: (_res, vars) => {
       qc.invalidateQueries({ queryKey: ["admin-cyber-quiz-certs"] })
-      toast.success(vars.status === "revoked" ? "Certificate revoked — it will no longer verify" : "Certificate restored")
+      toast.success(vars.status === "revoked" ? "Certificate revoked - it will no longer verify" : "Certificate restored")
     },
     onError: (e: any) => toast.error(e.message || "Status update failed"),
   })
@@ -73,7 +73,7 @@ export function AdminCyberQuizCertsView() {
         </div>
         <div className="rounded-xl border border-border/60 bg-card/40 p-4">
           <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground mb-1">Avg score</div>
-          <div className="text-2xl font-bold tabular-nums">{certs.length ? Math.round(certs.reduce((a, c) => a + c.percentage, 0) / certs.length) + "%" : "—"}</div>
+          <div className="text-2xl font-bold tabular-nums">{certs.length ? Math.round(certs.reduce((a, c) => a + c.percentage, 0) / certs.length) + "%" : " - "}</div>
         </div>
         <div className="rounded-xl border border-border/60 bg-card/40 p-4">
           <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground mb-1">Revoked</div>

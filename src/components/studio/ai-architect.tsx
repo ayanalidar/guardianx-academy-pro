@@ -1,7 +1,7 @@
 "use client"
 
 /**
- * AI Course Architect — Studio dialogs.
+ * AI Course Architect - Studio dialogs.
  *
  * Three review-before-apply surfaces onto /api/ai/course-architect:
  *  1. BlueprintDialog      → course-page sections (what you will learn, prerequisites, tools, careers…)
@@ -9,7 +9,7 @@
  *  3. LessonDeepDiveDialog → expand a single lesson into teaching-grade content
  *
  * Nothing is written to the DB unless the human presses an Apply/Create
- * button — the agent fills the editor, the author stays in charge.
+ * button - the agent fills the editor, the author stays in charge.
  */
 
 import * as React from "react"
@@ -90,7 +90,7 @@ function GeneratingState({ label }: { label: string }) {
         <Skeleton className="h-4 w-2/3 rounded bg-muted/40" />
       </div>
       <p className="text-[11px] text-muted-foreground">
-        The agent is reasoning over its cybersecurity domain knowledge — deep work takes 30-90 seconds.
+        The agent is reasoning over its cybersecurity domain knowledge - deep work takes 30-90 seconds.
       </p>
     </div>
   )
@@ -119,11 +119,11 @@ function ReviewNote() {
 }
 
 // ---------------------------------------------------------------------------
-// 1. Blueprint — course page sections
+// 1. Blueprint - course page sections
 // ---------------------------------------------------------------------------
 
 const BLUEPRINT_FIELDS: { key: string; label: string; hint: string }[] = [
-  { key: "longDescription", label: "Long description", hint: "Course page overview — 2-3 paragraphs" },
+  { key: "longDescription", label: "Long description", hint: "Course page overview - 2-3 paragraphs" },
   { key: "whatYouWillLearn", label: "What you will learn", hint: "Outcome checklist on the public page" },
   { key: "prerequisites", label: "Prerequisites", hint: "Ordered foundational → specific" },
   { key: "whoShouldAttend", label: "Who should attend", hint: "Right-fit audience" },
@@ -281,7 +281,7 @@ export function BlueprintDialog({
 }
 
 // ---------------------------------------------------------------------------
-// 2. Curriculum — in-depth modules & lessons (append)
+// 2. Curriculum - in-depth modules & lessons (append)
 // ---------------------------------------------------------------------------
 
 interface PlannedLesson {
@@ -422,8 +422,8 @@ export function CurriculumDialog({
                   <Select value={depth} onValueChange={setDepth}>
                     <SelectTrigger className="bg-background/60"><SelectValue /></SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="standard">Standard — focused teaching content</SelectItem>
-                      <SelectItem value="deep">Deep — 200-400 word lessons + full labs</SelectItem>
+                      <SelectItem value="standard">Standard - focused teaching content</SelectItem>
+                      <SelectItem value="deep">Deep - 200-400 word lessons + full labs</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -464,7 +464,7 @@ export function CurriculumDialog({
           )}
 
           {stage === "loading" && (
-            <GeneratingState label="The Architect is architecting your curriculum — 30-90 seconds…" />
+            <GeneratingState label="The Architect is architecting your curriculum - 30-90 seconds…" />
           )}
 
           {stage === "review" && (
@@ -600,7 +600,7 @@ export function CurriculumDialog({
               </AlertDialogTitle>
               <AlertDialogDescription className="text-xs leading-relaxed">
                 This course already has <b>{existingModuleCount} module(s)</b>. The Architect will ADD{" "}
-                {selectedModules.length} new modules ({selectedLessons} lessons) after the existing ones —
+                {selectedModules.length} new modules ({selectedLessons} lessons) after the existing ones - 
                 nothing is deleted or reordered. You can restructure afterwards in the content tree.
               </AlertDialogDescription>
             </AlertDialogHeader>
@@ -618,7 +618,7 @@ export function CurriculumDialog({
 }
 
 // ---------------------------------------------------------------------------
-// 3. Lesson deep-dive — expand a single lesson
+// 3. Lesson deep-dive - expand a single lesson
 // ---------------------------------------------------------------------------
 
 export function LessonDeepDiveDialog({
@@ -691,7 +691,7 @@ export function LessonDeepDiveDialog({
                 className="bg-background/60 text-xs font-mono leading-relaxed"
               />
               <p className="text-[10px] text-muted-foreground">
-                Markdown — edits here carry into the lesson editor when applied.
+                Markdown - edits here carry into the lesson editor when applied.
               </p>
             </div>
           ) : null}
@@ -725,7 +725,7 @@ export function LessonDeepDiveDialog({
 }
 
 // ---------------------------------------------------------------------------
-// 4. Syllabus Audit — the agent reviews the WHOLE course
+// 4. Syllabus Audit - the agent reviews the WHOLE course
 // ---------------------------------------------------------------------------
 
 interface AuditResult {
@@ -797,7 +797,7 @@ export function AuditDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-card border-border/60 max-w-3xl max-h-[88vh] flex flex-col">
         <DialogHeader>
-          <ArchitectHeader subtitle={`Auditing "${course.title}" against senior-level ${course.category} expectations — coverage, depth, practicality.`} />
+          <ArchitectHeader subtitle={`Auditing "${course.title}" against senior-level ${course.category} expectations - coverage, depth, practicality.`} />
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto custom-scroll min-h-0 pr-1">
@@ -893,7 +893,7 @@ export function AuditDialog({
 }
 
 // ---------------------------------------------------------------------------
-// 5. Assessment Bank — exam-grade question builder per module
+// 5. Assessment Bank - exam-grade question builder per module
 // ---------------------------------------------------------------------------
 
 interface BankQuestion {
@@ -962,7 +962,7 @@ export function AssessmentDialog({
 
   const applyAssessment = async () => {
     if (!targetLesson) {
-      toast.error("This module has no lessons yet — add a lesson first, then attach the quiz.")
+      toast.error("This module has no lessons yet - add a lesson first, then attach the quiz.")
       return
     }
     setApplying(true)
@@ -998,7 +998,7 @@ export function AssessmentDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="bg-card border-border/60 max-w-3xl max-h-[88vh] flex flex-col">
         <DialogHeader>
-          <ArchitectHeader subtitle={`Exam-grade question bank for "${module.title}" — test application, not trivia.`} />
+          <ArchitectHeader subtitle={`Exam-grade question bank for "${module.title}" - test application, not trivia.`} />
         </DialogHeader>
 
         <div className="flex-1 overflow-y-auto custom-scroll min-h-0 pr-1">

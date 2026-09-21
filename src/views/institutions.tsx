@@ -13,14 +13,14 @@ import { cn } from "@/lib/utils"
 import { ArrowRight, ArrowLeft, Handshake } from "lucide-react"
 
 /**
- * Institutions Hub — the `institutions` landing page.
+ * Institutions Hub - the `institutions` landing page.
  *
  * Fully CMS-driven (Admin → Content Studio → Institutions): hero, partner
  * types, benefits, flow steps, partnership models and the final CTA all read
  * from the "institutions" page content with hard-coded fallbacks.
  *
  * History: the CMS seed for this page existed since the Content Studio shipped,
- * but no view consumed it — "institutions" simply redirected to the schools
+ * but no view consumed it - "institutions" simply redirected to the schools
  * product page, making every CMS edit here write-only. This view restores the
  * intended hub and links into the three institution-type product pages.
  */
@@ -40,7 +40,7 @@ interface PartnerType {
 }
 
 // Static view targets per partner type (content drives the copy, code drives
-// the navigation — the three product pages are real views).
+// the navigation - the three product pages are real views).
 const PARTNER_TARGETS: Record<string, { name: any }> = {
   School: { name: "institutions-schools" },
   College: { name: "institutions-colleges" },
@@ -59,7 +59,7 @@ export function InstitutionsView() {
   const heroTitleAccent = getContent(cmsData, "hero", "titleAccent", "schools, colleges & universities.")
   const heroDescription = getContent(
     cmsData, "hero", "description",
-    "GuardianX delivers cybersecurity training directly at your campus — your classrooms, your labs, your schedule. From secondary schools to research universities, we build job-ready defenders through a single, integrated platform.",
+    "GuardianX delivers cybersecurity training directly at your campus - your classrooms, your labs, your schedule. From secondary schools to research universities, we build job-ready defenders through a single, integrated platform.",
   )
   const heroCtaPrimary = getContent(cmsData, "hero", "ctaPrimary", "Sign an MoU")
   const heroCtaSecondary = getContent(cmsData, "hero", "ctaSecondary", "Build Your Cybersecurity Program")

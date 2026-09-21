@@ -152,7 +152,7 @@ export function CMSDashboardView() {
     )
   }
 
-  // ADMIN_EMAILS bootstrap promotes platform owners to SUPER_ADMIN — the
+  // ADMIN_EMAILS bootstrap promotes platform owners to SUPER_ADMIN - the
   // gate must accept both roles or the Content Studio locks the actual
   // admin out ("Admin access required" shown to the super-admin).
   if (!user || (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN")) {
@@ -373,7 +373,7 @@ function PageEditor({ page }: { page: PageId }) {
     },
     staleTime: 30_000,
     retry: 1,
-    // Force the query to run on every mount — fixes the issue where the
+    // Force the query to run on every mount - fixes the issue where the
     // CMS page showed an empty editor because the query didn't fire
     // after navigating from the admin dashboard.
     refetchOnMount: "always",
@@ -391,7 +391,7 @@ function PageEditor({ page }: { page: PageId }) {
 
   // Reset draft whenever data changes (initial load + invalidations).
   // Using `data?.sections` (a stable object identity per fetch) avoids
-  // resetting the form on every keystroke — the parent's draft state
+  // resetting the form on every keystroke - the parent's draft state
   // is the source of truth while the user is editing.
   React.useEffect(() => {
     if (data?.sections) {
@@ -447,7 +447,7 @@ function PageEditor({ page }: { page: PageId }) {
     setNewSectionName("")
     setNewSectionKey("")
     setOpenSection(name)
-    toast.success(`Added section "${name}" — Save to publish`)
+    toast.success(`Added section "${name}" - Save to publish`)
   }
 
   const saveMutation = useMutation({
@@ -498,12 +498,12 @@ function PageEditor({ page }: { page: PageId }) {
       for (const [section, keys] of Object.entries(data.sections)) {
         const draftKeys = draft[section]
         if (!draftKeys) {
-          // whole section removed — delete every key in it
+          // whole section removed - delete every key in it
           for (const key of Object.keys(keys)) {
             deletes.push({ section, key })
           }
         } else {
-          // section exists in draft — delete any key that's missing
+          // section exists in draft - delete any key that's missing
           for (const key of Object.keys(keys)) {
             if (!(key in draftKeys)) {
               deletes.push({ section, key })
@@ -694,7 +694,7 @@ function PageEditor({ page }: { page: PageId }) {
           <h3 className="font-semibold text-base">No content yet for the {meta.label} page</h3>
           <p className="text-sm text-muted-foreground mt-1.5 max-w-md mx-auto leading-relaxed">
             You can either re-seed this page from the platform's default content
-            (recommended — gives you every section the page renders), or start
+            (recommended - gives you every section the page renders), or start
             from scratch by adding your own section.
           </p>
           <div className="flex items-center justify-center gap-2 mt-5 flex-wrap">
@@ -766,7 +766,7 @@ function PageEditor({ page }: { page: PageId }) {
                           delete next[section]
                           return next
                         })
-                        toast.success(`Deleted section "${section}" — Save to publish`)
+                        toast.success(`Deleted section "${section}" - Save to publish`)
                       }
                     }}
                     title="Delete this section from the draft"
@@ -833,7 +833,7 @@ function PageEditor({ page }: { page: PageId }) {
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="new-section-key" className="text-xs font-mono text-muted-foreground">
-                First key (optional — defaults to <code>newKey</code>)
+                First key (optional - defaults to <code>newKey</code>)
               </Label>
               <Input
                 id="new-section-key"

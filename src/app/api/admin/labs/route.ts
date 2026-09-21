@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { requireAdmin, withErrorHandler } from "@/lib/session"
 
-// GET /api/admin/labs — list all labs with progress counts
+// GET /api/admin/labs - list all labs with progress counts
 export const GET = withErrorHandler(async (req: NextRequest) => {
   const user = await requireAdmin()
   if (user instanceof NextResponse) return user
@@ -80,7 +80,7 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
   return NextResponse.json({ labs: result, total: result.length })
 })
 
-// POST /api/admin/labs — create a new lab (ADMIN only)
+// POST /api/admin/labs - create a new lab (ADMIN only)
 export const POST = withErrorHandler(async (req: NextRequest) => {
   const user = await requireAdmin()
   if (user instanceof NextResponse) return user

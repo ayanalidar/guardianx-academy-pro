@@ -6,16 +6,16 @@ export const runtime = "nodejs"
 /**
  * GET /api/credentials/verify/[credentialId]
  *
- * PUBLIC endpoint — no auth required. Anyone (employer, recruiter,
+ * PUBLIC endpoint - no auth required. Anyone (employer, recruiter,
  * registrar) can verify a GuardianX credential by its public
  * `credentialId` (e.g. `GX-CERT-2025-XXXX`).
  *
  * Response shape (always 200 unless server error):
- *   { valid: true,  credential: {...} }  — found + active (status === "valid")
- *   { valid: false, credential: {...} }  — found but revoked / expired / suspended
- *   { valid: false, credential: null   }  — not found
+ *   { valid: true,  credential: {...} } - found + active (status === "valid")
+ *   { valid: false, credential: {...} } - found but revoked / expired / suspended
+ *   { valid: false, credential: null   } - not found
  *
- * `credential` (when present) is safe to display publicly — it contains
+ * `credential` (when present) is safe to display publicly - it contains
  * the candidate name, certification name, score, issue/expiry dates,
  * status, skillsAssessed, and examType. It does NOT leak the user's
  * internal DB id, email, or any PII beyond the candidate name as it
@@ -51,11 +51,11 @@ export async function GET(req: Request, { params }: { params: Promise<{ credenti
           status: cred.status,
           skillsAssessed: JSON.parse(cred.skillsAssessed || "[]"),
           examType: cred.examType,
-          // Human-facing canonical link — the verify page for this credential.
+          // Human-facing canonical link - the verify page for this credential.
           // Previously absent, which meant the "Open certificate" button never
           // rendered for exam credentials.
           verificationUrl: `/verify/${cred.credentialId}`,
-          // NOTE: verificationHash is intentionally NOT returned publicly —
+          // NOTE: verificationHash is intentionally NOT returned publicly - 
           // it is a server-side integrity value, not a display field.
         },
       })
@@ -85,7 +85,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ credenti
             examType: "online-quiz",
             // verificationHash intentionally omitted (server-side only)
             // OVERRIDE the stored value: old rows point at /verify?id=… (the
-            // verification page itself — circular). "Open certificate" must
+            // verification page itself - circular). "Open certificate" must
             // open the FULL certificate page, not the verifier again.
             verificationUrl: `/cyber-quiz/certificate/${quizCert.credentialId}`,
           },
@@ -96,7 +96,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ credenti
     // ── Check course-completion Certificate (GX-… format) ──
     // The /verify page must be universal: dashboard-issued course
     // certificates (Certificate table) were previously NOT verifiable here
-    // at all — pasting their ID returned "not found".
+    // at all - pasting their ID returned "not found".
     const courseCert = await db.certificate.findUnique({
       where: { certificateId: credentialId },
       include: {

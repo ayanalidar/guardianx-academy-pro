@@ -48,7 +48,7 @@ function timeAgo(iso: string): string {
 
 export function NotificationCenterView() {
   const { navigate } = useAppStore()
-  // Real feed — aggregated from enrollments/certs/labs/exams/leads (30 days)
+  // Real feed - aggregated from enrollments/certs/labs/exams/leads (30 days)
   const qc = useQueryClient()
   const { data, isLoading, error } = useQuery({
     queryKey: ["admin-notifications"],
@@ -59,13 +59,13 @@ export function NotificationCenterView() {
   const [dismissed, setDismissed] = React.useState<Set<string>>(new Set())
   const [filter, setFilter] = React.useState<"all" | "unread">("all")
 
-  // Optimistic state + server persistence — read/dismiss used to live only
+  // Optimistic state + server persistence - read/dismiss used to live only
   // in component state and was lost on every reload.
   function persist(patch: { readIds?: string[]; dismissedIds?: string[]; markAllRead?: boolean }) {
     api("/api/admin/notifications", { method: "PATCH", body: JSON.stringify(patch) })
       .then(() => qc.invalidateQueries({ queryKey: ["admin-notifications"] }))
       .catch(() => {
-        // best-effort — local state already updated
+        // best-effort - local state already updated
       })
   }
 

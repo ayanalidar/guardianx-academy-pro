@@ -4,7 +4,7 @@ import { cachedJson } from "@/lib/http-cache"
 
 export const runtime = "nodejs"
 
-// GET /api/instructors — public. Returns all instructors (role=INSTRUCTOR) with
+// GET /api/instructors - public. Returns all instructors (role=INSTRUCTOR) with
 // their InstructorProfile (expertise, yearsExperience, certifications, linkedinUrl)
 // plus counts of assigned courses + assigned training batches.
 export async function GET() {

@@ -241,7 +241,7 @@ export function DashboardView() {
   const { data: meData, isLoading: meLoading } = useQuery<MeData>({
     queryKey: ["me"],
     queryFn: () => api("/api/me"),
-    // Re-sync the user on every dashboard mount — a stale pre-login
+    // Re-sync the user on every dashboard mount - a stale pre-login
     // `{ user: null }` cached by the login page must never survive here.
     staleTime: 0,
     refetchOnMount: "always",
@@ -251,7 +251,7 @@ export function DashboardView() {
   const { data: coursesData, isLoading: coursesLoading, isError: coursesError, refetch: refetchCourses } = useQuery<{ courses: CourseListItem[] }>({
     queryKey: ["courses", "dashboard-enrolled"],
     // No catch-swallowing: a transient failure used to be silently cached
-    // as `{ courses: [] }` — the "dashboard shows no courses" bug. Now a
+    // as `{ courses: [] }` - the "dashboard shows no courses" bug. Now a
     // failure retries and, if it still fails, renders a visible retry
     // banner instead of a silent empty state.
     queryFn: () => api(`/api/courses?enrolled=true&userId=${user?.id ?? ""}&status=in-progress`),
@@ -275,7 +275,7 @@ export function DashboardView() {
     retry: 1,
   })
 
-  // Recommended courses — shown on the dashboard when the student has no
+  // Recommended courses - shown on the dashboard when the student has no
   // active courses (fresh accounts previously saw bare empty states and
   // reported "courses don't show").
   const { data: recommendedData, isLoading: recommendedLoading, isError: recommendedError, refetch: refetchRecommended } = useQuery<{ courses: CourseListItem[] }>({
@@ -378,7 +378,7 @@ export function DashboardView() {
 
         {/* ====================================================
             2b. PROGRESS OVERVIEW - Enrolled / Completed / In-Progress / Certs
-            (XP + level deliberately NOT repeated here — they're already
+            (XP + level deliberately NOT repeated here - they're already
             shown in StatsRow and its XP bar right above; rendering them
             three times in the first two screens wasted vertical space.)
             ==================================================== */}
@@ -411,14 +411,14 @@ export function DashboardView() {
               />
             </ScrollReveal>
 
-            {/* CONNECTION RETRY BANNER — course data failed to load after
+            {/* CONNECTION RETRY BANNER - course data failed to load after
                 retries. Never render a silent empty dashboard when the
                 API is temporarily unreachable (e.g. server restart). */}
             {(coursesError || recommendedError) && (
               <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3">
                 <div className="flex items-center gap-2 text-sm text-amber-200">
                   <span className="inline-block h-2 w-2 rounded-full bg-amber-400 animate-pulse" />
-                  Couldn&apos;t load your courses — the connection was interrupted.
+                  Couldn&apos;t load your courses - the connection was interrupted.
                 </div>
                 <button
                   onClick={() => { refetchCourses(); refetchRecommended() }}
@@ -447,7 +447,7 @@ export function DashboardView() {
               />
             </ScrollReveal>
 
-            {/* DAILY OBJECTIVE — moved from the right column: the left rail
+            {/* DAILY OBJECTIVE - moved from the right column: the left rail
                 was much shorter than the right one on student accounts,
                 leaving a large blank region under the labs panel. */}
             <ScrollReveal delay={0.15}>
@@ -798,7 +798,7 @@ function ContinueLearning({
             <div className="rounded-xl border border-cyan-500/20 bg-cyan-500/5 p-3 flex items-center gap-2">
               <Sparkles className="h-3.5 w-3.5 text-cyan-300 shrink-0" />
               <p className="text-xs text-cyan-200/90">
-                You haven't enrolled yet — pick a course below to start your training.
+                You haven't enrolled yet - pick a course below to start your training.
               </p>
             </div>
             <div className="grid sm:grid-cols-3 gap-3">
@@ -1494,7 +1494,7 @@ function EmptyState({
 }
 
 /* ============================================================
-   2a-bis. Refer & Earn — referral link + share + stats widget
+   2a-bis. Refer & Earn - referral link + share + stats widget
    ============================================================ */
 interface ReferralStats {
   total: number
@@ -1531,7 +1531,7 @@ function ReferEarnPanel() {
     staleTime: 30 * 1000,
   })
 
-  // Lazily generate a referral link on first "Get link" interaction — most
+  // Lazily generate a referral link on first "Get link" interaction - most
   // students won't need one until they decide to share, so we don't pre-create
   // rows for every dashboard visit.
   const [generating, setGenerating] = React.useState(false)
@@ -1559,13 +1559,13 @@ function ReferEarnPanel() {
       toast.success("Referral link copied to clipboard")
       setTimeout(() => setCopied(false), 2000)
     } catch {
-      toast.error("Couldn't access clipboard — long-press the link to copy.")
+      toast.error("Couldn't access clipboard - long-press the link to copy.")
     }
   }
 
   function shareOnWhatsApp() {
     if (!link) return
-    const text = `I'm training on GuardianX Academy — hands-on cyber security labs + certification prep. Sign up with my link and we both get a discount:\n${link}`
+    const text = `I'm training on GuardianX Academy - hands-on cyber security labs + certification prep. Sign up with my link and we both get a discount:\n${link}`
     const url = `https://wa.me/?text=${encodeURIComponent(text)}`
     window.open(url, "_blank", "noopener,noreferrer")
   }
@@ -1674,7 +1674,7 @@ function ReferEarnPanel() {
             </Button>
           )}
 
-          {/* Latest rewarded coupon — surfaced once a referral converts. */}
+          {/* Latest rewarded coupon - surfaced once a referral converts. */}
           {data?.referrals?.some((r) => r.status === "REWARDED" && r.couponCode) && (
             <div className="flex items-center justify-between rounded-md border border-emerald-500/30 bg-emerald-500/5 px-3 py-2">
               <div className="flex items-center gap-2">
@@ -1708,7 +1708,7 @@ function ReferralStat({
     <div className="rounded-md border border-border/50 bg-background/40 px-2.5 py-2 text-center">
       <Icon className={cn("mx-auto size-3.5", t.icon)} aria-hidden />
       <div className="mt-1 font-mono text-base font-semibold tabular-nums text-foreground">
-        {loading ? <span className="text-muted-foreground/50">—</span> : value}
+        {loading ? <span className="text-muted-foreground/50"> - </span> : value}
       </div>
       <div className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
         {label}
@@ -1718,7 +1718,7 @@ function ReferralStat({
 }
 
 /* ============================================================
-   2b. Progress Overview — Enrolled / Completed / In-Progress / Certs
+   2b. Progress Overview - Enrolled / Completed / In-Progress / Certs
    ============================================================ */
 function ProgressOverview({
   enrolled, completed, inProgress, certificates, loading,
@@ -1780,7 +1780,7 @@ function ProgressOverview({
 }
 
 /* ============================================================
-   3b-i. Weekly XP Chart — Recharts bar chart, last 7 days
+   3b-i. Weekly XP Chart - Recharts bar chart, last 7 days
    ============================================================ */
 function WeeklyXpChart({
   data, loading,
@@ -1822,7 +1822,7 @@ function WeeklyXpChart({
             {totalXp === 0 && (
               <p className="text-[11px] font-mono text-muted-foreground mb-2 flex items-center gap-1.5">
                 <Zap className="size-3 text-amber-300/70" aria-hidden />
-                No XP earned yet this week — complete a lab or lesson to start a streak.
+                No XP earned yet this week - complete a lab or lesson to start a streak.
               </p>
             )}
             <ResponsiveContainer width="100%" height={180}>
@@ -1875,7 +1875,7 @@ function WeeklyXpChart({
 }
 
 /* ============================================================
-   3b-ii. Skill Radar — Recharts RadarChart across skill domains
+   3b-ii. Skill Radar - Recharts RadarChart across skill domains
    ============================================================ */
 function SkillRadar({
   skills, loading,
@@ -1889,11 +1889,11 @@ function SkillRadar({
   const radarData = React.useMemo(() => {
     if (skills.length === 0) return []
     // Use a max of 6 categories so the radar stays readable. If there are
-    // fewer than 3, pad with "—" entries so the radar still renders a
+    // fewer than 3, pad with " - " entries so the radar still renders a
     // polygon instead of a flat line.
     const top = skills.slice(0, 6)
     while (top.length < 3) {
-      top.push({ key: `pad-${top.length}`, label: "—", solved: 0, total: 0, pct: 0 })
+      top.push({ key: `pad-${top.length}`, label: " - ", solved: 0, total: 0, pct: 0 })
     }
     return top.map((s) => ({
       domain: s.label.length > 12 ? s.label.slice(0, 11) + "…" : s.label,
@@ -1956,7 +1956,7 @@ function SkillRadar({
 }
 
 /* ============================================================
-   3d-ii. Streak Tracker — visual flame + last-7-days dots
+   3d-ii. Streak Tracker - visual flame + last-7-days dots
    ============================================================ */
 function StreakTracker({
   streak, weeklyXp, loading,
@@ -1965,7 +1965,7 @@ function StreakTracker({
   weeklyXp: WeeklyXpItem[]
   loading: boolean
 }) {
-  // 7-day activity dots — a dot is "lit" if there was any activity that day
+  // 7-day activity dots - a dot is "lit" if there was any activity that day
   const dots = React.useMemo(() => {
     return weeklyXp.map((d) => {
       const dt = new Date(d.date + "T00:00:00")
@@ -2054,7 +2054,7 @@ function StreakTracker({
 }
 
 /* ============================================================
-   3c. Upcoming Deadlines — assignments / live sessions / exams
+   3c. Upcoming Deadlines - assignments / live sessions / exams
    ============================================================ */
 function UpcomingDeadlines({
   deadlines, loading,
@@ -2155,7 +2155,7 @@ function UpcomingDeadlines({
 }
 
 // ============================================================
-// QuickWidgets — batch schedule + recommended next course
+// QuickWidgets - batch schedule + recommended next course
 // ============================================================
 function QuickWidgets({ userId, navigate }: { userId?: string; navigate: any }) {
   // Fetch upcoming batches

@@ -56,7 +56,7 @@ export class WebRTCSession {
   }
 
   async connect() {
-    // Signaling server URL — configurable so deployments can point at a
+    // Signaling server URL - configurable so deployments can point at a
     // dedicated host (the old /?XTransformPort= proxy path was removed from
     // Caddy as an SSRF risk). Falls back to the local dev default.
     const SIGNALING_URL = process.env.NEXT_PUBLIC_SIGNALING_URL || "http://localhost:3003"

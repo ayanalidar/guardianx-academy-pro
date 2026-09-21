@@ -4,7 +4,7 @@ import { requireAdmin, withErrorHandler } from "@/lib/session"
 
 const LEAD_STATUSES = ["New", "Contacted", "Qualified", "Proposal", "Negotiation", "Converted", "Lost"]
 
-// PATCH /api/admin/leads/[id] — update lead status, followUpDate, assignedTo
+// PATCH /api/admin/leads/[id] - update lead status, followUpDate, assignedTo
 export const PATCH = withErrorHandler(
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const currentUser = await requireAdmin()

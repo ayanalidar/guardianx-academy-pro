@@ -4,7 +4,7 @@ import { AppRoot } from "@/components/platform/app-root"
 /**
  * Root route. All shell/session/view logic lives in AppRoot (shared with
  * the catch-all bridge route). Navigation is path-based
- * (`/skill-assessments`, not `/#/skill-assessments`) — legacy `#/…` URLs
+ * (`/skill-assessments`, not `/#/skill-assessments`) - legacy `#/…` URLs
  * are transparently rewritten to clean paths on load (see AppRoot).
  *
  * This file is a server component; AppRoot is the client boundary.

@@ -7,7 +7,7 @@ export const runtime = "nodejs"
 /**
  * POST /api/admin/leads/import
  *
- * CSV import for leads — the rescue path for Google Form responses that were
+ * CSV import for leads - the rescue path for Google Form responses that were
  * collected BEFORE the Apps Script webhook was set up (or that failed to sync).
  * The admin exports the Google Form responses sheet as CSV and pastes/uploads
  * it here; every row is upserted by email (like the live webhook does).
@@ -119,12 +119,12 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
     const get = (i?: number) => (i !== undefined ? (row[i] ?? "").trim() : "")
     const name = get(idx.name)
     const email = get(idx.email).toLowerCase() || null
-    if (!name && !email) { errors.push(`Row ${r + 1}: missing name and email — skipped`); continue }
+    if (!name && !email) { errors.push(`Row ${r + 1}: missing name and email - skipped`); continue }
 
     const typeRaw = get(idx.type)
     const typeMatch = LEAD_TYPES.find((t) => norm(t) === norm(typeRaw))
     const type = typeMatch ?? "Individual"
-    const requirementText = [get(idx.requirement), get(idx.message)].filter(Boolean).join(" — ")
+    const requirementText = [get(idx.requirement), get(idx.message)].filter(Boolean).join(" - ")
     const score = scoreFor(type, requirementText)
     const ts = get(idx.timestamp)
     const createdAt = ts && !isNaN(Date.parse(ts)) ? new Date(ts) : undefined

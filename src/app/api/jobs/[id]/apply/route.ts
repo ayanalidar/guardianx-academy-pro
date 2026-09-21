@@ -5,8 +5,8 @@ import { getCurrentUser } from "@/lib/session"
 export const runtime = "nodejs"
 
 // ============================================================
-// Job Board — apply for a job
-// POST /api/jobs/[id]/apply — body: { coverLetter }
+// Job Board - apply for a job
+// POST /api/jobs/[id]/apply - body: { coverLetter }
 // ============================================================
 
 export async function POST(

@@ -42,7 +42,7 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
 
   if (amount <= 0) {
     return NextResponse.json(
-      { error: "This course is free — no payment required", free: true },
+      { error: "This course is free - no payment required", free: true },
       { status: 400 },
     )
   }
@@ -96,7 +96,7 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
   if (isMock) {
     razorpayOrderId = `order_mock_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`
   } else {
-    // Real Razorpay — create order via REST API
+    // Real Razorpay - create order via REST API
     const auth = Buffer.from(`${keyId}:${keySecret}`).toString("base64")
     const res = await fetch("https://api.razorpay.com/v1/orders", {
       method: "POST",

@@ -5,7 +5,7 @@ export const runtime = "nodejs"
 
 /**
  * GET /api/skills
- * Public — returns all skill categories with their skills, ordered.
+ * Public - returns all skill categories with their skills, ordered.
  */
 export async function GET() {
   try {

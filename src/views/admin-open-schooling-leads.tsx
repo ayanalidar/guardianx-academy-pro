@@ -347,7 +347,7 @@ function LeadDetailDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <GraduationCap className="h-5 w-5 text-violet-400" />
-            Lead — {lead.name}
+            Lead - {lead.name}
           </DialogTitle>
           <DialogDescription>
             Registered {formatTime(lead.createdAt)} · Source: {lead.source}

@@ -5,7 +5,7 @@ import { logAction } from "@/lib/audit"
 
 export const runtime = "nodejs"
 
-/* PATCH /api/admin/coupons/[id] — ADMIN only. Update a coupon.
+/* PATCH /api/admin/coupons/[id] - ADMIN only. Update a coupon.
  * Accepts any of: { code?, type?, value?, maxUses?, validFrom?, validUntil?, courseId?, active? }
  * Validates per the same rules as POST /api/admin/coupons.
  */
@@ -135,7 +135,7 @@ export const PATCH = withErrorHandler(
   },
 )
 
-/* DELETE /api/admin/coupons/[id] — ADMIN only. Delete a coupon. */
+/* DELETE /api/admin/coupons/[id] - ADMIN only. Delete a coupon. */
 export const DELETE = withErrorHandler(
   async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const currentUser = await requireAdmin()

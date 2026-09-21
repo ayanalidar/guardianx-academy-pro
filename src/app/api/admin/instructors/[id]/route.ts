@@ -5,7 +5,7 @@ import { logAction } from "@/lib/audit"
 
 export const runtime = "nodejs"
 
-// DELETE /api/admin/instructors/[id] — delete an instructor
+// DELETE /api/admin/instructors/[id] - delete an instructor
 export const DELETE = withErrorHandler(
   async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const currentUser = await requireAdmin()

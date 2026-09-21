@@ -5,7 +5,7 @@ import { getCurrentUser } from "@/lib/session"
 
 export const runtime = "nodejs"
 
-// PATCH /api/user/password — change own password (any role)
+// PATCH /api/user/password - change own password (any role)
 export async function PATCH(req: NextRequest) {
   const user = await getCurrentUser()
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })

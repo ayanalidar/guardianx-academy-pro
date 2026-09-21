@@ -6,7 +6,7 @@ export const runtime = "nodejs"
 
 /* GET /api/admin/platform-stats
  * ADMIN-only. Returns ALL platform stats (including hidden ones) for
- * management — unlike the public /api/platform-stats which only returns
+ * management - unlike the public /api/platform-stats which only returns
  * visible ones.
  */
 export const GET = withErrorHandler(async () => {

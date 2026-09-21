@@ -6,7 +6,7 @@ export const runtime = "nodejs"
 
 /**
  * GET /api/ranks
- * Public — returns all 8 rank tiers ordered by level.
+ * Public - returns all 8 rank tiers ordered by level.
  */
 export async function GET() {
   try {

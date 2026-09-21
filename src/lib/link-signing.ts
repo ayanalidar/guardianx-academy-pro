@@ -6,7 +6,7 @@ import { requireSecret } from "@/lib/secrets"
  *
  * Problem being solved: after a guest completes the Cyber Awareness Quiz,
  * the results view fetches /api/cyber-quiz/attempt/[attemptId]. Attempt IDs
- * are CUIDs — NOT security tokens — so the endpoint needs proof that the
+ * are CUIDs - NOT security tokens - so the endpoint needs proof that the
  * requester is the person the result belongs to. Previously the endpoint
  * required the guest's email as a query param (weak, and the results view
  * didn't even send it → guest results 403'd), with a TODO to sign links.
@@ -34,7 +34,7 @@ export function signAttemptToken(attemptId: string): string {
   return `${attemptId}.${sig}`
 }
 
-/** Verify "<attemptId>.<sig>" — timing-safe, no information leaks. */
+/** Verify "<attemptId>.<sig>" - timing-safe, no information leaks. */
 export function verifyAttemptToken(token: string | null | undefined): string | null {
   if (!token || typeof token !== "string") return null
   const dot = token.lastIndexOf(".")

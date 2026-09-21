@@ -1,5 +1,5 @@
 /**
- * Minimal CSV parser — handles quoted fields with embedded commas and
+ * Minimal CSV parser - handles quoted fields with embedded commas and
  * double-quote escaping. No external dependency.
  *
  * Expected input: a CSV string with a header row.

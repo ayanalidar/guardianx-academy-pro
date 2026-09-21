@@ -4,7 +4,7 @@ import { withErrorHandler } from "@/lib/session"
 
 export const runtime = "nodejs"
 
-// Reward config — both referrer & referred receive a 15% discount coupon,
+// Reward config - both referrer & referred receive a 15% discount coupon,
 // valid for 90 days, single use.
 const REWARD_TYPE = "percentage" // percentage | fixed
 const REWARD_VALUE = 15 // 15% off
@@ -20,7 +20,7 @@ function generateCouponCode(prefix: string): string {
   return `${prefix}-${suffix}`
 }
 
-/* POST /api/referral/track — PUBLIC (no auth).
+/* POST /api/referral/track - PUBLIC (no auth).
  * ---------------------------------------------------------------
  * Body: { referralId, email, userId? }
  *

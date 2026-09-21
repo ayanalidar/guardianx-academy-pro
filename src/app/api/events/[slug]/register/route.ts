@@ -5,9 +5,9 @@ import { getCurrentUser, withErrorHandler } from "@/lib/session"
 export const runtime = "nodejs"
 
 /**
- * POST /api/events/[slug]/register — register the signed-in user for an
+ * POST /api/events/[slug]/register - register the signed-in user for an
  * event. Increments the Event.registered counter (the Event model has a
- * `registered` field per the spec — we use it directly rather than creating
+ * `registered` field per the spec - we use it directly rather than creating
  * a separate registration row, since there is no EventRegistration model).
  *
  * Auth: required (any logged-in user). Returns:
@@ -40,10 +40,10 @@ export const POST = withErrorHandler(
       const body = await req.json()
       bodyEventId = body?.eventId
     } catch {
-      // No body / invalid JSON — fine, slug in URL is canonical.
+      // No body / invalid JSON - fine, slug in URL is canonical.
     }
     if (bodyEventId && bodyEventId !== event.id) {
-      // Tolerate — don't 400. The URL slug wins.
+      // Tolerate - don't 400. The URL slug wins.
     }
 
     // Capacity check
@@ -73,7 +73,7 @@ export const POST = withErrorHandler(
     const res = NextResponse.json({
       success: true,
       message: alreadyRegistered
-        ? "You're already registered — see you there!"
+        ? "You're already registered - see you there!"
         : `You're registered for ${event.title}.`,
       registered: newCount,
       alreadyRegistered,

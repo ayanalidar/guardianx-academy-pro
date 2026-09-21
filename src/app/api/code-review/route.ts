@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
     if (!rateLimit(`code-review:${user.id}`, { max: 10, windowMs: 5 * 60 * 1000 })) {
-      return NextResponse.json({ error: "Rate limit reached — try again in a few minutes." }, { status: 429 })
+      return NextResponse.json({ error: "Rate limit reached - try again in a few minutes." }, { status: 429 })
     }
 
     const body = await req.json()

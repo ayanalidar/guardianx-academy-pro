@@ -72,7 +72,7 @@ export function AdminCyberQuizAttemptsView() {
         <StatCard label="Total attempts" value={totalCount} />
         <StatCard label="Passed" value={passed} color="text-emerald-300" />
         <StatCard label="With certificate" value={withCert} color="text-violet-300" />
-        <StatCard label="Pass rate" value={totalCount ? passRate + "%" : "—"} color="text-cyan-300" />
+        <StatCard label="Pass rate" value={totalCount ? passRate + "%" : " - "} color="text-cyan-300" />
       </div>
 
       <div className="flex flex-col sm:flex-row gap-3">
@@ -135,7 +135,7 @@ export function AdminCyberQuizAttemptsView() {
                         )}
                       </div>
                       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
-                        <span>{a.guestEmail || "—"}</span>
+                        <span>{a.guestEmail || " - "}</span>
                         <span className="tabular-nums">{a.score}/{a.totalQuestions} · {a.percentage}%</span>
                         <span className="flex items-center gap-1"><Clock className="h-3 w-3" /> {formatTime(a.createdAt)}</span>
                       </div>

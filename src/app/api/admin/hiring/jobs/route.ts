@@ -6,7 +6,7 @@ import { logAction } from "@/lib/audit"
 export const runtime = "nodejs"
 
 /* ============================================================
- * Hiring admin API — manage the job openings shown on /hiring.
+ * Hiring admin API - manage the job openings shown on /hiring.
  *
  * GET  /api/admin/hiring/jobs  → ALL openings (draft/closed/active) + stats
  * POST /api/admin/hiring/jobs  → create a new opening (ADMIN only)
@@ -75,7 +75,7 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
   const description = String(body.description || "").trim()
   if (!title) return NextResponse.json({ error: "Job title is required" }, { status: 400 })
   if (!company) return NextResponse.json({ error: "Company is required" }, { status: 400 })
-  if (!location) return NextResponse.json({ error: "Location is required (e.g. \"Dubai, UAE\" or \"Remote — Worldwide\")" }, { status: 400 })
+  if (!location) return NextResponse.json({ error: "Location is required (e.g. \"Dubai, UAE\" or \"Remote - Worldwide\")" }, { status: 400 })
   if (!description) return NextResponse.json({ error: "Description is required" }, { status: 400 })
 
   const job = await db.job.create({

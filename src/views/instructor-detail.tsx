@@ -14,7 +14,7 @@ import {
 } from "lucide-react"
 
 /* ============================================================
-   /instructor/<id> — public instructor profile (master-prompt §25)
+   /instructor/<id> - public instructor profile (master-prompt §25)
    ============================================================ */
 
 interface AssignedCourse {

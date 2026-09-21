@@ -8,12 +8,12 @@ import { COURSE_LIST_FIELDS, normalizeCourseListInput } from "@/lib/course-lists
 export const runtime = "nodejs"
 
 /**
- * Course Authoring Studio — single-course operations.
+ * Course Authoring Studio - single-course operations.
  *
- * GET    — fetch course config (full JSON for the editor).
- * PATCH  — update config + meta (title, status, version bump).
- * DELETE — delete the authored course (does NOT delete any published Course).
- * POST   — publish: convert the draft into a real Course with modules/lessons.
+ * GET - fetch course config (full JSON for the editor).
+ * PATCH - update config + meta (title, status, version bump).
+ * DELETE - delete the authored course (does NOT delete any published Course).
+ * POST - publish: convert the draft into a real Course with modules/lessons.
  *          Re-publishing updates the existing Course (idempotent).
  *
  * Auth: requires the logged-in user to be the author.
@@ -33,7 +33,7 @@ interface StudioConfig {
   tags: string[]
   certBody: string | null
   thumbnail: string | null
-  // Course extras — optional JSON arrays (what you'll learn, prerequisites,
+  // Course extras - optional JSON arrays (what you'll learn, prerequisites,
   // who should attend, tools covered, career outcomes)
   whatYouWillLearn?: string[]
   prerequisites?: string[]
@@ -91,20 +91,20 @@ async function getOwnedDraft(id: string, userId: string) {
     console.error("[course-studio/draft-lookup]", err)
     return {
       error: NextResponse.json(
-        { error: isDriftError(err) ? "Course storage is being provisioned — try again in a moment." : "Failed to load course" },
+        { error: isDriftError(err) ? "Course storage is being provisioned - try again in a moment." : "Failed to load course" },
         { status: 500 }
       ),
     }
   }
   if (!draft) return { error: NextResponse.json({ error: "Course not found" }, { status: 404 }) }
   if (draft.authorId !== userId) {
-    return { error: NextResponse.json({ error: "Forbidden — not the author" }, { status: 403 }) }
+    return { error: NextResponse.json({ error: "Forbidden - not the author" }, { status: 403 }) }
   }
   return { draft }
 }
 
 // ---------------------------------------------------------------------------
-// GET — fetch full config
+// GET - fetch full config
 // ---------------------------------------------------------------------------
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const user = await getCurrentUser()
@@ -130,7 +130,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 }
 
 // ---------------------------------------------------------------------------
-// PATCH — update config / meta
+// PATCH - update config / meta
 // ---------------------------------------------------------------------------
 const patchSchema = z.object({
   title: z.string().min(3).max(120).optional(),
@@ -197,7 +197,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       return NextResponse.json(
         {
           error: isDriftError(updErr)
-            ? "Course storage is being provisioned — try again in a moment."
+            ? "Course storage is being provisioned - try again in a moment."
             : "Failed to update course",
         },
         { status: 500 }
@@ -217,7 +217,7 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
 }
 
 // ---------------------------------------------------------------------------
-// DELETE — delete draft
+// DELETE - delete draft
 // ---------------------------------------------------------------------------
 export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const user = await getCurrentUser()
@@ -239,7 +239,7 @@ export async function DELETE(_req: NextRequest, { params }: { params: Promise<{ 
 }
 
 // ---------------------------------------------------------------------------
-// POST — publish (convert to real Course + modules + lessons)
+// POST - publish (convert to real Course + modules + lessons)
 // ---------------------------------------------------------------------------
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const user = await getCurrentUser()
@@ -261,7 +261,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     return NextResponse.json({ error: "Add at least one module before publishing" }, { status: 400 })
   }
 
-  // Validate that each module has at least one lesson (warn-only — we still publish)
+  // Validate that each module has at least one lesson (warn-only - we still publish)
   const totalLessons = config.modules.reduce(
     (acc, m) => acc + (Array.isArray(m.lessons) ? m.lessons.length : 0),
     0
@@ -287,7 +287,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   // Drift-resilient lookup: a full-model findUnique selects every Course
   // column and 500s with P2022 on drifted databases. Select only columns
   // that actually exist; if even the lookup fails treat it as "no existing
-  // course" (re-publish then creates rather than updates — the slug embeds
+  // course" (re-publish then creates rather than updates - the slug embeds
   // the draft id, so collisions are practically impossible).
   let existing: { id: string; instructorId?: string | null } | null = null
   try {
@@ -307,14 +307,14 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     }
   }
 
-  // Course extras — config arrays normalized to the canonical JSON encoding
+  // Course extras - config arrays normalized to the canonical JSON encoding
   const extrasData = Object.fromEntries(
     COURSE_LIST_FIELDS.map(({ key }) => [key, normalizeCourseListInput((config as any)[key])])
   ) as Record<string, string>
 
   // --- Drift prep (before the transaction) -------------------------------
   // Sync Course/Module/Lesson storage to the current Prisma schema (adds
-  // any missing columns — e.g. the five required-with-default course-extras
+  // any missing columns - e.g. the five required-with-default course-extras
   // columns Prisma always sends on INSERT). On a fully-synced schema this
   // is a no-op passthrough.
   await Promise.all([ensureTable("Course"), ensureTable("Module"), ensureTable("Lesson")])
@@ -337,7 +337,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     published: true,
     instructorId: user.id,
   }
-  // Keep only fields whose columns exist. id/slug (create) stay explicit —
+  // Keep only fields whose columns exist. id/slug (create) stay explicit - 
   // if those core columns are missing the schema is unusable and the
   // publish SHOULD fail loudly.
   const courseCreateData: Record<string, unknown> = { slug: desiredSlug }
@@ -370,7 +370,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         course = await tx.course.create({ data: courseCreateData as any })
       }
 
-      // Create modules + lessons — each write filtered to the columns the
+      // Create modules + lessons - each write filtered to the columns the
       // drifted database actually has (degrades gracefully; a fully-synced
       // schema writes every field).
       for (let mIdx = 0; mIdx < config.modules.length; mIdx++) {

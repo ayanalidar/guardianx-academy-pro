@@ -293,7 +293,7 @@ export function GlobalSearch({ className, variant = "input" }: GlobalSearchProps
               {roleNav.length > topRoleNav.length && (
                 <CommandItem value="go to more navigation" onSelect={() => go({ name: "dashboard" })}>
                   <LayoutDashboard className="size-4 text-violet-300" aria-hidden />
-                  <span>Dashboard <span className="text-[10px] text-muted-foreground ml-1">— full menu in sidebar</span></span>
+                  <span>Dashboard <span className="text-[10px] text-muted-foreground ml-1"> - full menu in sidebar</span></span>
                 </CommandItem>
               )}
             </CommandGroup>

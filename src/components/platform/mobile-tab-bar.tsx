@@ -1,7 +1,7 @@
 "use client"
 
 /**
- * MobileTabBar — fixed bottom navigation for logged-in users on <lg screens.
+ * MobileTabBar - fixed bottom navigation for logged-in users on <lg screens.
  *
  * Four primary destinations (role-aware first tab), rendered only for app
  * surfaces so it never fights the marketing footer. Hides while the user

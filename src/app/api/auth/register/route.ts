@@ -3,7 +3,7 @@ import bcrypt from "bcryptjs"
 import { z } from "zod"
 import { db } from "@/lib/db"
 
-// Rate limiting — simple in-memory counter (per IP, per window)
+// Rate limiting - simple in-memory counter (per IP, per window)
 const RATE_LIMIT_WINDOW = 60 * 1000 // 1 minute
 const RATE_LIMIT_MAX = 5 // 5 registrations per minute per IP
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
@@ -34,7 +34,7 @@ const schema = z.object({
   ref: z.string().max(64).optional(), // referral id (from ?ref= URL / localStorage)
 })
 
-// Reward config — duplicated from /api/referral/track to keep register
+// Reward config - duplicated from /api/referral/track to keep register
 // self-contained (no cross-route import). See referral/track for full docs.
 const REWARD_TYPE = "percentage"
 const REWARD_VALUE = 15
@@ -78,7 +78,7 @@ async function allocateCoupon() {
  * stamp the referral with both coupon codes + status = REWARDED, and create a
  * second Coupon for the new (referred) user.
  *
- * Failures here are non-fatal — the account has already been created, so we
+ * Failures here are non-fatal - the account has already been created, so we
  * log and continue.
  */
 async function trackReferralOnSignup(referralId: string, newUser: { id: string; email: string }) {
@@ -141,7 +141,7 @@ export async function POST(req: NextRequest) {
     const { name, email, password, ref } = parsed.data
 
     // SECURITY: Always register as STUDENT. Instructor/Admin roles must be
-    // assigned by an admin — never self-assigned via the registration API.
+    // assigned by an admin - never self-assigned via the registration API.
     const role = "STUDENT"
 
     const existing = await db.user.findUnique({ where: { email } })
@@ -164,7 +164,7 @@ export async function POST(req: NextRequest) {
       select: { id: true, email: true, name: true, role: true },
     })
 
-    // Referral tracking — only if a valid `ref` id was supplied (from the
+    // Referral tracking - only if a valid `ref` id was supplied (from the
     // ?ref= URL captured client-side and stored in localStorage).
     if (ref && ref.trim()) {
       await trackReferralOnSignup(ref.trim(), { id: user.id, email: user.email })

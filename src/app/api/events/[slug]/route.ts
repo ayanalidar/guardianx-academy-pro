@@ -3,7 +3,7 @@ import { db } from "@/lib/db"
 
 export const runtime = "nodejs"
 
-// GET /api/events/[slug] — public. Returns a single published event by slug
+// GET /api/events/[slug] - public. Returns a single published event by slug
 // plus 3 related events of the same type (for the detail page's
 // "Related events" section).
 export async function GET(

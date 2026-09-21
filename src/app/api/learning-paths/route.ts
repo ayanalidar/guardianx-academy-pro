@@ -6,7 +6,7 @@ export const runtime = "nodejs"
 
 /**
  * GET /api/learning-paths
- * Public — returns all published learning paths ordered by `order`.
+ * Public - returns all published learning paths ordered by `order`.
  */
 export async function GET() {
   try {

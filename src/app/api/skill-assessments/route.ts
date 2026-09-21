@@ -5,7 +5,7 @@ import { getCurrentUser } from "@/lib/session"
 export const runtime = "nodejs"
 
 // ============================================================
-// Skill Assessments — list
+// Skill Assessments - list
 // GET: list assessments (auto-seeds 5 if empty)
 // ============================================================
 
@@ -54,7 +54,7 @@ async function seedAssessments() {
           question: "Which vulnerability class does IDOR (Insecure Direct Object Reference) belong to?",
           options: JSON.stringify(["Injection", "Broken Access Control", "Cryptographic Failure", "Security Misconfiguration"]),
           correctAnswer: 1,
-          explanation: "IDOR is a canonical Broken Access Control flaw — authorization is not enforced on object access.",
+          explanation: "IDOR is a canonical Broken Access Control flaw - authorization is not enforced on object access.",
           skillTag: "access-control",
           points: 10,
         },

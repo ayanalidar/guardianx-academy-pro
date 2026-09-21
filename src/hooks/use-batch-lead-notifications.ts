@@ -6,7 +6,7 @@ import { api } from "@/lib/api"
 import { useUser } from "@/hooks/use-user"
 
 /**
- * useBatchLeadNotifications — polls for new batch leads + shows browser
+ * useBatchLeadNotifications - polls for new batch leads + shows browser
  * push notifications when a new lead comes in.
  *
  * Only activates for ADMIN users. Uses the Web Notifications API.

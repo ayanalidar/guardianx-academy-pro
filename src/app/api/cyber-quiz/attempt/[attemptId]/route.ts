@@ -6,7 +6,7 @@ import { verifyAttemptToken } from "@/lib/link-signing"
 export const runtime = "nodejs"
 
 /* GET /api/cyber-quiz/attempt/[attemptId]
- * Returns the attempt's score + domain breakdown — used by the results page +
+ * Returns the attempt's score + domain breakdown - used by the results page +
  * progress report. Does NOT reveal correct answers.
  *
  * AUTH: requires either:
@@ -15,7 +15,7 @@ export const runtime = "nodejs"
  *       guestEmail as a query param (verified via a magic link the guest
  *       received), OR
  *   (c) the request includes a valid HMAC-signed result token (?t=<token>)
- *       issued in the submit response — see src/lib/link-signing.ts. This
+ *       issued in the submit response - see src/lib/link-signing.ts. This
  *       closes the previous TODO: the token is unforgeable without the
  *       server secret and is verified in constant time.
  *
@@ -54,7 +54,7 @@ export const GET = withErrorHandler(async (req: NextRequest, { params }: { param
   const signedAttemptId = verifyAttemptToken(new URL(req.url).searchParams.get("t"))
   const tokenValid = signedAttemptId === attempt.id
 
-  // Case 1: attempt belongs to a logged-in user — must be that user.
+  // Case 1: attempt belongs to a logged-in user - must be that user.
   if (attempt.userId) {
     if (!tokenValid && (!currentUser || currentUser.id !== attempt.userId)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 })

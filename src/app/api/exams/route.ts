@@ -5,7 +5,7 @@ export const runtime = "nodejs"
 
 /**
  * GET /api/exams
- * PUBLIC (auth optional) — list published exams.
+ * PUBLIC (auth optional) - list published exams.
  *
  * Authenticated users also get back their per-exam `userAttempts` AND a
  * computed `readinessScore` (the average score of their last 3 completed

@@ -139,7 +139,7 @@ const FALLBACK_ROLES: CareerRole[] = [
     title: "Junior Penetration Tester",
     description:
       "Entry-level offensive security role. Executes scoped penetration tests against networks and web apps, documents findings, and supports senior testers on engagements.",
-    avgSalary: "$70,000 – $100,000",
+    avgSalary: "$70,000-$100,000",
     requiredSkills: ["Networking", "Linux", "Web", "Pentesting", "Reporting"],
     recommendedCourses: [],
     growthRate: "↑ 18% / yr",
@@ -150,7 +150,7 @@ const FALLBACK_ROLES: CareerRole[] = [
     title: "SOC Analyst",
     description:
       "Monitors SIEM, triages alerts, escalates true positives, and writes initial incident reports. The classic blue-team entry point.",
-    avgSalary: "$65,000 – $95,000",
+    avgSalary: "$65,000-$95,000",
     requiredSkills: ["Networking", "Linux", "Web", "Defensive", "Reporting"],
     recommendedCourses: [],
     growthRate: "↑ 18% / yr",
@@ -161,7 +161,7 @@ const FALLBACK_ROLES: CareerRole[] = [
     title: "Security Engineer",
     description:
       "Designs, deploys, and maintains defensive security infrastructure - firewalls, EDR, IAM, WAF. Bridges blue-team and DevOps.",
-    avgSalary: "$110,000 – $155,000",
+    avgSalary: "$110,000-$155,000",
     requiredSkills: ["Networking", "Linux", "Defensive", "Engineering", "Cloud"],
     recommendedCourses: [],
     growthRate: "↑ 18% / yr",
@@ -172,7 +172,7 @@ const FALLBACK_ROLES: CareerRole[] = [
     title: "Cloud Security Engineer",
     description:
       "Secures cloud-native workloads. Implements CSPM, CI/CD security, container hardening, and zero-trust across AWS/Azure/GCP.",
-    avgSalary: "$130,000 – $180,000",
+    avgSalary: "$130,000-$180,000",
     requiredSkills: ["Cloud", "Networking", "Linux", "Engineering", "Defensive"],
     recommendedCourses: [],
     growthRate: "↑ 18% / yr",
@@ -183,7 +183,7 @@ const FALLBACK_ROLES: CareerRole[] = [
     title: "Web Application Tester",
     description:
       "Specializes in web app pentesting. Deep OWASP Top 10 knowledge, advanced SQLi/XSS, SSRF, JWT attacks, and API security testing.",
-    avgSalary: "$95,000 – $140,000",
+    avgSalary: "$95,000-$140,000",
     requiredSkills: ["Web", "Pentesting", "Networking", "Linux", "Reporting"],
     recommendedCourses: [],
     growthRate: "↑ 18% / yr",
@@ -194,7 +194,7 @@ const FALLBACK_ROLES: CareerRole[] = [
     title: "Security Consultant",
     description:
       "Advises clients on security strategy, risk, compliance, and architecture. Combines technical depth with strong communication.",
-    avgSalary: "$120,000 – $180,000",
+    avgSalary: "$120,000-$180,000",
     requiredSkills: ["Engineering", "Defensive", "Pentesting", "Governance", "Reporting"],
     recommendedCourses: [],
     growthRate: "↑ 9% / yr",
@@ -290,7 +290,7 @@ const JOB_READINESS: JobReadiness[] = [
   {
     role: "Junior Penetration Tester",
     readiness: 82,
-    avgSalary: "$75K – $95K",
+    avgSalary: "$75K-$95K",
     matchingSkills: ["Web Security", "Networking", "Linux"],
     missingSkills: ["Burp Suite Pro", "Report Writing"],
     recommendedCourses: ["WAPT", "CEH"],
@@ -298,7 +298,7 @@ const JOB_READINESS: JobReadiness[] = [
   {
     role: "SOC Analyst (Tier 1)",
     readiness: 71,
-    avgSalary: "$55K – $75K",
+    avgSalary: "$55K-$75K",
     matchingSkills: ["Networking", "Linux", "SOC Analysis"],
     missingSkills: ["SIEM (Splunk)", "Threat Intel"],
     recommendedCourses: ["CySA+", "CCNA"],
@@ -306,7 +306,7 @@ const JOB_READINESS: JobReadiness[] = [
   {
     role: "Security Engineer",
     readiness: 54,
-    avgSalary: "$110K – $150K",
+    avgSalary: "$110K-$150K",
     matchingSkills: ["Networking", "Linux"],
     missingSkills: ["Cloud Security", "IAM/PAM", "Automation"],
     recommendedCourses: ["CISSP", "AWS Security"],

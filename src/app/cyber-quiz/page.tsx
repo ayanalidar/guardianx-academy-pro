@@ -1,7 +1,7 @@
 import { PublicRouteView } from "@/components/platform/public-route-view"
 
 export const metadata = { alternates: { canonical: "/cyber-quiz" },
-  title: "Cyber Security Foundation Quiz — Free Public Quiz + ₹199 Certificate",
+  title: "Cyber Security Foundation Quiz - Free Public Quiz + ₹199 Certificate",
   description:
     "Test your cyber awareness with 30 questions across 8 domains. Pass at 50% to unlock a verifiable Cyber Security Foundation certificate + detailed progress report. Shareable to LinkedIn + WhatsApp. ₹199 one-time fee.",
 }

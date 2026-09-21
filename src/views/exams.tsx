@@ -124,7 +124,7 @@ export function ExamsView() {
         </div>
       </section>
 
-      {/* YOUR EXAM READINESS — only shown to authenticated users */}
+      {/* YOUR EXAM READINESS - only shown to authenticated users */}
       {user && <ExamReadinessSection />}
 
       {/* GUARDIANX CERTIFICATIONS */}
@@ -245,7 +245,7 @@ export function ExamsView() {
 }
 
 /* ============================================================
-   ExamReadinessSection — authenticated-only block that shows
+   ExamReadinessSection - authenticated-only block that shows
    each published exam + a readiness score (avg of last 3 attempts)
    ============================================================ */
 

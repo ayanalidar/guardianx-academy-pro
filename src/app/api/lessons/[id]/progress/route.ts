@@ -81,7 +81,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       if (certUser) {
         await sendEmail({
           to: certUser.email,
-          subject: `🎉 Certificate Earned — ${course?.title ?? "Course"}`,
+          subject: `🎉 Certificate Earned - ${course?.title ?? "Course"}`,
           body: `Hi ${certUser.name},\n\nCongratulations! You've successfully completed "${course?.title ?? "your course"}" on GuardianX Academy.\n\nYour certificate ID is: ${certId}\nVerification hash: ${verificationHash}\n\nYou can verify your certificate anytime at academy.guardianx.cloud using this ID.\n\nKeep learning,\nThe GuardianX Team`,
           type: "certificate",
           userId: user.id,

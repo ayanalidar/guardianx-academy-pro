@@ -1,5 +1,5 @@
 /* ============================================================
-   GuardianX Academy — Service Worker
+   GuardianX Academy - Service Worker
    - Network-first for navigation requests (fresh UI when online)
    - Cache-first for immutable static assets
    - Offline fallback to cached shell
@@ -7,11 +7,11 @@
 
 // v3: fixed ghost-build bug. v2 cached EVERY navigation response under the
 // cache key "/" and served that stale HTML for any route whenever the
-// network hiccupped (deploys, restarts) — clients silently ran old builds
+// network hiccupped (deploys, restarts) - clients silently ran old builds
 // with old bugs. v3 caches each page under its own URL, only caches OK
 // responses, and times out slow navigations before falling back.
 // v4: added stale-while-offline fallback for the two public catalog APIs
-// (/api/courses, /api/platform-stats) — a network blip now serves the last
+// (/api/courses, /api/platform-stats) - a network blip now serves the last
 // good JSON instead of blanking the catalog. Bump VERSION on every
 // shell-affecting change so clients self-refresh.
 const VERSION = "guardianx-sw-v4";
@@ -86,7 +86,7 @@ self.addEventListener("fetch", (event) => {
 
   const url = new URL(request.url);
 
-  // Skip Next.js HMR, dev, and internal endpoints entirely — except a
+  // Skip Next.js HMR, dev, and internal endpoints entirely - except a
   // small whitelist of public catalog APIs that get a stale-safe fallback.
   if (url.pathname.startsWith("/_next/webpack-hmr")) return;
   if (url.pathname.startsWith("/_next/data")) return;
@@ -116,14 +116,14 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // 1) Navigation requests — network-first, fall back to cached copy of
+  // 1) Navigation requests - network-first, fall back to cached copy of
   //    THIS page, then the cached shell, then the offline body.
   if (isNavigation(request) && isSameOrigin(url)) {
     event.respondWith(
       (async () => {
         try {
           const fresh = await fetchWithTimeout(request, NAV_TIMEOUT_MS);
-          // Only cache genuinely good HTML, under the page's OWN URL —
+          // Only cache genuinely good HTML, under the page's OWN URL - 
           // never poison "/" with a different page's HTML.
           if (fresh && fresh.ok && fresh.type === "basic") {
             const cache = await caches.open(RUNTIME_CACHE);
@@ -148,7 +148,7 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // 2) Static assets (same origin) — cache-first, then network (and cache).
+  // 2) Static assets (same origin) - cache-first, then network (and cache).
   //    _next/static assets are content-hashed so caching them is safe.
   if (isSameOrigin(url)) {
     event.respondWith(
@@ -171,18 +171,18 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // 3) Cross-origin — straight to network
+  // 3) Cross-origin - straight to network
   // (Default browser behaviour; do not intercept)
 });
 
-// Offline fallback HTML body — minimal branded page
+// Offline fallback HTML body - minimal branded page
 function offlineBody() {
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>GuardianX — Offline</title>
+<title>GuardianX - Offline</title>
 <style>
   :root { color-scheme: dark; }
   * { box-sizing: border-box; }

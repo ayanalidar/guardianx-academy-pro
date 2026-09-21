@@ -4,7 +4,7 @@ import { cachedJson } from "@/lib/http-cache"
 
 export const runtime = "nodejs"
 
-// GET /api/events — public. Returns all published events ordered by `order`
+// GET /api/events - public. Returns all published events ordered by `order`
 // then `startIsoDate`. Supports `?type=workshop|webinar|ctf|...` filtering.
 export async function GET(req: NextRequest) {
   try {

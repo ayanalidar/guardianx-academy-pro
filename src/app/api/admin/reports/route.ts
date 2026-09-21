@@ -4,16 +4,16 @@ import { requireAdmin, withErrorHandler } from "@/lib/session"
 
 export const runtime = "nodejs"
 
-/* GET /api/admin/reports — ADMIN only.
+/* GET /api/admin/reports - ADMIN only.
  *
  * Query params:
- *   type          (required) — "enrollment" | "attendance" | "completion" | "revenue"
- *   institutionId (optional) — School.id to filter to a specific institution's students
- *   from          (optional) — ISO date string (defaults to 30 days ago)
- *   to            (optional) — ISO date string (defaults to now)
+ *   type          (required) - "enrollment" | "attendance" | "completion" | "revenue"
+ *   institutionId (optional) - School.id to filter to a specific institution's students
+ *   from          (optional) - ISO date string (defaults to 30 days ago)
+ *   to            (optional) - ISO date string (defaults to now)
  *
  * Returns aggregated data for the selected report type + date range. The
- * response shape varies by type — see the per-type branches below.
+ * response shape varies by type - see the per-type branches below.
  */
 export const GET = withErrorHandler(async (req: NextRequest) => {
   const currentUser = await requireAdmin()
@@ -23,7 +23,7 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
   const type = (url.searchParams.get("type") || "").toLowerCase()
   const institutionId = url.searchParams.get("institutionId") || null
 
-  // Date range — default to last 30 days if not specified
+  // Date range - default to last 30 days if not specified
   const now = new Date()
   const defaultFrom = new Date(now)
   defaultFrom.setDate(defaultFrom.getDate() - 30)
@@ -262,7 +262,7 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
     // Aggregate by course
     const byCourseMap = new Map<string, { courseId: string; courseTitle: string; courseShortName: string; revenue: number; orders: number }>()
     for (const o of orders) {
-      const key = o.courseId ?? "—"
+      const key = o.courseId ?? " - "
       const existing = byCourseMap.get(key)
       if (existing) {
         existing.revenue += o.finalAmount
@@ -270,8 +270,8 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
       } else {
         byCourseMap.set(key, {
           courseId: key,
-          courseTitle: o.course?.title ?? "—",
-          courseShortName: o.course?.shortName ?? "—",
+          courseTitle: o.course?.title ?? " - ",
+          courseShortName: o.course?.shortName ?? " - ",
           revenue: o.finalAmount,
           orders: 1,
         })
@@ -296,8 +296,8 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
         userName: o.user.name,
         userEmail: o.user.email,
         courseId: o.courseId,
-        courseTitle: o.course?.title ?? "—",
-        courseShortName: o.course?.shortName ?? "—",
+        courseTitle: o.course?.title ?? " - ",
+        courseShortName: o.course?.shortName ?? " - ",
         amount: o.amount,
         discount: o.discount,
         finalAmount: o.finalAmount,

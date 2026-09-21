@@ -10,7 +10,7 @@ export const runtime = "nodejs"
  * Google Apps Script webhook receiver.
  * When a Google Form is submitted, the Apps Script sends the response here.
  * 
- * No auth required — the webhook URL contains a secret token for security.
+ * No auth required - the webhook URL contains a secret token for security.
  * 
  * Expected body shape (from Google Apps Script):
  * {
@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
     }
 
-    // SECURITY: verify the webhook secret. There is NO hardcoded fallback —
+    // SECURITY: verify the webhook secret. There is NO hardcoded fallback - 
     // the previous default ("guardianx-crm-webhook-2025") was shipped in a
     // public file and let anyone inject leads / email-bomb admins.
     // Set CRM_WEBHOOK_SECRET (env or Platform Settings) and share it with
@@ -42,7 +42,7 @@ export async function POST(req: NextRequest) {
     const { timingSafeEqual } = await import("crypto")
     const webhookSecret = await getSetting("CRM_WEBHOOK_SECRET")
     if (!webhookSecret) {
-      console.error("[crm/webhook] CRM_WEBHOOK_SECRET not configured — rejecting webhook")
+      console.error("[crm/webhook] CRM_WEBHOOK_SECRET not configured - rejecting webhook")
       return NextResponse.json({ error: "Webhook not configured" }, { status: 503 })
     }
     const provided = typeof body.token === "string" ? body.token : ""

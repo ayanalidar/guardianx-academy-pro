@@ -4,7 +4,7 @@ import { getCurrentUser, withErrorHandler } from "@/lib/session"
 
 export const runtime = "nodejs"
 
-// GET /api/cms/[page] — public. Returns all content for a page.
+// GET /api/cms/[page] - public. Returns all content for a page.
 // Shape: { page, sections: { [section]: { [key]: value } } }
 export const GET = withErrorHandler(
   async (_req: NextRequest, { params }: { params: Promise<{ page: string }> }) => {
@@ -31,7 +31,7 @@ export const GET = withErrorHandler(
   },
 )
 
-// PUT /api/cms/[page] — admin only. Batch upsert + delete content for a page.
+// PUT /api/cms/[page] - admin only. Batch upsert + delete content for a page.
 // Body:
 //   {
 //     items:    [{ section, key, value }, ...]  // upsert these

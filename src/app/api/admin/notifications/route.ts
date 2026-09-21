@@ -5,7 +5,7 @@ import { requireAdmin, withErrorHandler } from "@/lib/session"
 export const runtime = "nodejs"
 
 /**
- * GET /api/admin/notifications — real platform event feed for admins.
+ * GET /api/admin/notifications - real platform event feed for admins.
  *
  * Replaces the hardcoded mock array in admin-notifications.tsx. Aggregates
  * the latest real events from across the platform into one feed:
@@ -27,7 +27,7 @@ export const GET = withErrorHandler(async (req: Request) => {
   const limit = Math.min(Math.max(Number(url.searchParams.get("limit")) || 50, 1), 200)
   const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) // last 30 days
 
-  // Read/dismiss state — persisted per-platform (all admins share one feed
+  // Read/dismiss state - persisted per-platform (all admins share one feed
   // state, which is the desired behavior for an ops feed). Stored as JSON
   // string arrays in PlatformSetting.
   const [readRow, dismissedRow] = await Promise.all([
@@ -132,7 +132,7 @@ export const GET = withErrorHandler(async (req: Request) => {
     })),
     ...examSubmissions.map((x) => ({
       id: `exam-${x.id}`, type: "exam" as const, title: "Exam Submitted",
-      message: `${examTitle.get(x.examId) || "An exam"} submitted by ${userName.get(x.userId) || "a student"} — Score: ${Math.round(x.score || 0)}% (${x.status === "passed" ? "PASSED" : x.status === "failed" ? "FAILED" : x.status.toUpperCase()})`,
+      message: `${examTitle.get(x.examId) || "An exam"} submitted by ${userName.get(x.userId) || "a student"} - Score: ${Math.round(x.score || 0)}% (${x.status === "passed" ? "PASSED" : x.status === "failed" ? "FAILED" : x.status.toUpperCase()})`,
       createdAt: (x.submittedAt || new Date()).toISOString(), read: false,
     })),
     ...leads.map((l) => ({
@@ -156,7 +156,7 @@ export const GET = withErrorHandler(async (req: Request) => {
 })
 
 /**
- * PATCH /api/admin/notifications — persist read/dismiss state.
+ * PATCH /api/admin/notifications - persist read/dismiss state.
  * Body: { readIds?: string[], dismissedIds?: string[], markAllRead?: boolean }
  * State is stored in PlatformSetting so it survives reloads and is shared
  * across admins/devices (previously it was client-only and lost on refresh).

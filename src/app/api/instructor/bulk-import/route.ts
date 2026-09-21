@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
 
     // Instructors can only import into courses they own; admins can import anywhere.
     if (!(user.role === "ADMIN" || user.role === "SUPER_ADMIN") && course.instructorId !== user.id) {
-      return NextResponse.json({ error: "Forbidden — you do not own this course" }, { status: 403 })
+      return NextResponse.json({ error: "Forbidden - you do not own this course" }, { status: 403 })
     }
 
     // Build students list from either array or CSV
@@ -133,7 +133,7 @@ export async function POST(req: NextRequest) {
           // Welcome email with temp credentials (newly created user)
           await sendEmail({
             to: email,
-            subject: `Welcome to GuardianX Academy — ${course.title}`,
+            subject: `Welcome to GuardianX Academy - ${course.title}`,
             body: `Hi ${name},\n\nYou've been enrolled in "${course.title}" (${course.shortName}) on GuardianX Academy by your instructor.\n\nYour temporary login credentials:\nEmail: ${email}\nPassword: ${tempPassword}\n\nPlease log in at GuardianX Academy and change your password after your first sign-in.\n\nWelcome aboard!\nThe GuardianX Team`,
             type: "welcome",
             userId,
@@ -142,7 +142,7 @@ export async function POST(req: NextRequest) {
           // Existing user, newly enrolled in this course
           await sendEmail({
             to: email,
-            subject: `Enrolled — ${course.title}`,
+            subject: `Enrolled - ${course.title}`,
             body: `Hi ${name},\n\nYou've been enrolled in "${course.title}" (${course.shortName}) on GuardianX Academy. Log in to start learning.\n\nThe GuardianX Team`,
             type: "notification",
             userId,

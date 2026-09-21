@@ -6,7 +6,7 @@ import { notifyAdmins, leadNotificationEmailTemplate } from "@/lib/email"
 export const runtime = "nodejs"
 
 /* POST /api/open-schooling/leads
- * Public endpoint — anyone can submit a lead to register for 10th/12th via open schooling.
+ * Public endpoint - anyone can submit a lead to register for 10th/12th via open schooling.
  * Rate-limited in-memory per IP (5 submissions per 10 minutes) to prevent spam.
  *
  * Body: {
@@ -107,16 +107,16 @@ export const POST = withErrorHandler(async (req) => {
 
   // --- email notification to admins ---
   await notifyAdmins(
-    `New Open Schooling Lead — ${course} — ${name}`,
+    `New Open Schooling Lead - ${course} - ${name}`,
     leadNotificationEmailTemplate("Open Schooling Lead", [
       { label: "Name", value: name.trim() },
       { label: "Email", value: email.trim() },
       { label: "Phone", value: cleanPhone },
       { label: "Course", value: course },
-      { label: "City", value: city?.trim() || "—" },
-      { label: "State", value: state?.trim() || "—" },
-      { label: "Qualification", value: qualification?.trim() || "—" },
-      { label: "Message", value: message?.trim() || "—" },
+      { label: "City", value: city?.trim() || " - " },
+      { label: "State", value: state?.trim() || " - " },
+      { label: "Qualification", value: qualification?.trim() || " - " },
+      { label: "Message", value: message?.trim() || " - " },
     ])
   )
 

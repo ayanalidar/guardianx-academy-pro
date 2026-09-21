@@ -4,7 +4,7 @@ import { withErrorHandler, rateLimit, getClientIp } from "@/lib/session"
 
 export const runtime = "nodejs"
 
-/* GET /api/search?q=<query>  (PUBLIC — no auth required)
+/* GET /api/search?q=<query>  (PUBLIC - no auth required)
  * -----------------------------------------------------
  * Searches across 5 content types:
  *   - courses (title, shortName, description, tags)

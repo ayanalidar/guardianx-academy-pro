@@ -21,7 +21,7 @@ import {
 import { toast } from "sonner"
 
 /* ============================================================
- *  REPORT TYPES — kept in sync with /api/admin/reports route
+ *  REPORT TYPES - kept in sync with /api/admin/reports route
  * ============================================================ */
 type ReportType = "enrollment" | "attendance" | "completion" | "revenue"
 
@@ -32,7 +32,7 @@ const REPORT_TYPES: { value: ReportType; label: string; icon: React.ComponentTyp
   { value: "revenue", label: "Revenue Report", icon: TrendingUp },
 ]
 
-/* Generic row type — the actual shape varies per report type, but
+/* Generic row type - the actual shape varies per report type, but
  * every report returns a `rows` array of flat objects. We index by
  * key for the CSV export + dynamic table render. */
 type ReportRow = Record<string, string | number | boolean | null>
@@ -48,7 +48,7 @@ type ReportResponse = {
 }
 
 /* ============================================================
- *  CSV EXPORT — generic for any report shape
+ *  CSV EXPORT - generic for any report shape
  * ============================================================ */
 function downloadCsv(filename: string, rows: ReportRow[]) {
   if (rows.length === 0) {
@@ -81,7 +81,7 @@ function downloadCsv(filename: string, rows: ReportRow[]) {
 }
 
 /* ============================================================
- *  Helper — pretty-print date inputs default to today/30 days ago
+ *  Helper - pretty-print date inputs default to today/30 days ago
  * ============================================================ */
 function todayISO(): string {
   return new Date().toISOString().slice(0, 10)
@@ -216,7 +216,7 @@ export function StudentProgressView() {
         return
       }
       setReportData(j as ReportResponse)
-      toast.success(`Generated ${reportType} report — ${j.rows?.length ?? 0} rows`)
+      toast.success(`Generated ${reportType} report - ${j.rows?.length ?? 0} rows`)
     } catch (err) {
       setReportError((err as Error)?.message || "Network error")
     } finally {
@@ -335,7 +335,7 @@ export function StudentProgressView() {
               <SelectItem value="all">All Courses</SelectItem>
               {courses.map((c) => (
                 <SelectItem key={c.id} value={c.id}>
-                  {c.shortName} — {c.title}
+                  {c.shortName} - {c.title}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -465,7 +465,7 @@ export function StudentProgressView() {
               {schools.length === 0 && (
                 <p className="text-[10px] text-muted-foreground">
                   <Building2 className="inline h-3 w-3 mr-1" />
-                  No institution filter available — reports will cover all students.
+                  No institution filter available - reports will cover all students.
                 </p>
               )}
             </div>
@@ -544,9 +544,9 @@ export function StudentProgressView() {
                         {reportColumns.map((col) => {
                           const v = row[col]
                           const display = typeof v === "boolean"
-                            ? (v ? "✓" : "—")
+                            ? (v ? "✓" : " - ")
                             : v === null || v === undefined
-                              ? "—"
+                              ? " - "
                               : col.toLowerCase().includes("date") || col.toLowerCase().endsWith("at")
                                 ? new Date(String(v)).toLocaleDateString()
                                 : col.toLowerCase().includes("amount") || col.toLowerCase().includes("revenue") || col.toLowerCase() === "finalamount" || col.toLowerCase() === "discount"

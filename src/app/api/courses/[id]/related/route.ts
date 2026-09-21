@@ -8,7 +8,7 @@ export const GET = withErrorHandler(async (_req: NextRequest, { params }: { para
   if (!course) return NextResponse.json({ courses: [] })
 
   // Same-category courses first; when a category holds only one or two
-  // courses the section used to render a single oversized card — top up
+  // courses the section used to render a single oversized card - top up
   // with other published courses so viewers always see a full row.
   const TARGET = 8
   const fetchRelated = async (select: any, orderBy: any) => {
@@ -30,7 +30,7 @@ export const GET = withErrorHandler(async (_req: NextRequest, { params }: { para
   }
 
   // Full select (rating/studentsCount/instructor) requires the current
-  // schema — degrade to core columns on drifted databases instead of 500.
+  // schema - degrade to core columns on drifted databases instead of 500.
   try {
     const related = await fetchRelated(
       {
@@ -43,7 +43,7 @@ export const GET = withErrorHandler(async (_req: NextRequest, { params }: { para
     )
     return NextResponse.json({ courses: related, count: related.length })
   } catch {
-    // Core-columns fallback — every historical schema version has these.
+    // Core-columns fallback - every historical schema version has these.
     const related = await fetchRelated(
       {
         id: true, slug: true, title: true, shortName: true, description: true,

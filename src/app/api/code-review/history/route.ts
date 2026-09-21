@@ -5,7 +5,7 @@ import { getCurrentUser } from "@/lib/session"
 export const runtime = "nodejs"
 
 // ============================================================
-// AI Code Review — GET user's code review history
+// AI Code Review - GET user's code review history
 // ============================================================
 
 export async function GET(req: NextRequest) {

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>GuardianX Particle Logo — Standalone</title>
+<title>GuardianX Particle Logo - Standalone</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   body {
@@ -63,14 +63,14 @@
 
 <script>
 /**
- * ParticleLogo — Standalone HTML Version
+ * ParticleLogo - Standalone HTML Version
  * 
  * The logo is reconstructed from square particles sampled from an image.
  * 
  * Phases:
- * 1. ASSEMBLY — particles scattered outside → spring to target positions
- * 2. IDLE — subtle perlin-ish noise floating + opacity flicker
- * 3. MOUSE — cursor repels nearby particles; they spring back
+ * 1. ASSEMBLY - particles scattered outside → spring to target positions
+ * 2. IDLE - subtle perlin-ish noise floating + opacity flicker
+ * 3. MOUSE - cursor repels nearby particles; they spring back
  * 
  * Usage:
  *   - Replace the <img> src with your logo URL
@@ -283,7 +283,7 @@ function animate() {
       p.vx += ax;
       p.vy += ay;
 
-      // Idle noise — subtle floating
+      // Idle noise - subtle floating
       if (phase === "idle" || arrived > 0.8) {
         const noiseAmp = 1.2 * dpr;
         const nx = Math.sin(t * 0.8 + p.seed) * Math.cos(t * 0.5 + p.seed * 0.7) * noiseAmp;

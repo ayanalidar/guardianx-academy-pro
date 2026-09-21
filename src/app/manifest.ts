@@ -2,7 +2,7 @@ import { MetadataRoute } from "next"
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "GuardianX Academy — Cyber Security Training OS",
+    name: "GuardianX Academy - Cyber Security Training OS",
     short_name: "GuardianX",
     description: "Master cybersecurity by actually breaking things. Real cyber range, hands-on labs, CTF arena, and career paths.",
     start_url: "/?source=pwa",

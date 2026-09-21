@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
   const user = await getCurrentUser()
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   if (!rateLimit(`ai-gen:${user.id}`, { max: 3, windowMs: 10 * 60 * 1000 })) {
-    return NextResponse.json({ error: "Generator cooling down — try again in a few minutes." }, { status: 429 })
+    return NextResponse.json({ error: "Generator cooling down - try again in a few minutes." }, { status: 429 })
   }
   if (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN") return NextResponse.json({ error: "Forbidden" }, { status: 403 })
 
@@ -254,7 +254,7 @@ Return as JSON: {"covers_all": true/false, "assessment": "...", "missing_domains
     const isConfig = msg.includes("Configuration file") || msg.includes("not configured")
     return NextResponse.json({
       error: isConfig
-        ? "AI service is not configured on this deployment. Set ZAI_BASE_URL and ZAI_API_KEY in the deployment environment variables, then redeploy. (The Course Studio's AI Architect works without it — it falls back to the built-in GuardianX knowledge generator.)"
+        ? "AI service is not configured on this deployment. Set ZAI_BASE_URL and ZAI_API_KEY in the deployment environment variables, then redeploy. (The Course Studio's AI Architect works without it - it falls back to the built-in GuardianX knowledge generator.)"
         : "Course generation failed: " + msg,
     }, { status: isConfig ? 503 : 500 })
   }

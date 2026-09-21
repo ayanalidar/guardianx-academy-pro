@@ -8,9 +8,9 @@ export const runtime = "nodejs"
  * ADMIN-only. Returns all open-schooling leads with optional filters.
  *
  * Query params:
- *   status  — NEW | CONTACTED | ENROLLED | LOST (optional)
- *   course  — 10th | 12th (optional)
- *   q       — search across name, email, phone (optional)
+ *   status - NEW | CONTACTED | ENROLLED | LOST (optional)
+ *   course - 10th | 12th (optional)
+ *   q - search across name, email, phone (optional)
  *
  * Returns: {
  *   leads: [{ id, name, email, phone, course, dateOfBirth, city, state,

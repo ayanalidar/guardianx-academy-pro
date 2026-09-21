@@ -18,7 +18,7 @@ import {
 } from "lucide-react"
 
 /* ============================================================
-   /admin-audit-log — audit log timeline (real data)
+   /admin-audit-log - audit log timeline (real data)
    ------------------------------------------------------------
    - Fetches from /api/admin/audit-logs (ADMIN-only)
    - Filterable by action type (resource prefix) + search box
@@ -121,7 +121,7 @@ export function AuditLogView() {
   const [expanded, setExpanded] = React.useState<Set<string>>(new Set())
 
   // The action filter is the action prefix (e.g. "course", "user", "coupon").
-  // Search is sent to the SERVER (q=...) so matches on any page are found —
+  // Search is sent to the SERVER (q=...) so matches on any page are found - 
   // it used to be a client-side filter over just the current 25 rows.
   const serverAction = actionFilter === "all" ? undefined : actionFilter
   const deferredSearch = React.useDeferredValue(search)
@@ -175,7 +175,7 @@ export function AuditLogView() {
 
   async function handleExport() {
     if (!logs.length) return
-    // Export the FULL filtered trail (all pages), not just the visible 25 —
+    // Export the FULL filtered trail (all pages), not just the visible 25 - 
     // an audit export of one page is useless for compliance.
     const headers = ["id", "createdAt", "userId", "userName", "action", "resource", "resourceId", "details"]
     const all: any[] = []

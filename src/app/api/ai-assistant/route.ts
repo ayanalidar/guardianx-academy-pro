@@ -5,7 +5,7 @@ import { getCurrentUser, rateLimit } from "@/lib/session"
 export const runtime = "nodejs"
 
 // ============================================================
-// AI Learning Assistant — POST a question, get an AI response.
+// AI Learning Assistant - POST a question, get an AI response.
 // Stores chat session + messages. Uses z-ai-web-dev-sdk LLM.
 // ============================================================
 
@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
     if (!rateLimit(`ai-assistant:${user.id}`, { max: 20, windowMs: 5 * 60 * 1000 })) {
-      return NextResponse.json({ error: "Rate limit reached — please wait a moment before asking again." }, { status: 429 })
+      return NextResponse.json({ error: "Rate limit reached - please wait a moment before asking again." }, { status: 429 })
     }
 
     const body = await req.json()
@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
         select: { title: true, shortName: true, category: true, level: true },
       })
       if (course) {
-        contextBlock = `\n[Context] The student is currently studying course: ${course.shortName} — ${course.title} (${course.category}, ${course.level}).`
+        contextBlock = `\n[Context] The student is currently studying course: ${course.shortName} - ${course.title} (${course.category}, ${course.level}).`
       }
     } else if (context?.labId) {
       const lab = await db.lab.findUnique({
@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
     }
 
     // ---- Find or create session ----
-    let session: any = null // typed as any — findFirst+create return shapes differ (pre-existing)
+    let session: any = null // typed as any - findFirst+create return shapes differ (pre-existing)
     if (sessionId) {
       session = await db.aIChatSession.findFirst({
         where: { id: sessionId, userId: user.id },

@@ -9,7 +9,7 @@ const VALID_COLORS = new Set([
   "emerald", "cyan", "violet", "amber", "orange", "red", "teal",
 ])
 
-/* GET /api/admin/achievements — ADMIN only.
+/* GET /api/admin/achievements - ADMIN only.
  * Returns the full catalog of achievements (static defs + admin-created rows).
  */
 export const GET = withErrorHandler(async () => {
@@ -32,7 +32,7 @@ export const GET = withErrorHandler(async () => {
   const earnedMap = new Map(earnedCounts.map((e) => [e.achievementId, e._count.userId]))
 
   // Hydrate static defs from DB where present (static defs may not be
-  // persisted in the DB until a user earns them — they're created
+  // persisted in the DB until a user earns them - they're created
   // lazily on first award).
   const staticRows = await db.achievement.findMany({
     where: { code: { in: ACHIEVEMENT_DEFS.map((d) => d.code) } },
@@ -82,12 +82,12 @@ export const GET = withErrorHandler(async () => {
   })
 })
 
-/* POST /api/admin/achievements — ADMIN only.
+/* POST /api/admin/achievements - ADMIN only.
  * Body: { code, title, description, icon, color, xp, tier }
  *
  * Creates a new admin-defined achievement row. The achievement will appear
  * in every user's "locked" list in /api/achievements (since it's not in
- * the static ACHIEVEMENT_DEFS, it has no auto-award check — admin must
+ * the static ACHIEVEMENT_DEFS, it has no auto-award check - admin must
  * award it manually via the admin UI / direct DB write).
  */
 export const POST = withErrorHandler(async (req: NextRequest) => {
@@ -142,10 +142,10 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
   const trimmedTitle = title.trim().slice(0, 120)
   const trimmedDesc = (description ?? "").trim().slice(0, 500)
 
-  // default icon "Award" (lucide) — accept any non-empty string, sanitize
+  // default icon "Award" (lucide) - accept any non-empty string, sanitize
   const trimmedIcon = (icon ?? "Award").trim().slice(0, 64) || "Award"
 
-  // default color "emerald" — must be in the known palette
+  // default color "emerald" - must be in the known palette
   const normalizedColor = color && VALID_COLORS.has(color) ? color : "emerald"
 
   const numericXp = typeof xp === "number" ? xp : Number(xp ?? 50)

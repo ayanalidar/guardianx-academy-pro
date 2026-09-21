@@ -18,7 +18,7 @@ export function PlatformHealthView() {
   const { navigate } = useAppStore()
 
   // LIVE health data from /api/sentinel/health (real DB queries + service
-  // checks) — replaces the previous hardcoded services + Math.random() charts.
+  // checks) - replaces the previous hardcoded services + Math.random() charts.
   const { data, isLoading, isError, refetch, dataUpdatedAt } = useQuery({
     queryKey: ["platform-health"],
     refetchInterval: 30_000,
@@ -45,9 +45,9 @@ export function PlatformHealthView() {
 
   const stats = [
     { label: "Services OK", value: `${operational}/${serviceList.length}`, icon: CheckCircle2, color: "text-emerald-300", tint: "bg-emerald-500/10" },
-    { label: "Overall", value: data?.overall || "—", icon: Activity, color: data?.overall === "operational" ? "text-emerald-300" : data?.overall === "down" ? "text-rose-300" : "text-amber-300", tint: "bg-violet-500/10" },
-    { label: "Avg Response", value: avgLatency >= 0 ? `${avgLatency}ms` : "—", icon: Clock, color: "text-cyan-300", tint: "bg-cyan-500/10" },
-    { label: "Last Check", value: dataUpdatedAt ? new Date(dataUpdatedAt).toLocaleTimeString() : "—", icon: AlertTriangle, color: "text-amber-300", tint: "bg-amber-500/10" },
+    { label: "Overall", value: data?.overall || " - ", icon: Activity, color: data?.overall === "operational" ? "text-emerald-300" : data?.overall === "down" ? "text-rose-300" : "text-amber-300", tint: "bg-violet-500/10" },
+    { label: "Avg Response", value: avgLatency >= 0 ? `${avgLatency}ms` : " - ", icon: Clock, color: "text-cyan-300", tint: "bg-cyan-500/10" },
+    { label: "Last Check", value: dataUpdatedAt ? new Date(dataUpdatedAt).toLocaleTimeString() : " - ", icon: AlertTriangle, color: "text-amber-300", tint: "bg-amber-500/10" },
   ]
 
   const STATUS_BADGE: Record<string, string> = {
@@ -102,7 +102,7 @@ export function PlatformHealthView() {
             ))}
             {!isLoading && isError && (
               <div className="p-4 rounded-lg border border-rose-500/30 bg-rose-500/5 text-sm text-rose-300 text-center">
-                Health check failed — retry in a moment.
+                Health check failed - retry in a moment.
               </div>
             )}
             {!isLoading && !isError && serviceList.map(s => (

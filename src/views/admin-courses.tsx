@@ -24,7 +24,7 @@ import { COURSE_LIST_FIELDS, parseCourseList } from "@/lib/course-lists"
 import { toast } from "sonner"
 
 /* ============================================================
-   AdminCoursesView — simple form-based course management page.
+   AdminCoursesView - simple form-based course management page.
 
    - Table of all courses: title, category, level, price, status,
      instructor, plus secondary info (rating, students, lessons).
@@ -90,7 +90,7 @@ interface CourseForm {
   price: string
   instructorId: string
   published: boolean
-  // Course extras — one item per line in the UI (see course-lists.ts)
+  // Course extras - one item per line in the UI (see course-lists.ts)
   whatYouWillLearn: string
   prerequisites: string
   whoShouldAttend: string
@@ -142,7 +142,7 @@ function formFromCourse(c: AdminCourse): CourseForm {
     price: String(c.price),
     instructorId: c.instructor?.id ?? "",
     published: c.published,
-    // Stored as JSON arrays — decode to one-item-per-line for the textareas
+    // Stored as JSON arrays - decode to one-item-per-line for the textareas
     ...Object.fromEntries(
       COURSE_LIST_FIELDS.map(({ key }) => [key, parseCourseList((c as any)[key]).join("\n")])
     ),
@@ -193,8 +193,8 @@ export function AdminCoursesView() {
     queryFn: async () => {
       const res = await fetch("/api/admin/courses")
       if (!res.ok) {
-        if (res.status === 401) throw new Error("Unauthorized — please sign in as an admin")
-        if (res.status === 403) throw new Error("Forbidden — admin role required")
+        if (res.status === 401) throw new Error("Unauthorized - please sign in as an admin")
+        if (res.status === 403) throw new Error("Forbidden - admin role required")
         const j = await res.json().catch(() => ({}))
         throw new Error(j.error || "Failed to load courses")
       }
@@ -213,7 +213,7 @@ export function AdminCoursesView() {
     queryFn: async () => {
       const res = await fetch("/api/admin/instructors")
       if (!res.ok) {
-        // A 401/500 must NOT silently degrade to an empty dropdown — an empty
+        // A 401/500 must NOT silently degrade to an empty dropdown - an empty
         // list dead-ends course creation with "Instructor is required" and no
         // hint why. Throw so the query error state can show the banner below.
         throw new Error(`Instructor list failed (HTTP ${res.status})`)
@@ -405,7 +405,7 @@ export function AdminCoursesView() {
           <FadeInRow>
             <div className="flex flex-wrap items-center gap-3 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm">
               <span className="text-red-300 font-medium">
-                Instructor list failed to load — course creation is blocked until it loads.
+                Instructor list failed to load - course creation is blocked until it loads.
               </span>
               <button
                 type="button"
@@ -531,9 +531,9 @@ export function AdminCoursesView() {
                           <span>·</span>
                           <span className="flex items-center gap-0.5">
                             <Star className="h-2.5 w-2.5 text-amber-300" />
-                            {/* rating can be NULL on the drifted production DB —
+                            {/* rating can be NULL on the drifted production DB - 
                                 null.toFixed() crashed the whole page (blank /admin-courses) */}
-                            {c.rating != null ? Number(c.rating).toFixed(1) : "—"}
+                            {c.rating != null ? Number(c.rating).toFixed(1) : " - "}
                           </span>
                           <span>·</span>
                           <span className="flex items-center gap-0.5">
@@ -583,7 +583,7 @@ export function AdminCoursesView() {
                     {/* Instructor */}
                     <div className="lg:col-span-2 text-sm truncate">
                       <span className="lg:hidden text-[10px] font-mono uppercase tracking-wider text-muted-foreground/70 mr-1">Instructor:</span>
-                      {c.instructor?.name ?? "—"}
+                      {c.instructor?.name ?? " - "}
                     </div>
 
                     {/* Status */}
@@ -667,7 +667,7 @@ export function AdminCoursesView() {
             </AlertDialogTitle>
             <AlertDialogDescription>
               This will permanently delete <span className="font-mono font-bold text-foreground">{deletingCourse?.shortName}</span>
-              {" "}— <span className="text-foreground">{deletingCourse?.title}</span>. All modules, lessons,
+              {" "} - <span className="text-foreground">{deletingCourse?.title}</span>. All modules, lessons,
               enrollments, and certificates linked to this course will be cascade-deleted. This cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
@@ -887,13 +887,13 @@ function CourseFormDialog({
             </div>
           </div>
 
-          {/* Course page sections — what you'll learn, prerequisites, etc. */}
+          {/* Course page sections - what you'll learn, prerequisites, etc. */}
           <div className="rounded-lg border border-border/60 bg-background/30 p-3 space-y-3">
             <div>
               <div className="text-sm font-medium flex items-center gap-1.5">
                 <Sparkles className="h-3.5 w-3.5 text-amber-300" /> Course page sections
               </div>
-              <p className="text-[10px] text-muted-foreground">One item per line — rendered exactly as typed on the public course page.</p>
+              <p className="text-[10px] text-muted-foreground">One item per line - rendered exactly as typed on the public course page.</p>
             </div>
             <div className="grid sm:grid-cols-2 gap-3">
               {COURSE_LIST_FIELDS.map(({ key, label, hint, placeholder }) => (
@@ -952,7 +952,7 @@ function CourseFormDialog({
           <div className="flex items-center justify-between rounded-lg border border-border/60 bg-background/40 px-3 py-2.5">
             <div>
               <div className="text-sm font-medium">Published</div>
-              <p className="text-[10px] text-muted-foreground">Unpublished courses are drafts — hidden from the public catalog.</p>
+              <p className="text-[10px] text-muted-foreground">Unpublished courses are drafts - hidden from the public catalog.</p>
             </div>
             <Checkbox
               checked={form.published}

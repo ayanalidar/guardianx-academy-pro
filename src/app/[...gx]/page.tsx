@@ -5,19 +5,19 @@ import { pathToView, viewTitle, viewDescription } from "@/lib/url-router"
 import { db } from "@/lib/db"
 
 /**
- * Catch-all bridge route — gives EVERY SPA view a real, crawlable URL.
+ * Catch-all bridge route - gives EVERY SPA view a real, crawlable URL.
  *
  * e.g. /skill-assessments, /dashboard, /lab/<slug>, /cyber-quiz/start/Easy
  *
  * The path is parsed into a View on the server (unknown paths → branded
  * 404), then AppRoot hydrates the SPA store and renders the view with the
  * exact same session/shell logic as the root route. Real dedicated pages
- * (e.g. /courses/[slug], /blog/[slug]) take precedence over this route —
+ * (e.g. /courses/[slug], /blog/[slug]) take precedence over this route - 
  * Next.js matches specific segments before the catch-all.
  *
  * SEO: metadata is content-aware. Detail views resolve their DB row so the
  * bridge URL carries the item's REAL title/description, and detail views
- * that have a dedicated route emit a canonical pointing there — this kills
+ * that have a dedicated route emit a canonical pointing there - this kills
  * the old duplicate-URL pair (/course/<x> vs /courses/<slug>).
  *
  * This is what replaces the old hash URLs (`/#/skill-assessments`):
@@ -127,7 +127,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
           title: `${cert.name} Certification`,
           description: cert.description ?? undefined,
           alternates: { canonical: `/cert/${cert.slug}` },
-          openGraph: { title: `${cert.name} — GuardianX Academy`, description: cert.description ?? undefined },
+          openGraph: { title: `${cert.name} - GuardianX Academy`, description: cert.description ?? undefined },
         }
       }
       return {

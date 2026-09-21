@@ -1,7 +1,7 @@
 "use client"
 
 /**
- * RouteProgress — thin gradient loading bar at the very top of the screen.
+ * RouteProgress - thin gradient loading bar at the very top of the screen.
  *
  * The platform is a SPA driven by the Zustand store: `navigate()` pushes
  * a real path and swaps the view. Because view swaps are synchronous state
@@ -15,7 +15,7 @@
  *
  * Timings are tuned for the preloaded-router era: chunks are warmed by
  * view-preloader.ts, so views usually render in <50ms and the bar
- * completes at 380ms — it signals the swap without lingering after the
+ * completes at 380ms - it signals the swap without lingering after the
  * content is already visible.
  */
 

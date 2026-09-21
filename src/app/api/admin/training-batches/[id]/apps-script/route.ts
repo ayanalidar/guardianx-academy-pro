@@ -36,7 +36,7 @@ export const GET = withErrorHandler(async (req: NextRequest, { params }: { param
   if (!batch) return NextResponse.json({ error: "Batch not found" }, { status: 404 })
 
   const webhookUrl = `${process.env.NEXTAUTH_URL || "https://academy.guardianx.cloud"}/api/crm/batch-webhook`
-  // Secret comes from Platform Settings (DB) or env — never a hardcoded default.
+  // Secret comes from Platform Settings (DB) or env - never a hardcoded default.
   const { getSetting } = await import("@/lib/settings")
   const webhookToken = (await getSetting("CRM_WEBHOOK_SECRET")) || process.env.CRM_WEBHOOK_SECRET || ""
   if (!webhookToken) {
@@ -57,7 +57,7 @@ export const GET = withErrorHandler(async (req: NextRequest, { params }: { param
 
   // Build the Apps Script content with the batch values baked in
   const script = `/**
- * GuardianX Academy — Per-Batch Google Forms Webhook Script
+ * GuardianX Academy - Per-Batch Google Forms Webhook Script
  * Batch: ${batch.name} (${batch.certification})
  * Generated: ${new Date().toISOString()}
  *
@@ -85,7 +85,7 @@ export const GET = withErrorHandler(async (req: NextRequest, { params }: { param
 var WEBHOOK_URL = "${webhookUrl}";
 var WEBHOOK_TOKEN = "${webhookToken}";
 
-// Baked-in batch identifiers — DO NOT EDIT (auto-generated per batch)
+// Baked-in batch identifiers - DO NOT EDIT (auto-generated per batch)
 var BATCH_ID = "${batch.id}";
 var BATCH_NAME = ${JSON.stringify(batch.name)};
 var BATCH_CERT = ${JSON.stringify(batch.certification)};

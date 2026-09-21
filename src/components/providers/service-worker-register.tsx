@@ -14,7 +14,7 @@ import * as React from "react"
  *   becomes visible again, and when the network returns. This matters
  *   because GuardianX is a long-lived pushState SPA: without a full page
  *   navigation, the browser gets almost no natural chances to re-fetch
- *   sw.js — a tab opened before a fix shipped could otherwise stay wedged
+ *   sw.js - a tab opened before a fix shipped could otherwise stay wedged
  *   on the old worker indefinitely.
  */
 
@@ -40,7 +40,7 @@ export function ServiceWorkerRegister() {
         const last = Number(window.sessionStorage.getItem(SW_RELOAD_GUARD_KEY) ?? 0)
         if (Date.now() - last < MIN_SW_RELOAD_GAP_MS) return
         window.sessionStorage.setItem(SW_RELOAD_GUARD_KEY, String(Date.now()))
-      } catch { /* storage blocked — proceed, one reload is harmless */ }
+      } catch { /* storage blocked - proceed, one reload is harmless */ }
       window.location.reload()
     }
     navigator.serviceWorker.addEventListener("controllerchange", onControllerChange)

@@ -7,7 +7,7 @@ async function schoolAdminGuard() {
   const user = await getCurrentUser()
   if (!user) return { error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) }
   if (user.role !== "SCHOOL_ADMIN") {
-    return { error: NextResponse.json({ error: "Forbidden — SCHOOL_ADMIN only" }, { status: 403 }) }
+    return { error: NextResponse.json({ error: "Forbidden - SCHOOL_ADMIN only" }, { status: 403 }) }
   }
   if (!user.schoolId) {
     return { error: NextResponse.json({ error: "No school linked to this account" }, { status: 403 }) }
@@ -165,7 +165,7 @@ export async function GET() {
       const att = attendanceByStudent.get(sp.userId)
       const attendanceRate = att && att.total ? Math.round((att.present / att.total) * 100) : att && att.total === 0 ? 100 : 0
       const reasons: string[] = []
-      // A student with no records at all is not flagged for attendance — only if records exist and rate is low
+      // A student with no records at all is not flagged for attendance - only if records exist and rate is low
       if (att && att.total > 0 && attendanceRate < 30) reasons.push(`Low attendance (${attendanceRate}%)`)
       if (sp.enrollmentCount > 0 && sp.avgProgress < 20) reasons.push(`Low progress (${sp.avgProgress}%)`)
       return { ...sp, attendanceRate, atRisk: reasons.length > 0, reasons }

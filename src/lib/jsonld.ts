@@ -3,7 +3,7 @@
 
    Used by the dedicated detail pages (courses/[slug], blog/[slug],
    events/[slug], instructors/[id]) to emit rich-result-eligible
-   markup. Builders are pure — they take plain rows and return a
+   markup. Builders are pure - they take plain rows and return a
    JSON-serializable object; pages render them via a
    <script type="application/ld+json"> tag.
 
@@ -21,7 +21,7 @@ function hoursToDuration(hours: number): string {
   return `P${h}H`;
 }
 
-/** Only emit dates we can express as ISO — invalid markup is worse
+/** Only emit dates we can express as ISO - invalid markup is worse
  *  than no markup. Returns null when unusable. */
 function safeIsoDate(value: string | null | undefined): string | null {
   if (!value) return null;
@@ -50,7 +50,7 @@ export function courseJsonLd(c: CourseJsonLdInput): Record<string, unknown> {
     "@context": "https://schema.org",
     "@type": "Course",
     name: c.shortName ? `${c.title} (${c.shortName})` : c.title,
-    description: (c.description || `${c.title} — live instructor-led cybersecurity training with hands-on labs from GuardianX Academy.`).slice(0, 300),
+    description: (c.description || `${c.title} - live instructor-led cybersecurity training with hands-on labs from GuardianX Academy.`).slice(0, 300),
     url,
     provider: {
       "@type": "EducationalOrganization",
@@ -150,7 +150,7 @@ export interface EventJsonLdInput {
 export function eventJsonLd(e: EventJsonLdInput): Record<string, unknown> | null {
   const start = safeIsoDate(e.startIsoDate);
   // Event rich results REQUIRE a machine-readable startDate; without one
-  // the markup would be invalid — emit nothing instead.
+  // the markup would be invalid - emit nothing instead.
   if (!start) return null;
 
   const url = `${SITE_URL}/events/${e.slug}`;
@@ -174,7 +174,7 @@ export function eventJsonLd(e: EventJsonLdInput): Record<string, unknown> | null
       url: SITE_URL,
     },
   };
-  const desc = (e.description || `${e.title} — hosted by GuardianX Academy.`).slice(0, 300);
+  const desc = (e.description || `${e.title} - hosted by GuardianX Academy.`).slice(0, 300);
   data.description = desc;
   const end = safeIsoDate(e.endDate);
   if (end) data.endDate = end;
@@ -183,7 +183,7 @@ export function eventJsonLd(e: EventJsonLdInput): Record<string, unknown> | null
   } else {
     data.image = `${SITE_URL}/og-default.png`;
   }
-  // Fee strings like "Free" / "₹500" / "$50" — parse a number when present.
+  // Fee strings like "Free" / "₹500" / "$50" - parse a number when present.
   const feeNum = parseFloat((e.fee || "").replace(/[^0-9.]/g, ""));
   const isFree = !e.fee || /free/i.test(e.fee);
   data.isAccessibleForFree = isFree;

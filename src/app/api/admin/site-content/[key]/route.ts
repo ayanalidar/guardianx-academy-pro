@@ -5,7 +5,7 @@ import { requireAdmin, withErrorHandler } from "@/lib/session"
 export const runtime = "nodejs"
 
 /**
- * PATCH /api/admin/site-content/[key] — upsert a single SiteContent row.
+ * PATCH /api/admin/site-content/[key] - upsert a single SiteContent row.
  *
  * The `[key]` path parameter may be in any of these formats:
  *   - "page.section.key"  (3 parts, fully qualified)
@@ -19,7 +19,7 @@ export const runtime = "nodejs"
  * array, object). The schema's `value` column is `Json` so we accept
  * any structured value, not just strings. The route uses the
  * `@@unique([page, section, key])` composite unique constraint for the
- * upsert — the previous implementation used `where: { key }` which is
+ * upsert - the previous implementation used `where: { key }` which is
  * invalid because `key` alone is NOT unique (only the composite is).
  */
 export const PATCH = withErrorHandler(
@@ -82,7 +82,7 @@ export const PATCH = withErrorHandler(
 )
 
 /**
- * GET /api/admin/site-content/[key] — fetch a single SiteContent row by
+ * GET /api/admin/site-content/[key] - fetch a single SiteContent row by
  * the same dotted-key convention as PATCH. Returns 404 if not found.
  */
 export const GET = withErrorHandler(
@@ -124,7 +124,7 @@ export const GET = withErrorHandler(
 )
 
 /**
- * DELETE /api/admin/site-content/[key] — delete a single SiteContent row
+ * DELETE /api/admin/site-content/[key] - delete a single SiteContent row
  * by the same dotted-key convention as PATCH.
  */
 export const DELETE = withErrorHandler(
@@ -171,7 +171,7 @@ export const DELETE = withErrorHandler(
       })
       return NextResponse.json({ deleted: true, page, section, key })
     } catch {
-      // already deleted — that's fine
+      // already deleted - that's fine
       return NextResponse.json({ deleted: false, page, section, key })
     }
   },

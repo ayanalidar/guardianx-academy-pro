@@ -5,7 +5,7 @@ import { getCurrentUser } from "@/lib/session"
 export const runtime = "nodejs"
 
 // ============================================================
-// Job Board — GET job detail / DELETE job (owner or admin)
+// Job Board - GET job detail / DELETE job (owner or admin)
 // ============================================================
 
 export async function GET(

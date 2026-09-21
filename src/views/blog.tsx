@@ -13,7 +13,7 @@ import {
 } from "lucide-react"
 
 /* ============================================================
-   /blog — public blog / content hub listing
+   /blog - public blog / content hub listing
    ------------------------------------------------------------
    - Hero: "GuardianX Cybersecurity Blog"
    - Featured post (large card)
@@ -180,7 +180,7 @@ export function BlogView() {
             <EmptyState
               icon={Sparkles}
               title="No posts in this category yet"
-              description="New guides and writeups are published every week — check back soon or subscribe to the newsletter."
+              description="New guides and writeups are published every week - check back soon or subscribe to the newsletter."
               className="py-16"
             />
           ) : (

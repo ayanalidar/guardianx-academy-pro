@@ -7,10 +7,10 @@ import { getCurrentUser } from "@/lib/session"
 export const runtime = "nodejs"
 
 /**
- * Course Authoring Studio — list & create.
+ * Course Authoring Studio - list & create.
  *
- * GET  — list the current user's authored courses (any role).
- * POST — create a new draft AuthoredCourse. Returns the new draft with its
+ * GET - list the current user's authored courses (any role).
+ * POST - create a new draft AuthoredCourse. Returns the new draft with its
  *        initial empty config skeleton.
  *
  * Auth: requires a logged-in user via getCurrentUser().
@@ -53,7 +53,7 @@ export function defaultCourseConfig(
     modules: [
       {
         id: `m_${Date.now()}`,
-        title: "Module 1 — Foundations",
+        title: "Module 1 - Foundations",
         description: "Introduction to the course's core concepts.",
         lessons: [
           {
@@ -71,7 +71,7 @@ export function defaultCourseConfig(
 }
 
 // ---------------------------------------------------------------------------
-// GET — list
+// GET - list
 // ---------------------------------------------------------------------------
 export async function GET() {
   const user = await getCurrentUser()
@@ -104,7 +104,7 @@ export async function GET() {
       courses: [],
       degraded: true,
       error: isDriftError(listErr)
-        ? "Course storage is being provisioned — try again in a moment."
+        ? "Course storage is being provisioned - try again in a moment."
         : "Failed to load your courses",
       totals: { total: 0, drafts: 0, review: 0, published: 0 },
     })
@@ -150,7 +150,7 @@ export async function GET() {
 }
 
 // ---------------------------------------------------------------------------
-// POST — create draft
+// POST - create draft
 // ---------------------------------------------------------------------------
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser()
@@ -202,7 +202,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json(
         {
           error: isDriftError(createErr)
-            ? "Course storage is being provisioned — try again in a moment."
+            ? "Course storage is being provisioned - try again in a moment."
             : "Failed to create course",
         },
         { status: 500 }

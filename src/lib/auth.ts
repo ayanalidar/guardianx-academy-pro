@@ -35,7 +35,7 @@ function clientIpFromAuthorizeReq(req: unknown): string {
 }
 
 // ---------------------------------------------------------------------------
-// Credentials provider — email + password for students/instructors/admins.
+// Credentials provider - email + password for students/instructors/admins.
 // Module-scope const: it is stateless (rate-limit map lives above) and shared
 // by both the dynamic options and the fallback options below.
 // ---------------------------------------------------------------------------
@@ -72,7 +72,7 @@ const credentialsProvider = CredentialsProvider({
 })
 
 // ---------------------------------------------------------------------------
-// School-login credentials provider — schoolCode + adminEmail + password.
+// School-login credentials provider - schoolCode + adminEmail + password.
 // Used by the "School Portal" tab on the login screen. Each school/college/
 // university has a unique schoolCode for login.
 // ---------------------------------------------------------------------------
@@ -136,7 +136,7 @@ const schoolLoginProvider = CredentialsProvider({
 })
 
 // ---------------------------------------------------------------------------
-// Callbacks — identical for every option variant (module-scope const).
+// Callbacks - identical for every option variant (module-scope const).
 // ---------------------------------------------------------------------------
 const authCallbacks: NextAuthOptions["callbacks"] = {
   async signIn({ user, account }) {
@@ -145,7 +145,7 @@ const authCallbacks: NextAuthOptions["callbacks"] = {
       const existing = await db.user.findUnique({ where: { email: user.email } })
       if (!existing) {
         // Auto-create a new STUDENT account for Google sign-ins.
-        // passwordHash is a non-guessable sentinel — credentials login
+        // passwordHash is a non-guessable sentinel - credentials login
         // for OAuth-only accounts is impossible.
         await db.user.create({
           data: {
@@ -202,7 +202,7 @@ const authCallbacks: NextAuthOptions["callbacks"] = {
 }
 
 // ---------------------------------------------------------------------------
-// Cookie security — use secure:true in production (HTTPS), false in dev.
+// Cookie security - use secure:true in production (HTTPS), false in dev.
 // ---------------------------------------------------------------------------
 const authCookies: NextAuthOptions["cookies"] = {
   sessionToken: {
@@ -234,7 +234,7 @@ const authCookies: NextAuthOptions["cookies"] = {
 }
 
 /**
- * buildAuthOptions() — assembles the full options from live settings.
+ * buildAuthOptions() - assembles the full options from live settings.
  * The ONLY dynamic part is the optional Google / Email providers; every
  * thing else (adapter, callbacks, cookies) is module-scope and shared.
  */
@@ -253,7 +253,7 @@ async function buildAuthOptions(): Promise<NextAuthOptions> {
   const smtpConfigured = !!(s.SMTP_HOST && s.SMTP_USER && s.SMTP_PASSWORD)
 
   return {
-    // Custom Prisma adapter — REQUIRED by next-auth v4 whenever the Email
+    // Custom Prisma adapter - REQUIRED by next-auth v4 whenever the Email
     // (magic link) provider is registered. Without it, assertConfig()
     // fails with MissingAdapter and EVERY auth endpoint (including plain
     // email+password login!) renders the built-in
@@ -267,14 +267,14 @@ async function buildAuthOptions(): Promise<NextAuthOptions> {
       credentialsProvider,
       schoolLoginProvider,
 
-      // Google OAuth provider — "Sign in with Google" button
+      // Google OAuth provider - "Sign in with Google" button
       // allowDangerousEmailAccountLinking TRUE:
       //   With the adapter registered, next-auth resolves OAuth users by
       //   email. Setting this to `true` keeps the exact access semantics
       //   the app ALWAYS had (pre-adapter): a Google account whose email
       //   matches an existing user signs in as that user, and the signIn
       //   callback auto-creates STUDENT accounts for brand-new emails.
-      //   Google-verified emails only — no email enumeration beyond what
+      //   Google-verified emails only - no email enumeration beyond what
       //   Google itself guarantees.
       // Registered only when configured (DB → env fallback) so that the
       // login UI can hide the button when Google OAuth is not set up.
@@ -288,12 +288,12 @@ async function buildAuthOptions(): Promise<NextAuthOptions> {
           ]
         : []),
 
-      // Email (magic link) provider — passwordless login
+      // Email (magic link) provider - passwordless login
       // User enters email → gets a login link → clicks → logged in
       // Requires SMTP settings (Platform Settings DB → env fallback):
       // SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASSWORD
       // If SMTP not configured, the provider is silently skipped.
-      // NOTE: this provider REQUIRES the adapter above — that requirement
+      // NOTE: this provider REQUIRES the adapter above - that requirement
       // is why login broke platform-wide when SMTP was configured without
       // one (see the adapter comment block).
       ...(smtpConfigured
@@ -309,7 +309,7 @@ async function buildAuthOptions(): Promise<NextAuthOptions> {
               },
               from: s.EMAIL_FROM || s.SMTP_USER || undefined,
               maxAge: 24 * 60 * 60, // 24 hours
-              // Custom sendMagicLink — uses our branded email template
+              // Custom sendMagicLink - uses our branded email template
               async sendVerificationRequest({ identifier: email, url }) {
                 // Look up the user to personalize the email
                 const user = await db.user.findUnique({ where: { email: email.toLowerCase() } })
@@ -328,10 +328,10 @@ async function buildAuthOptions(): Promise<NextAuthOptions> {
     ],
 
     session: { strategy: "jwt" },
-    // requireSecret throws in production if NEXTAUTH_SECRET is missing —
+    // requireSecret throws in production if NEXTAUTH_SECRET is missing - 
     // getAuthOptions() catches that and degrades gracefully (see below).
     // In dev, a random ephemeral secret is used (with a loud warning) so
-    // the server still boots — but JWTs won't survive a restart.
+    // the server still boots - but JWTs won't survive a restart.
     secret: requireSecret("NEXTAUTH_SECRET"),
     pages: { signIn: "/" },
     callbacks: authCallbacks,
@@ -340,12 +340,12 @@ async function buildAuthOptions(): Promise<NextAuthOptions> {
 }
 
 /**
- * getAuthOptions() — builds NextAuth options dynamically per request.
+ * getAuthOptions() - builds NextAuth options dynamically per request.
  *
  * Google OAuth + SMTP credentials are read from the Platform Settings DB
  * (admin-configurable via Admin → Settings) with env-var fallback, so saving
- * keys in the admin panel takes effect on the NEXT request — no redeploy.
- * getSettings() caches values in memory for 5 minutes, so this costs 0–1 DB
+ * keys in the admin panel takes effect on the NEXT request - no redeploy.
+ * getSettings() caches values in memory for 5 minutes, so this costs 0-1 DB
  * queries per auth call.
  *
  * FALLBACK GUARANTEE: if anything above throws (settings DB unavailable in a
@@ -362,7 +362,7 @@ export async function getAuthOptions(): Promise<NextAuthOptions> {
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error(
-      "[auth] getAuthOptions() failed — falling back to credentials-only options:",
+      "[auth] getAuthOptions() failed - falling back to credentials-only options:",
       error
     )
     return {

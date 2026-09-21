@@ -117,9 +117,9 @@ const STATUS_STYLES: Record<string, { label: string; classes: string }> = {
 }
 
 function fmtDate(iso: string | null): string {
-  if (!iso) return "—"
+  if (!iso) return " - "
   const d = new Date(iso)
-  if (Number.isNaN(d.getTime())) return "—"
+  if (Number.isNaN(d.getTime())) return " - "
   return d.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "numeric" })
 }
 
@@ -148,8 +148,8 @@ export function AdminCouponsView() {
     queryFn: async () => {
       const res = await fetch("/api/admin/coupons")
       if (!res.ok) {
-        if (res.status === 401) throw new Error("Unauthorized — please sign in as an admin")
-        if (res.status === 403) throw new Error("Forbidden — admin role required")
+        if (res.status === 401) throw new Error("Unauthorized - please sign in as an admin")
+        if (res.status === 403) throw new Error("Forbidden - admin role required")
         const j = await res.json().catch(() => ({}))
         throw new Error(j.error || "Failed to load coupons")
       }
@@ -158,7 +158,7 @@ export function AdminCouponsView() {
   })
 
   /* ----------------- DB query: courses for select --------------- */
-  // The course catalog endpoint returns published courses — used to populate
+  // The course catalog endpoint returns published courses - used to populate
   // the optional "scope to course" select in the create/edit dialog.
   const { data: courseData } = useQuery<{ courses: CourseOption[] }>({
     queryKey: ["courses-mini"],
@@ -601,7 +601,7 @@ function StatTile({
 }
 
 function FadeInRow({ children }: { children: React.ReactNode }) {
-  // Lightweight fade-in on mount — gives a subtle reveal without depending on
+  // Lightweight fade-in on mount - gives a subtle reveal without depending on
   // the platform motion-system (avoids a heavy bundle import here).
   const [shown, setShown] = React.useState(false)
   React.useEffect(() => {
@@ -747,7 +747,7 @@ function CouponFormDialog({
           {/* Course scope */}
           <div className="space-y-1.5">
             <Label htmlFor="coupon-course" className="text-xs font-medium">
-              Scope <span className="text-muted-foreground font-normal">(optional — leave empty for all courses)</span>
+              Scope <span className="text-muted-foreground font-normal">(optional - leave empty for all courses)</span>
             </Label>
             <Select
               value={form.courseId || "__ALL__"}
@@ -764,7 +764,7 @@ function CouponFormDialog({
                 </SelectItem>
                 {courses.map((c) => (
                   <SelectItem key={c.id} value={c.id}>
-                    {c.shortName} — {c.title}
+                    {c.shortName} - {c.title}
                   </SelectItem>
                 ))}
               </SelectContent>

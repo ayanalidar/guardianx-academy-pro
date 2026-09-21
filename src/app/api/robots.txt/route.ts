@@ -5,7 +5,7 @@ import { withErrorHandler } from "@/lib/session";
 export const runtime = "nodejs";
 
 /* ============================================================
-   /api/robots.txt  (GET — public, no auth)
+   /api/robots.txt  (GET - public, no auth)
 
    Returns the robots.txt content. If the admin has saved a
    custom robots.txt in SiteContent (page="seo", section="robots",
@@ -17,7 +17,7 @@ export const runtime = "nodejs";
 
 const BASE_URL = "https://academy.guardianx.cloud";
 
-const DEFAULT_ROBOTS = `# robots.txt — GuardianX Academy
+const DEFAULT_ROBOTS = `# robots.txt - GuardianX Academy
 # Default policy: allow all crawlers, point at the sitemap.
 
 User-agent: *

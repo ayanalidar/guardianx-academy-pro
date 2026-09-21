@@ -1,7 +1,7 @@
 "use client"
 
 /**
- * EmptyState — the ONE consistent "nothing here" treatment.
+ * EmptyState - the ONE consistent "nothing here" treatment.
  *
  * Replaces the ~30 ad-hoc empty-text blocks across views with a single
  * component: tinted icon bubble, title, description, optional action.

@@ -2,7 +2,7 @@
  * Safe serializer for Lab records.
  *
  * The `flag` field holds the CTF answer and must NEVER be shipped to the
- * client in listing or detail responses — otherwise anyone can `curl
+ * client in listing or detail responses - otherwise anyone can `curl
  * /api/labs` and capture every flag without solving anything (master-
  * prompt §34, §80-81). The flag is only ever returned from the
  * `/api/labs/[slug]/submit` route AFTER a correct submission.

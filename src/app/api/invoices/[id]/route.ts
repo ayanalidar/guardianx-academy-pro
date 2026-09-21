@@ -6,7 +6,7 @@ import { parseInvoicePayload, computeTotals } from "@/lib/invoice-utils"
 export const runtime = "nodejs"
 
 /**
- * GET /api/invoices/[id] — ADMIN. Load one invoice (for re-editing).
+ * GET /api/invoices/[id] - ADMIN. Load one invoice (for re-editing).
  */
 export const GET = withErrorHandler(async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
   const currentUser = await requireAdmin()
@@ -19,7 +19,7 @@ export const GET = withErrorHandler(async (_req: NextRequest, { params }: { para
 })
 
 /**
- * PATCH /api/invoices/[id] — ADMIN. Update an invoice.
+ * PATCH /api/invoices/[id] - ADMIN. Update an invoice.
  * Supports quick status changes ({ status: "Paid" }) and full edits.
  * Money columns are recomputed when items/rates change.
  */
@@ -74,7 +74,7 @@ export const PATCH = withErrorHandler(async (req: NextRequest, { params }: { par
 })
 
 /**
- * DELETE /api/invoices/[id] — ADMIN. Remove a saved invoice.
+ * DELETE /api/invoices/[id] - ADMIN. Remove a saved invoice.
  */
 export const DELETE = withErrorHandler(async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
   const currentUser = await requireAdmin()

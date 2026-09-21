@@ -26,7 +26,7 @@ export const runtime = "nodejs";
                auto-fixes it WOULD apply (nothing is written).
 
      apply   → writes the safe fixes (generated meta descriptions,
-               missing excerpts, missing slugs — generated from the
+               missing excerpts, missing slugs - generated from the
                item's own content, deduped against the DB), then
                re-audits for the real after-score, pings IndexNow
                so search engines recrawl immediately, and writes an
@@ -144,7 +144,7 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
       ok: true,
       mode,
       scoreBefore: audit.scoreBefore,
-      scoreAfter: projected, // projected — nothing written yet
+      scoreAfter: projected, // projected - nothing written yet
       issues: audit.issues,
       fixes: audit.fixes,
       fixed: [],
@@ -155,7 +155,7 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
     });
   }
 
-  // ---- 2. APPLY — write only the safe, proposed fixes ----
+  // ---- 2. APPLY - write only the safe, proposed fixes ----
   const fixed: (ProposedFix & { applied: boolean })[] = [];
   const skipped: { label: string; field: string; reason: string }[] = [];
   const pingPaths: string[] = [];

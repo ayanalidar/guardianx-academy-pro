@@ -5,7 +5,7 @@ import { getCurrentUser } from "@/lib/session"
 export const runtime = "nodejs"
 
 // ============================================================
-// CTF Competition Platform — list & create
+// CTF Competition Platform - list & create
 // GET: list competitions (auto-seeds 3 if empty)
 // POST: create competition (admin only)
 // ============================================================
@@ -34,7 +34,7 @@ async function seedCompetitions() {
     {
       title: "Cyber Friday Sprint #42",
       description:
-        "A 4-hour sprint CTF — fast, focused, beginner-friendly. Perfect warm-up before the season championship.",
+        "A 4-hour sprint CTF - fast, focused, beginner-friendly. Perfect warm-up before the season championship.",
       format: "jeopardy",
       startAt: inDays(-1),
       endAt: inDays(0),

@@ -299,7 +299,7 @@ export function ProfileView() {
   const [editOpen, setEditOpen] = React.useState(false)
   const [pwdOpen, setPwdOpen] = React.useState(false)
 
-  // Extended profile (with instructorProfile relation + phone) — used to pre-fill the edit dialog
+  // Extended profile (with instructorProfile relation + phone) - used to pre-fill the edit dialog
   const { data: profData } = useQuery<{
     user: {
       id: string; email: string; name: string; role: string; avatar: string | null;
@@ -377,7 +377,7 @@ export function ProfileView() {
     avatar: user.avatar ?? profData?.user?.avatar ?? "",
   }
 
-  // Stats strip — 6 metrics (students only)
+  // Stats strip - 6 metrics (students only)
   const statStrip = [
     { label: "Courses", value: stats?.enrollments ?? 0, accent: "border-violet-500/50", color: "text-violet-300", icon: GraduationCap },
     { label: "Labs", value: stats?.labsDone ?? 0, accent: "border-cyan-500/50", color: "text-cyan-300", icon: FlaskConical },
@@ -575,7 +575,7 @@ export function ProfileView() {
           </div>
 
           {/* ====================================================
-              Action card — role-specific
+              Action card - role-specific
               ==================================================== */}
           <div className="lg:col-span-4">
             <ScrollReveal delay={0.4}>

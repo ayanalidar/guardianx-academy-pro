@@ -33,7 +33,7 @@ const HOME: ContentItem[] = [
   { page: "home", section: "hero", key: "titleAccent", value: "cyber defense." },
   {
     page: "home", section: "hero", key: "description",
-    value: "A world-class platform for aspirants, freshers, and working professionals. Certification prep, live workshops, hands-on labs, and corporate training — all in one place."
+    value: "A world-class platform for aspirants, freshers, and working professionals. Certification prep, live workshops, hands-on labs, and corporate training - all in one place."
   },
   { page: "home", section: "hero", key: "ctaPrimary", value: "Explore Courses" },
   { page: "home", section: "hero", key: "ctaSecondary", value: "Start Learning" },
@@ -86,8 +86,8 @@ const HOME: ContentItem[] = [
   {
     page: "home", section: "labs", key: "features",
     value: [
-      { icon: "Server", title: "Live Target Environments", desc: "Each lab spins up a Docker container with a real vulnerable system. Not a simulation — a real attack surface." },
-      { icon: "Terminal", title: "In-Browser Terminal", desc: "Full Kali Linux terminal in your browser. Run nmap, sqlmap, burp, metasploit — no setup required." },
+      { icon: "Server", title: "Live Target Environments", desc: "Each lab spins up a Docker container with a real vulnerable system. Not a simulation - a real attack surface." },
+      { icon: "Terminal", title: "In-Browser Terminal", desc: "Full Kali Linux terminal in your browser. Run nmap, sqlmap, burp, metasploit - no setup required." },
       { icon: "Target", title: "Dynamic Flags & Auto-Grading", desc: "Each lab generates a unique flag. Submit it for instant grading and XP. No two attempts are the same." },
       { icon: "Activity", title: "Real-Time Progress Tracking", desc: "Track time spent, hints used, attempts made. Build a portfolio of practical skills." },
     ]
@@ -136,7 +136,7 @@ const HOME: ContentItem[] = [
   {
     page: "home", section: "benefits", key: "items",
     value: [
-      { icon: "Building2", title: "School Management System", desc: "Complimentary full-featured school management software for MoU partners. Manage students, attendance, grades, and more — separate from our training platform.", color: "text-violet-400", bg: "bg-violet-500/10" },
+      { icon: "Building2", title: "School Management System", desc: "Complimentary full-featured school management software for MoU partners. Manage students, attendance, grades, and more - separate from our training platform.", color: "text-violet-400", bg: "bg-violet-500/10" },
       { icon: "FlaskConical", title: "31 Docker-Powered Labs", desc: "Production-grade cyber range with live targets. Students practice on real vulnerabilities, not simulations.", color: "text-cyan-400", bg: "bg-cyan-500/10" },
       { icon: "Award", title: "Verifiable Certificates", desc: "Tamper-evident, publicly verifiable credentials. Employers can validate any certificate by ID.", color: "text-amber-400", bg: "bg-amber-500/10" },
       { icon: "Users", title: "On-Premises Training", desc: "We deliver training at your institution. Instructors, labs, and materials brought to your campus.", color: "text-emerald-400", bg: "bg-emerald-500/10" },
@@ -167,7 +167,7 @@ const IMPACT: ContentItem[] = [
   { page: "impact", section: "hero", key: "titleAccent", value: "securing the future." },
   {
     page: "impact", section: "hero", key: "description",
-    value: "Every number tells a story — a learner who leveled up their career, an institution that transformed its curriculum, and a community quietly making the digital world safer."
+    value: "Every number tells a story - a learner who leveled up their career, an institution that transformed its curriculum, and a community quietly making the digital world safer."
   },
   {
     page: "impact", section: "hero", key: "pills",
@@ -198,7 +198,7 @@ const IMPACT: ContentItem[] = [
   { page: "impact", section: "outcomes", key: "title", value: "Real results, real careers" },
   {
     page: "impact", section: "outcomes", key: "description",
-    value: "Measured impact on our learners' professional trajectories, tracked 6–12 months post-certification."
+    value: "Measured impact on our learners' professional trajectories, tracked 6-12 months post-certification."
   },
   {
     page: "impact", section: "outcomes", key: "items",
@@ -213,12 +213,12 @@ const IMPACT: ContentItem[] = [
   // Success stories
   { page: "impact", section: "stories", key: "eyebrow", value: "SUCCESS STORIES" },
   { page: "impact", section: "stories", key: "title", value: "Learners who became guardians" },
-  { page: "impact", section: "stories", key: "description", value: "Real journeys from our community — verified by their certificates." },
+  { page: "impact", section: "stories", key: "description", value: "Real journeys from our community - verified by their certificates." },
   {
     page: "impact", section: "stories", key: "items",
     value: [
       { name: "Priya Sharma", transition: "Security Analyst → SOC Lead", company: "TCS Cyber Defense", avatar: "PS", tint: "bg-violet-500/15 text-violet-200", cert: "CEH", quote: "GuardianX's CEH track was a complete game-changer. The hands-on labs gave me real confidence during incident response. Within 4 months of certification, I was promoted to SOC Lead." },
-      { name: "Rahul Verma", transition: "Network Engineer → Security Engineer", company: "Infosys", avatar: "RV", tint: "bg-cyan-500/15 text-cyan-200", cert: "CCNP Security", quote: "The CCNA + CCNP Security tracks were exactly what I needed. Live sessions with industry experts were invaluable — I now lead security initiatives across enterprise networks." },
+      { name: "Rahul Verma", transition: "Network Engineer → Security Engineer", company: "Infosys", avatar: "RV", tint: "bg-cyan-500/15 text-cyan-200", cert: "CCNP Security", quote: "The CCNA + CCNP Security tracks were exactly what I needed. Live sessions with industry experts were invaluable - I now lead security initiatives across enterprise networks." },
       { name: "Ananya Reddy", transition: "Student → Penetration Tester", company: "Wipro", avatar: "AR", tint: "bg-amber-500/15 text-amber-200", cert: "WAPT", quote: "As a fresher, the WAPT labs gave me hands-on experience no textbook could. I landed my pentest role directly because of the skills I demonstrated in the technical interview." },
     ]
   },
@@ -228,7 +228,7 @@ const IMPACT: ContentItem[] = [
   { page: "impact", section: "mission", key: "title", value: "Educating the next generation" },
   {
     page: "impact", section: "mission", key: "description",
-    value: "We partner with schools, colleges, and universities to bring cyber security education to their students — verified curricula, shared labs, and joint certifications."
+    value: "We partner with schools, colleges, and universities to bring cyber security education to their students - verified curricula, shared labs, and joint certifications."
   },
   {
     page: "impact", section: "mission", key: "partners",
@@ -251,7 +251,7 @@ const CONTACT: ContentItem[] = [
   { page: "contact", section: "hero", key: "titleAccent", value: "safer world together" },
   {
     page: "contact", section: "hero", key: "description",
-    value: "Have questions about courses, partnerships, or anything else? We'd love to hear from you — our team responds fast."
+    value: "Have questions about courses, partnerships, or anything else? We'd love to hear from you - our team responds fast."
   },
 
   // Contact info
@@ -332,7 +332,7 @@ const CONTACT: ContentItem[] = [
     page: "contact", section: "faq", key: "items",
     value: [
       { q: "How do I enroll in a course?", a: "Create a free account, browse our course catalog, and click 'Enroll' on any course. Most courses are free to start, and you can upgrade to a certification track anytime." },
-      { q: "Are the certificates verifiable?", a: "Yes! Every certificate issued by GuardianX has a unique ID (GX-XXXXX) that can be publicly verified on our homepage by employers and recruiters — no login required." },
+      { q: "Are the certificates verifiable?", a: "Yes! Every certificate issued by GuardianX has a unique ID (GX-XXXXX) that can be publicly verified on our homepage by employers and recruiters - no login required." },
       { q: "How do hands-on labs work?", a: "Our labs run in Docker containers that spin up on demand. Each lab has a target environment and a flag to capture. Submit the flag for instant grading and XP." },
       { q: "Can my school, college, or university partner with GuardianX?", a: "Absolutely. We partner with institutions across India and beyond. Use the form above with category 'Institution Partnership' and we'll set up your dedicated multi-tenant portal." },
       { q: "Do you offer live sessions?", a: "Yes. Instructors host live screen-sharing workshops with two-way voice and a collaborative whiteboard. Check the Live Sessions tab in your dashboard for upcoming sessions." },
@@ -353,7 +353,7 @@ const INSTITUTIONS: ContentItem[] = [
   { page: "institutions", section: "hero", key: "titleAccent", value: "schools, colleges & universities." },
   {
     page: "institutions", section: "hero", key: "description",
-    value: "GuardianX delivers cybersecurity training directly at your campus — your classrooms, your labs, your schedule. From secondary schools to research universities, we build job-ready defenders through a single, integrated platform."
+    value: "GuardianX delivers cybersecurity training directly at your campus - your classrooms, your labs, your schedule. From secondary schools to research universities, we build job-ready defenders through a single, integrated platform."
   },
   { page: "institutions", section: "hero", key: "ctaPrimary", value: "Sign an MoU" },
   { page: "institutions", section: "hero", key: "ctaSecondary", value: "Build Your Cybersecurity Program" },
@@ -414,15 +414,15 @@ const INSTITUTIONS: ContentItem[] = [
   { page: "institutions", section: "benefits", key: "title", value: "Everything your institution unlocks." },
   {
     page: "institutions", section: "benefits", key: "description",
-    value: "On-premises training delivery, a dedicated cyber range, a separate School Management System for MoU partners, and full program analytics — all in one partnership."
+    value: "On-premises training delivery, a dedicated cyber range, a separate School Management System for MoU partners, and full program analytics - all in one partnership."
   },
   {
     page: "institutions", section: "benefits", key: "items",
     value: [
       { icon: "Database", title: "School Management System", desc: "A SEPARATE product for MoU partners (not our training platform). Manage students, attendance, batches, fees, and grades from one dashboard.", color: "text-emerald-400", bg: "bg-emerald-500/10", tag: "MoU partners only" },
-      { icon: "FlaskConical", title: "31 Docker Labs", desc: "Docker-powered hands-on labs with live targets. No setup required — students start practicing on day one, on-premises.", color: "text-violet-400", bg: "bg-violet-500/10", tag: "Cyber range" },
+      { icon: "FlaskConical", title: "31 Docker Labs", desc: "Docker-powered hands-on labs with live targets. No setup required - students start practicing on day one, on-premises.", color: "text-violet-400", bg: "bg-violet-500/10", tag: "Cyber range" },
       { icon: "Award", title: "Verifiable Certificates", desc: "Tamper-evident certificates with public verification. Employers and academic institutions can verify any credential by ID.", color: "text-amber-400", bg: "bg-amber-500/10", tag: "Industry recognized" },
-      { icon: "Server", title: "On-Premises Training", desc: "We deliver training at your campus — your classrooms, your labs, your schedule. Our instructors travel to your institution.", color: "text-cyan-400", bg: "bg-cyan-500/10", tag: "In-person" },
+      { icon: "Server", title: "On-Premises Training", desc: "We deliver training at your campus - your classrooms, your labs, your schedule. Our instructors travel to your institution.", color: "text-cyan-400", bg: "bg-cyan-500/10", tag: "In-person" },
       { icon: "Activity", title: "Real-Time Analytics", desc: "Track student progress, attendance, engagement, and certification outcomes. Data-driven decisions for program directors.", color: "text-rose-400", bg: "bg-rose-500/10", tag: "Live insights" },
       { icon: "Users", title: "Bulk Student Import", desc: "CSV upload, batch management, unique school codes, and attendance tracking. Onboard 1,000 students in under an hour.", color: "text-teal-400", bg: "bg-teal-500/10", tag: "At scale" },
     ]
@@ -434,7 +434,7 @@ const INSTITUTIONS: ContentItem[] = [
   { page: "institutions", section: "flowSteps", key: "titleAccent", value: "Our cyber range." },
   {
     page: "institutions", section: "flowSteps", key: "description",
-    value: "From onboarding students to issuing industry-recognized certificates — every step runs inside the GuardianX platform, on your premises."
+    value: "From onboarding students to issuing industry-recognized certificates - every step runs inside the GuardianX platform, on your premises."
   },
   {
     page: "institutions", section: "flowSteps", key: "items",
@@ -470,7 +470,7 @@ const INSTITUTIONS: ContentItem[] = [
   { page: "institutions", section: "finalCta", key: "titleAccent", value: "Build your cybersecurity program." },
   {
     page: "institutions", section: "finalCta", key: "description",
-    value: "Let's transform your institution's cyber education together — on your premises, with our cyber range, instructors, and a dedicated School Management System for MoU partners."
+    value: "Let's transform your institution's cyber education together - on your premises, with our cyber range, instructors, and a dedicated School Management System for MoU partners."
   },
   { page: "institutions", section: "finalCta", key: "ctaPrimary", value: "Sign an MoU" },
   { page: "institutions", section: "finalCta", key: "ctaSecondary", value: "Build Your Cybersecurity Program" },
@@ -494,7 +494,7 @@ const CATALOG: ContentItem[] = [
   { page: "catalog", section: "hero", key: "titleAccent", value: "path." },
   {
     page: "catalog", section: "hero", key: "description",
-    value: "27 certification tracks across ethical hacking, networking, web security, IAM, and more — from beginner fundamentals to advanced specializations."
+    value: "27 certification tracks across ethical hacking, networking, web security, IAM, and more - from beginner fundamentals to advanced specializations."
   },
   {
     page: "catalog", section: "filters", key: "statCards",
@@ -529,7 +529,7 @@ const AUTH: ContentItem[] = [
   { page: "auth", section: "hero", key: "titleAccent", value: "Become a Guardian." },
   {
     page: "auth", section: "hero", key: "description",
-    value: "Industry-leading certification prep, live screen-sharing workshops, and hands-on offensive security labs — all in one platform built for defenders."
+    value: "Industry-leading certification prep, live screen-sharing workshops, and hands-on offensive security labs - all in one platform built for defenders."
   },
   { page: "auth", section: "hero", key: "tagline", value: "cyber security · certification · labs" },
   { page: "auth", section: "hero", key: "statusBadge", value: "SYSTEM ONLINE" },

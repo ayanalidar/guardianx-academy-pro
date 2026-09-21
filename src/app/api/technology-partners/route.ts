@@ -6,7 +6,7 @@ export const runtime = "nodejs"
 
 /**
  * GET /api/technology-partners
- * Public — returns all published technology partners ordered by `order`.
+ * Public - returns all published technology partners ordered by `order`.
  */
 export async function GET() {
   try {

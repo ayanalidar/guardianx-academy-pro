@@ -5,7 +5,7 @@ import { requireAdmin, withErrorHandler } from "@/lib/session"
 export const runtime = "nodejs"
 
 /**
- * POST /api/admin/site-content/seed — re-seed default CMS content for
+ * POST /api/admin/site-content/seed - re-seed default CMS content for
  * one or all pages from the in-repo seed module. Lets admins fix an
  * empty Content Studio from the UI without shell access.
  *
@@ -26,7 +26,7 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
   try {
     body = await req.json()
   } catch {
-    // empty body is OK — defaults to "all pages"
+    // empty body is OK - defaults to "all pages"
   }
 
   const pageFilter = typeof body?.page === "string" && body.page !== "*"

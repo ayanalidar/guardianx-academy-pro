@@ -4,7 +4,7 @@ import { getCurrentUser } from "@/lib/session"
 
 export const runtime = "nodejs"
 
-// GET /api/user/profile — current user's full profile (any role)
+// GET /api/user/profile - current user's full profile (any role)
 export async function GET() {
   const user = await getCurrentUser()
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
@@ -24,7 +24,7 @@ export async function GET() {
   return NextResponse.json({ user: full })
 }
 
-// PATCH /api/user/profile — update own profile (any role). NEVER allow role changes.
+// PATCH /api/user/profile - update own profile (any role). NEVER allow role changes.
 export async function PATCH(req: NextRequest) {
   const user = await getCurrentUser()
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })

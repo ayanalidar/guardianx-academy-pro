@@ -33,7 +33,7 @@ export function EmailCampaignView() {
       .catch(() => {})
   }, [])
 
-  // Delivery history — real EmailLog rows (was persisted but never shown)
+  // Delivery history - real EmailLog rows (was persisted but never shown)
   const [history, setHistory] = React.useState<
     { id: string; toEmail: string; subject: string; status: string; sentAt: string }[]
   >([])
@@ -66,7 +66,7 @@ export function EmailCampaignView() {
         method: "POST",
         body: JSON.stringify({ subject, body, audience }),
       })
-      toast.success(`Campaign sent — ${res.sent} delivered, ${res.failed} failed (${res.total} recipients)`)
+      toast.success(`Campaign sent - ${res.sent} delivered, ${res.failed} failed (${res.total} recipients)`)
       setSubject(""); setBody("")
       loadHistory()
     } catch (e: any) {
@@ -142,7 +142,7 @@ export function EmailCampaignView() {
           </div>
         </Card>
 
-        {/* Delivery history — from the EmailLog table */}
+        {/* Delivery history - from the EmailLog table */}
         <Card className="p-5">
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-semibold">Recent Sends</h2>
@@ -151,7 +151,7 @@ export function EmailCampaignView() {
             </Button>
           </div>
           {history.length === 0 ? (
-            <p className="text-xs text-muted-foreground">No emails sent yet — campaign sends are logged here.</p>
+            <p className="text-xs text-muted-foreground">No emails sent yet - campaign sends are logged here.</p>
           ) : (
             <div className="space-y-1.5 max-h-64 overflow-y-auto custom-scroll">
               {history.map((h) => (

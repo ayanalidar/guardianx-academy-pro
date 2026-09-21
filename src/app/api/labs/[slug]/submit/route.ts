@@ -86,7 +86,7 @@ export const POST = withErrorHandler(async (req: NextRequest, { params }: { para
       if (labUser) {
         await sendEmail({
           to: labUser.email,
-          subject: `🏆 Lab Solved — ${lab.title}`,
+          subject: `🏆 Lab Solved - ${lab.title}`,
           body: `Hi ${labUser.name},\n\nGreat work! You've successfully solved the "${lab.title}" lab on GuardianX Academy.\n\nXP earned: ${xp}\nDifficulty: ${lab.difficulty}\n\nKeep honing your skills,\nThe GuardianX Team`,
           type: "notification",
           userId: user.id,
@@ -102,13 +102,13 @@ export const POST = withErrorHandler(async (req: NextRequest, { params }: { para
     })
   }
 
-  // "reveal" action — used by the SIMULATED lab terminal when the user
+  // "reveal" action - used by the SIMULATED lab terminal when the user
   // "finds" the flag through the simulated command line (e.g. types
   // `cat /root/flag.txt` in a lab that has no real Docker backend).
   // The server marks the lab complete WITHOUT ever shipping the flag
   // to the client for comparison. The flag is only returned in the
   // response so the terminal can display it as a "captured" confirmation
-  // — but the user never had it before solving, so this is not a leak.
+  // - but the user never had it before solving, so this is not a leak.
   // This closes the previous vulnerability where the flag was passed
   // as a React prop to LabTerminal and visible in devtools (§34, §80-81).
   if (action === "reveal") {
@@ -134,7 +134,7 @@ export const POST = withErrorHandler(async (req: NextRequest, { params }: { para
       if (labUser) {
         await sendEmail({
           to: labUser.email,
-          subject: `🏆 Lab Solved — ${lab.title}`,
+          subject: `🏆 Lab Solved - ${lab.title}`,
           body: `Hi ${labUser.name},\n\nGreat work! You've successfully solved the "${lab.title}" lab on GuardianX Academy.\n\nXP earned: ${xp}\nDifficulty: ${lab.difficulty}\n\nKeep honing your skills,\nThe GuardianX Team`,
           type: "notification",
           userId: user.id,

@@ -5,7 +5,7 @@ import { withErrorHandler } from "@/lib/session"
 export const runtime = "nodejs"
 
 /* GET /api/cyber-quiz/questions?difficulty=Easy|Hard|Advanced
- * Public endpoint — returns 30 random questions for the candidate's chosen
+ * Public endpoint - returns 30 random questions for the candidate's chosen
  * difficulty. Does NOT reveal correctAnswer or explanation in the response
  * (those come back only after submission, in review mode).
  *
@@ -44,7 +44,7 @@ export const GET = withErrorHandler(async (req) => {
       optionB: true,
       optionC: true,
       optionD: true,
-      // NOTE: do NOT select correctAnswer or explanation — client mustn't see them
+      // NOTE: do NOT select correctAnswer or explanation - client mustn't see them
     },
   })
 

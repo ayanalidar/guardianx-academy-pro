@@ -30,7 +30,7 @@ export default function NotFound() {
               404
             </div>
             <h1 style={{ fontSize: "20px", fontWeight: 700, margin: "12px 0 8px" }}>
-              Signal lost — page not found
+              Signal lost - page not found
             </h1>
             <p style={{ fontSize: "14px", color: "#9ca3af", lineHeight: 1.6, marginBottom: "24px" }}>
               The page you requested doesn&apos;t exist or may have been moved.
