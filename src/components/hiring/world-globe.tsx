@@ -39,8 +39,29 @@ function isLand(lat: number, lon: number): boolean {
   return LAND[row * MASK_W + col] === 1
 }
 
-/** Country/region name (lowercased) -> [lat, lon]. */
+/** Country/region name (lowercased) -> [lat, lon]. Cities resolve first
+ *  ("Mumbai, India" -> Mumbai pin) since the location tail is tried first. */
 const COUNTRY_COORDS: Record<string, [number, number]> = {
+  // major cities
+  "delhi": [28.6, 77.2], "new delhi": [28.6, 77.2], "mumbai": [19.1, 72.9],
+  "bangalore": [13.0, 77.6], "bengaluru": [13.0, 77.6], "hyderabad": [17.4, 78.5],
+  "chennai": [13.1, 80.3], "pune": [18.5, 73.9], "kolkata": [22.6, 88.4],
+  "gurugram": [28.5, 77.1], "gurgaon": [28.5, 77.1], "noida": [28.5, 77.4],
+  "abu dhabi": [24.5, 54.4], "sharjah": [25.3, 55.4],
+  "london": [51.5, -0.13], "new york": [40.7, -74.0], "san francisco": [37.8, -122.4],
+  "austin": [30.3, -97.7], "seattle": [47.6, -122.3], "boston": [42.4, -71.1], "chicago": [41.9, -87.6],
+  "berlin": [52.5, 13.4], "paris": [48.9, 2.35], "amsterdam": [52.4, 4.9],
+  "madrid": [40.4, -3.7], "lisbon": [38.7, -9.1], "warsaw": [52.2, 21.0],
+  "dublin": [53.3, -6.3], "zurich": [47.4, 8.5],
+  "sydney": [-33.9, 151.2], "melbourne": [-37.8, 145.0],
+  "toronto": [43.7, -79.4], "vancouver": [49.3, -123.1],
+  "tokyo": [35.7, 139.7], "seoul": [37.6, 127.0], "hong kong": [22.3, 114.2],
+  "lagos": [6.5, 3.4], "nairobi": [-1.3, 36.8], "cairo": [30.0, 31.2],
+  "cape town": [-33.9, 18.4], "johannesburg": [-26.2, 28.0],
+  "sao paulo": [-23.6, -46.6], "mexico city": [19.4, -99.1], "buenos aires": [-34.6, -58.4],
+  "tel aviv": [32.1, 34.8], "riyadh": [24.7, 46.7], "doha": [25.3, 51.5],
+  "manama": [26.2, 50.6], "muscat": [23.6, 58.5], "amman": [31.9, 35.9], "istanbul": [41.0, 28.9],
+  // countries / regions
   "uae": [24.5, 54.5], "united arab emirates": [24.5, 54.5], "dubai": [25.2, 55.3],
   "india": [21.5, 78.9], "usa": [39, -98], "united states": [39, -98],
   "uk": [54, -2], "united kingdom": [54, -2], "england": [52.5, -1.8],
