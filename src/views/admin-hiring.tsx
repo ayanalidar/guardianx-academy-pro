@@ -43,7 +43,7 @@ import { toast } from "sonner"
 import {
   Plus, Search, Globe2, MapPin, Home, Building2, Wallet, Users, Pencil,
   Trash2, Loader2, Briefcase, Eye, EyeOff, ExternalLink, RotateCcw,
-  Inbox, CheckCircle2, UserPlus, Mail, Phone, Link2, FileText, Clock,
+  Inbox, CheckCircle2, UserPlus, Mail, Phone, Link2, FileText, Clock, Star,
 } from "lucide-react"
 
 // ============================================================
@@ -158,6 +158,27 @@ export function AdminHiringView() {
   }, [jobs, search, statusFilter])
 
   const invalidate = () => queryClient.invalidateQueries({ queryKey: ["admin-hiring-jobs"] })
+
+  // Featured (admin-pinned) roles - zero-migration storage in SiteContent.
+  const featuredQ = useQuery<{ ids: string[] }>({
+    queryKey: ["admin-hiring-featured"],
+    queryFn: () => api("/api/admin/hiring/featured"),
+  })
+  const featuredIds = featuredQ.data?.ids ?? []
+  const featuredMutation = useMutation({
+    mutationFn: (ids: string[]) => api("/api/admin/hiring/featured", { method: "PUT", body: JSON.stringify({ ids }) }),
+    onSuccess: () => {
+      toast.success("Featured roles updated on /hiring")
+      queryClient.invalidateQueries({ queryKey: ["admin-hiring-featured"] })
+    },
+    onError: (e: any) => toast.error(e?.message || "Could not update featured roles"),
+  })
+  const toggleFeatured = (id: string) => {
+    const next = featuredIds.includes(id)
+      ? featuredIds.filter((x) => x !== id)
+      : [...featuredIds, id].slice(0, 12)
+    featuredMutation.mutate(next)
+  }
 
   const statusMutation = useMutation({
     mutationFn: async ({ id, status }: { id: string; status: string }) => {
@@ -281,6 +302,8 @@ export function AdminHiringView() {
             <JobRow
               key={job.id}
               job={job}
+              featured={featuredIds.includes(job.id)}
+              onToggleFeatured={() => toggleFeatured(job.id)}
               onEdit={() => setEditing(job)}
               onStatus={(s) => statusMutation.mutate({ id: job.id, status: s })}
               onDelete={() => {
@@ -317,7 +340,7 @@ function StatTile({ label, value, tone }: { label: string; value: number; tone?:
   )
 }
 
-function JobRow({ job, onEdit, onStatus, onDelete }: { job: AdminJob; onEdit: () => void; onStatus: (s: string) => void; onDelete: () => void }) {
+function JobRow({ job, featured, onToggleFeatured, onEdit, onStatus, onDelete }: { job: AdminJob; featured: boolean; onToggleFeatured: () => void; onEdit: () => void; onStatus: (s: string) => void; onDelete: () => void }) {
   const statusMeta = JOB_STATUSES.find((s) => s.value === job.status) || JOB_STATUSES[0]
   return (
     <div className="p-4 flex items-start gap-3 hover:bg-violet-500/[0.03] transition-colors">
@@ -327,6 +350,11 @@ function JobRow({ job, onEdit, onStatus, onDelete }: { job: AdminJob; onEdit: ()
           <Badge variant="outline" className={cn("text-[9px]", statusMeta.color, statusMeta.border, statusMeta.bg)}>
             <span className={cn("h-1.5 w-1.5 rounded-full mr-1", statusMeta.dot)} /> {statusMeta.label}
           </Badge>
+          {featured && (
+            <Badge className="text-[9px] text-amber-950 border-0 bg-gradient-to-r from-amber-300 to-yellow-200">
+              <Star className="h-2.5 w-2.5 mr-0.5 fill-amber-900" /> Featured
+            </Badge>
+          )}
           {job.remote && <Badge variant="outline" className="text-[9px] text-emerald-300 border-emerald-500/30">Remote</Badge>}
         </div>
         <div className="flex items-center gap-2.5 text-[11px] text-muted-foreground mt-1 flex-wrap">
@@ -338,6 +366,15 @@ function JobRow({ job, onEdit, onStatus, onDelete }: { job: AdminJob; onEdit: ()
       </div>
 
       <div className="flex items-center gap-1 shrink-0">
+        <Button
+          size="sm"
+          variant="ghost"
+          title={featured ? "Remove from featured" : "Feature on /hiring (shows in the Featured strip)"}
+          onClick={onToggleFeatured}
+          className={cn("h-8 px-2", featured ? "text-amber-300 hover:bg-amber-500/10" : "text-zinc-500 hover:text-amber-300 hover:bg-amber-500/10")}
+        >
+          <Star className={cn("h-3.5 w-3.5", featured && "fill-amber-300")} />
+        </Button>
         {job.status !== "active" && (
           <Button size="sm" variant="ghost" title="Publish to /hiring" onClick={() => onStatus("active")} className="h-8 px-2 text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10">
             <Eye className="h-3.5 w-3.5" />

@@ -1375,3 +1375,9 @@ html:not(.gx-hydrated) [style*="opacity: 0"] {
   from { transform: translateX(-50%); }
   to { transform: translateX(0); }
 }
+
+/* Featured/glow-edge conic border rotation (hiring page) */
+@keyframes gx-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

@@ -58,6 +58,7 @@ export async function GET(_req: NextRequest) {
         createdAt: j.createdAt,
         applicants: j._count.applications,
       })),
+      featured: await readFeaturedIdsSafe(),
       count: jobs.length,
       degraded: false,
     }
@@ -78,6 +79,20 @@ function safeParseArray(raw: string | null | undefined): string[] {
   try {
     const v = JSON.parse(raw || "[]")
     return Array.isArray(v) ? v.map(String) : []
+  } catch {
+    return []
+  }
+}
+
+/** Admin-pinned featured job ids (SiteContent row). Missing row or table
+ *  -> empty list; never breaks the public jobs payload. */
+async function readFeaturedIdsSafe(): Promise<string[]> {
+  try {
+    const row = await db.siteContent.findUnique({
+      where: { page_section_key: { page: "hiring", section: "featured", key: "ids" } },
+    })
+    const v = row?.value
+    return Array.isArray(v) ? v.map(String).slice(0, 12) : []
   } catch {
     return []
   }
