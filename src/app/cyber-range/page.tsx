@@ -1,8 +1,8 @@
 import { PublicRouteView } from "@/components/platform/public-route-view"
 
 
-export const metadata = {
-  title: "Cyber Range — Hands-On Hacking Labs | GuardianX Academy",
+export const metadata = { alternates: { canonical: "/cyber-range" },
+  title: "Cyber Range — Hands-On Hacking Labs",
   description: "Spin up real isolated targets in seconds. Probe, break, and capture flags in a real cyber range environment.",
 }
 

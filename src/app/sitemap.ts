@@ -17,6 +17,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${BASE_URL}/pricing`, lastModified: now, changeFrequency: "monthly", priority: 0.7 },
     { url: `${BASE_URL}/contact`, lastModified: now, changeFrequency: "yearly", priority: 0.5 },
     { url: `${BASE_URL}/verify`, lastModified: now, changeFrequency: "yearly", priority: 0.5 },
+    { url: `${BASE_URL}/institutions`, lastModified: now, changeFrequency: "monthly", priority: 0.7 },
     { url: `${BASE_URL}/institutions/schools`, lastModified: now, changeFrequency: "monthly", priority: 0.7 },
     { url: `${BASE_URL}/institutions/colleges`, lastModified: now, changeFrequency: "monthly", priority: 0.7 },
     { url: `${BASE_URL}/institutions/universities`, lastModified: now, changeFrequency: "monthly", priority: 0.7 },
@@ -35,12 +36,13 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ]
 
   try {
-    const [courses, blogPosts, events, instructors, batches] = await Promise.all([
+    const [courses, blogPosts, events, instructors, batches, certs] = await Promise.all([
       db.course.findMany({ where: { published: true }, select: { slug: true, updatedAt: true } }).catch(() => []),
       db.blogPost.findMany({ where: { published: true }, select: { slug: true, updatedAt: true } }).catch(() => []),
       db.event.findMany({ where: { published: true }, select: { slug: true, updatedAt: true } }).catch(() => []),
       db.user.findMany({ where: { role: "INSTRUCTOR" }, select: { id: true, updatedAt: true } }).catch(() => []),
       db.trainingBatch.findMany({ where: { published: true }, select: { id: true, updatedAt: true } }).catch(() => []),
+      db.guardianCertification.findMany({ where: { published: true }, select: { slug: true, updatedAt: true } }).catch(() => []),
     ])
 
     for (const c of courses) {
@@ -57,6 +59,9 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     }
     for (const i of instructors) {
       entries.push({ url: `${BASE_URL}/instructors/${encodeURIComponent(i.id)}`, lastModified: i.updatedAt, changeFrequency: "monthly" as const, priority: 0.6 })
+    }
+    for (const cert of certs) {
+      entries.push({ url: `${BASE_URL}/cert/${encodeURIComponent(cert.slug)}`, lastModified: cert.updatedAt, changeFrequency: "monthly" as const, priority: 0.7 })
     }
   } catch (e) {
     // DB failed — still return static routes

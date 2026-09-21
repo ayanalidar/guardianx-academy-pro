@@ -141,9 +141,10 @@ export const metadata: Metadata = {
   publisher: "GuardianX Academy",
   applicationName: "GuardianX Academy",
   category: "Education",
-  alternates: {
-    canonical: "/",
-  },
+  // NOTE: no layout-level `alternates.canonical` — a canonical here would be
+  // inherited by EVERY page, telling Google all pages are copies of the
+  // homepage (actively de-indexes the site). Each page sets its own
+  // self-referencing canonical instead.
   openGraph: {
     title: "GuardianX Academy — Cyber Security Training Operating System",
     description:
@@ -199,9 +200,10 @@ export const metadata: Metadata = {
     telephone: false,
   },
   manifest: "/manifest.webmanifest",
-  verification: {
-    google: "guardianx-academy-google-site-verification",
-  },
+  // To enable Google Search Console meta-tag verification, replace the
+  // placeholder below with the real `google-site-verification` token from
+  // Search Console (Settings → Ownership verification → HTML tag).
+  // verification: { google: "<REAL_TOKEN_FROM_SEARCH_CONSOLE>" },
   icons: {
     icon: [
       { url: "/guardianx-logo-v2.png", type: "image/png", sizes: "32x32" },

@@ -369,22 +369,22 @@ const VIEW_TITLES: Partial<Record<View["name"], string>> = {
 /** Metadata title for a view (used by the catch-all's generateMetadata). */
 export function viewTitle(view: View): string {
   if (view.name === "legal") {
-    return `${view.pageType.charAt(0).toUpperCase()}${view.pageType.slice(1)} | GuardianX Academy`
+    return `${view.pageType.charAt(0).toUpperCase()}${view.pageType.slice(1)}`
   }
-  if (view.name === "course") return "Course Details | GuardianX Academy"
-  if (view.name === "lab") return "Hands-on Lab | GuardianX Academy"
-  if (view.name === "exam-detail") return "Exam Details | GuardianX Academy"
-  if (view.name === "lesson") return "Lesson | GuardianX Academy"
-  if (view.name === "blog-post") return "Blog | GuardianX Academy"
-  if (view.name === "event-detail") return "Event | GuardianX Academy"
-  if (view.name === "instructor-detail") return "Instructor Profile | GuardianX Academy"
-  if (view.name === "cert-landing") return "Certification | GuardianX Academy"
-  if (view.name === "cyber-quiz-runner") return "Cyber Quiz | GuardianX Academy"
-  if (view.name === "cyber-quiz-results") return "Quiz Results | GuardianX Academy"
-  if (view.name === "cyber-quiz-certificate") return "Your Certificate | GuardianX Academy"
-  if (view.name === "cyber-quiz-progress") return "Quiz Progress | GuardianX Academy"
+  if (view.name === "course") return "Course Details"
+  if (view.name === "lab") return "Hands-on Lab"
+  if (view.name === "exam-detail") return "Exam Details"
+  if (view.name === "lesson") return "Lesson"
+  if (view.name === "blog-post") return "Blog"
+  if (view.name === "event-detail") return "Event"
+  if (view.name === "instructor-detail") return "Instructor Profile"
+  if (view.name === "cert-landing") return "Certification"
+  if (view.name === "cyber-quiz-runner") return "Cyber Quiz"
+  if (view.name === "cyber-quiz-results") return "Quiz Results"
+  if (view.name === "cyber-quiz-certificate") return "Your Certificate"
+  if (view.name === "cyber-quiz-progress") return "Quiz Progress"
   const t = VIEW_TITLES[view.name]
-  return t ? `${t} | GuardianX Academy` : "GuardianX Academy"
+  return t ? `${t}` : "GuardianX Academy"
 }
 
 /** Metadata description fallback for bridge routes. */

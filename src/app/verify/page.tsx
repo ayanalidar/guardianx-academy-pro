@@ -1,7 +1,7 @@
 import { PublicRouteView } from "@/components/platform/public-route-view"
 import type { View } from "@/store/app-store"
 
-export const metadata = { title: "Verify Certificate | GuardianX Academy", description: "Public certificate verification. Enter a credential ID to verify any GuardianX Academy certification." }
+export const metadata = { alternates: { canonical: "/verify" }, title: "Verify Certificate", description: "Public certificate verification. Enter a credential ID to verify any GuardianX Academy certification." }
 
 /**
  * /verify — dedicated public verification page.
