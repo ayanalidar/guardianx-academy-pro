@@ -2563,14 +2563,18 @@ interface InstructorDetail {
   courses?: { id: string; title: string; level: string; category: string; enrolledCount: number }[]
 }
 function InstructorSpotlight({ instructor, navigate }: { instructor: any; navigate: any }) {
-  // Degraded course payloads (schema-drift fallback) may carry no instructor.
-  if (!instructor) return null
-  // Fetch full instructor profile (includes expertise, certifications, yearsExperience)
+  // Hooks MUST run unconditionally (rules-of-hooks): the early return used to
+  // sit BEFORE useQuery, so a payload that flips `instructor` from absent to
+  // present between renders changed hook order and crashed the whole page.
   const { data, isLoading } = useQuery<{ instructor: InstructorDetail | null }>({
     queryKey: ["instructor-profile", instructor?.id],
     queryFn: () => api(`/api/instructors/${instructor.id}`),
     enabled: !!instructor?.id,
   })
+
+  // Degraded course payloads (schema-drift fallback) may carry no instructor.
+  if (!instructor) return null
+  // Fetch full instructor profile (includes expertise, certifications, yearsExperience)
 
   const profile = data?.instructor
   const expertise = profile?.expertise ?? []

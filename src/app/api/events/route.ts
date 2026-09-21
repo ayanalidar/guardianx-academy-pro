@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
+import { cachedJson } from "@/lib/http-cache"
 
 export const runtime = "nodejs"
 
@@ -20,7 +21,7 @@ export async function GET(req: NextRequest) {
       orderBy: [{ order: "asc" }, { startIsoDate: "asc" }],
     })
 
-    return NextResponse.json({ events, count: events.length })
+    return cachedJson({ events, count: events.length }, { sMax: 120, swr: 600 })
   } catch (err) {
     console.error("[api/events] GET failed:", err)
     return NextResponse.json(

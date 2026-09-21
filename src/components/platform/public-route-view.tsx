@@ -87,7 +87,11 @@ function renderView(view: View): React.ReactNode {
 
 export function PublicRouteView({ initialView }: { initialView: View }) {
   const storeView = useAppStore((s) => s.view)
-  const hydratedRef = React.useRef(false)
+  // Hydration flag: false during SSR + the very first client render (so the
+  // DEEP-LINKED view paints), true after the mount effect (so the store —
+  // the single source of truth — drives every subsequent render). This used
+  // to be a ref read during render, which is illegal in React.
+  const [hydrated, setHydrated] = React.useState(false)
 
   // Hydrate the store with the initial view after mount. The store is the
   // single source of truth from that point on: clicking any nav link, footer
@@ -95,7 +99,7 @@ export function PublicRouteView({ initialView }: { initialView: View }) {
   // component re-renders IN PLACE (this is what fixes the old dead-end pages
   // where the URL changed but the screen never did).
   React.useEffect(() => {
-    hydratedRef.current = true
+    setHydrated(true)
     const current = useAppStore.getState().view
     if (JSON.stringify(current) !== JSON.stringify(initialView)) {
       useAppStore.setState({ view: initialView, sidebarOpen: false })
@@ -107,7 +111,7 @@ export function PublicRouteView({ initialView }: { initialView: View }) {
   // would otherwise give crawlers and pre-hydration users homepage HTML on
   // detail pages. After the mount effect runs, always follow the store.
   const storeIsPristine = JSON.stringify(storeView) === JSON.stringify({ name: "home" })
-  const active = !hydratedRef.current && storeIsPristine ? initialView : storeView
+  const active = !hydrated && storeIsPristine ? initialView : storeView
 
   return (
     <PublicPageShell>

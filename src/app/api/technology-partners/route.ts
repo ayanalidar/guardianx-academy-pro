@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
+import { cachedJson } from "@/lib/http-cache"
 
 export const runtime = "nodejs"
 
@@ -14,10 +15,10 @@ export async function GET() {
       orderBy: { order: "asc" },
     })
 
-    return NextResponse.json({
-      partners,
-      count: partners.length,
-    })
+    return cachedJson(
+      { partners, count: partners.length },
+      { sMax: 120, swr: 600 }
+    )
   } catch (err) {
     console.error("[api/technology-partners] GET error:", err)
     return NextResponse.json(

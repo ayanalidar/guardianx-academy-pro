@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
+import { cachedJson } from "@/lib/http-cache"
 
 export const runtime = "nodejs"
 
@@ -91,7 +92,7 @@ export async function GET() {
       }
     })
 
-    return NextResponse.json({ feed, count: feed.length })
+    return cachedJson({ feed, count: feed.length }, { sMax: 60, swr: 300 })
   } catch (err) {
     console.error("[api/enrollment-feed] GET failed:", err)
     return NextResponse.json({ feed: [], count: 0 })

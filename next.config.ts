@@ -11,6 +11,13 @@ const nextConfig: NextConfig = {
   },
   // Re-enabled: catches effect double-fire bugs, suspense edge cases, etc.
   reactStrictMode: true,
+  // Perf: don't advertise the framework (minor fingerprinting + header noise).
+  poweredByHeader: false,
+  // Perf: serve next/image assets in the leanest widely-supported formats.
+  images: {
+    formats: ["image/avif", "image/webp"],
+    minimumCacheTTL: 86400,
+  },
   allowedDevOrigins: [
     "*.space-z.ai",
     "*.z.ai",

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
+import { cachedJson } from "@/lib/http-cache"
 
 export const runtime = "nodejs"
 
@@ -20,7 +21,7 @@ export async function GET() {
       courses: safeParseArray(p.courses),
     }))
 
-    return NextResponse.json({ learningPaths: data, count: data.length })
+    return cachedJson({ learningPaths: data, count: data.length }, { sMax: 120, swr: 600 })
   } catch (err) {
     console.error("[api/learning-paths] GET error:", err)
     return NextResponse.json(

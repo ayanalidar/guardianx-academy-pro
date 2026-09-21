@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentUser, withErrorHandler } from "@/lib/session"
+import { cachedJson, noStore } from "@/lib/http-cache"
 
 export const GET = withErrorHandler(async (req: NextRequest) => {
   const { searchParams } = new URL(req.url)
@@ -176,5 +177,13 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
     }
   })
 
-  return NextResponse.json({ courses: result, degraded })
+  // Cache policy: the anonymous catalog payload (no session, no enrollment
+  // personalization params) is identical for every visitor and changes only
+  // when admins edit courses — safe to edge-cache. Anything authenticated or
+  // enrollment-related must never be cached (per-user progress badges).
+  const personalized = !!currentUser || enrolledOnly || status !== "all" || !!userIdParam
+  if (personalized) {
+    return noStore(NextResponse.json({ courses: result, degraded }))
+  }
+  return cachedJson({ courses: result, degraded }, { sMax: 60, swr: 300 })
 })

@@ -37,6 +37,38 @@ const USER_SELECT = {
   lastActiveDate: true,
 } as const
 
+/**
+ * Per-lambda in-memory cache for getCurrentUser().
+ *
+ * Every authenticated API request used to pay a `user.findUnique` round
+ * trip on top of session decoding — significant when the DB is distant and
+ * the lambda is warm (the common case within a single page load, where a
+ * dozen API calls each re-resolve the SAME user). A short 30s TTL keeps
+ * role/permission changes effectively real-time while eliminating the
+ * repeated read. Bootstrap-admin promotion still runs when the cached role
+ * is below SUPER_ADMIN, so ADMIN_EMAILS upgrades propagate within one TTL.
+ */
+const USER_CACHE_TTL = 30_000
+const _userCache = new Map<string, { user: any; expiresAt: number }>()
+
+function userFromCache(id: string) {
+  const hit = _userCache.get(id)
+  if (hit && Date.now() < hit.expiresAt) return hit.user
+  if (hit) _userCache.delete(id)
+  return undefined // undefined = miss; null = cached "gone" is not used
+}
+
+function userToCache(id: string, user: any) {
+  _userCache.set(id, { user, expiresAt: Date.now() + USER_CACHE_TTL })
+  // Bound the map defensively (tiny — one entry per active user per lambda).
+  if (_userCache.size > 500) {
+    const now = Date.now()
+    for (const [k, v] of _userCache) {
+      if (v.expiresAt <= now) _userCache.delete(k)
+    }
+  }
+}
+
 export async function getCurrentUser() {
   // Dynamic options: same DB-backed provider config as the auth route handler.
   // The secret is identical (requireSecret("NEXTAUTH_SECRET")) so JWT decoding
@@ -44,8 +76,13 @@ export async function getCurrentUser() {
   // does not need.
   const session = await getServerSession(await getAuthOptions())
   if (!session?.user) return null
+  const userId = (session.user as any).id
+
+  const cached = userFromCache(userId)
+  if (cached !== undefined) return cached
+
   let user = await db.user.findUnique({
-    where: { id: (session.user as any).id },
+    where: { id: userId },
     select: USER_SELECT,
   })
   if (
@@ -66,6 +103,9 @@ export async function getCurrentUser() {
       // drift on a stale remote DB). The next session read retries.
     }
   }
+  // A user row that vanished mid-session must NOT be pinned in cache —
+  // only cache the found shape so the next request re-checks the DB.
+  if (user) userToCache(userId, user)
   return user
 }
 

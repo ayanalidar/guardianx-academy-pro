@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
+import { cachedJson } from "@/lib/http-cache"
 
 export const runtime = "nodejs"
 
@@ -109,7 +110,7 @@ export async function GET() {
       }
     })
 
-    return NextResponse.json({ instructors: result, count: result.length })
+    return cachedJson({ instructors: result, count: result.length }, { sMax: 120, swr: 600 })
   } catch (err) {
     console.error("[api/instructors] GET failed:", err)
     return NextResponse.json(

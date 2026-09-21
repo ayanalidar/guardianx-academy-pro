@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentUser, withErrorHandler } from "@/lib/session"
+import { cachedJson, noStore } from "@/lib/http-cache"
 
 export const GET = withErrorHandler(async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
   const { id } = await params
@@ -142,7 +143,7 @@ export const GET = withErrorHandler(async (_req: NextRequest, { params }: { para
   const totalLessons = course.modules.reduce((acc: number, m: any) => acc + m.lessons.length, 0)
   const completedLessons = Object.values(lessonProgress).filter((p) => p.completed).length
 
-  return NextResponse.json({
+  const payload = {
     course,
     enrollment,
     lessonProgress,
@@ -150,5 +151,12 @@ export const GET = withErrorHandler(async (_req: NextRequest, { params }: { para
     completedLessons,
     progressPct: totalLessons ? Math.round((completedLessons / totalLessons) * 100) : 0,
     degraded,
-  })
+  }
+  // Anonymous course-detail responses are identical for every visitor —
+  // edge-cache them. Authenticated responses embed enrollment + progress
+  // and must never be cached.
+  if (user) {
+    return noStore(NextResponse.json(payload))
+  }
+  return cachedJson(payload, { sMax: 60, swr: 300 })
 })

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
+import { cachedJson } from "@/lib/http-cache"
 
 export const runtime = "nodejs"
 
@@ -48,7 +49,7 @@ export async function GET() {
       }
     })
 
-    return NextResponse.json({ stats: data, count: data.length })
+    return cachedJson({ stats: data, count: data.length }, { sMax: 120, swr: 600 })
   } catch (err) {
     console.error("[api/platform-stats] GET error:", err)
     return NextResponse.json(

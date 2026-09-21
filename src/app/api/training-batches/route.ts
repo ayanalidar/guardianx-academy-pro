@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { withErrorHandler } from "@/lib/session"
+import { cachedJson } from "@/lib/http-cache"
 
 export const runtime = "nodejs"
 
@@ -12,5 +13,5 @@ export const GET = withErrorHandler(async () => {
     orderBy: [{ order: "asc" }, { startDate: "asc" }],
   })
 
-  return NextResponse.json({ batches, count: batches.length })
+  return cachedJson({ batches, count: batches.length }, { sMax: 120, swr: 600 })
 })
