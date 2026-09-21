@@ -98,6 +98,7 @@ export const ADMIN_NAV: NavItem[] = [
   { label: "Proposal Maker", icon: FileText, view: { name: "proposal-maker" } },
   { label: "Lead / CRM", icon: Users, view: { name: "admin-lead-crm" } },
   { label: "Batch Leads Hub", icon: UsersRound, view: { name: "admin-batch-hub" } },
+  { label: "Hiring & Jobs", icon: Briefcase, view: { name: "admin-hiring" } },
   { label: "Batch Calendar", icon: Calendar, view: { name: "admin-batch-calendar" } },
   { label: "Student Progress", icon: TrendingUp, view: { name: "admin-student-progress" } },
   { label: "Revenue Analytics", icon: DollarSign, view: { name: "admin-revenue" } },
@@ -128,6 +129,7 @@ export const PUBLIC_NAV: NavItem[] = [
   { label: "Blog", icon: FileText, view: { name: "blog" } },
   { label: "Events", icon: Calendar, view: { name: "events" } },
   { label: "Instructors", icon: Users, view: { name: "instructors" } },
+  { label: "Hiring", icon: Briefcase, view: { name: "hiring" } },
   { label: "Contact", icon: MessageSquare, view: { name: "contact" } },
   { label: "Verify Certificate", icon: ShieldCheck, view: { name: "verify" } },
 ]

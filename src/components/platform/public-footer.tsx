@@ -113,6 +113,7 @@ export function PublicFooter() {
         { label: "About", view: { name: "impact" } },
         { label: "Instructors", view: { name: "instructors" } },
         { label: "Careers", view: { name: "career-planner" } },
+        { label: "Hiring — Job Openings", view: { name: "hiring" } },
         { label: "Contact", view: { name: "contact" } },
         { label: "Security", view: { name: "contact" } },
       ],

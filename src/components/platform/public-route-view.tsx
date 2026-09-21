@@ -31,6 +31,7 @@ import { BlogView } from "@/views/blog"
 import { BlogPostView } from "@/views/blog-post"
 import { CertLandingView } from "@/views/cert-landing"
 import { PricingView } from "@/views/pricing"
+import { HiringView } from "@/views/hiring"
 import { CourseDetailView } from "@/views/course-detail"
 
 /* ============================================================
@@ -78,6 +79,7 @@ function renderView(view: View): React.ReactNode {
     case "blog-post": return "slug" in view ? <BlogPostView slug={view.slug} /> : <BlogView />
     case "cert-landing": return "certSlug" in view ? <CertLandingView certSlug={view.certSlug} /> : null
     case "pricing": return <PricingView />
+    case "hiring": return <HiringView />
     case "course": return <CourseDetailView />
     case "learning-paths": return <LearningPathsView />
     case "cyber-range": return <CyberRangeView />

@@ -110,6 +110,8 @@ export type View =
   | { name: "affiliate" }
   | { name: "pricing" }
   | { name: "admin-seo" }
+  | { name: "hiring" }
+  | { name: "admin-hiring" }
 
 interface AppState {
   view: View

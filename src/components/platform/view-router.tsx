@@ -70,6 +70,8 @@ const InvoiceGeneratorView = dynamic(() => import("@/views/invoice-generator").t
 const ProposalMakerView = dynamic(() => import("@/views/proposal-maker").then(m => ({ default: m.ProposalMakerView })), { ssr: false, loading: ViewLoading })
 const LeadCrmView = dynamic(() => import("@/views/admin-lead-crm").then(m => ({ default: m.LeadCrmView })), { ssr: false, loading: ViewLoading })
 const BatchHubView = dynamic(() => import("@/views/admin-batch-hub").then(m => ({ default: m.AdminBatchHubView })), { ssr: false, loading: ViewLoading })
+const HiringView = dynamic(() => import("@/views/hiring").then(m => ({ default: m.HiringView })), { ssr: false, loading: ViewLoading })
+const AdminHiringView = dynamic(() => import("@/views/admin-hiring").then(m => ({ default: m.AdminHiringView })), { ssr: false, loading: ViewLoading })
 const BatchCalendarView = dynamic(() => import("@/views/admin-batch-calendar").then(m => ({ default: m.BatchCalendarView })), { ssr: false, loading: ViewLoading })
 const StudentProgressView = dynamic(() => import("@/views/admin-student-progress").then(m => ({ default: m.StudentProgressView })), { ssr: false, loading: ViewLoading })
 const RevenueAnalyticsView = dynamic(() => import("@/views/admin-revenue").then(m => ({ default: m.RevenueAnalyticsView })), { ssr: false, loading: ViewLoading })
@@ -176,6 +178,8 @@ export function ViewRouter() {
       {view.name === "proposal-maker" && <RoleGate allow={ROLES_ADMIN} area="Proposal Maker"><ProposalMakerView /></RoleGate>}
       {view.name === "admin-lead-crm" && <RoleGate allow={ROLES_ADMIN} area="Lead CRM"><LeadCrmView /></RoleGate>}
       {view.name === "admin-batch-hub" && <RoleGate allow={ROLES_ADMIN} area="Batch Leads Hub"><BatchHubView initialBatchId={view.batchId} /></RoleGate>}
+      {view.name === "hiring" && <HiringView />}
+      {view.name === "admin-hiring" && <RoleGate allow={ROLES_ADMIN} area="Hiring & Jobs"><AdminHiringView /></RoleGate>}
       {view.name === "admin-batch-calendar" && <RoleGate allow={ROLES_INSTRUCTOR} area="Batch Calendar"><BatchCalendarView /></RoleGate>}
       {view.name === "admin-student-progress" && <RoleGate allow={ROLES_ADMIN} area="Student Progress"><StudentProgressView /></RoleGate>}
       {view.name === "admin-revenue" && <RoleGate allow={ROLES_ADMIN} area="Revenue Analytics"><RevenueAnalyticsView /></RoleGate>}

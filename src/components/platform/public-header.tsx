@@ -4,7 +4,7 @@ import * as React from "react"
 import { motion, AnimatePresence, useScroll, useMotionValueEvent } from "framer-motion"
 import {
   FlaskConical, BookOpen, Route, Trophy, Briefcase, Search, Target,
-  Brain,
+  Brain, ArrowRight,
   FileText, School, Building, Landmark, ShieldCheck, Award, GraduationCap,
   ExternalLink,
   TrendingUp, Mail, Menu, ChevronDown, LogIn, LayoutDashboard,
@@ -48,6 +48,9 @@ interface MegaMenuGroup {
   id: string
   label: string
   items: MegaMenuItem[]
+  /** When set, the top-level tab is a DIRECT link (no dropdown panel).
+   *  Used for single-destination tabs like "Hiring". */
+  directView?: View
 }
 
 const MEGA_MENU_GROUPS: MegaMenuGroup[] = [
@@ -238,6 +241,13 @@ const MEGA_MENU_GROUPS: MegaMenuGroup[] = [
       },
     ],
   },
+  {
+    // Direct tab — no dropdown; clicking goes straight to /hiring.
+    id: "hiring",
+    label: "Hiring",
+    items: [],
+    directView: { name: "hiring" },
+  },
 ]
 
 export function PublicHeader() {
@@ -417,6 +427,38 @@ export function PublicHeader() {
           aria-label="Primary"
         >
           {MEGA_MENU_GROUPS.map((group) => {
+            // Direct tab (e.g. Hiring): a plain link, no mega panel.
+            if (group.directView) {
+              const active = isViewActive(group.directView)
+              return (
+                <a
+                  key={group.id}
+                  href={viewToPath(group.directView)}
+                  onClick={(e) => handleLinkClick(e, group.directView!)}
+                  onMouseEnter={() => setOpenMenuId(null)}
+                  aria-current={active ? "page" : undefined}
+                  className={cn(
+                    "relative px-3 py-1.5 rounded-full text-xs font-medium transition-colors",
+                    "flex items-center gap-1 outline-none focus-visible:ring-2 focus-visible:ring-violet-400/50",
+                    active ? "text-violet-300" : "text-muted-foreground hover:text-foreground"
+                  )}
+                >
+                  <span className="relative z-10 tracking-wide uppercase">{group.label}</span>
+                  {active && (
+                    <span
+                      aria-hidden
+                      className="absolute inset-0 rounded-full bg-violet-500/10 border border-violet-500/20"
+                    />
+                  )}
+                  {active && (
+                    <span
+                      aria-hidden
+                      className="absolute -bottom-0.5 left-1/2 -translate-x-1/2 h-0.5 w-4 rounded-full bg-violet-400"
+                    />
+                  )}
+                </a>
+              )
+            }
             const isOpen = openMenuId === group.id
             const anyChildActive = group.items.some((i) => isViewActive(i.view))
             const highlight = isOpen || anyChildActive
@@ -515,7 +557,26 @@ export function PublicHeader() {
 
               <div className="flex-1 overflow-y-auto px-2 max-h-[70vh]">
                 <Accordion type="multiple" className="w-full">
-                  {MEGA_MENU_GROUPS.map((group) => (
+                  {MEGA_MENU_GROUPS.map((group) => {
+                    // Direct tab (e.g. Hiring): a plain row, no accordion.
+                    if (group.directView) {
+                      const active = isViewActive(group.directView)
+                      return (
+                        <a
+                          key={group.id}
+                          href={viewToPath(group.directView)}
+                          onClick={(e) => handleLinkClick(e, group.directView!)}
+                          className={cn(
+                            "flex items-center justify-between px-5 py-3.5 text-xs font-semibold uppercase tracking-wide transition-colors border-b border-border/40",
+                            active ? "text-violet-300 bg-violet-500/10" : "text-foreground hover:bg-accent/60"
+                          )}
+                        >
+                          {group.label}
+                          <ArrowRight className="h-3.5 w-3.5 text-muted-foreground" />
+                        </a>
+                      )
+                    }
+                    return (
                     <AccordionItem key={group.id} value={group.id} className="px-3">
                       <AccordionTrigger className="text-xs font-semibold uppercase tracking-wide text-foreground hover:no-underline">
                         {group.label}
@@ -557,7 +618,8 @@ export function PublicHeader() {
                         </div>
                       </AccordionContent>
                     </AccordionItem>
-                  ))}
+                    )
+                  })}
                 </Accordion>
               </div>
 
