@@ -56,6 +56,11 @@ import {
   Gauge,
   Link2,
   Fingerprint,
+  Zap,
+  Sparkles,
+  Info,
+  ScanSearch,
+  Wand2,
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -1558,11 +1563,307 @@ function KeywordTracker({
   )
 }
 
+/* =================== Autopilot — one-click audit + fix =================== */
+
+interface AutopilotIssue {
+  type: string
+  id: string
+  label: string
+  url: string
+  issue: string
+  severity: "critical" | "warning" | "info"
+  autoFixable: boolean
+}
+
+interface AutopilotFix {
+  type: string
+  id: string
+  label: string
+  field: string
+  before: string
+  after: string
+  pingUrl: string
+  applied?: boolean
+}
+
+interface AutopilotReport {
+  ok: boolean
+  mode: "dry-run" | "apply"
+  scoreBefore: number
+  scoreAfter: number
+  issues: AutopilotIssue[]
+  fixes: AutopilotFix[]
+  fixed: AutopilotFix[]
+  skipped: { label: string; field: string; reason: string }[]
+  humanActions: { label: string; reason: string }[]
+  ping: { submitted: number; status: number | null; ok: boolean; note?: string } | null
+  counts: { total: number; byType: Record<string, number> }
+}
+
+function scoreTextClass(score: number): string {
+  if (score >= 90) return "text-emerald-300"
+  if (score >= 70) return "text-amber-300"
+  return "text-rose-300"
+}
+
+function SeoAutopilot({ onFixed }: { onFixed: () => void }) {
+  const [running, setRunning] = React.useState<"dry-run" | "apply" | null>(null)
+  const [report, setReport] = React.useState<AutopilotReport | null>(null)
+  const [confirmOpen, setConfirmOpen] = React.useState(false)
+
+  async function run(mode: "dry-run" | "apply") {
+    setRunning(mode)
+    try {
+      const r = await fetch("/api/admin/seo/autopilot", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode }),
+      })
+      const j = await r.json()
+      if (!r.ok || !j.ok) throw new Error(j.error || `Request failed (${r.status})`)
+      setReport(j as AutopilotReport)
+      if (mode === "apply") {
+        const n = (j.fixed as AutopilotFix[] | undefined)?.length ?? 0
+        if (n > 0) toast.success(`Autopilot fixed ${n} issue${n === 1 ? "" : "s"}`)
+        else toast.info("Nothing left to auto-fix — you are all clean")
+        onFixed()
+      }
+    } catch (e) {
+      toast.error((e as Error).message)
+    } finally {
+      setRunning(null)
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      {/* Hero action card */}
+      <Card className="bg-card/40 backdrop-blur-xl border-border/60 p-6 lg:p-8 relative overflow-hidden">
+        <div className="absolute inset-0 pointer-events-none opacity-20" aria-hidden>
+          <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-cyan-500/30 blur-3xl" />
+          <div className="absolute -bottom-24 -left-16 h-64 w-64 rounded-full bg-violet-500/30 blur-3xl" />
+        </div>
+        <div className="relative flex flex-col lg:flex-row lg:items-center gap-5 justify-between">
+          <div className="flex items-start gap-4">
+            <span className="h-12 w-12 rounded-xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center shrink-0">
+              <Zap className="h-6 w-6 text-amber-300" />
+            </span>
+            <div>
+              <h2 className="text-lg font-bold flex items-center gap-2">
+                SEO Autopilot
+                <Badge className="bg-amber-500/15 text-amber-300 border-amber-500/30 text-[10px] uppercase tracking-wider">One Click</Badge>
+              </h2>
+              <p className="text-sm text-muted-foreground mt-1 max-w-xl">
+                Scans every course, blog post, event and certification for missing
+                descriptions, excerpts and slugs — then fixes them automatically from
+                each item&apos;s own content and pings search engines to recrawl instantly.
+              </p>
+            </div>
+          </div>
+          <div className="flex flex-col sm:flex-row gap-2 shrink-0">
+            <Button
+              variant="outline"
+              disabled={running !== null}
+              onClick={() => run("dry-run")}
+            >
+              {running === "dry-run" ? (
+                <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+              ) : (
+                <ScanSearch className="h-4 w-4 mr-1.5" />
+              )}
+              Run Smart Audit
+            </Button>
+            <Button
+              className="bg-amber-600 hover:bg-amber-500 text-white"
+              disabled={running !== null}
+              onClick={() => (report?.mode === "dry-run" ? setConfirmOpen(true) : run("apply"))}
+            >
+              {running === "apply" ? (
+                <Loader2 className="h-4 w-4 mr-1.5 animate-spin" />
+              ) : (
+                <Wand2 className="h-4 w-4 mr-1.5" />
+              )}
+              Fix Everything Automatically
+            </Button>
+          </div>
+        </div>
+      </Card>
+
+      {/* Report */}
+      {report && (
+        <FadeIn>
+          <Card className="bg-card/40 backdrop-blur-xl border-border/60 p-5 lg:p-6 space-y-5">
+            {/* Score row */}
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+              <div className="rounded-lg border border-border/60 bg-muted/20 p-4">
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Score</div>
+                <div className={cn("text-2xl font-bold mt-1", scoreTextClass(report.scoreBefore))}>
+                  {report.scoreBefore}
+                  {report.scoreAfter !== report.scoreBefore && (
+                    <span className="text-sm font-medium text-muted-foreground"> → </span>
+                  )}
+                  {report.scoreAfter !== report.scoreBefore && (
+                    <span className={scoreTextClass(report.scoreAfter)}>{report.scoreAfter}</span>
+                  )}
+                </div>
+                <div className="text-[10px] text-muted-foreground/70 mt-0.5">
+                  {report.mode === "apply" ? "measured after fixes" : "projected after fixes"}
+                </div>
+              </div>
+              <div className="rounded-lg border border-border/60 bg-muted/20 p-4">
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Issues Found</div>
+                <div className="text-2xl font-bold mt-1">{report.issues.length}</div>
+                <div className="text-[10px] text-muted-foreground/70 mt-0.5">across {report.counts.total} pages</div>
+              </div>
+              <div className="rounded-lg border border-border/60 bg-muted/20 p-4">
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Auto-Fixed</div>
+                <div className="text-2xl font-bold mt-1 text-emerald-300">{report.fixed.length}</div>
+                <div className="text-[10px] text-muted-foreground/70 mt-0.5">
+                  {report.mode === "apply" ? "written just now" : "available to apply"}
+                </div>
+              </div>
+              <div className="rounded-lg border border-border/60 bg-muted/20 p-4">
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Search Engine Ping</div>
+                <div className="text-2xl font-bold mt-1 flex items-center gap-1.5">
+                  {report.ping ? (
+                    report.ping.ok ? (
+                      <CheckCircle2 className="h-5 w-5 text-emerald-300" />
+                    ) : (
+                      <AlertTriangle className="h-5 w-5 text-amber-300" />
+                    )
+                  ) : (
+                    <span className="text-muted-foreground">—</span>
+                  )}
+                  {report.ping ? <span className="text-sm">{report.ping.submitted} URLs</span> : ""}
+                </div>
+                <div className="text-[10px] text-muted-foreground/70 mt-0.5">IndexNow (Bing &amp; co.)</div>
+              </div>
+            </div>
+
+            {report.ping?.note && (
+              <div className="flex items-start gap-2 text-xs text-muted-foreground bg-muted/20 rounded-lg border border-border/40 p-3">
+                <Info className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                {report.ping.note}
+              </div>
+            )}
+
+            {/* Fixes applied / available */}
+            {report.fixes.length > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
+                  <Sparkles className="h-3.5 w-3.5 text-amber-300" />
+                  {report.mode === "apply" ? "Fixes Written" : "Fixes Ready To Apply"} ({report.fixes.length})
+                </h3>
+                <div className="space-y-2 max-h-72 overflow-y-auto pr-1">
+                  {report.fixes.slice(0, 50).map((f, i) => (
+                    <div key={`${f.id}-${f.field}-${i}`} className="rounded-lg border border-border/50 bg-muted/10 p-3 flex items-start gap-3">
+                      <Badge variant="outline" className="text-[9px] uppercase mt-0.5 shrink-0">{f.type}</Badge>
+                      <div className="min-w-0">
+                        <div className="text-sm font-medium truncate">{f.label}</div>
+                        <div className="text-xs text-muted-foreground mt-0.5">
+                          <span className="text-amber-300/90 uppercase text-[10px] font-mono mr-1">{f.field}</span>
+                          {f.before ? (
+                            <span className="line-through opacity-60">{f.before.slice(0, 90)}{f.before.length > 90 ? "…" : ""}</span>
+                          ) : (
+                            <span className="opacity-60">(empty)</span>
+                          )}
+                          <span className="mx-1.5">→</span>
+                          <span className="text-emerald-300/90">{f.after.slice(0, 110)}{f.after.length > 110 ? "…" : ""}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {report.fixes.length > 50 && (
+                    <p className="text-xs text-muted-foreground text-center pt-1">
+                      + {report.fixes.length - 50} more…
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Remaining issues (apply mode) */}
+            {report.mode === "apply" && report.issues.length > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+                  Still Open ({report.issues.length})
+                </h3>
+                <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1">
+                  {report.issues.slice(0, 30).map((is, i) => (
+                    <div key={`${is.id}-${i}`} className="flex items-start gap-2 text-sm">
+                      <span
+                        className={cn(
+                          "h-1.5 w-1.5 rounded-full mt-1.5 shrink-0",
+                          is.severity === "critical" ? "bg-rose-400" : is.severity === "warning" ? "bg-amber-400" : "bg-slate-400",
+                        )}
+                      />
+                      <span className="truncate">{is.label}</span>
+                      <span className="text-muted-foreground">— {is.issue}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Human actions */}
+            {report.humanActions.length > 0 && (
+              <div>
+                <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1.5">
+                  <HelpCircle className="h-3.5 w-3.5 text-cyan-300" />
+                  Needs You ({report.humanActions.length})
+                </h3>
+                <div className="space-y-1.5 max-h-52 overflow-y-auto pr-1">
+                  {report.humanActions.slice(0, 20).map((h, i) => (
+                    <div key={i} className="rounded-lg border border-border/40 bg-cyan-500/5 p-2.5 text-xs">
+                      <span className="font-medium">{h.label}</span>
+                      <span className="text-muted-foreground"> — {h.reason}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </Card>
+        </FadeIn>
+      )}
+
+      {/* Confirm apply */}
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Apply {report?.fixes.length ?? 0} automatic fixes?</DialogTitle>
+            <DialogDescription>
+              Generated descriptions, excerpts and slugs will be written to the live
+              content. Only empty or too-short fields are touched — existing well-formed
+              content is never overwritten. Search engines are pinged afterwards.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="ghost" disabled={running !== null} onClick={() => setConfirmOpen(false)}>
+              Cancel
+            </Button>
+            <Button
+              className="bg-amber-600 hover:bg-amber-500 text-white"
+              disabled={running !== null}
+              onClick={() => {
+                setConfirmOpen(false)
+                run("apply")
+              }}
+            >
+              {running === "apply" ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : <Wand2 className="h-4 w-4 mr-1.5" />}
+              Yes, fix everything
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  )
+}
+
 /* =================== main view =================== */
 export function AdminSeoView() {
   const { navigate } = useAppStore()
   const qc = useQueryClient()
-  const [tab, setTab] = React.useState("audit")
+  const [tab, setTab] = React.useState("autopilot")
   const [editingPage, setEditingPage] = React.useState<AuditPage | null>(null)
   const [editOpen, setEditOpen] = React.useState(false)
 
@@ -1667,6 +1968,9 @@ export function AdminSeoView() {
             <FadeIn delay={0.05}>
               <Tabs value={tab} onValueChange={setTab} className="w-full">
                 <TabsList className="flex flex-wrap h-auto gap-1 p-1.5 bg-muted/40">
+                  <TabsTrigger value="autopilot" className="text-xs">
+                    <Zap className="h-3.5 w-3.5" /> Autopilot
+                  </TabsTrigger>
                   <TabsTrigger value="audit" className="text-xs">
                     <ListChecks className="h-3.5 w-3.5" /> Page Audit
                   </TabsTrigger>
@@ -1687,6 +1991,13 @@ export function AdminSeoView() {
                   </TabsTrigger>
                 </TabsList>
 
+                <TabsContent value="autopilot" className="mt-4">
+                  <SeoAutopilot
+                    onFixed={() =>
+                      qc.invalidateQueries({ queryKey: ["admin", "seo"] })
+                    }
+                  />
+                </TabsContent>
                 <TabsContent value="audit" className="mt-4">
                   <PageAuditTable
                     pages={auditQuery.data?.pages ?? []}

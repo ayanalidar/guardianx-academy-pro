@@ -540,6 +540,7 @@ const QUICK_ACTIONS: { label: string; description: string; icon: any; view: stri
   { label: "Student Progress", description: "Cohort-level progress reports", icon: GraduationCap, view: "admin-student-progress", tone: "text-cyan-300 bg-cyan-500/10" },
   { label: "Audit Logs", description: "Every admin action, tracked", icon: ShieldAlert, view: "admin-audit-log", tone: "text-rose-300 bg-rose-500/10" },
   { label: "Platform Health", description: "Uptime, errors & API latency", icon: Server, view: "admin-platform-health", tone: "text-sky-300 bg-sky-500/10" },
+  { label: "SEO Autopilot", description: "One-click SEO audit & auto-fix", icon: Sparkles, view: "admin-seo", tone: "text-amber-300 bg-amber-500/10" },
 ]
 
 function QuickActions() {
