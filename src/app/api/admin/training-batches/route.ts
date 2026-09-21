@@ -111,31 +111,49 @@ export const GET = withErrorHandler(async () => {
   const currentUser = await requireRole(["INSTRUCTOR", "ADMIN", "SUPER_ADMIN"])
   if (currentUser instanceof NextResponse) return currentUser
 
-  const batches = await db.trainingBatch.findMany({
-    orderBy: [{ order: "asc" }, { startDate: "asc" }],
-    select: {
-      id: true,
-      certification: true,
-      name: true,
-      schedule: true,
-      startDate: true,
-      startIsoDate: true,
-      mode: true,
-      instructor: true,
-      instructorId: true,
-      seats: true,
-      enrolled: true,
-      level: true,
-      status: true,
-      description: true,
-      featured: true,
-      order: true,
-      published: true,
-      googleFormUrl: true,
-    },
-  })
+  const [batches, newLeadGroups] = await Promise.all([
+    db.trainingBatch.findMany({
+      orderBy: [{ order: "asc" }, { startDate: "asc" }],
+      select: {
+        id: true,
+        certification: true,
+        name: true,
+        schedule: true,
+        startDate: true,
+        startIsoDate: true,
+        mode: true,
+        instructor: true,
+        instructorId: true,
+        seats: true,
+        enrolled: true,
+        level: true,
+        status: true,
+        description: true,
+        featured: true,
+        order: true,
+        published: true,
+        googleFormUrl: true,
+        // Per-batch lead counts for the Batch Leads Hub cards.
+        _count: { select: { batchLeads: true } },
+      },
+    }),
+    // "New" (unworked) lead count per batch — shown as an attention badge.
+    db.batchLead.groupBy({
+      by: ["batchId"],
+      where: { status: "New" },
+      _count: true,
+    }),
+  ])
 
-  return NextResponse.json({ batches, count: batches.length })
+  const newLeadCountByBatch = new Map(newLeadGroups.map((g) => [g.batchId, g._count]))
+  const batchesWithCounts = batches.map((b) => ({
+    ...b,
+    leadCount: b._count.batchLeads,
+    newLeadCount: newLeadCountByBatch.get(b.id) ?? 0,
+    _count: undefined,
+  }))
+
+  return NextResponse.json({ batches: batchesWithCounts, count: batchesWithCounts.length })
 })
 
 // POST /api/admin/training-batches — create a new training batch.

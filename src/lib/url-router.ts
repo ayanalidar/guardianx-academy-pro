@@ -59,6 +59,10 @@ export function viewToPath(view: View): string {
       return `/cert/${encodeURIComponent(view.certSlug)}`
     case "batch-detail":
       return `/batches/${encodeURIComponent(view.batchSlug)}`
+    case "admin-batch-hub":
+      return view.batchId
+        ? `/admin-batch-hub?batch=${encodeURIComponent(view.batchId)}`
+        : "/admin-batch-hub"
     case "cyber-quiz-runner":
       return `/cyber-quiz/start/${encodeURIComponent(view.difficulty)}`
     case "cyber-quiz-results":
@@ -120,7 +124,7 @@ const KNOWN_FLAT_VIEWS = new Set<View["name"]>([
   "parent-portal", "course-studio", "cms", "exams", "credentials",
   "invoice-generator", "proposal-maker", "support", "instructors", "events",
   "blog", "affiliate", "pricing", "batches", "contact", "learning-paths",
-  "admin-lead-crm", "admin-batch-calendar", "admin-student-progress",
+  "admin-lead-crm", "admin-batch-hub", "admin-batch-calendar", "admin-student-progress",
   "admin-revenue", "admin-cert-bulk", "admin-email-campaign",
   "admin-instructor-assignment", "admin-audit-log", "admin-platform-health",
   "admin-notifications", "admin-coupons", "admin-open-schooling-leads",
@@ -239,6 +243,12 @@ export function pathToView(pathWithSearch: string): View | null {
 
   // /<view-name> flat routes (validated so unknown paths 404 instead of
   // silently rendering the homepage).
+  // /admin-batch-hub and /admin-batch-hub?batch=<id> (deep link to one
+  // batch's own leads screen)
+  if (parts.length === 1 && parts[0] === "admin-batch-hub") {
+    const batchId = search.get("batch") || undefined
+    return batchId ? { name: "admin-batch-hub", batchId } : { name: "admin-batch-hub" }
+  }
   if (parts.length === 1 && KNOWN_FLAT_VIEWS.has(parts[0] as View["name"])) {
     return { name: parts[0] as View["name"] } as View
   }
@@ -364,6 +374,7 @@ const VIEW_TITLES: Partial<Record<View["name"], string>> = {
   "instructor": "Instructor Dashboard",
   "school": "School Dashboard",
   "admin": "Admin Dashboard",
+  "admin-batch-hub": "Batch Leads Hub",
 }
 
 /** Metadata title for a view (used by the catch-all's generateMetadata). */

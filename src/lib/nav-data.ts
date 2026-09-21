@@ -97,6 +97,7 @@ export const ADMIN_NAV: NavItem[] = [
   { label: "Invoice Generator", icon: FileText, view: { name: "invoice-generator" } },
   { label: "Proposal Maker", icon: FileText, view: { name: "proposal-maker" } },
   { label: "Lead / CRM", icon: Users, view: { name: "admin-lead-crm" } },
+  { label: "Batch Leads Hub", icon: UsersRound, view: { name: "admin-batch-hub" } },
   { label: "Batch Calendar", icon: Calendar, view: { name: "admin-batch-calendar" } },
   { label: "Student Progress", icon: TrendingUp, view: { name: "admin-student-progress" } },
   { label: "Revenue Analytics", icon: DollarSign, view: { name: "admin-revenue" } },

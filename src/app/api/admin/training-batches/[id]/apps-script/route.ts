@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { requireAdmin, withErrorHandler } from "@/lib/session"
 
@@ -9,8 +9,12 @@ export const runtime = "nodejs"
  * this specific batch. The script has BATCH_ID + BATCH_NAME + BATCH_CERT
  * baked in so the admin doesn't need to manually edit anything.
  *
- * Returns: text/plain (the .gs file content) with a Content-Disposition
- * header so the browser downloads it as a file.
+ * ?format=json  → JSON { ok, script, fileName, webhookUrl, batchName,
+ *                       certification, formQuestions }
+ *                 (used by the Batch Leads Hub to SHOW the script inline
+ *                  with a copy-paste box)
+ * default       → text/plain with Content-Disposition attachment
+ *                 (direct .gs download)
  *
  * The form questions the script maps:
  *   1. Name
@@ -19,9 +23,10 @@ export const runtime = "nodejs"
  *   4. Current professional status
  *   5. Current job role or designation
  */
-export const GET = withErrorHandler(async (_req, { params }: { params: Promise<{ id: string }> }) => {
+export const GET = withErrorHandler(async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
   const currentUser = await requireAdmin()
   if (currentUser instanceof NextResponse) return currentUser
+  const wantsJson = new URL(req.url).searchParams.get("format") === "json"
 
   const { id } = await params
   const batch = await db.trainingBatch.findUnique({
@@ -42,6 +47,13 @@ export const GET = withErrorHandler(async (_req, { params }: { params: Promise<{
   }
   const slug = batch.name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") || batch.id
   const fileName = `guardianx-batch-${slug}.gs`
+  const formQuestions = [
+    "Name",
+    "WhatsApp number with country code",
+    "LinkedIn profile link",
+    "Current professional status",
+    "Current job role or designation",
+  ]
 
   // Build the Apps Script content with the batch values baked in
   const script = `/**
@@ -167,6 +179,19 @@ function testWebhook() {
   Logger.log("Test response: " + resp.getResponseCode() + " - " + resp.getContentText());
 }
 `
+
+  if (wantsJson) {
+    return NextResponse.json({
+      ok: true,
+      script,
+      fileName,
+      webhookUrl,
+      batchId: batch.id,
+      batchName: batch.name,
+      certification: batch.certification,
+      formQuestions,
+    })
+  }
 
   return new NextResponse(script, {
     status: 200,

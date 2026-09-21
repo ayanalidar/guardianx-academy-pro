@@ -78,6 +78,7 @@ export type View =
   | { name: "invoice-generator" }
   | { name: "proposal-maker" }
   | { name: "admin-lead-crm" }
+  | { name: "admin-batch-hub"; batchId?: string }
   | { name: "admin-batch-calendar" }
   | { name: "admin-student-progress" }
   | { name: "admin-revenue" }
