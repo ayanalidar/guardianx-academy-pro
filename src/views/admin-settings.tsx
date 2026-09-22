@@ -29,7 +29,7 @@ interface Setting {
 }
 
 const CATEGORIES = [
-  { id: "payment", label: "Payment (Razorpay)", icon: CreditCard, color: "text-emerald-300", tint: "bg-emerald-500/10", border: "border-emerald-500/30" },
+  { id: "payment", label: "Payments (Razorpay + PayPal)", icon: CreditCard, color: "text-emerald-300", tint: "bg-emerald-500/10", border: "border-emerald-500/30" },
   { id: "email", label: "Email (SMTP)", icon: Mail, color: "text-cyan-300", tint: "bg-cyan-500/10", border: "border-cyan-500/30" },
   { id: "crm", label: "CRM Webhook", icon: LinkIcon, color: "text-violet-300", tint: "bg-violet-500/10", border: "border-violet-500/30" },
   { id: "tracking", label: "Error Tracking (Sentry)", icon: ShieldAlert, color: "text-rose-300", tint: "bg-rose-500/10", border: "border-rose-500/30", note: "Takes effect immediately - unhandled errors are forwarded to Sentry" },

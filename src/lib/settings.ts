@@ -106,6 +106,12 @@ export const SETTING_DEFINITIONS = [
   { key: "RAZORPAY_KEY_ID", label: "Razorpay Key ID", category: "payment", isSecret: false, placeholder: "rzp_live_xxxxxxxxxxxx", description: "From razorpay.com → API Keys" },
   { key: "RAZORPAY_KEY_SECRET", label: "Razorpay Key Secret", category: "payment", isSecret: true, placeholder: "••••••••••••••••", description: "From razorpay.com → API Keys" },
 
+  // Payment (PayPal - international clients)
+  { key: "PAYPAL_CLIENT_ID", label: "PayPal Client ID", category: "payment", isSecret: false, placeholder: "AXxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx", description: "From developer.paypal.com → Apps & Credentials → Live (or Sandbox) → REST API credentials" },
+  { key: "PAYPAL_CLIENT_SECRET", label: "PayPal Client Secret", category: "payment", isSecret: true, placeholder: "••••••••••••••••", description: "Paired with the Client ID from developer.paypal.com" },
+  { key: "PAYPAL_ENV", label: "PayPal Environment", category: "payment", isSecret: false, placeholder: "live", description: "live or sandbox. Sandbox uses the test credentials and never charges real money" },
+  { key: "PAYPAL_FX_RATE", label: "INR per 1 USD (PayPal FX rate)", category: "payment", isSecret: false, placeholder: "87", description: "Courses are priced in INR. International clients pay in USD converted at this rate (e.g. 87 means ₹4,350 becomes $50)" },
+
   // Email (SMTP)
   { key: "SMTP_HOST", label: "SMTP Host", category: "email", isSecret: false, placeholder: "smtp.hostinger.com", description: "Hostinger hPanel → Emails → SMTP config" },
   { key: "SMTP_PORT", label: "SMTP Port", category: "email", isSecret: false, placeholder: "465", description: "465 (SSL) or 587 (STARTTLS)" },
@@ -128,7 +134,7 @@ export const SETTING_DEFINITIONS = [
 export type SettingCategory = "payment" | "email" | "crm" | "tracking" | "auth"
 
 export const CATEGORY_META: Record<SettingCategory, { label: string; icon: string; color: string; note?: string }> = {
-  payment: { label: "Payment (Razorpay)", icon: "💳", color: "text-emerald-300" },
+  payment: { label: "Payments (Razorpay + PayPal)", icon: "💳", color: "text-emerald-300" },
   email: { label: "Email (SMTP)", icon: "📧", color: "text-cyan-300" },
   crm: { label: "CRM Webhook", icon: "🔗", color: "text-violet-300" },
   tracking: { label: "Error Tracking (Sentry)", icon: "🔴", color: "text-rose-300", note: "Requires redeploy to activate (Sentry loads at server start)" },

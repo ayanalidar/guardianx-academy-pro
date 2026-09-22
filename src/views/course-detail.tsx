@@ -27,7 +27,7 @@ import {
   ArrowRight, ArrowDown, Sparkles, Zap, Target, Layers, Shield, Briefcase, Radio, Calendar,
   TrendingUp, Rocket, Trophy, Network, Wrench, Brain, Crosshair,
   Code, Activity, Eye, KeyRound, Bug, X, Hexagon,
-  Ticket, IndianRupee, Percent, Loader2,
+  Ticket, IndianRupee, Percent, Loader2, Globe,
   Copy, MessageCircle, Linkedin,
 } from "lucide-react"
 import { toast } from "sonner"
@@ -295,6 +295,24 @@ function loadRazorpayScript(): Promise<void> {
   })
 }
 
+// Load the PayPal checkout SDK script (Smart Payment Buttons)
+function loadPayPalScript(clientId: string): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const existing = document.getElementById("paypal-sdk-script") as HTMLScriptElement | null
+    if (existing) {
+      if (existing.dataset.clientId === clientId) { resolve(); return }
+      existing.remove() // client id changed (e.g. live <-> sandbox) - reload
+    }
+    const script = document.createElement("script")
+    script.id = "paypal-sdk-script"
+    script.dataset.clientId = clientId
+    script.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(clientId)}&currency=USD&intent=capture&components=buttons&disable-funding=paylater`
+    script.onload = () => resolve()
+    script.onerror = () => reject(new Error("Failed to load PayPal SDK"))
+    document.body.appendChild(script)
+  })
+}
+
 // ============================================================
 // MAIN VIEW
 // ============================================================
@@ -454,6 +472,61 @@ export function CourseDetailView() {
     setCouponCode("")
     setCouponState({ status: "idle" })
     setCheckoutOpen(true)
+  }
+
+  /* ============ PayPal (international clients) ============ */
+  // Which providers are configured? /api/payment/methods returns booleans only.
+  const { data: payMethods } = useQuery<{ razorpay: boolean; paypal: boolean }>({
+    queryKey: ["payment-methods"],
+    queryFn: () => api("/api/payment/methods"),
+    staleTime: 5 * 60 * 1000,
+  })
+  const paypalAvailable = payMethods?.paypal === true
+
+  // Active PayPal order: set once /api/payment/paypal/create-order succeeds;
+  // the CheckoutDialog then renders the PayPal Smart Buttons for it.
+  const [paypalOrder, setPaypalOrder] = React.useState<{
+    orderId: string
+    paypalOrderId: string
+    amount: number
+    clientId: string
+  } | null>(null)
+
+  const createPaypalMutation = useMutation({
+    mutationFn: (vars: { couponCode?: string }) =>
+      api<{ orderId: string; paypalOrderId: string; amount: number; currency: string; clientId: string }>(
+        "/api/payment/paypal/create-order",
+        { method: "POST", body: JSON.stringify({ courseId, couponCode: vars.couponCode }) },
+      ),
+    onSuccess: (res) => {
+      setPaypalOrder({ orderId: res.orderId, paypalOrderId: res.paypalOrderId, amount: res.amount, clientId: res.clientId })
+    },
+    onError: (e: any) => toast.error(e.message || "Could not start PayPal checkout"),
+  })
+
+  const capturePaypalMutation = useMutation({
+    mutationFn: (vars: { orderId: string }) =>
+      api<{ success: boolean; enrollment: any }>("/api/payment/paypal/capture", {
+        method: "POST",
+        body: JSON.stringify({ orderId: vars.orderId }),
+      }),
+    onSuccess: () => {
+      toast.success("Payment successful! Enrolled - redirecting…")
+      qc.invalidateQueries({ queryKey: ["course", courseId] })
+      qc.invalidateQueries({ queryKey: ["courses"] })
+      qc.invalidateQueries({ queryKey: ["me"] })
+      setCheckoutOpen(false)
+      setPaypalOrder(null)
+      setCouponCode("")
+      setCouponState({ status: "idle" })
+      setTimeout(() => navigate({ name: "learning" }), 700)
+    },
+    onError: (e: any) => toast.error(e.message || "PayPal payment could not be confirmed"),
+  })
+
+  function startPaypalCheckout() {
+    const appliedCode = couponState.status === "applied" ? couponState.code : couponCode.trim() || undefined
+    createPaypalMutation.mutate({ couponCode: appliedCode })
   }
 
   function handleApplyCoupon(amount: number) {
@@ -1144,7 +1217,7 @@ export function CourseDetailView() {
           ==================================================== */}
       <CheckoutDialog
         open={checkoutOpen}
-        onOpenChange={setCheckoutOpen}
+        onOpenChange={(o) => { setCheckoutOpen(o); if (!o) setPaypalOrder(null) }}
         course={course}
         couponCode={couponCode}
         setCouponCode={setCouponCode}
@@ -1153,6 +1226,13 @@ export function CourseDetailView() {
         onPayNow={handlePayNow}
         isApplyingCoupon={applyCouponMutation.isPending}
         isPaying={payMutation.isPending}
+        paypalAvailable={paypalAvailable}
+        paypalOrder={paypalOrder}
+        isCreatingPaypal={createPaypalMutation.isPending}
+        isCapturingPaypal={capturePaypalMutation.isPending}
+        onStartPaypal={startPaypalCheckout}
+        onCapturePaypal={(orderId) => capturePaypalMutation.mutate({ orderId })}
+        onCancelPaypal={() => setPaypalOrder(null)}
       />
     </div>
   )
@@ -1172,6 +1252,13 @@ function CheckoutDialog({
   onPayNow,
   isApplyingCoupon,
   isPaying,
+  paypalAvailable,
+  paypalOrder,
+  isCreatingPaypal,
+  isCapturingPaypal,
+  onStartPaypal,
+  onCapturePaypal,
+  onCancelPaypal,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -1186,6 +1273,13 @@ function CheckoutDialog({
   onPayNow: () => void
   isApplyingCoupon: boolean
   isPaying: boolean
+  paypalAvailable: boolean
+  paypalOrder: { orderId: string; paypalOrderId: string; amount: number; clientId: string } | null
+  isCreatingPaypal: boolean
+  isCapturingPaypal: boolean
+  onStartPaypal: () => void
+  onCapturePaypal: (orderId: string) => void
+  onCancelPaypal: () => void
 }) {
   const { formatPrice, isINR } = useCurrencyHook()
   const originalPrice = Number(course?.price ?? 0)
@@ -1195,6 +1289,49 @@ function CheckoutDialog({
   const discountPct = applied && originalPrice > 0
     ? Math.round((discount / originalPrice) * 100)
     : 0
+
+  // Payment method selection - Razorpay by default, PayPal when configured.
+  const [payMethod, setPayMethod] = React.useState<"razorpay" | "paypal">("razorpay")
+  const paypalContainerRef = React.useRef<HTMLDivElement>(null)
+  const paypalRenderedRef = React.useRef<string | null>(null)
+  const paypalStep = payMethod === "paypal" && !!paypalOrder
+
+  // Render the PayPal Smart Buttons once the container exists in the DOM.
+  React.useEffect(() => {
+    if (!paypalStep || !paypalOrder) return
+    const container = paypalContainerRef.current
+    if (!container) return
+    if (paypalRenderedRef.current === paypalOrder.paypalOrderId) return
+
+    // Claim the slot synchronously so a fast parent re-render cannot
+    // trigger a second .render() into the same container.
+    paypalRenderedRef.current = paypalOrder.paypalOrderId
+    let cancelled = false
+
+    loadPayPalScript(paypalOrder.clientId)
+      .then(() => {
+        if (cancelled || !paypalContainerRef.current) return
+        const pp = (window as any).paypal
+        if (!pp?.Buttons) throw new Error("PayPal SDK unavailable")
+        return pp.Buttons({
+          style: { layout: "vertical", shape: "pill", color: "gold", height: 45 },
+          createOrder: () => paypalOrder.paypalOrderId,
+          onApprove: async () => {
+            onCapturePaypal(paypalOrder.orderId)
+          },
+          onCancel: () => toast.info("PayPal payment cancelled"),
+          onError: () => toast.error("PayPal reported an error - please try again"),
+        }).render(paypalContainerRef.current)
+      })
+      .catch((e: any) => {
+        if (!cancelled) {
+          paypalRenderedRef.current = null // allow retry
+          toast.error(e?.message || "Failed to load PayPal")
+        }
+      })
+
+    return () => { cancelled = true }
+  }, [paypalStep, paypalOrder, onCapturePaypal])
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -1258,6 +1395,77 @@ function CheckoutDialog({
             </div>
           </div>
 
+          {/* Payment method selector - PayPal shown only when configured */}
+          {paypalAvailable && !paypalStep && (
+            <div className="space-y-2">
+              <Label className="text-xs font-medium">Payment method</Label>
+              <div className="grid grid-cols-1 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPayMethod("razorpay")}
+                  className={cn(
+                    "flex items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors",
+                    payMethod === "razorpay"
+                      ? "border-violet-500/60 bg-violet-500/10"
+                      : "border-border/60 bg-background/40 hover:border-border",
+                  )}
+                >
+                  <IndianRupee className={cn("h-4 w-4 shrink-0", payMethod === "razorpay" ? "text-violet-300" : "text-muted-foreground")} />
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-medium">Razorpay</span>
+                    <span className="block text-[11px] text-muted-foreground">Cards, UPI, Net Banking (₹)</span>
+                  </span>
+                  <span className={cn(
+                    "h-3.5 w-3.5 rounded-full border-2 shrink-0",
+                    payMethod === "razorpay" ? "border-violet-400 bg-violet-400" : "border-muted-foreground/40",
+                  )} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPayMethod("paypal")}
+                  className={cn(
+                    "flex items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors",
+                    payMethod === "paypal"
+                      ? "border-amber-400/60 bg-amber-400/10"
+                      : "border-border/60 bg-background/40 hover:border-border",
+                  )}
+                >
+                  <Globe className={cn("h-4 w-4 shrink-0", payMethod === "paypal" ? "text-amber-300" : "text-muted-foreground")} />
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-medium">PayPal</span>
+                    <span className="block text-[11px] text-muted-foreground">For international clients (USD $)</span>
+                  </span>
+                  <span className={cn(
+                    "h-3.5 w-3.5 rounded-full border-2 shrink-0",
+                    payMethod === "paypal" ? "border-amber-300 bg-amber-300" : "border-muted-foreground/40",
+                  )} />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* PayPal payment step - Smart Buttons replace the coupon + footer */}
+          {paypalStep && paypalOrder ? (
+            <div className="space-y-3">
+              <div className="rounded-lg border border-amber-400/30 bg-amber-400/5 px-3 py-2.5 text-sm">
+                <div className="flex items-center justify-between">
+                  <span className="text-muted-foreground">Amount due</span>
+                  <span className="text-xl font-bold tabular-nums text-amber-200">${paypalOrder.amount.toFixed(2)}</span>
+                </div>
+                <p className="text-[11px] text-muted-foreground mt-1">
+                  Charged in USD via PayPal. Coupons already applied. Complete the payment below.
+                </p>
+              </div>
+              {isCapturingPaypal ? (
+                <div className="flex items-center justify-center gap-2 rounded-lg border border-border/60 bg-background/40 py-8 text-sm text-muted-foreground">
+                  <Loader2 className="h-4 w-4 animate-spin" /> Confirming your payment…
+                </div>
+              ) : (
+                <div ref={paypalContainerRef} className="min-h-[120px]" />
+              )}
+            </div>
+          ) : (
+            <>
           {/* Coupon code input */}
           <div className="space-y-2">
             <Label htmlFor="coupon-input" className="text-xs font-medium flex items-center gap-1.5">
@@ -1308,31 +1516,70 @@ function CheckoutDialog({
           </div>
 
           {/* Trust badge */}
-          <div className="flex items-center gap-2 rounded-lg border border-emerald-500/20 bg-emerald-500/5 px-3 py-2 text-[11px] text-emerald-300">
+          <div className={cn(
+            "flex items-center gap-2 rounded-lg border px-3 py-2 text-[11px]",
+            payMethod === "paypal"
+              ? "border-amber-400/20 bg-amber-400/5 text-amber-300"
+              : "border-emerald-500/20 bg-emerald-500/5 text-emerald-300",
+          )}>
             <ShieldCheck className="h-3.5 w-3.5 shrink-0" />
-            <span>Secured by Razorpay · Payments are encrypted end-to-end.</span>
+            <span>
+              {payMethod === "paypal"
+                ? "Secured by PayPal · Buyer protection included · Charged in USD."
+                : "Secured by Razorpay · Payments are encrypted end-to-end."}
+            </span>
           </div>
+            </>
+          )}
         </div>
 
-        <DialogFooter>
-          <DialogClose asChild>
-            <Button variant="outline" className="border-border/60" disabled={isPaying}>
-              <X className="h-3.5 w-3.5 mr-1.5" /> Cancel
+        {paypalStep ? (
+          <DialogFooter>
+            <Button
+              variant="outline"
+              className="border-border/60"
+              onClick={onCancelPaypal}
+              disabled={isCapturingPaypal}
+            >
+              <X className="h-3.5 w-3.5 mr-1.5" /> Back
             </Button>
-          </DialogClose>
-          <Button
-            onClick={onPayNow}
-            disabled={isPaying}
-            className="bg-violet-600 hover:bg-violet-500 text-violet-50 btn-premium"
-          >
-            {isPaying ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+          </DialogFooter>
+        ) : (
+          <DialogFooter>
+            <DialogClose asChild>
+              <Button variant="outline" className="border-border/60" disabled={isPaying || isCreatingPaypal}>
+                <X className="h-3.5 w-3.5 mr-1.5" /> Cancel
+              </Button>
+            </DialogClose>
+            {payMethod === "paypal" ? (
+              <Button
+                onClick={onStartPaypal}
+                disabled={isCreatingPaypal || isPaying}
+                className="bg-amber-400 hover:bg-amber-300 text-amber-950 font-semibold btn-premium"
+              >
+                {isCreatingPaypal ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+                ) : (
+                  <Globe className="h-3.5 w-3.5 mr-1.5" />
+                )}
+                {isCreatingPaypal ? "Preparing…" : "Continue with PayPal"}
+              </Button>
             ) : (
-              <IndianRupee className="h-3.5 w-3.5 mr-1.5" />
+              <Button
+                onClick={onPayNow}
+                disabled={isPaying}
+                className="bg-violet-600 hover:bg-violet-500 text-violet-50 btn-premium"
+              >
+                {isPaying ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+                ) : (
+                  <IndianRupee className="h-3.5 w-3.5 mr-1.5" />
+                )}
+                {isPaying ? "Processing…" : `Pay ${formatPrice(finalAmount)}`}
+              </Button>
             )}
-            {isPaying ? "Processing…" : `Pay ${formatPrice(finalAmount)}`}
-          </Button>
-        </DialogFooter>
+          </DialogFooter>
+        )}
       </DialogContent>
     </Dialog>
   )
