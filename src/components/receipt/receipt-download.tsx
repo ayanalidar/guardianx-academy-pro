@@ -3,32 +3,18 @@
 import * as React from "react"
 import { Download, Loader2 } from "lucide-react"
 import { toast } from "sonner"
-import { buildInvoicePdf } from "@/lib/invoice-pdf"
+import { buildReceiptPdf, type ReceiptPdfData } from "@/lib/receipt-pdf"
 
 /* ============================================================
-   Receipt PDF download - reuses the native vector A4 invoice
-   engine (src/lib/invoice-pdf.ts) so the receipt is print-grade
-   without any server-side PDF dependency. The document is
-   generated client-side from the receipt data embedded in the
-   page.
+   Receipt PDF download - uses the shared receipt PDF builder
+   (src/lib/receipt-pdf.ts) so the downloadable PDF is pixel-
+   identical to the one attached to payment confirmation emails.
+   The document is generated client-side; the only browser-only
+   piece is the canvas logo flattening (jsPDF can't embed
+   SMask'd PNGs safely for print).
    ============================================================ */
 
-export interface ReceiptPdfData {
-  number: string
-  paidDate: string
-  currency: string
-  clientName: string
-  clientEmail: string
-  itemDescription: string
-  amountPaid: number
-  gstin: string
-  taxRate: number
-  taxIncluded: number
-  provider: string
-  paymentId: string
-  installmentNote: string
-  footerNote: string
-}
+export type { ReceiptPdfData }
 
 /** Flatten transparent pixels onto the header violet so jsPDF can embed
  *  the shield without an /SMask (Chrome print drops SMask'd images). */
@@ -59,29 +45,7 @@ export function ReceiptDownloadButton({ data }: { data: ReceiptPdfData }) {
     try {
       toast.info("Generating PDF receipt…")
       const logo = await buildReceiptLogoPng()
-      const pdf = await buildInvoicePdf(
-        {
-          number: data.number,
-          status: "Paid",
-          issueDate: data.paidDate,
-          dueDate: null,
-          currency: data.currency,
-          clientName: data.clientName,
-          clientEmail: data.clientEmail,
-          items: [{ description: data.itemDescription, quantity: 1, unitPrice: data.amountPaid }],
-          discountRate: 0,
-          taxRate: data.gstin ? data.taxRate : 0,
-          roundingAdjustment: 0,
-          gstSplit: false,
-          notes: [
-            data.installmentNote,
-            `Paid via ${data.provider} - Payment ID ${data.paymentId}`,
-            data.gstin ? `GSTIN ${data.gstin} · GST @ ${data.taxRate}% included in the price` : "",
-          ].filter(Boolean).join("\n"),
-          terms: data.footerNote,
-        },
-        { qrPngDataUrl: null, logoPngDataUrl: logo, theme: "light" },
-      )
+      const pdf = await buildReceiptPdf(data, { logoPngDataUrl: logo })
       pdf.save(`${data.number}.pdf`)
       toast.success("Receipt PDF downloaded")
     } catch (e: any) {

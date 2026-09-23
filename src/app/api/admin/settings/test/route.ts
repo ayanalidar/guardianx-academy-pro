@@ -1,7 +1,8 @@
 import { NextResponse } from "next/server"
 import { requireAdmin, withErrorHandler } from "@/lib/session"
 import { getSettings } from "@/lib/settings"
-import { sendEmailDetailed } from "@/lib/email"
+import { sendEmailDetailed, type EmailAttachment } from "@/lib/email"
+import { buildReceiptPdf } from "@/lib/receipt-pdf"
 
 export const runtime = "nodejs"
 
@@ -54,10 +55,41 @@ export const POST = withErrorHandler(async (req) => {
       )
     }
     const to = s.EMAIL_TO_ADMINS || currentUser.email
+    // Also attach a SAMPLE receipt PDF - verifies the full email pipeline:
+    // server-side PDF generation (fonts included) + attachment over Mail API/SMTP.
+    let attachments: EmailAttachment[] | undefined
+    let pdfNote = ""
+    try {
+      const now = new Date()
+      const sampleNumber = `GX-RCPT-SAMPLE-${now.getTime().toString().slice(-6)}`
+      const pdf = await buildReceiptPdf({
+        number: sampleNumber,
+        paidDate: now.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }),
+        currency: "INR",
+        clientName: currentUser.name || "Admin",
+        clientEmail: to,
+        itemDescription: "SAMPLE - PDF attachment check (not a real payment)",
+        amountPaid: 1000,
+        gstin: "01ABCDE1234F2Z5",
+        taxRate: 18,
+        taxIncluded: 152.54,
+        provider: "Sample",
+        paymentId: "sample_payment_id",
+        installmentNote: "",
+        footerNote: "This is a system-generated sample attached by the settings email test.",
+      })
+      const base64 = Buffer.from(pdf.output("arraybuffer")).toString("base64")
+      attachments = [{ filename: `${sampleNumber}.pdf`, content: base64, contentType: "application/pdf" }]
+      pdfNote = " A SAMPLE receipt PDF is attached - open it to verify server-side PDF generation."
+    } catch (e: any) {
+      console.error("[settings-test] sample receipt PDF failed:", e)
+      pdfNote = ` WARNING: sample PDF generation FAILED (${String(e?.message || e).slice(0, 120)}) - email sent without attachment.`
+    }
     const result = await sendEmailDetailed({
       to,
       subject: "GuardianX - Email Test",
       html: `<div style="font-family:sans-serif;padding:40px;background:#0a0a0f;color:#fff;border-radius:12px;"><h1 style="color:#a78bfa;">GuardianX Email Test</h1><p>This is a test email from the GuardianX Platform Settings page.</p><p>If you received this, your email transport is working correctly.</p></div>`,
+      attachments,
     })
     if (!result.ok) {
       return NextResponse.json(
@@ -73,7 +105,7 @@ export const POST = withErrorHandler(async (req) => {
       // Mail API was tried first and failed, SMTP carried the message.
       message += `. Note: the Mail API attempt FAILED and SMTP took over (API error: ${result.error.slice(0, 200)})`
     }
-    message += ". Check the inbox (and spam folder)."
+    message += ". Check the inbox (and spam folder)." + pdfNote
     return NextResponse.json({ ok: true, message })
   }
 

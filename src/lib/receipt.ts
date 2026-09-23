@@ -1,7 +1,8 @@
 import { db } from "@/lib/db"
 import { getSettings } from "@/lib/settings"
-import { sendEmail } from "@/lib/email"
+import { sendEmailDetailed, type EmailAttachment } from "@/lib/email"
 import { parseEmiPurpose } from "@/lib/installments"
+import { buildReceiptPdf } from "@/lib/receipt-pdf"
 
 /* ============================================================
    Payment receipts - automated, branded, zero-migration
@@ -66,9 +67,11 @@ function fmt(amount: number, currency: string): string {
 }
 
 /**
- * Send the branded HTML receipt email for a paid order.
+ * Send the branded HTML receipt email for a paid order, with the same
+ * vector PDF receipt (as the /receipt page download) attached.
  * Best-effort by contract: callers wrap this in try/catch so an
- * email failure can never fail a completed payment.
+ * email failure can never fail a completed payment. A PDF-generation
+ * failure degrades to sending the email without the attachment.
  */
 export async function sendPaymentReceipt(params: {
   order: { id: string; purpose?: string | null; amount: number; currency: string; finalAmount: number; discount: number; couponCode: string | null; courseId: string | null; razorpayPaymentId: string | null; createdAt: Date; updatedAt: Date }
@@ -144,9 +147,40 @@ export async function sendPaymentReceipt(params: {
 </body>
 </html>`
 
-  return sendEmail({
+  // Build the identical vector PDF the receipt page offers and attach it.
+  // Any failure here is non-fatal - the email still goes out with the
+  // online receipt link inside.
+  let attachments: EmailAttachment[] | undefined
+  try {
+    const pdf = await buildReceiptPdf({
+      number,
+      paidDate,
+      currency: order.currency,
+      clientName: user.name || "Student",
+      clientEmail: user.email,
+      itemDescription: itemDesc,
+      amountPaid: order.finalAmount,
+      gstin: billing.gstin,
+      taxRate: billing.taxRate,
+      taxIncluded,
+      provider,
+      paymentId,
+      installmentNote: parsed
+        ? `Installment ${parsed.index} of ${parsed.total} for the course "${courseTitle}".`
+        : "",
+      footerNote: billing.footerNote,
+    })
+    const base64 = Buffer.from(pdf.output("arraybuffer")).toString("base64")
+    attachments = [{ filename: `${number}.pdf`, content: base64, contentType: "application/pdf" }]
+  } catch (e) {
+    console.warn("[receipt] PDF attachment generation failed - sending email without attachment:", e)
+  }
+
+  const result = await sendEmailDetailed({
     to: user.email,
     subject: `Payment receipt ${number} - ${purposeLabel ? `${purposeLabel} - ` : ""}${courseTitle}`,
     html,
+    attachments,
   })
+  return result.ok
 }
