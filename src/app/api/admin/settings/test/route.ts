@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server"
 import { requireAdmin, withErrorHandler } from "@/lib/session"
 import { getSettings } from "@/lib/settings"
-import { sendEmail } from "@/lib/email"
+import { sendEmailDetailed } from "@/lib/email"
 
 export const runtime = "nodejs"
 
@@ -44,20 +44,37 @@ export const POST = withErrorHandler(async (req) => {
   }
 
   if (type === "email") {
-    const s = await getSettings(["SMTP_HOST", "SMTP_PORT", "SMTP_USER", "SMTP_PASSWORD", "EMAIL_TO_ADMINS"])
-    if (!s.SMTP_HOST || !s.SMTP_USER || !s.SMTP_PASSWORD) {
-      return NextResponse.json({ ok: false, error: "SMTP settings not configured" }, { status: 400 })
+    const s = await getSettings(["MAIL_API_TOKEN", "MAIL_MAILBOX_RESOURCE_ID", "SMTP_HOST", "SMTP_PORT", "SMTP_USER", "SMTP_PASSWORD", "EMAIL_TO_ADMINS"])
+    const hasApi = !!(s.MAIL_API_TOKEN || process.env.MAIL_API_TOKEN)
+    const hasSmtp = !!(s.SMTP_HOST && s.SMTP_USER && s.SMTP_PASSWORD)
+    if (!hasApi && !hasSmtp) {
+      return NextResponse.json(
+        { ok: false, error: "Email not configured - paste a Hostinger Mail API token (preferred) or SMTP credentials, then Save and retest" },
+        { status: 400 },
+      )
     }
     const to = s.EMAIL_TO_ADMINS || currentUser.email
-    const ok = await sendEmail({
+    const result = await sendEmailDetailed({
       to,
       subject: "GuardianX - Email Test",
-      html: `<div style="font-family:sans-serif;padding:40px;background:#0a0a0f;color:#fff;border-radius:12px;"><h1 style="color:#a78bfa;">GuardianX Email Test</h1><p>This is a test email from the GuardianX Platform Settings page.</p><p>If you received this, SMTP is working correctly.</p></div>`,
+      html: `<div style="font-family:sans-serif;padding:40px;background:#0a0a0f;color:#fff;border-radius:12px;"><h1 style="color:#a78bfa;">GuardianX Email Test</h1><p>This is a test email from the GuardianX Platform Settings page.</p><p>If you received this, your email transport is working correctly.</p></div>`,
     })
-    if (!ok) {
-      return NextResponse.json({ ok: false, error: "Failed to send - check SMTP credentials" }, { status: 400 })
+    if (!result.ok) {
+      return NextResponse.json(
+        { ok: false, error: `Send failed - ${result.error || "check credentials"}` },
+        { status: 400 },
+      )
     }
-    return NextResponse.json({ ok: true, message: `Test email sent to ${to}` })
+    let message =
+      result.transport === "mail-api"
+        ? `Test email sent to ${to} via Hostinger Mail API (mailbox ${result.detail || "auto-discovered"})`
+        : `Test email sent to ${to} via SMTP (${result.detail || "configured host"})`
+    if (result.transport === "smtp" && hasApi && result.error) {
+      // Mail API was tried first and failed, SMTP carried the message.
+      message += `. Note: the Mail API attempt FAILED and SMTP took over (API error: ${result.error.slice(0, 200)})`
+    }
+    message += ". Check the inbox (and spam folder)."
+    return NextResponse.json({ ok: true, message })
   }
 
   if (type === "crm") {

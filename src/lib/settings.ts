@@ -128,8 +128,10 @@ export const SETTING_DEFINITIONS = [
   { key: "RECEIPT_SUPPORT_EMAIL", label: "Receipt - Support Email", category: "payment", isSecret: false, placeholder: "academy@guardianx.in", description: "Contact email printed on receipts for billing queries" },
   { key: "RECEIPT_FOOTER_NOTE", label: "Receipt - Footer Note", category: "payment", isSecret: false, placeholder: "This is an electronically generated receipt...", description: "Small print at the bottom of every receipt" },
 
-  // Email (SMTP)
-  { key: "SMTP_HOST", label: "SMTP Host", category: "email", isSecret: false, placeholder: "smtp.hostinger.com", description: "Hostinger hPanel → Emails → SMTP config" },
+  // Email (Hostinger Mail API - preferred, then SMTP fallback)
+  { key: "MAIL_API_TOKEN", label: "Hostinger Mail API Token", category: "email", isSecret: true, placeholder: "paste your API token", description: "hPanel → API access → API token (Mail API). Preferred transport - plain HTTPS, no mailbox password. The mailbox Resource ID is auto-discovered from this token" },
+  { key: "MAIL_MAILBOX_RESOURCE_ID", label: "Mailbox Resource ID (optional)", category: "email", isSecret: false, placeholder: "AC1a2b3c4d5e6f7g", description: "Leave empty to auto-discover. Only set if your token manages several mailboxes (hPanel → API access, or GET api.mail.hostinger.com/api/v1/me)" },
+  { key: "SMTP_HOST", label: "SMTP Host (fallback)", category: "email", isSecret: false, placeholder: "smtp.hostinger.com", description: "Optional fallback used only when the Mail API fails. Hostinger hPanel → Emails → SMTP config" },
   { key: "SMTP_PORT", label: "SMTP Port", category: "email", isSecret: false, placeholder: "465", description: "465 (SSL) or 587 (STARTTLS)" },
   { key: "SMTP_USER", label: "Sender Email", category: "email", isSecret: false, placeholder: "noreply@academy.guardianx.cloud", description: "The mailbox to send from" },
   { key: "SMTP_PASSWORD", label: "Sender Password", category: "email", isSecret: true, placeholder: "••••••••••", description: "The mailbox password" },
@@ -151,7 +153,7 @@ export type SettingCategory = "payment" | "email" | "crm" | "tracking" | "auth"
 
 export const CATEGORY_META: Record<SettingCategory, { label: string; icon: string; color: string; note?: string }> = {
   payment: { label: "Payments (Razorpay + PayPal)", icon: "💳", color: "text-emerald-300" },
-  email: { label: "Email (SMTP)", icon: "📧", color: "text-cyan-300" },
+  email: { label: "Email (Hostinger Mail API / SMTP)", icon: "📧", color: "text-cyan-300", note: "Preferred: paste the Mail API token - it works alone (mailbox auto-discovered). SMTP fields are optional fallback. Use Test to send a real email" },
   crm: { label: "CRM Webhook", icon: "🔗", color: "text-violet-300" },
   tracking: { label: "Error Tracking (Sentry)", icon: "🔴", color: "text-rose-300", note: "Requires redeploy to activate (Sentry loads at server start)" },
   auth: { label: "Google OAuth", icon: "🔵", color: "text-blue-300", note: "No redeploy needed. The callback URL shown in Admin → Settings → Google OAuth must be registered as an Authorized redirect URI in Google Cloud Console" },
