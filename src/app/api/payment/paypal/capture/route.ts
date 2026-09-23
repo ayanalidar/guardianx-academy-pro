@@ -77,6 +77,19 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
     },
   })
 
+  // Automated payment receipt (best-effort - must never fail a completed payment)
+  try {
+    const { sendPaymentReceipt } = await import("@/lib/receipt")
+    await sendPaymentReceipt({
+      order: { ...order, razorpayPaymentId: capture.captureId },
+      user,
+      provider: "PayPal",
+      paymentId: capture.captureId,
+    })
+  } catch (e) {
+    console.error("[paypal/capture] receipt email failed:", e)
+  }
+
   try {
     await logAction(user.id, user.email ?? user.name ?? "user", "payment.paypal.captured", "order", order.id, {
       paypalOrderId: order.razorpayOrderId,

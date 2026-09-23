@@ -40,6 +40,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 import { ScrollReveal } from "@/components/platform/motion-system"
+import { PendingInstallments } from "@/components/billing/pending-installments"
 import {
   LabCard, type LabDifficulty, MissionCard, RankBadge, StatTile,
   StatusDot, XPBar,
@@ -428,6 +429,11 @@ export function DashboardView() {
                 </button>
               </div>
             )}
+
+            {/* PENDING INSTALLMENTS (EMI) - hidden when nothing is due */}
+            <ScrollReveal delay={0.02}>
+              <PendingInstallments />
+            </ScrollReveal>
 
             {/* CONTINUE LEARNING */}
             <ScrollReveal delay={0.05}>

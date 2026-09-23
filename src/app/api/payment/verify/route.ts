@@ -89,6 +89,21 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
     },
   })
 
+  // Automated payment receipt (best-effort - must never fail a completed
+  // payment). Covers full payments and every EMI installment paid via this
+  // route, including installments paid later from the dashboard.
+  try {
+    const { sendPaymentReceipt } = await import("@/lib/receipt")
+    await sendPaymentReceipt({
+      order: { ...order, razorpayPaymentId },
+      user,
+      provider: "Razorpay",
+      paymentId: razorpayPaymentId,
+    })
+  } catch (e) {
+    console.error("[payment/verify] receipt email failed:", e)
+  }
+
   // Increment coupon usage (if a coupon was applied)
   if (order.couponCode) {
     try {

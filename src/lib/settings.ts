@@ -112,6 +112,22 @@ export const SETTING_DEFINITIONS = [
   { key: "PAYPAL_ENV", label: "PayPal Environment", category: "payment", isSecret: false, placeholder: "live", description: "live or sandbox. Sandbox uses the test credentials and never charges real money" },
   { key: "PAYPAL_FX_RATE", label: "INR per 1 USD (PayPal FX rate)", category: "payment", isSecret: false, placeholder: "87", description: "Courses are priced in INR. International clients pay in USD converted at this rate (e.g. 87 means ₹4,350 becomes $50)" },
 
+  // EMI / Installment plans (all values editable here - no redeploy needed)
+  { key: "EMI_ENABLED", label: "EMI Plans Enabled", category: "payment", isSecret: false, placeholder: "true", description: "Show Pay in 2 / Pay in 3 installment options at checkout. Defaults to true when unset" },
+  { key: "EMI_MIN_AMOUNT", label: "EMI Minimum Course Amount (₹)", category: "payment", isSecret: false, placeholder: "1000", description: "Installment options are hidden for courses whose final price is below this amount. Default 1000" },
+  { key: "EMI_PLAN_2_SPLIT", label: "Pay in 2 - split %", category: "payment", isSecret: false, placeholder: "50,50", description: "Comma-separated percentages for the 2-installment plan. Defaults to 50,50" },
+  { key: "EMI_PLAN_3_SPLIT", label: "Pay in 3 - split %", category: "payment", isSecret: false, placeholder: "40,30,30", description: "Comma-separated percentages for the 3-installment plan. Defaults to 40,30,30" },
+  { key: "EMI_DUE_GAP_DAYS", label: "Days Between Installments", category: "payment", isSecret: false, placeholder: "30", description: "Each installment becomes due this many days after purchase. Default 30" },
+  { key: "EMI_REMINDERS_ENABLED", label: "EMI Email Reminders", category: "payment", isSecret: false, placeholder: "true", description: "Daily cron emails students 3 days and 1 day before each installment is due, and 3 days after it becomes overdue. Default true" },
+
+  // Receipts & tax (printed on payment receipts - email, receipt page and PDF)
+  { key: "RECEIPT_COMPANY_NAME", label: "Receipt - Company Name", category: "payment", isSecret: false, placeholder: "GuardianX Academy", description: "Legal/trading name printed on receipts. Default GuardianX Academy" },
+  { key: "RECEIPT_GSTIN", label: "Receipt - GSTIN", category: "payment", isSecret: false, placeholder: "01ABCDE1234F2Z5", description: "GSTIN printed on receipts. When set, a GST-included tax line is shown at the rate below; leave empty to omit tax lines" },
+  { key: "RECEIPT_TAX_RATE", label: "Receipt - Tax Rate %", category: "payment", isSecret: false, placeholder: "18", description: "Rate used for the 'tax included' line on receipts (prices are tax-inclusive). Default 18" },
+  { key: "RECEIPT_ADDRESS", label: "Receipt - Registered Address", category: "payment", isSecret: false, placeholder: "Nooripora, Baramulla, Kashmir 193401", description: "Address block printed on receipts" },
+  { key: "RECEIPT_SUPPORT_EMAIL", label: "Receipt - Support Email", category: "payment", isSecret: false, placeholder: "academy@guardianx.in", description: "Contact email printed on receipts for billing queries" },
+  { key: "RECEIPT_FOOTER_NOTE", label: "Receipt - Footer Note", category: "payment", isSecret: false, placeholder: "This is an electronically generated receipt...", description: "Small print at the bottom of every receipt" },
+
   // Email (SMTP)
   { key: "SMTP_HOST", label: "SMTP Host", category: "email", isSecret: false, placeholder: "smtp.hostinger.com", description: "Hostinger hPanel → Emails → SMTP config" },
   { key: "SMTP_PORT", label: "SMTP Port", category: "email", isSecret: false, placeholder: "465", description: "465 (SSL) or 587 (STARTTLS)" },

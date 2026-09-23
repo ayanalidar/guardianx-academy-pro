@@ -5,6 +5,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { motion, useInView, AnimatePresence, useScroll, useSpring } from "framer-motion"
 import { api } from "@/lib/api"
 import { parseCourseList } from "@/lib/course-lists"
+import { loadRazorpayScript, loadPayPalScript } from "@/lib/checkout-sdk"
 import { useAppStore } from "@/store/app-store"
 import { LEVEL_COLORS } from "@/lib/colors"
 import { useUser } from "@/hooks/use-user"
@@ -27,7 +28,7 @@ import {
   ArrowRight, ArrowDown, Sparkles, Zap, Target, Layers, Shield, Briefcase, Radio, Calendar,
   TrendingUp, Rocket, Trophy, Network, Wrench, Brain, Crosshair,
   Code, Activity, Eye, KeyRound, Bug, X, Hexagon,
-  Ticket, IndianRupee, Percent, Loader2, Globe,
+  Ticket, IndianRupee, Percent, Loader2, Globe, CalendarClock,
   Copy, MessageCircle, Linkedin,
 } from "lucide-react"
 import { toast } from "sonner"
@@ -281,37 +282,8 @@ function safeParseTags(tags?: string | null): string[] {
     .filter(Boolean)
 }
 
-// Load the Razorpay checkout SDK script
-function loadRazorpayScript(): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const existing = document.getElementById("razorpay-script")
-    if (existing) { resolve(); return }
-    const script = document.createElement("script")
-    script.id = "razorpay-script"
-    script.src = "https://checkout.razorpay.com/v1/checkout.js"
-    script.onload = () => resolve()
-    script.onerror = () => reject(new Error("Failed to load Razorpay SDK"))
-    document.body.appendChild(script)
-  })
-}
-
-// Load the PayPal checkout SDK script (Smart Payment Buttons)
-function loadPayPalScript(clientId: string): Promise<void> {
-  return new Promise((resolve, reject) => {
-    const existing = document.getElementById("paypal-sdk-script") as HTMLScriptElement | null
-    if (existing) {
-      if (existing.dataset.clientId === clientId) { resolve(); return }
-      existing.remove() // client id changed (e.g. live <-> sandbox) - reload
-    }
-    const script = document.createElement("script")
-    script.id = "paypal-sdk-script"
-    script.dataset.clientId = clientId
-    script.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(clientId)}&currency=USD&intent=capture&components=buttons&disable-funding=paylater`
-    script.onload = () => resolve()
-    script.onerror = () => reject(new Error("Failed to load PayPal SDK"))
-    document.body.appendChild(script)
-  })
-}
+// SDK loaders moved to @/lib/checkout-sdk (shared with the dashboard
+// "pay pending installment" dialog).
 
 // ============================================================
 // MAIN VIEW
@@ -390,12 +362,15 @@ export function CourseDetailView() {
   })
 
   const payMutation = useMutation({
-    mutationFn: (vars: { couponCode?: string }) =>
-      api<{ orderId: string; amount: number; currency: string; razorpayOrderId: string; keyId: string | null; mock: boolean }>(
+    mutationFn: (vars: { couponCode?: string; installments?: number }) =>
+      api<{
+        orderId: string; amount: number; currency: string; razorpayOrderId: string; keyId: string | null; mock: boolean
+        installmentPlan?: { count: number; index: number; amounts: number[]; dueDates: (string | null)[] } | null
+      }>(
         "/api/payment/create-order",
         {
           method: "POST",
-          body: JSON.stringify({ courseId, couponCode: vars.couponCode }),
+          body: JSON.stringify({ courseId, couponCode: vars.couponCode, installments: vars.installments }),
         },
       ).then(async (createRes) => {
         if (createRes.mock) {
@@ -409,12 +384,12 @@ export function CourseDetailView() {
               body: JSON.stringify({ orderId: createRes.orderId, razorpayPaymentId, razorpaySignature }),
             },
           )
-          return { ...verifyRes, paidAmount: createRes.amount }
+          return { ...verifyRes, paidAmount: createRes.amount, installmentPlan: createRes.installmentPlan ?? null }
         }
 
         // Real Razorpay - load the SDK + open the checkout modal
         await loadRazorpayScript()
-        return new Promise<{ success: boolean; enrollment: any; paidAmount: number }>((resolve, reject) => {
+        return new Promise<{ success: boolean; enrollment: any; paidAmount: number; installmentPlan: { count: number; index: number; amounts: number[]; dueDates: (string | null)[] } | null }>((resolve, reject) => {
           // @ts-ignore
           const rzp = new window.Razorpay({
             key: createRes.keyId,
@@ -436,7 +411,7 @@ export function CourseDetailView() {
                     }),
                   },
                 )
-                resolve({ ...verifyRes, paidAmount: createRes.amount })
+                resolve({ ...verifyRes, paidAmount: createRes.amount, installmentPlan: createRes.installmentPlan ?? null })
               } catch (e: any) {
                 reject(new Error(e?.message || "Payment verification failed"))
               }
@@ -454,10 +429,16 @@ export function CourseDetailView() {
         })
       }),
     onSuccess: (data) => {
-      toast.success("Payment successful! Enrolled - redirecting…")
+      const plan = data.installmentPlan
+      toast.success(
+        plan && plan.count > 1 && plan.index < plan.count
+          ? `Installment ${plan.index} of ${plan.count} paid! Enrolled - next installment due ${plan.dueDates?.[plan.index] ? new Date(plan.dueDates[plan.index]!).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "later"}.`
+          : "Payment successful! Enrolled - redirecting…",
+      )
       qc.invalidateQueries({ queryKey: ["course", courseId] })
       qc.invalidateQueries({ queryKey: ["courses"] })
       qc.invalidateQueries({ queryKey: ["me"] })
+      qc.invalidateQueries({ queryKey: ["installments"] })
       setCheckoutOpen(false)
       setCouponCode("")
       setCouponState({ status: "idle" })
@@ -475,13 +456,18 @@ export function CourseDetailView() {
   }
 
   /* ============ PayPal (international clients) ============ */
-  // Which providers are configured? /api/payment/methods returns booleans only.
-  const { data: payMethods } = useQuery<{ razorpay: boolean; paypal: boolean }>({
+  // Which providers are configured? /api/payment/methods returns booleans + EMI config.
+  const { data: payMethods } = useQuery<{
+    razorpay: boolean
+    paypal: boolean
+    emi?: { enabled: boolean; minAmount: number; plans: { installments: number; split: number[]; dueDays: number[] }[] }
+  }>({
     queryKey: ["payment-methods"],
     queryFn: () => api("/api/payment/methods"),
     staleTime: 5 * 60 * 1000,
   })
   const paypalAvailable = payMethods?.paypal === true
+  const emiConfig = payMethods?.emi?.enabled ? payMethods.emi : null
 
   // Active PayPal order: set once /api/payment/paypal/create-order succeeds;
   // the CheckoutDialog then renders the PayPal Smart Buttons for it.
@@ -491,15 +477,20 @@ export function CourseDetailView() {
     amount: number
     clientId: string
   } | null>(null)
+  // Installment schedule of the active PayPal checkout (for the success toast)
+  const [paypalInstallmentPlan, setPaypalInstallmentPlan] = React.useState<{
+    count: number; index: number; amounts: number[]; dueDates: (string | null)[]
+  } | null>(null)
 
   const createPaypalMutation = useMutation({
-    mutationFn: (vars: { couponCode?: string }) =>
-      api<{ orderId: string; paypalOrderId: string; amount: number; currency: string; clientId: string }>(
+    mutationFn: (vars: { couponCode?: string; installments?: number }) =>
+      api<{ orderId: string; paypalOrderId: string; amount: number; currency: string; clientId: string; installmentPlan?: { count: number; index: number; amounts: number[]; dueDates: (string | null)[] } | null }>(
         "/api/payment/paypal/create-order",
-        { method: "POST", body: JSON.stringify({ courseId, couponCode: vars.couponCode }) },
+        { method: "POST", body: JSON.stringify({ courseId, couponCode: vars.couponCode, installments: vars.installments }) },
       ),
     onSuccess: (res) => {
       setPaypalOrder({ orderId: res.orderId, paypalOrderId: res.paypalOrderId, amount: res.amount, clientId: res.clientId })
+      setPaypalInstallmentPlan(res.installmentPlan ?? null)
     },
     onError: (e: any) => toast.error(e.message || "Could not start PayPal checkout"),
   })
@@ -511,12 +502,19 @@ export function CourseDetailView() {
         body: JSON.stringify({ orderId: vars.orderId }),
       }),
     onSuccess: () => {
-      toast.success("Payment successful! Enrolled - redirecting…")
+      const plan = paypalInstallmentPlan
+      toast.success(
+        plan && plan.count > 1 && plan.index < plan.count
+          ? `Installment ${plan.index} of ${plan.count} paid! Enrolled - next installment due ${plan.dueDates?.[plan.index] ? new Date(plan.dueDates[plan.index]!).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" }) : "later"}.`
+          : "Payment successful! Enrolled - redirecting…",
+      )
       qc.invalidateQueries({ queryKey: ["course", courseId] })
       qc.invalidateQueries({ queryKey: ["courses"] })
       qc.invalidateQueries({ queryKey: ["me"] })
+      qc.invalidateQueries({ queryKey: ["installments"] })
       setCheckoutOpen(false)
       setPaypalOrder(null)
+      setPaypalInstallmentPlan(null)
       setCouponCode("")
       setCouponState({ status: "idle" })
       setTimeout(() => navigate({ name: "learning" }), 700)
@@ -524,9 +522,9 @@ export function CourseDetailView() {
     onError: (e: any) => toast.error(e.message || "PayPal payment could not be confirmed"),
   })
 
-  function startPaypalCheckout() {
+  function startPaypalCheckout(installments?: number) {
     const appliedCode = couponState.status === "applied" ? couponState.code : couponCode.trim() || undefined
-    createPaypalMutation.mutate({ couponCode: appliedCode })
+    createPaypalMutation.mutate({ couponCode: appliedCode, installments })
   }
 
   function handleApplyCoupon(amount: number) {
@@ -538,8 +536,8 @@ export function CourseDetailView() {
     applyCouponMutation.mutate({ code: couponCode.trim(), amount })
   }
 
-  function handlePayNow() {
-    payMutation.mutate({ couponCode: couponState.status === "applied" ? couponState.code : undefined })
+  function handlePayNow(installments?: number) {
+    payMutation.mutate({ couponCode: couponState.status === "applied" ? couponState.code : undefined, installments })
   }
 
   // Prerequisites (existing /enroll GET endpoint)
@@ -1227,12 +1225,13 @@ export function CourseDetailView() {
         isApplyingCoupon={applyCouponMutation.isPending}
         isPaying={payMutation.isPending}
         paypalAvailable={paypalAvailable}
+        emiConfig={emiConfig}
         paypalOrder={paypalOrder}
         isCreatingPaypal={createPaypalMutation.isPending}
         isCapturingPaypal={capturePaypalMutation.isPending}
-        onStartPaypal={startPaypalCheckout}
+        onStartPaypal={(installments?: number) => startPaypalCheckout(installments)}
         onCapturePaypal={(orderId) => capturePaypalMutation.mutate({ orderId })}
-        onCancelPaypal={() => setPaypalOrder(null)}
+        onCancelPaypal={() => { setPaypalOrder(null); setPaypalInstallmentPlan(null) }}
       />
     </div>
   )
@@ -1253,6 +1252,7 @@ function CheckoutDialog({
   isApplyingCoupon,
   isPaying,
   paypalAvailable,
+  emiConfig,
   paypalOrder,
   isCreatingPaypal,
   isCapturingPaypal,
@@ -1270,14 +1270,15 @@ function CheckoutDialog({
     | { status: "applied"; discount: number; finalAmount: number; type: string; value: number; code: string }
     | { status: "error"; message: string }
   onApplyCoupon: () => void
-  onPayNow: () => void
+  onPayNow: (installments?: number) => void
   isApplyingCoupon: boolean
   isPaying: boolean
   paypalAvailable: boolean
+  emiConfig: { enabled: boolean; minAmount: number; plans: { installments: number; split: number[]; dueDays: number[] }[] } | null
   paypalOrder: { orderId: string; paypalOrderId: string; amount: number; clientId: string } | null
   isCreatingPaypal: boolean
   isCapturingPaypal: boolean
-  onStartPaypal: () => void
+  onStartPaypal: (installments?: number) => void
   onCapturePaypal: (orderId: string) => void
   onCancelPaypal: () => void
 }) {
@@ -1292,9 +1293,29 @@ function CheckoutDialog({
 
   // Payment method selection - Razorpay by default, PayPal when configured.
   const [payMethod, setPayMethod] = React.useState<"razorpay" | "paypal">("razorpay")
+  // EMI plan selection: 1 = pay in full, 2/3 = platform installment plans
+  const [planInstallments, setPlanInstallments] = React.useState<1 | 2 | 3>(1)
   const paypalContainerRef = React.useRef<HTMLDivElement>(null)
   const paypalRenderedRef = React.useRef<string | null>(null)
   const paypalStep = payMethod === "paypal" && !!paypalOrder
+
+  // Installment preview - mirrors the server's computeShares math
+  // (weight x total / 100 rounded to 2dp, remainder lands on the last share)
+  const emiPlans = React.useMemo(() => {
+    if (!emiConfig?.enabled || finalAmount < (emiConfig.minAmount || 0)) return []
+    return emiConfig.plans.map((plan) => {
+      const shares = plan.split.map((w) => Math.round(((finalAmount * w) / 100) * 100) / 100)
+      const drift = Math.round((finalAmount - shares.reduce((a, b) => a + b, 0)) * 100) / 100
+      shares[shares.length - 1] = Math.round((shares[shares.length - 1] + drift) * 100) / 100
+      const dueDates = plan.dueDays.map((d) => {
+        const dt = new Date()
+        dt.setDate(dt.getDate() + d)
+        return dt
+      })
+      return { installments: plan.installments, shares, dueDates }
+    })
+  }, [emiConfig, finalAmount])
+  const activePlan = emiPlans.find((p) => p.installments === planInstallments) || null
 
   // Render the PayPal Smart Buttons once the container exists in the DOM.
   React.useEffect(() => {
@@ -1380,11 +1401,29 @@ function CheckoutDialog({
                 </>
               )}
               <div className="flex items-center justify-between pt-2 border-t border-border/40">
-                <span className="text-sm font-medium">Total payable</span>
+                <span className="text-sm font-medium">
+                  {activePlan ? "Due today (installment 1)" : "Total payable"}
+                </span>
                 <span className="text-2xl font-bold tabular-nums text-gradient-premium">
-                  {formatPrice(finalAmount)}
+                  {formatPrice(activePlan ? activePlan.shares[0] : finalAmount)}
                 </span>
               </div>
+              {/* Installment schedule preview */}
+              {activePlan && (
+                <div className="text-[11px] text-muted-foreground space-y-0.5 pt-1">
+                  {activePlan.shares.slice(1).map((s, i) => (
+                    <div key={i} className="flex items-center gap-1">
+                      <CalendarClock className="h-3 w-3 text-cyan-300 shrink-0" />
+                      <span>
+                        Installment {i + 2} of {activePlan.installments}: {formatPrice(s)} due ~{activePlan.dueDates[i]?.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                      </span>
+                    </div>
+                  ))}
+                  <div className="text-[10px] text-muted-foreground/80 pt-0.5">
+                    Full course access starts after installment 1. Remaining installments are paid from your dashboard.
+                  </div>
+                </div>
+              )}
               {/* INR payment note for non-INR users */}
               {!isINR && (
                 <div className="text-[10px] text-muted-foreground flex items-center gap-1 pt-1">
@@ -1395,6 +1434,59 @@ function CheckoutDialog({
             </div>
           </div>
 
+          {/* EMI plan selector - Pay in 2 / Pay in 3 (admin-configurable) */}
+          {emiPlans.length > 0 && (
+            <div className="space-y-2">
+              <Label className="text-xs font-medium flex items-center gap-1.5">
+                <CalendarClock className="h-3.5 w-3.5 text-cyan-300" /> Payment plan (EMI)
+              </Label>
+              <div className="grid grid-cols-1 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setPlanInstallments(1)}
+                  className={cn(
+                    "flex items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors",
+                    planInstallments === 1
+                      ? "border-violet-500/60 bg-violet-500/10"
+                      : "border-border/60 bg-background/40 hover:border-border",
+                  )}
+                >
+                  <span className="min-w-0 flex-1">
+                    <span className="block text-sm font-medium">Pay in full</span>
+                    <span className="block text-[11px] text-muted-foreground">One single payment of {formatPrice(finalAmount)}</span>
+                  </span>
+                  <span className={cn(
+                    "h-3.5 w-3.5 rounded-full border-2 shrink-0",
+                    planInstallments === 1 ? "border-violet-400 bg-violet-400" : "border-muted-foreground/40",
+                  )} />
+                </button>
+                {emiPlans.map((plan) => (
+                  <button
+                    key={plan.installments}
+                    type="button"
+                    onClick={() => setPlanInstallments(plan.installments as 2 | 3)}
+                    className={cn(
+                      "flex items-center gap-3 rounded-lg border px-3 py-2.5 text-left transition-colors",
+                      planInstallments === plan.installments
+                        ? "border-cyan-500/60 bg-cyan-500/10"
+                        : "border-border/60 bg-background/40 hover:border-border",
+                    )}
+                  >
+                    <span className="min-w-0 flex-1">
+                      <span className="block text-sm font-medium">Pay in {plan.installments} installments</span>
+                      <span className="block text-[11px] text-muted-foreground truncate">
+                        {plan.shares.map((s, i) => formatPrice(s)).join(" + ")} - due every {emiConfig?.plans.find(p => p.installments === plan.installments)?.dueDays[0] || 30} days
+                      </span>
+                    </span>
+                    <span className={cn(
+                      "h-3.5 w-3.5 rounded-full border-2 shrink-0",
+                      planInstallments === plan.installments ? "border-cyan-400 bg-cyan-400" : "border-muted-foreground/40",
+                    )} />
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
           {/* Payment method selector - PayPal shown only when configured */}
           {paypalAvailable && !paypalStep && (
             <div className="space-y-2">
@@ -1553,7 +1645,7 @@ function CheckoutDialog({
             </DialogClose>
             {payMethod === "paypal" ? (
               <Button
-                onClick={onStartPaypal}
+                onClick={() => onStartPaypal(planInstallments)}
                 disabled={isCreatingPaypal || isPaying}
                 className="bg-amber-400 hover:bg-amber-300 text-amber-950 font-semibold btn-premium"
               >
@@ -1566,7 +1658,7 @@ function CheckoutDialog({
               </Button>
             ) : (
               <Button
-                onClick={onPayNow}
+                onClick={() => onPayNow(planInstallments)}
                 disabled={isPaying}
                 className="bg-violet-600 hover:bg-violet-500 text-violet-50 btn-premium"
               >
@@ -1575,7 +1667,7 @@ function CheckoutDialog({
                 ) : (
                   <IndianRupee className="h-3.5 w-3.5 mr-1.5" />
                 )}
-                {isPaying ? "Processing…" : `Pay ${formatPrice(finalAmount)}`}
+                {isPaying ? "Processing…" : `Pay ${formatPrice(activePlan ? activePlan.shares[0] : finalAmount)}`}
               </Button>
             )}
           </DialogFooter>
