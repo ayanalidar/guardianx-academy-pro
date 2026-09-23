@@ -128,6 +128,18 @@ export const SETTING_DEFINITIONS = [
   { key: "RECEIPT_SUPPORT_EMAIL", label: "Receipt - Support Email", category: "payment", isSecret: false, placeholder: "academy@guardianx.in", description: "Contact email printed on receipts for billing queries" },
   { key: "RECEIPT_FOOTER_NOTE", label: "Receipt - Footer Note", category: "payment", isSecret: false, placeholder: "This is an electronically generated receipt...", description: "Small print at the bottom of every receipt" },
 
+  // Upcoming events (rendered in the 'Upcoming at GuardianX' block of every
+  // payment confirmation email - admin-managed, leave title empty to skip)
+  { key: "EVENT_1_TITLE", label: "Event 1 - Title", category: "events", isSecret: false, placeholder: "Free Live Webinar: Ethical Hacking 101", description: "Shown in the 'Upcoming at GuardianX' section of payment confirmation emails. Leave empty to skip this event" },
+  { key: "EVENT_1_DATE", label: "Event 1 - Date / Time", category: "events", isSecret: false, placeholder: "Sat, Oct 5 - 7:00 PM IST", description: "Free-text date shown under the event title" },
+  { key: "EVENT_1_LINK", label: "Event 1 - Link (optional)", category: "events", isSecret: false, placeholder: "https://academy.guardianx.cloud/...", description: "Optional URL - a 'Details' link is added when it starts with http(s)://" },
+  { key: "EVENT_2_TITLE", label: "Event 2 - Title", category: "events", isSecret: false, placeholder: "New Batch: CEH v13 Prep - starts Nov 1", description: "Second upcoming event. Leave empty to skip" },
+  { key: "EVENT_2_DATE", label: "Event 2 - Date / Time", category: "events", isSecret: false, placeholder: "Nov 1, 2026", description: "Free-text date shown under the event title" },
+  { key: "EVENT_2_LINK", label: "Event 2 - Link (optional)", category: "events", isSecret: false, placeholder: "https://academy.guardianx.cloud/...", description: "Optional URL - a 'Details' link is added when it starts with http(s)://" },
+  { key: "EVENT_3_TITLE", label: "Event 3 - Title", category: "events", isSecret: false, placeholder: "Capture The Flag - Autumn Edition", description: "Third upcoming event. Leave empty to skip" },
+  { key: "EVENT_3_DATE", label: "Event 3 - Date / Time", category: "events", isSecret: false, placeholder: "Nov 15 - 16 (online)", description: "Free-text date shown under the event title" },
+  { key: "EVENT_3_LINK", label: "Event 3 - Link (optional)", category: "events", isSecret: false, placeholder: "https://academy.guardianx.cloud/...", description: "Optional URL - a 'Details' link is added when it starts with http(s)://" },
+
   // Email (Hostinger Mail API - preferred, then SMTP fallback)
   { key: "MAIL_API_TOKEN", label: "Hostinger Mail API Token", category: "email", isSecret: true, placeholder: "paste your API token", description: "hPanel → API access → API token (Mail API). Preferred transport - plain HTTPS, no mailbox password. The mailbox Resource ID is auto-discovered from this token" },
   { key: "MAIL_MAILBOX_RESOURCE_ID", label: "Mailbox Resource ID (optional)", category: "email", isSecret: false, placeholder: "AC1a2b3c4d5e6f7g", description: "Leave empty to auto-discover. Only set if your token manages several mailboxes (hPanel → API access, or GET api.mail.hostinger.com/api/v1/me)" },
@@ -149,7 +161,7 @@ export const SETTING_DEFINITIONS = [
   { key: "GOOGLE_CLIENT_SECRET", label: "Google Client Secret", category: "auth", isSecret: true, placeholder: "••••••••••", description: "From Google Cloud Console → Credentials. The callback URL shown in the panel above must be registered as an Authorized redirect URI." },
 ]
 
-export type SettingCategory = "payment" | "email" | "crm" | "tracking" | "auth"
+export type SettingCategory = "payment" | "email" | "crm" | "tracking" | "auth" | "events"
 
 export const CATEGORY_META: Record<SettingCategory, { label: string; icon: string; color: string; note?: string }> = {
   payment: { label: "Payments (Razorpay + PayPal)", icon: "💳", color: "text-emerald-300" },
@@ -157,4 +169,5 @@ export const CATEGORY_META: Record<SettingCategory, { label: string; icon: strin
   crm: { label: "CRM Webhook", icon: "🔗", color: "text-violet-300" },
   tracking: { label: "Error Tracking (Sentry)", icon: "🔴", color: "text-rose-300", note: "Requires redeploy to activate (Sentry loads at server start)" },
   auth: { label: "Google OAuth", icon: "🔵", color: "text-blue-300", note: "No redeploy needed. The callback URL shown in Admin → Settings → Google OAuth must be registered as an Authorized redirect URI in Google Cloud Console" },
+  events: { label: "Upcoming Events (receipt emails)", icon: "📅", color: "text-amber-300", note: "Optional - shown in the 'Upcoming at GuardianX' block of every payment confirmation email. Fill events 1/2/3; leave a title empty to skip that event. Changes apply to the next email immediately" },
 }

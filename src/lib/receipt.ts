@@ -84,6 +84,37 @@ export async function sendPaymentReceipt(params: {
 
   const billing = await getReceiptBilling()
   const number = receiptNumberFor(order.id)
+
+  // Admin-managed upcoming events (Platform Settings → Upcoming Events).
+  // Rendered as the 'Upcoming at GuardianX' block; hidden entirely when no
+  // event titles are configured. Links are only used when they look like
+  // real http(s) URLs.
+  const ev = await getSettings([
+    "EVENT_1_TITLE", "EVENT_1_DATE", "EVENT_1_LINK",
+    "EVENT_2_TITLE", "EVENT_2_DATE", "EVENT_2_LINK",
+    "EVENT_3_TITLE", "EVENT_3_DATE", "EVENT_3_LINK",
+  ])
+  const events = [1, 2, 3]
+    .map((i) => ({
+      title: (ev[`EVENT_${i}_TITLE`] || "").trim(),
+      date: (ev[`EVENT_${i}_DATE`] || "").trim(),
+      link: (ev[`EVENT_${i}_LINK`] || "").trim(),
+    }))
+    .filter((e) => e.title)
+  const eventsHtml = events.length
+    ? `<div style="margin-top:26px;padding-top:18px;border-top:1px solid #eee9fb;">
+      <div style="font-size:14px;font-weight:700;color:#1f1235;">Upcoming at GuardianX</div>
+      ${events
+        .map((e) => {
+          const safeLink = /^https?:\/\//i.test(e.link) ? e.link : ""
+          return `<div style="margin-top:10px;font-size:13px;">
+            <div style="color:#2e1065;font-weight:600;">${esc(e.title)}</div>
+            <div style="color:#7c7392;font-size:12px;margin-top:1px;">${esc(e.date)}${safeLink ? ` &nbsp;·&nbsp; <a href="${esc(safeLink)}" style="color:#2e1065;font-weight:600;text-decoration:underline;">Details</a>` : ""}</div>
+          </div>`
+        })
+        .join("")}
+    </div>`
+    : ""
   let courseTitle = "GuardianX Academy Course"
   let purposeLabel = ""
 
@@ -138,6 +169,8 @@ export async function sendPaymentReceipt(params: {
       <a href="${receiptUrlFor(order.id)}" style="display:inline-block;margin-top:22px;background:#2e1065;color:#ffffff;text-decoration:none;font-size:13px;font-weight:600;padding:11px 22px;border-radius:8px;">View &amp; download PDF receipt</a>
 
       ${purposeLabel ? `<p style="font-size:12px;color:#7c7392;margin-top:16px;">This payment covers ${esc(purposeLabel.toLowerCase())} of your installment plan. Remaining installments can be paid anytime from your <a href="https://academy.guardianx.cloud/dashboard" style="color:#2e1065;">dashboard</a>.</p>` : ""}
+
+      ${eventsHtml}
     </div>
     <div style="padding:16px 28px;background:#ece8fa;border-radius:0 0 16px 16px;">
       <p style="font-size:11px;color:#7c7392;margin:0 0 4px;">Questions? Contact ${esc(billing.supportEmail)}</p>
