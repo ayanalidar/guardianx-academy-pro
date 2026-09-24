@@ -49,7 +49,7 @@ export async function GET() {
       }
     })
 
-    return cachedJson({ stats: data, count: data.length }, { sMax: 120, swr: 600 })
+    return cachedJson({ stats: data, count: data.length }, { sMax: 300, swr: 900 })
   } catch (err) {
     console.error("[api/platform-stats] GET error:", err)
     return NextResponse.json(

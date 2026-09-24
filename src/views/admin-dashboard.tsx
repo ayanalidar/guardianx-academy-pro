@@ -18,9 +18,13 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog"
-import {
-  ResponsiveContainer, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, BarChart, Bar,
-} from "recharts"
+// Recharts is heavy (~100KB+ with d3 deps) - code-split the growth chart so
+// the admin console's initial JS parses and becomes interactive sooner.
+import dynamic from "next/dynamic"
+const GrowthChart = dynamic(() => import("@/components/admin/growth-chart"), {
+  ssr: false,
+  loading: () => <div className="h-full w-full animate-pulse rounded-xl bg-muted/30" />,
+})
 import {
   Shield, Users, BookOpen, FlaskConical, Award, Radio, Mail, Settings,
   TrendingUp, Activity, DollarSign, Crown, Lock, Search, Plus, Pencil,
@@ -221,6 +225,9 @@ function AdminHero() {
   const { data } = useQuery<OverviewData>({
     queryKey: ["admin", "overview"],
     queryFn: () => api("/api/admin/overview"),
+    // Tab switches re-mount observers; keep the overview fresh for a minute
+    // instead of refetching (origin paid ~0.5s+ per hit before the region fix).
+    staleTime: 60_000,
   })
 
   return (
@@ -282,6 +289,7 @@ function OverviewTab({ onGoTab }: { onGoTab?: (tab: AdminTab) => void }) {
   const { data, isLoading } = useQuery<OverviewData>({
     queryKey: ["admin", "overview"],
     queryFn: () => api("/api/admin/overview"),
+    staleTime: 60_000,
   })
 
   if (isLoading || !data) {
@@ -346,35 +354,7 @@ function OverviewTab({ onGoTab }: { onGoTab?: (tab: AdminTab) => void }) {
               <TrendingUp className="h-5 w-5 text-amber-400" />
             </div>
             <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={data.growth} margin={{ top: 5, right: 5, bottom: 0, left: -10 }}>
-                  <defs>
-                    <linearGradient id="gradEnroll" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor="oklch(0.7 0.15 85)" stopOpacity={0.5} />
-                      <stop offset="100%" stopColor="oklch(0.7 0.15 85)" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="oklch(1 0 0 / 0.05)" />
-                  <XAxis dataKey="month" stroke="oklch(0.68 0.012 260)" fontSize={11} tickLine={false} axisLine={false} />
-                  <YAxis stroke="oklch(0.68 0.012 260)" fontSize={11} tickLine={false} axisLine={false} allowDecimals={false} />
-                  <Tooltip
-                    contentStyle={{
-                      backgroundColor: "oklch(0.1 0.008 270 / 0.95)",
-                      border: "1px solid oklch(1 0 0 / 0.1)",
-                      borderRadius: "0.5rem",
-                      fontSize: "12px",
-                    }}
-                    labelStyle={{ color: "oklch(0.95 0.004 270)" }}
-                  />
-                  <Area
-                    type="monotone"
-                    dataKey="enrollments"
-                    stroke="oklch(0.7 0.15 85)"
-                    strokeWidth={2}
-                    fill="url(#gradEnroll)"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
+              <GrowthChart data={data.growth} />
             </div>
           </div>
         </ScrollReveal>

@@ -119,7 +119,21 @@ export function RoleGate({
   area: string
   children: React.ReactNode
 }) {
-  const { user, isLoading } = useUser()
+  const { user, isLoading, refetch } = useUser()
+
+  // Self-heal the "blank console" race: a stale pre-login { user: null }
+  // cache entry (fetched on the auth screen) or a failed /api/me used to
+  // leave this gate rendering NULL forever - the admin view showed a blank
+  // page until the user re-clicked the tab (remount → refetch). Fire ONE
+  // automatic refetch when the session looks unsettled; AppRoot still owns
+  // the genuine logged-out flow (it shows the AuthScreen itself).
+  const retriedRef = React.useRef(false)
+  React.useEffect(() => {
+    if (!isLoading && !user && !retriedRef.current) {
+      retriedRef.current = true
+      void refetch()
+    }
+  }, [isLoading, user, refetch])
 
   if (isLoading) {
     return (
@@ -129,9 +143,17 @@ export function RoleGate({
     )
   }
 
-  // Not logged in yet → AppRoot is responsible for the auth screen; render
-  // nothing here so the gate never flashes a denied panel during login.
-  if (!user) return null
+  // Not logged in (yet / anymore) → AppRoot is responsible for the auth
+  // screen; render a NEUTRAL spinner here (never a denied panel, never a
+  // blank null) so the gate neither flashes "access restricted" during
+  // login nor shows an empty void while the session settles.
+  if (!user) {
+    return (
+      <div className="min-h-[60vh] flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground/60" />
+      </div>
+    )
+  }
 
   if (!allow.includes(user.role)) {
     return <AccessDeniedPanel area={area} requiredRoles={allow} />

@@ -72,7 +72,7 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
       where,
       include: {
         instructor: { select: { id: true, name: true, title: true, avatar: true } },
-        modules: { select: { id: true, lessons: { select: { id: true } } } },
+        modules: { select: { _count: { select: { lessons: true } } } },
         _count: { select: { enrollments: true } },
         ...(includeEnrollments
           ? { enrollments: { where: { userId }, select: { progress: true, completed: true, lastAccessed: true, enrolledAt: true } } }
@@ -144,7 +144,11 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
   const result = courses.map((c) => {
     // Degraded rows lack modules/lessons/enrollment - never crash the mapper.
     const lessonCount = Array.isArray(c.modules)
-      ? c.modules.reduce((acc: number, m: any) => acc + (Array.isArray(m?.lessons) ? m.lessons.length : 0), 0)
+      ? c.modules.reduce((acc: number, m: any) => {
+          if (typeof m?._count?.lessons === "number") return acc + m._count.lessons
+          // Legacy shape (full lesson rows) - kept for resilience.
+          return acc + (Array.isArray(m?.lessons) ? m.lessons.length : 0)
+        }, 0)
       : 0
     const enrollment = includeEnrollments ? (c as any).enrollments?.[0] : null
     return {
@@ -185,5 +189,5 @@ export const GET = withErrorHandler(async (req: NextRequest) => {
   if (personalized) {
     return noStore(NextResponse.json({ courses: result, degraded }))
   }
-  return cachedJson({ courses: result, degraded }, { sMax: 60, swr: 300 })
+  return cachedJson({ courses: result, degraded }, { sMax: 300, swr: 600 })
 })

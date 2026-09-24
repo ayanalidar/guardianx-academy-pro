@@ -13,5 +13,5 @@ export const GET = withErrorHandler(async () => {
     orderBy: [{ order: "asc" }, { startDate: "asc" }],
   })
 
-  return cachedJson({ batches, count: batches.length }, { sMax: 120, swr: 600 })
+  return cachedJson({ batches, count: batches.length }, { sMax: 600, swr: 1800 })
 })
