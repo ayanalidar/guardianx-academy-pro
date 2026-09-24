@@ -670,6 +670,20 @@
   to { opacity: 1; }
 }
 
+/* Cinematic hero - ultra-slow Ken Burns drift on the course cover (V1).
+   Deliberately calm: 40s cycle, tiny 1.06 max scale, ease-in-out alternate
+   so the motion reads as "breathing" rather than movement. Disabled by the
+   global prefers-reduced-motion rule below. */
+.gx-kenburns {
+  animation: gx-kenburns 40s ease-in-out infinite alternate;
+  will-change: transform;
+  transform-origin: 60% 40%;
+}
+@keyframes gx-kenburns {
+  from { transform: scale(1) translate3d(0, 0, 0); }
+  to   { transform: scale(1.06) translate3d(-1.5%, 1%, 0); }
+}
+
 /* Smooth scroll behavior */
 html {
   scroll-behavior: smooth;

@@ -82,3 +82,16 @@ export function getCourseImage(course: { category?: string; title?: string; shor
   // Default
   return COURSE_IMAGES["Ethical Hacking"]
 }
+
+/**
+ * Optional per-course YouTube trailer URLs, keyed by UPPERCASE shortName
+ * (V1). Add an entry like "CEH": "https://www.youtube.com/embed/<id>" and
+ * the course hero automatically shows a "Watch trailer" button + inline
+ * player dialog. An empty map = the button stays hidden everywhere.
+ */
+export const COURSE_TRAILERS: Record<string, string> = {}
+
+export function getCourseTrailer(shortName?: string | null): string | null {
+  if (!shortName) return null
+  return COURSE_TRAILERS[String(shortName).toUpperCase()] ?? null
+}

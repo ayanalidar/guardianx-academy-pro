@@ -29,12 +29,17 @@ import {
   TrendingUp, Rocket, Trophy, Network, Wrench, Brain, Crosshair,
   Code, Activity, Eye, KeyRound, Bug, X, Hexagon,
   Ticket, IndianRupee, Percent, Loader2, Globe, CalendarClock,
-  Copy, MessageCircle, Linkedin,
+  Copy, MessageCircle, Linkedin, RefreshCw, HelpCircle, Play,
 } from "lucide-react"
 import { toast } from "sonner"
 import { cn } from "@/lib/utils"
 import { useBookmarks } from "@/hooks/use-bookmarks"
-import { getCourseImage } from "@/lib/course-images"
+import { getCourseImage, getCourseTrailer } from "@/lib/course-images"
+import { getToolLogo } from "@/lib/tool-logos"
+
+// V3: recharts radar is code-split so it never loads until the Skill
+// Progression section actually needs it (keeps the course-page chunk lean).
+const SkillRadarChart = React.lazy(() => import("@/components/platform/skill-radar-chart"))
 
 // ============================================================
 // Types
@@ -55,6 +60,7 @@ interface CourseDetail {
   totalLessons: number
   completedLessons: number
   progressPct: number
+  rank?: { position: number; total: number } | null
 }
 
 // ============================================================
@@ -224,6 +230,7 @@ const SECTION_NAV_ITEMS = [
   { id: "gx-curriculum", label: "Curriculum" },
   { id: "gx-instructor", label: "Instructor" },
   { id: "gx-reviews", label: "Reviews" },
+  { id: "gx-faq", label: "FAQ" },
 ]
 
 function StickySectionNav({ items }: { items: { id: string; label: string }[] }) {
@@ -245,7 +252,7 @@ function StickySectionNav({ items }: { items: { id: string; label: string }[] })
 
   return (
     <div className="sticky top-16 lg:top-12 z-30 border-b border-border/60 bg-background shadow-[0_12px_32px_-24px_rgba(0,0,0,0.65)]">
-      <div className="mx-auto max-w-[1400px] px-0 sm:px-8 lg:px-10 flex sm:grid sm:grid-cols-5 items-stretch overflow-x-auto sm:overflow-visible scrollbar-thin">
+      <div className="mx-auto max-w-[1400px] px-0 sm:px-8 lg:px-10 flex sm:grid sm:grid-cols-6 items-stretch overflow-x-auto sm:overflow-visible scrollbar-thin">
         {items.map(({ id, label }, i) => (
           <button
             key={id}
@@ -294,6 +301,7 @@ export function CourseDetailView() {
   const { user } = useUser()
   const qc = useQueryClient()
   const { formatPrice, isINR, currencyCode } = useCurrencyHook()
+  const [trailerOpen, setTrailerOpen] = React.useState(false)
 
   // Refs for floating CTA visibility tracking
   const enrollCardRef = React.useRef<HTMLDivElement>(null)
@@ -608,11 +616,12 @@ export function CourseDetailView() {
   }
 
   if (!data) return null
-  const { course, enrollment, lessonProgress, progressPct, totalLessons, completedLessons } = data
+  const { course, enrollment, lessonProgress, progressPct, totalLessons, completedLessons, rank } = data
   // Degraded payloads (schema-drift fallback) can lack modules - every
   // dereference below must use this normalized array, never course.modules.
   const courseModules: any[] = Array.isArray(course.modules) ? course.modules : []
   const isEnrolled = !!enrollment
+  const trailerUrl = getCourseTrailer(course?.shortName)
 
   const goLesson = (lessonId: string, isPreview?: boolean) => {
     // Allow access to preview lessons without enrollment
@@ -681,7 +690,7 @@ export function CourseDetailView() {
             <img
               src={getCourseImage(course)}
               alt={course.title}
-              className="w-full h-full object-cover opacity-40"
+              className="gx-kenburns w-full h-full object-cover opacity-40"
             />
             <div className="absolute inset-0 bg-gradient-to-b from-background/60 via-background/80 to-background" />
             <div className="absolute inset-0 bg-grid opacity-10" />
@@ -757,6 +766,36 @@ export function CourseDetailView() {
                     <Badge className="text-[10px] font-mono tracking-[0.3em] uppercase bg-emerald-500/15 text-emerald-300 border border-emerald-500/30">
                       <CheckCircle2 className="h-2.5 w-2.5 mr-1" /> ENROLLED
                     </Badge>
+                  )}
+                  {trailerUrl && (
+                    <button
+                      onClick={() => setTrailerOpen(true)}
+                      className="group inline-flex items-center gap-1.5 rounded-full border border-border/60 px-3 py-1 text-[10px] font-mono tracking-[0.2em] uppercase text-muted-foreground hover:text-violet-200 hover:border-violet-500/40 transition-colors"
+                    >
+                      <Play className="h-3 w-3 text-violet-300 transition-transform group-hover:scale-110" />
+                      Watch trailer
+                    </button>
+                  )}
+                  {trailerUrl && (
+                    <Dialog open={trailerOpen} onOpenChange={setTrailerOpen}>
+                      <DialogContent className="max-w-3xl border-violet-500/25 bg-background">
+                        <DialogHeader>
+                          <DialogTitle className="text-left">{course.title} — trailer</DialogTitle>
+                          <DialogDescription className="text-left text-xs">
+                            Quick look at the course. The full curriculum is in the modules section below.
+                          </DialogDescription>
+                        </DialogHeader>
+                        <div className="aspect-video w-full overflow-hidden rounded-lg border border-border/50 bg-black">
+                          <iframe
+                            src={`${trailerUrl}${trailerUrl.includes("?") ? "&" : "?"}autoplay=1`}
+                            title={`${course.title} trailer`}
+                            className="h-full w-full"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                          />
+                        </div>
+                      </DialogContent>
+                    </Dialog>
                   )}
                 </motion.div>
 
@@ -945,7 +984,7 @@ export function CourseDetailView() {
         {/* ====================================================
             2. STATS HERO BAR - 4 animated stat tiles with count-up
             ==================================================== */}
-        <StatsHeroBar course={course} />
+        <StatsHeroBar course={course} rank={data?.rank} />
 
         {/* ====================================================
             3. METADATA STRIP - animated 7-column grid
@@ -1065,6 +1104,11 @@ export function CourseDetailView() {
         <ActivityFeed courseId={course.id} />
 
         {/* ====================================================
+            16b. COMMUNITY PREVIEW (D1) - recent discussion threads
+            ==================================================== */}
+        <CommunityPreview courseId={course.id} navigate={navigate} />
+
+        {/* ====================================================
             17. SKILLS YOU'LL EARN (TAG CLOUD)
             ==================================================== */}
         <SkillsTagCloud tags={course.tags} modules={courseModules} />
@@ -1074,6 +1118,13 @@ export function CourseDetailView() {
             ==================================================== */}
         <div id="gx-reviews" className="scroll-mt-28 lg:scroll-mt-24">
           <ReviewsSection courseId={course.id} isEnrolled={isEnrolled} />
+        </div>
+
+        {/* ====================================================
+            FAQ (V5) - answers the pre-enrollment questions
+            ==================================================== */}
+        <div id="gx-faq" className="scroll-mt-28 lg:scroll-mt-24">
+          <FaqSection course={course} prerequisiteTexts={prerequisiteTexts} toolsCovered={toolsCovered} />
         </div>
 
         {/* ====================================================
@@ -1678,9 +1729,454 @@ function CheckoutDialog({
 }
 
 // ============================================================
+// SHARED HELPERS - course page upgrades (V1-V6, D1-D6)
+// ============================================================
+
+/** D3: "Curriculum updated" label - relative if fresh, month-year otherwise. */
+function formatCourseUpdated(value: any): string {
+  const d = new Date(value)
+  if (isNaN(d.getTime())) return ""
+  const days = Math.floor((Date.now() - d.getTime()) / 86400000)
+  if (days < 1) return "today"
+  if (days === 1) return "yesterday"
+  if (days < 45) return `${days} days ago`
+  return d.toLocaleDateString("en-IN", { month: "short", year: "numeric" })
+}
+
+/** D5: compact inline SVG sparkline for the 30-day enrollment series. */
+function EnrollSparkline({ series }: { series: number[] }) {
+  if (!Array.isArray(series) || series.length !== 30) return null
+  const max = Math.max(...series, 1)
+  const W = 240
+  const H = 48
+  const P = 3
+  const stepX = (W - P * 2) / (series.length - 1)
+  const pts = series.map((v, i) => {
+    const x = P + i * stepX
+    const y = H - P - (v / max) * (H - P * 2 - 4)
+    return `${x.toFixed(1)},${y.toFixed(1)}`
+  })
+  const line = pts.join(" ")
+  const area = `M${pts[0]} L${pts.slice(1).join(" L")} L${(W - P).toFixed(1)},${H - P} L${P},${H - P} Z`
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-12" preserveAspectRatio="none" role="img" aria-label="Enrollments over the last 30 days">
+      <defs>
+        <linearGradient id="gx-spark-fill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor="rgb(167,139,250)" stopOpacity="0.35" />
+          <stop offset="100%" stopColor="rgb(167,139,250)" stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path d={area} fill="url(#gx-spark-fill)" stroke="none" />
+      <polyline
+        points={line}
+        fill="none"
+        stroke="rgb(196,181,253)"
+        strokeWidth="1.8"
+        strokeLinejoin="round"
+        strokeLinecap="round"
+        vectorEffect="non-scaling-stroke"
+      />
+      <circle
+        cx={P + (series.length - 1) * stepX}
+        cy={H - P - (series[series.length - 1] / max) * (H - P * 2 - 4)}
+        r="2.5"
+        fill="rgb(221,214,254)"
+      />
+    </svg>
+  )
+}
+
+/** D2: next live session countdown card (renders nothing when unscheduled). */
+function NextLiveSessionCard({ courseId }: { courseId: string }) {
+  const { data } = useQuery<{
+    session: {
+      id: string
+      title: string
+      scheduledAt: string
+      status: string
+      host?: { name?: string | null; title?: string | null; avatar?: string | null } | null
+      seatsTaken?: number
+      maxStudents?: number
+    } | null
+  }>({
+    queryKey: ["course-next-session", courseId],
+    queryFn: () => api(`/api/courses/${courseId}/next-session`),
+    enabled: !!courseId,
+  })
+  const session = data?.session
+  const [now, setNow] = React.useState<number | null>(null)
+  React.useEffect(() => {
+    setNow(Date.now())
+    const t = setInterval(() => setNow(Date.now()), 1000)
+    return () => clearInterval(t)
+  }, [])
+  if (!session?.scheduledAt) return null
+
+  const target = new Date(session.scheduledAt).getTime()
+  const remaining = now == null ? null : Math.max(0, target - now)
+  const parts = remaining == null ? null : {
+    d: Math.floor(remaining / 86400000),
+    h: Math.floor((remaining % 86400000) / 3600000),
+    m: Math.floor((remaining % 3600000) / 60000),
+    s: Math.floor((remaining % 60000) / 1000),
+  }
+  const when = new Date(session.scheduledAt).toLocaleString("en-IN", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    hour: "numeric",
+    minute: "2-digit",
+    timeZone: "Asia/Kolkata",
+  })
+  const isLive = session.status === "live"
+  const tiles = parts == null ? [] : [
+    { v: parts.d, l: "DAYS" },
+    { v: parts.h, l: "HRS" },
+    { v: parts.m, l: "MIN" },
+    { v: parts.s, l: "SEC" },
+  ]
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.3 }}
+      transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+      className="mb-6 rounded-2xl border border-cyan-500/25 bg-gradient-to-r from-cyan-500/[0.07] via-violet-500/[0.05] to-transparent p-5 backdrop-blur"
+    >
+      <div className="flex flex-wrap items-center gap-x-6 gap-y-4">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="relative inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-cyan-500/15 border border-cyan-500/30">
+            <Radio className="h-5 w-5 text-cyan-300" />
+            {isLive && <span className="absolute -top-1 -right-1 h-3 w-3 rounded-full bg-rose-500 animate-pulse" />}
+          </div>
+          <div className="min-w-0">
+            <p className="text-[10px] font-mono text-cyan-300 tracking-[0.25em]">
+              {isLive ? "LIVE RIGHT NOW" : "NEXT LIVE SESSION"}
+            </p>
+            <p className="text-sm font-semibold truncate">{session.title}</p>
+            <p className="text-[11px] text-muted-foreground font-mono">
+              {when}
+              {session.host?.name ? ` · ${session.host.name}` : ""}
+              {session.maxStudents ? ` · ${Math.min(session.seatsTaken ?? 0, session.maxStudents)}/${session.maxStudents} seats` : ""}
+            </p>
+          </div>
+        </div>
+        {tiles.length > 0 && !isLive && (
+          <div className="flex items-center gap-2 ml-auto">
+            {tiles.map((t) => (
+              <div key={t.l} className="rounded-lg border border-border/50 bg-background/50 px-2.5 py-1.5 text-center min-w-[46px]">
+                <div className="text-lg font-bold tabular-nums leading-none">{String(t.v).padStart(2, "0")}</div>
+                <div className="text-[8px] font-mono text-muted-foreground tracking-[0.2em] mt-1">{t.l}</div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </motion.div>
+  )
+}
+
+/** D1: community preview - recent threads pulled from the discussions API. */
+function CommunityPreview({ courseId, navigate }: { courseId: string; navigate: any }) {
+  const { data, isLoading } = useQuery<{ discussions: any[] }>({
+    queryKey: ["course-community-preview", courseId],
+    queryFn: () => api(`/api/discussions?courseId=${courseId}`),
+    enabled: !!courseId,
+  })
+  const discussions = data?.discussions ?? []
+  const totalReplies = discussions.reduce((acc, d) => acc + (d.replies?.length ?? 0), 0)
+  const preview = discussions.slice(0, 3)
+
+  const when = (v: any) => {
+    const d = new Date(v)
+    if (isNaN(d.getTime())) return ""
+    const mins = Math.floor((Date.now() - d.getTime()) / 60000)
+    if (mins < 60) return `${Math.max(1, mins)} min ago`
+    const hours = Math.floor(mins / 60)
+    if (hours < 24) return `${hours}h ago`
+    const days = Math.floor(hours / 24)
+    if (days < 30) return `${days}d ago`
+    return d.toLocaleDateString("en-IN", { month: "short", day: "numeric" })
+  }
+
+  return (
+    <section className="py-8 lg:py-10 border-t border-border/60">
+      <div className="mx-auto max-w-[1400px] px-4 sm:px-8 lg:px-10">
+        <div className="rounded-2xl border border-border/60 bg-card/40 backdrop-blur p-6">
+          <div className="flex items-center justify-between flex-wrap gap-4 mb-5">
+            <div className="flex items-center gap-3">
+              <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-cyan-500/15 border border-cyan-500/30">
+                <MessageSquare className="h-5 w-5 text-cyan-300" />
+              </div>
+              <div>
+                <h3 className="text-base font-semibold">From the community</h3>
+                <p className="text-[11px] font-mono text-muted-foreground tracking-[0.15em]">
+                  {discussions.length} THREAD{discussions.length === 1 ? "" : "S"} · {totalReplies} REPL{totalReplies === 1 ? "Y" : "IES"}
+                </p>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              className="border-cyan-500/30 text-cyan-200 hover:bg-cyan-500/10"
+              onClick={() => navigate({ name: "community" })}
+            >
+              Join the discussion <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
+            </Button>
+          </div>
+
+          {isLoading ? (
+            <div className="space-y-2">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="h-12 rounded-lg" />
+              ))}
+            </div>
+          ) : preview.length === 0 ? (
+            <div className="text-center py-4">
+              <MessageSquare className="h-7 w-7 text-muted-foreground/40 mx-auto mb-2" />
+              <p className="text-sm text-muted-foreground">No discussions yet - be the first to start one after enrolling.</p>
+            </div>
+          ) : (
+            <div className="grid sm:grid-cols-3 gap-3">
+              {preview.map((d, i) => (
+                <motion.button
+                  key={d.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true, amount: 0.3 }}
+                  transition={{ duration: 0.4, delay: i * 0.06 }}
+                  onClick={() => navigate({ name: "community" })}
+                  className="text-left rounded-xl border border-border/40 bg-background/30 p-4 hover:border-cyan-500/40 hover:bg-cyan-500/[0.04] transition-all"
+                >
+                  <p className="text-sm font-medium line-clamp-2 mb-2">{d.title}</p>
+                  <div className="flex items-center gap-2 text-[10px] font-mono text-muted-foreground tracking-wider">
+                    <span className="truncate">{d.user?.name || "Member"}</span>
+                    <span>·</span>
+                    <span className="shrink-0">{when(d.createdAt)}</span>
+                    <span className="ml-auto shrink-0 text-cyan-300">{d.replies?.length ?? 0} replies</span>
+                  </div>
+                </motion.button>
+              ))}
+            </div>
+          )}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/** V5: FAQ accordion - pre-enrollment questions with course facts interpolated. */
+function FaqSection({
+  course,
+  prerequisiteTexts,
+  toolsCovered,
+}: {
+  course: any
+  prerequisiteTexts: string[]
+  toolsCovered: string[]
+}) {
+  const faqs = React.useMemo(() => {
+    const list: { q: string; a: string }[] = []
+    list.push({
+      q: `How is ${course.title} structured?`,
+      a: `The course runs about ${course.durationHours ?? 40} hours of structured content at a ${String(course.level || "mixed").toLowerCase()} pace, split into modules of hands-on lessons. Everything lives in your GuardianX account - including curriculum updates as the field evolves.`,
+    })
+    list.push({
+      q: "Can I pay in installments (EMI)?",
+      a: "Yes. Installment options appear at checkout alongside UPI, cards and net-banking via Razorpay, with PayPal for international payments. Coupon codes apply before you choose a plan, so EMI is calculated on the discounted price.",
+    })
+    list.push({
+      q: "Will I get a certificate?",
+      a: `Yes. Complete all lessons and a verifiable GuardianX certificate${course.certBody ? ` aligned with ${course.certBody} objectives` : ""} is issued to your account. Anyone can confirm it using the certificate ID on the verification page.`,
+    })
+    list.push({
+      q: "Do I need any prerequisites?",
+      a: prerequisiteTexts.length > 0
+        ? `Before starting, you should be comfortable with: ${prerequisiteTexts.slice(0, 3).join("; ")}. The Fit Check section above has the full list.`
+        : `There are no hard prerequisites - the course is pitched at a ${String(course.level || "mixed").toLowerCase()} level and builds from first principles in each module.`,
+    })
+    list.push({
+      q: "What about live batches and labs?",
+      a: "Instructor-led cohorts run periodically with limited seats - current dates and seat availability are shown in the Live Batch Schedule section above. Hands-on labs let you practice every technique in a safe environment as you go.",
+    })
+    list.push({
+      q: "What if it isn't right for me?",
+      a: "Refunds follow the policy shown at checkout. If something is not working out, contact support - we would rather fix the problem than have you stuck with a course you cannot use.",
+    })
+    if (toolsCovered.length > 0) {
+      list.push({
+        q: "Which tools will I actually use?",
+        a: `${toolsCovered.slice(0, 4).join(", ")}${toolsCovered.length > 4 ? ` and ${toolsCovered.length - 4} more` : ""} - all mapped to real exercises in the curriculum, not just demos.`,
+      })
+    }
+    return list
+  }, [course, prerequisiteTexts, toolsCovered])
+
+  return (
+    <section className="py-8 lg:py-10 border-t border-border/60 relative overflow-hidden">
+      <div className="absolute top-0 left-0 w-[400px] h-[300px] bg-amber-600/5 blur-[120px] rounded-full" />
+      <div className="mx-auto max-w-[1000px] px-4 sm:px-8 lg:px-10 relative">
+        <div className="mb-6">
+          <SectionLabel index="17" className="text-amber-300">QUESTIONS</SectionLabel>
+          <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance">
+            Questions,
+            <span className="text-gradient-premium"> answered.</span>
+          </h2>
+          <p className="text-muted-foreground mt-4 leading-relaxed">
+            Everything people usually ask before enrolling. Still unsure? The support team replies fast.
+          </p>
+        </div>
+
+        <Reveal>
+          <Accordion type="single" collapsible className="rounded-2xl border border-border/60 bg-card/40 backdrop-blur px-5">
+            {faqs.map((f, i) => (
+              <AccordionItem key={i} value={`faq-${i}`} className={cn(i === faqs.length - 1 && "border-b-0")}>
+                <AccordionTrigger className="text-sm sm:text-base font-medium text-left hover:text-violet-200 hover:no-underline py-4">
+                  <span className="flex items-center gap-3">
+                    <HelpCircle className="h-4 w-4 text-amber-300/80 shrink-0" />
+                    {f.q}
+                  </span>
+                </AccordionTrigger>
+                <AccordionContent className="text-sm text-muted-foreground leading-relaxed pb-5 pl-7">
+                  {f.a}
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </Reveal>
+      </div>
+    </section>
+  )
+}
+
+/** V2: certificate preview - renders the reward, not just the promise. */
+function CertificateMockup({ course }: { course: any }) {
+  const year = new Date().getFullYear()
+  const shortCode = (String(course.shortName || "GX").replace(/[^A-Z0-9]/gi, "").toUpperCase().slice(0, 10)) || "GX"
+  const certId = `GX-CERT-${shortCode}-${year}`
+  const issued = new Date().toLocaleDateString("en-IN", { month: "long", year: "numeric" })
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.2 }}
+      transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
+      className="mt-6 relative overflow-hidden rounded-2xl border border-amber-500/25 bg-gradient-to-br from-[#141031] via-[#0d0b1f] to-[#0a1526] p-6 sm:p-10"
+    >
+      {/* Guilloche-style rings + grid */}
+      <div aria-hidden className="absolute -top-24 -right-24 w-72 h-72 rounded-full border border-amber-300/10" />
+      <div aria-hidden className="absolute -top-16 -right-16 w-56 h-56 rounded-full border border-amber-300/15" />
+      <div aria-hidden className="absolute -bottom-28 -left-20 w-80 h-80 rounded-full border border-violet-400/10" />
+      <div aria-hidden className="absolute inset-0 bg-grid opacity-[0.06]" />
+
+      <div className="relative z-10 text-center">
+        <div className="flex items-center justify-center gap-2.5 mb-6">
+          <div className="inline-flex h-9 w-9 items-center justify-center rounded-lg bg-amber-500/15 border border-amber-500/30">
+            <ShieldCheck className="h-5 w-5 text-amber-300" />
+          </div>
+          <span className="text-[11px] font-mono tracking-[0.35em] text-muted-foreground uppercase">GuardianX Academy</span>
+        </div>
+
+        <p className="text-[10px] font-mono tracking-[0.4em] text-amber-300/90 uppercase mb-6">Certificate of Completion</p>
+
+        <p className="text-[11px] font-mono text-muted-foreground tracking-[0.25em] uppercase">This certificate is proudly presented to</p>
+        <p className="mt-3 font-serif italic text-3xl sm:text-5xl leading-tight bg-gradient-to-r from-amber-200 via-violet-200 to-cyan-200 bg-clip-text text-transparent">
+          Your Name Here
+        </p>
+
+        <p className="text-[11px] font-mono text-muted-foreground tracking-[0.25em] uppercase mt-6">for successfully completing all requirements of</p>
+        <p className="mt-2 text-xl sm:text-2xl font-bold tracking-tight">{course.title}</p>
+
+        <div className="mt-4 flex items-center justify-center gap-2 flex-wrap">
+          <span className="rounded-full border border-border/50 px-2.5 py-0.5 text-[10px] font-mono text-muted-foreground">{course.durationHours ?? 40}H</span>
+          <span className="rounded-full border border-border/50 px-2.5 py-0.5 text-[10px] font-mono text-muted-foreground uppercase">{course.level}</span>
+          {course.certBody && (
+            <span className="rounded-full border border-violet-500/30 bg-violet-500/10 px-2.5 py-0.5 text-[10px] font-mono text-violet-300">{course.certBody}</span>
+          )}
+        </div>
+
+        <div className="mt-8 pt-6 border-t border-border/40 grid grid-cols-3 items-end gap-3 text-left">
+          <div>
+            <p className="text-[9px] font-mono text-muted-foreground tracking-[0.2em] uppercase">Issued</p>
+            <p className="text-xs font-semibold mt-1">{issued}</p>
+          </div>
+          <div className="flex justify-center">
+            <div className="relative inline-flex h-12 w-12 items-center justify-center rounded-full border-2 border-amber-400/40">
+              <div className="absolute inset-1 rounded-full border border-amber-400/25" />
+              <Award className="h-5 w-5 text-amber-300" />
+            </div>
+          </div>
+          <div className="text-right">
+            <p className="text-[9px] font-mono text-muted-foreground tracking-[0.2em] uppercase">Certificate ID</p>
+            <p className="text-xs font-mono font-semibold mt-1 text-amber-200">{certId}</p>
+          </div>
+        </div>
+
+        <p className="mt-6 text-[10px] text-muted-foreground/70 font-mono tracking-wider">
+          Preview - your issued certificate carries your full name and a unique verifiable ID.
+        </p>
+      </div>
+    </motion.div>
+  )
+}
+
+/** V4: animated donut for certification exam domain weightings. */
+function BlueprintDonut({ domains }: { domains: { name: string; pct: number }[] }) {
+  const STROKES = ["#a78bfa", "#22d3ee", "#34d399", "#fbbf24", "#fb7185", "#fb923c"]
+  let cum = 0
+  const slices = domains.map((d, i) => {
+    const offset = 25 - cum
+    cum += d.pct
+    return { ...d, offset, color: STROKES[i % STROKES.length] }
+  })
+  return (
+    <div className="flex flex-col sm:flex-row items-center gap-5">
+      <div className="relative h-[132px] w-[132px] shrink-0">
+        <svg viewBox="0 0 42 42" className="h-full w-full">
+          <circle cx="21" cy="21" r="15.9155" fill="none" stroke="rgba(148,163,184,0.12)" strokeWidth="5.5" />
+          {slices.map((s, i) => (
+            <motion.circle
+              key={i}
+              cx="21"
+              cy="21"
+              r="15.9155"
+              fill="none"
+              stroke={s.color}
+              strokeWidth="5.5"
+              strokeLinecap="butt"
+              strokeDasharray={`${Math.max(0.5, s.pct - 0.6)} ${100 - Math.max(0.5, s.pct - 0.6)}`}
+              strokeDashoffset={s.offset}
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true, amount: 0.4 }}
+              transition={{ duration: 0.5, delay: 0.15 + i * 0.12 }}
+            />
+          ))}
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <span className="text-xl font-bold tabular-nums">{slices.length}</span>
+          <span className="text-[8px] font-mono text-muted-foreground tracking-[0.25em]">DOMAINS</span>
+        </div>
+      </div>
+      <div className="min-w-0 flex-1 space-y-1.5 w-full">
+        {slices.map((s, i) => (
+          <div key={i} className="flex items-center gap-2 text-[11px]">
+            <span className="h-2 w-2 rounded-sm shrink-0" style={{ background: s.color }} />
+            <span className="truncate text-muted-foreground">{s.name}</span>
+            <span className="ml-auto font-mono tabular-nums shrink-0">{s.pct}%</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ============================================================
 // 2. STATS HERO BAR
 // ============================================================
-function StatsHeroBar({ course }: { course: any }) {
+function StatsHeroBar({ course, rank }: { course: any; rank?: { position: number; total: number } | null }) {
   const stats = [
     {
       label: "Students Enrolled",
@@ -1727,6 +2223,20 @@ function StatsHeroBar({ course }: { course: any }) {
   return (
     <section className="relative -mt-2 pb-6 lg:pb-8">
       <div className="mx-auto max-w-[1400px] px-4 sm:px-8 lg:px-10">
+        {/* D6: popularity rank - only worth showing in the top 3 */}
+        {rank && rank.total > 1 && rank.position <= 3 && (
+          <motion.div
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.15 }}
+            className="mb-3 inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3.5 py-1.5"
+          >
+            <Trophy className="h-3.5 w-3.5 text-amber-300" />
+            <span className="text-[11px] font-mono tracking-[0.12em] text-amber-200">
+              #{rank.position} MOST ENROLLED IN {String(course.category || "CATEGORY").toUpperCase()} · {rank.total} COURSES
+            </span>
+          </motion.div>
+        )}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
           {stats.map((s, i) => (
             <motion.div
@@ -1831,9 +2341,16 @@ function AchievementCollection({
                     <h3 className="text-sm font-semibold">Tools you&apos;ll use</h3>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {toolsCovered.map((t, i) => (
-                      <Badge key={i} variant="outline" className="text-[11px] py-1 border-cyan-500/30 bg-cyan-500/10 text-cyan-200">{t}</Badge>
-                    ))}
+                    {toolsCovered.map((t, i) => {
+                      const L = getToolLogo(t)
+                      const ToolIcon = L.icon
+                      return (
+                        <div key={i} className={cn("flex items-center gap-2 rounded-lg border px-2.5 py-1.5", L.bg)} title={t}>
+                          <ToolIcon className={cn("h-3.5 w-3.5 shrink-0", L.color)} />
+                          <span className="text-[11px] font-medium text-foreground/90">{t}</span>
+                        </div>
+                      )
+                    })}
                   </div>
                 </div>
               )}
@@ -1965,6 +2482,10 @@ function SkillProgressionChart({ tags }: { tags?: string | null }) {
     return { skill, beforePct, afterPct, i }
   })
 
+  // V3: radar uses the SAME deterministic before/after values as the bars
+  // below, so the two visualizations can never disagree.
+  const radarPoints = skillBars.map((b) => ({ skill: b.skill, before: b.beforePct, after: b.afterPct }))
+
   return (
     <section className="py-8 lg:py-10 border-t border-border/60 relative overflow-hidden">
       <div className="absolute top-0 right-0 w-[500px] h-[400px] bg-emerald-600/5 blur-[120px] rounded-full" />
@@ -1981,7 +2502,8 @@ function SkillProgressionChart({ tags }: { tags?: string | null }) {
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-5">
+        <div className="grid lg:grid-cols-12 gap-5 items-start">
+          <div className="lg:col-span-7 grid sm:grid-cols-2 gap-5">
           {skillBars.map((bar) => (
             <motion.div
               key={bar.skill}
@@ -2035,6 +2557,16 @@ function SkillProgressionChart({ tags }: { tags?: string | null }) {
               </div>
             </motion.div>
           ))}
+          </div>
+
+          {/* V3: animated before/after radar - code-split recharts chunk */}
+          <div className="lg:col-span-5 rounded-2xl border border-emerald-500/20 bg-card/40 backdrop-blur p-5">
+            <p className="text-[10px] font-mono text-emerald-300 tracking-[0.2em] mb-1">SKILL RADAR</p>
+            <p className="text-xs text-muted-foreground mb-2">Your six core domains - before vs after this course.</p>
+            <React.Suspense fallback={<Skeleton className="h-[300px] w-full rounded-xl" />}>
+              <SkillRadarChart points={radarPoints} />
+            </React.Suspense>
+          </div>
         </div>
       </div>
     </section>
@@ -2224,6 +2756,18 @@ function CurriculumTimeline({
                 <div className="h-8 w-px bg-border" />
                 <div>
                   <span className="text-emerald-300 font-bold text-lg">{completedLessons}</span> DONE
+                </div>
+              </>
+            )}
+            {course.updatedAt && (
+              <>
+                <div className="h-8 w-px bg-border" />
+                <div className="flex items-center gap-1.5 text-[11px]">
+                  <RefreshCw className="h-3 w-3 text-emerald-300" />
+                  <span>
+                    <span className="text-emerald-300 font-bold">Updated</span>{" "}
+                    {formatCourseUpdated(course.updatedAt)}
+                  </span>
                 </div>
               </>
             )}
@@ -2752,6 +3296,9 @@ function BatchSchedulePreview({
           </p>
         </div>
 
+        {/* D2: next live session countdown (hidden when nothing is scheduled) */}
+        <NextLiveSessionCard courseId={courseId} />
+
         {isLoading ? (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {Array.from({ length: 3 }).map((_, i) => (
@@ -3159,7 +3706,8 @@ function CertExamBlueprint({ course }: { course: any }) {
           <div className="lg:col-span-7">
             <div className="rounded-2xl border border-border/60 bg-card/40 backdrop-blur p-6">
               <p className="text-[10px] font-mono text-amber-300 tracking-[0.2em] mb-4">DOMAIN WEIGHTINGS</p>
-              <div className="space-y-4">
+              <BlueprintDonut domains={domains} />
+              <div className="mt-6 space-y-4">
                 {domains.map((d: { name: string; pct: number; color: string; bar: string }, i: number) => (
                   <div key={i}>
                     <div className="flex items-center justify-between mb-1.5">
@@ -3181,6 +3729,9 @@ function CertExamBlueprint({ course }: { course: any }) {
             </div>
           </div>
         </div>
+
+        {/* V2: certificate preview - shows the actual reward */}
+        <CertificateMockup course={course} />
       </div>
     </section>
   )
@@ -3358,7 +3909,7 @@ interface ActivityItem {
   timeAgo: string
 }
 function ActivityFeed({ courseId }: { courseId: string }) {
-  const { data, isLoading } = useQuery<{ activities: ActivityItem[]; total: number; thisWeek: number }>({
+  const { data, isLoading } = useQuery<{ activities: ActivityItem[]; total: number; thisWeek: number; daily30?: number[] }>({
     queryKey: ["course-activity", courseId],
     queryFn: () => api(`/api/courses/${courseId}/activity`),
     enabled: !!courseId,
@@ -3367,6 +3918,7 @@ function ActivityFeed({ courseId }: { courseId: string }) {
   const activities = data?.activities ?? []
   const total = data?.total ?? 0
   const thisWeek = data?.thisWeek ?? 0
+  const daily30 = Array.isArray(data?.daily30) && data!.daily30!.length === 30 ? data!.daily30! : []
 
   return (
     <section className="py-8 lg:py-10 border-t border-border/60">
@@ -3406,6 +3958,16 @@ function ActivityFeed({ courseId }: { courseId: string }) {
                   </div>
                 </div>
               </div>
+              {/* D5: 30-day enrollment velocity sparkline */}
+              {daily30.length === 30 && (
+                <div className="rounded-xl border border-border/60 bg-card/40 backdrop-blur p-5">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="text-[10px] font-mono text-muted-foreground tracking-[0.2em]">ENROLLMENT VELOCITY - 30 DAYS</div>
+                    <div className="text-[10px] font-mono text-violet-300 tabular-nums">+{daily30.reduce((a, b) => a + b, 0)}</div>
+                  </div>
+                  <EnrollSparkline series={daily30} />
+                </div>
+              )}
             </div>
           </div>
 

@@ -143,6 +143,26 @@ export const GET = withErrorHandler(async (_req: NextRequest, { params }: { para
   const totalLessons = course.modules.reduce((acc: number, m: any) => acc + m.lessons.length, 0)
   const completedLessons = Object.values(lessonProgress).filter((p) => p.completed).length
 
+  // Popularity rank (D6): position of this course among PUBLISHED courses in
+  // the same category, by studentsCount. Two cheap indexed counts; fails open
+  // to null so degraded/tier-3 rows simply skip the badge.
+  let rank: { position: number; total: number } | null = null
+  try {
+    const cat = typeof course.category === "string" ? course.category : ""
+    const sc = Number(course.studentsCount ?? 0)
+    if (cat && Number.isFinite(sc)) {
+      const [higher, total] = await Promise.all([
+        db.course.count({
+          where: { category: cat, published: true, studentsCount: { gt: sc }, id: { not: course.id } },
+        }),
+        db.course.count({ where: { category: cat, published: true } }),
+      ])
+      if (total > 1) rank = { position: higher + 1, total }
+    }
+  } catch {
+    rank = null
+  }
+
   const payload = {
     course,
     enrollment,
@@ -150,6 +170,7 @@ export const GET = withErrorHandler(async (_req: NextRequest, { params }: { para
     totalLessons,
     completedLessons,
     progressPct: totalLessons ? Math.round((completedLessons / totalLessons) * 100) : 0,
+    rank,
     degraded,
   }
   // Anonymous course-detail responses are identical for every visitor - 
