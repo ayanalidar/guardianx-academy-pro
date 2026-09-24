@@ -767,6 +767,13 @@ export function CourseDetailView() {
                       <CheckCircle2 className="h-2.5 w-2.5 mr-1" /> ENROLLED
                     </Badge>
                   )}
+                  {/* D6: popularity rank - top 3 only; lives in the hero so it never slides under the sticky section nav */}
+                  {data?.rank && data.rank.total > 1 && data.rank.position <= 3 && (
+                    <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-500/30 bg-amber-500/10 px-3 py-1 text-[10px] font-mono tracking-[0.2em] uppercase text-amber-200">
+                      <Trophy className="h-3 w-3 text-amber-300" />
+                      #{data.rank.position} MOST ENROLLED IN {String(course.category || "CATEGORY").toUpperCase()} · {data.rank.total} COURSES
+                    </span>
+                  )}
                   {trailerUrl && (
                     <button
                       onClick={() => setTrailerOpen(true)}
@@ -984,7 +991,7 @@ export function CourseDetailView() {
         {/* ====================================================
             2. STATS HERO BAR - 4 animated stat tiles with count-up
             ==================================================== */}
-        <StatsHeroBar course={course} rank={data?.rank} />
+        <StatsHeroBar course={course} />
 
         {/* ====================================================
             3. METADATA STRIP - animated 7-column grid
@@ -2077,9 +2084,12 @@ function CertificateMockup({ course }: { course: any }) {
       <div className="rounded-[20px] bg-gradient-to-br from-amber-300/70 via-amber-100/20 to-amber-400/60 p-px shadow-[0_24px_70px_-24px_rgba(251,191,36,0.25)]">
         <div className="relative overflow-hidden rounded-[19px] bg-[#0c0a1c] px-5 py-10 sm:px-10 sm:py-12">
           {/* --- Decorations (all z-0, clipped, clear of text zones) --- */}
-          <ShieldCheck
+          <img
             aria-hidden
-            className="pointer-events-none absolute left-1/2 top-1/2 h-[300px] w-[300px] -translate-x-1/2 -translate-y-1/2 text-amber-100/[0.04]"
+            src="/guardianx-logo-v2.png"
+            alt=""
+            className="pointer-events-none absolute left-1/2 top-1/2 h-[320px] w-[320px] -translate-x-1/2 -translate-y-1/2 object-contain opacity-[0.06] mix-blend-screen select-none"
+            draggable={false}
           />
           <svg aria-hidden viewBox="0 0 200 200" className="pointer-events-none absolute -right-12 -top-12 h-48 w-48 text-amber-200/[0.07]">
             {Array.from({ length: 8 }).map((_, i) => (
@@ -2103,8 +2113,8 @@ function CertificateMockup({ course }: { course: any }) {
             {/* Header: monogram + wordmark | hologram */}
             <div className="flex items-center justify-between gap-3">
               <div className="flex min-w-0 items-center gap-2.5">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-amber-400/40 bg-amber-400/10">
-                  <span className="text-[11px] font-bold tracking-widest text-amber-200">GX</span>
+                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-amber-400/40 bg-amber-400/10 p-1">
+                  <img src="/guardianx-logo-v2.png" alt="GuardianX Academy logo" className="h-full w-full object-contain mix-blend-screen" draggable={false} />
                 </div>
                 <div className="min-w-0 text-left">
                   <p className="truncate text-[11px] font-bold uppercase tracking-[0.3em]">GuardianX Academy</p>
@@ -2162,7 +2172,7 @@ function CertificateMockup({ course }: { course: any }) {
                   <div className="absolute inset-0 rounded-full border border-amber-300/40 bg-gradient-to-br from-amber-300/25 to-amber-600/5" />
                   <div className="absolute inset-[5px] rounded-full border border-dashed border-amber-300/35" />
                   <div className="absolute inset-0 flex items-center justify-center">
-                    <Award className="h-6 w-6 text-amber-200" />
+                    <img src="/guardianx-logo-v2.png" alt="" className="h-8 w-8 object-contain mix-blend-screen" draggable={false} />
                   </div>
                 </div>
               </div>
@@ -2241,7 +2251,7 @@ function BlueprintDonut({ domains }: { domains: { name: string; pct: number }[] 
 // ============================================================
 // 2. STATS HERO BAR
 // ============================================================
-function StatsHeroBar({ course, rank }: { course: any; rank?: { position: number; total: number } | null }) {
+function StatsHeroBar({ course }: { course: any }) {
   const stats = [
     {
       label: "Students Enrolled",
@@ -2288,20 +2298,6 @@ function StatsHeroBar({ course, rank }: { course: any; rank?: { position: number
   return (
     <section className="relative -mt-2 pb-6 lg:pb-8">
       <div className="mx-auto max-w-[1400px] px-4 sm:px-8 lg:px-10">
-        {/* D6: popularity rank - only worth showing in the top 3 */}
-        {rank && rank.total > 1 && rank.position <= 3 && (
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.15 }}
-            className="mb-3 inline-flex items-center gap-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-3.5 py-1.5"
-          >
-            <Trophy className="h-3.5 w-3.5 text-amber-300" />
-            <span className="text-[11px] font-mono tracking-[0.12em] text-amber-200">
-              #{rank.position} MOST ENROLLED IN {String(course.category || "CATEGORY").toUpperCase()} · {rank.total} COURSES
-            </span>
-          </motion.div>
-        )}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
           {stats.map((s, i) => (
             <motion.div
