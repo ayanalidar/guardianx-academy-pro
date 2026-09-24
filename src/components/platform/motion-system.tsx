@@ -17,7 +17,7 @@ const EASE_OUT = [0.22, 1, 0.36, 1] as const
 export function ScrollReveal({
   children,
   delay = 0,
-  y = 40,
+  y = 10,
   className,
   once = true,
 }: {
@@ -36,7 +36,7 @@ export function ScrollReveal({
       data-gx-reveal=""
       initial={{ opacity: 0, y }}
       animate={isInView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.5, delay, ease: EASE }}
+      transition={{ duration: 0.4, delay, ease: EASE }}
       className={className}
     >
       {children}
@@ -74,7 +74,7 @@ export function ClipReveal({
       data-gx-reveal=""
       initial={{ clipPath: clipPaths[direction] }}
       animate={isInView ? { clipPath: "inset(0% 0% 0% 0%)" } : {}}
-      transition={{ duration: 1.2, delay, ease: EASE }}
+      transition={{ duration: 0.6, delay, ease: EASE }}
       className={className}
     >
       {children}
@@ -119,10 +119,10 @@ export function TextReveal({
           key={i}
           data-gx-reveal=""
           variants={{
-            hidden: { opacity: 0, y: "0.4em", filter: "blur(6px)" },
+            hidden: { opacity: 0, y: "0.12em", filter: "blur(2px)" },
             visible: {
               opacity: 1, y: 0, filter: "blur(0px)",
-              transition: { duration: 0.4, ease: EASE },
+              transition: { duration: 0.35, ease: EASE },
             },
           }}
           className="inline-block"
@@ -182,7 +182,7 @@ export function StaggerItem({
 export function MagneticButton({
   children,
   className,
-  strength = 0.3,
+  strength = 0.06,
   onClick,
   ...props
 }: {
@@ -194,8 +194,8 @@ export function MagneticButton({
   const ref = React.useRef<HTMLDivElement>(null)
   const x = useMotionValue(0)
   const y = useMotionValue(0)
-  const springX = useSpring(x, { stiffness: 150, damping: 15 })
-  const springY = useSpring(y, { stiffness: 150, damping: 15 })
+  const springX = useSpring(x, { stiffness: 260, damping: 34 })
+  const springY = useSpring(y, { stiffness: 260, damping: 34 })
 
   function handleMouseMove(e: React.MouseEvent) {
     const el = ref.current
@@ -231,7 +231,7 @@ export function MagneticButton({
 export function Parallax({
   children,
   className,
-  offset = 80,
+  offset = 16,
 }: {
   children: React.ReactNode
   className?: string
@@ -442,9 +442,9 @@ export function ScaleReveal({
     <motion.div
       ref={ref}
       data-gx-reveal=""
-      initial={{ opacity: 0, scale: 0.9 }}
+      initial={{ opacity: 0, scale: 0.98 }}
       animate={isInView ? { opacity: 1, scale: 1 } : {}}
-      transition={{ duration: 1, delay, ease: EASE }}
+      transition={{ duration: 0.45, delay, ease: EASE }}
       className={className}
     >
       {children}
@@ -471,9 +471,9 @@ export function BlurReveal({
     <motion.div
       ref={ref}
       data-gx-reveal=""
-      initial={{ opacity: 0, filter: "blur(20px)" }}
+      initial={{ opacity: 0, filter: "blur(6px)" }}
       animate={isInView ? { opacity: 1, filter: "blur(0px)" } : {}}
-      transition={{ duration: 1.2, delay, ease: EASE }}
+      transition={{ duration: 0.5, delay, ease: EASE }}
       className={className}
     >
       {children}

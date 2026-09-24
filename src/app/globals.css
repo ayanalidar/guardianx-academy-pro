@@ -584,13 +584,13 @@
   animation: scale-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Subtle bounce */
+/* Subtle bounce - disabled in calm mode (class kept for compatibility) */
 @keyframes bounce-subtle {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-2px); }
 }
 .animate-bounce-subtle {
-  animation: bounce-subtle 2s ease-in-out infinite;
+  animation: none;
 }
 
 /* Progress bar animated stripes */
@@ -661,13 +661,13 @@
   border-radius: 4px;
 }
 
-/* Page transition - butter smooth fade + slide */
+/* Page transition - calm opacity fade (no slide/scale) */
 .page-transition {
-  animation: page-enter 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: page-enter 0.25s ease-out;
 }
 @keyframes page-enter {
-  from { opacity: 0; transform: translateY(8px) scale(0.998); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 /* Smooth scroll behavior */
@@ -917,11 +917,11 @@ a {
    disabled under prefers-reduced-motion.
    ============================================================ */
 @keyframes gx-view-enter {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 .gx-view-enter {
-  animation: gx-view-enter 260ms cubic-bezier(0.22, 1, 0.36, 1);
+  animation: gx-view-enter 200ms ease-out;
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -45,7 +45,7 @@ function Logo({ onClick }: { onClick?: () => void }) {
         <img
           src="/guardianx-logo-v2.png"
           alt="GuardianX"
-          className="h-9 w-9 object-contain transition-transform group-hover:scale-110"
+          className="h-9 w-9 object-contain transition-transform group-hover:scale-105"
           style={{ filter: "drop-shadow(0 0 6px rgba(124,58,237,0.6))" }}
           draggable={false}
         />

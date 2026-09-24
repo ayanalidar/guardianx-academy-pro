@@ -737,7 +737,7 @@ function SpotlightCard({ course, index }: { course: CourseItem; index: number })
         <img
           src={image}
           alt={course.title}
-          className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+          className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-card via-card/30 to-transparent" />
 
@@ -841,7 +841,7 @@ function CourseCard({
           <img
             src={image}
             alt={course.title}
-            className="absolute inset-0 w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+            className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-card via-card/20 to-transparent" />
 
@@ -1031,7 +1031,7 @@ function CourseListRow({
     >
       {/* thumbnail */}
       <div className="relative size-16 sm:size-20 rounded-lg overflow-hidden shrink-0">
-        <img src={image} alt="" className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" />
+        <img src={image} alt="" className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-[1.03]" />
       </div>
 
       {/* main */}

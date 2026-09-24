@@ -9,7 +9,7 @@ import { motion, useInView, useMotionValue, useSpring, useTransform, useScroll, 
 export function ScrollReveal({
   children,
   delay = 0,
-  y = 24,
+  y = 10,
   className,
   as = "div",
   id,
@@ -30,7 +30,7 @@ export function ScrollReveal({
       ref={ref}
       initial={{ opacity: 0, y }}
       animate={isInView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.7, delay, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ duration: 0.4, delay, ease: [0.16, 1, 0.3, 1] }}
       className={className}
     >
       {children}
@@ -45,7 +45,7 @@ export function Stagger({
   children,
   className,
   delay = 0,
-  staggerChildren = 0.08,
+  staggerChildren = 0.05,
 }: {
   children: React.ReactNode
   className?: string
@@ -76,7 +76,7 @@ export function Stagger({
 export function StaggerItem({
   children,
   className,
-  y = 20,
+  y = 6,
 }: {
   children: React.ReactNode
   className?: string
@@ -89,7 +89,7 @@ export function StaggerItem({
         visible: {
           opacity: 1,
           y: 0,
-          transition: { duration: 0.6, ease: [0.16, 1, 0.3, 1] },
+          transition: { duration: 0.35, ease: [0.16, 1, 0.3, 1] },
         },
       }}
       className={className}
@@ -106,7 +106,7 @@ export function TextReveal({
   text,
   className,
   delay = 0,
-  stagger = 0.04,
+  stagger = 0.02,
 }: {
   text: string
   className?: string
@@ -134,12 +134,12 @@ export function TextReveal({
         <motion.span
           key={i}
           variants={{
-            hidden: { opacity: 0, y: "0.5em", filter: "blur(8px)" },
+            hidden: { opacity: 0, y: "0.12em", filter: "blur(2px)" },
             visible: {
               opacity: 1,
               y: 0,
               filter: "blur(0px)",
-              transition: { duration: 0.5, ease: [0.16, 1, 0.3, 1] },
+              transition: { duration: 0.35, ease: [0.16, 1, 0.3, 1] },
             },
           }}
           className="inline-block"
@@ -158,7 +158,7 @@ export function TextReveal({
 export function MagneticButton({
   children,
   className,
-  strength = 0.3,
+  strength = 0.06,
   onClick,
   ...props
 }: {
@@ -170,8 +170,8 @@ export function MagneticButton({
   const ref = React.useRef<HTMLDivElement>(null)
   const x = useMotionValue(0)
   const y = useMotionValue(0)
-  const springX = useSpring(x, { stiffness: 200, damping: 15 })
-  const springY = useSpring(y, { stiffness: 200, damping: 15 })
+  const springX = useSpring(x, { stiffness: 260, damping: 34 })
+  const springY = useSpring(y, { stiffness: 260, damping: 34 })
 
   function handleMouseMove(e: React.MouseEvent) {
     const el = ref.current
@@ -209,7 +209,7 @@ export function MagneticButton({
 export function Parallax({
   children,
   className,
-  offset = 50,
+  offset = 14,
 }: {
   children: React.ReactNode
   className?: string
@@ -354,9 +354,9 @@ export function ScaleIn({
 }) {
   return (
     <motion.div
-      initial={{ opacity: 0, scale: 0.95 }}
+      initial={{ opacity: 0, scale: 0.98 }}
       animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.5, delay, ease: [0.16, 1, 0.3, 1] }}
+      transition={{ duration: 0.35, delay, ease: [0.16, 1, 0.3, 1] }}
       className={className}
     >
       {children}

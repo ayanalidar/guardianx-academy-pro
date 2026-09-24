@@ -258,11 +258,11 @@ export function ParticleLogo({
 
         // Idle noise - subtle floating (only when mostly assembled)
         if (phase === "idle" || arrived > 0.8) {
-          const noiseAmp = 1.2 * dpr
+          const noiseAmp = 0.6 * dpr
           const nx = Math.sin(t * 0.8 + p.seed) * Math.cos(t * 0.5 + p.seed * 0.7) * noiseAmp
           const ny = Math.cos(t * 0.7 + p.seed * 1.3) * Math.sin(t * 0.6 + p.seed * 0.5) * noiseAmp
-          p.vx += nx * 0.04
-          p.vy += ny * 0.04
+          p.vx += nx * 0.02
+          p.vy += ny * 0.02
 
           // Opacity flicker
           p.opacity = p.baseOpacity * (0.82 + Math.sin(t * 1.5 + p.seed) * 0.18)
@@ -282,8 +282,8 @@ export function ParticleLogo({
             const normalizedDist = dist / repelRadius
             const shatterForce =
               normalizedDist < 0.4
-                ? (1 - normalizedDist / 0.4) * 18 // violent inner shatter
-                : (1 - normalizedDist) * repelStrength * 4 // gentle outer push
+                ? (1 - normalizedDist / 0.4) * 3 // calm inner drift
+                : (1 - normalizedDist) * repelStrength * 1.2 // gentle outer push
             p.vx += (dx / dist) * shatterForce
             p.vy += (dy / dist) * shatterForce
 
@@ -298,9 +298,9 @@ export function ParticleLogo({
           }
         }
 
-        // Damping - slightly less damping so shatter feels energetic
-        p.vx *= 0.84
-        p.vy *= 0.84
+        // Damping - higher damping so particles settle without wobbling
+        p.vx *= 0.74
+        p.vy *= 0.74
       }
 
       p.x += p.vx

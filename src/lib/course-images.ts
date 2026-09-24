@@ -1,6 +1,9 @@
 /**
- * Course category → image mapping
- * Each category gets a distinctive visual identity.
+ * Course image mapping — three tiers:
+ *  1. COURSE_SHORT_IMAGES: exact shortName → dedicated per-course cover
+ *  2. COURSE_IMAGES: category fallback
+ *  3. title/shortName keyword match
+ * All local images are text-free (no garbled glyphs), brand-styled dark navy + violet/teal.
  */
 
 export const COURSE_IMAGES: Record<string, string> = {
@@ -18,12 +21,42 @@ export const COURSE_IMAGES: Record<string, string> = {
   "Incident Response": "/courses/incident-response.png",
 }
 
+/** Per-course dedicated covers (checked first, before category fallbacks). */
+export const COURSE_SHORT_IMAGES: Record<string, string> = {
+  "CPENT": "/courses/cpent.png",
+  "OSCP": "/courses/oscp.png",
+  "OSEP": "/courses/osep.png",
+  "CEH": "/courses/ceh.png",
+  "VAPT": "/courses/vapt.png",
+  "WAPT": "/courses/wapt.png",
+  "EWPTX": "/courses/ewptx.png",
+  "CCNA": "/courses/ccna.png",
+  "CCNP ENTERPRISE": "/courses/ccnp-enterprise.png",
+  "AWS-SEC": "/courses/aws-security.png",
+  "AZ-500": "/courses/az-500.png",
+  "RHCSA": "/courses/rhcsa.png",
+  "CISSP": "/courses/cissp.png",
+  "CISM": "/courses/cism.png",
+  "CISA": "/courses/cisa.png",
+  "ISO27001": "/courses/iso-27001.png",
+  "GRC": "/courses/grc.png",
+  "SOC": "/courses/soc.png",
+  "CYBERARK": "/courses/cyberark.png",
+}
+
 /**
- * Get the best matching image for a course based on its category/title.
+ * Get the best matching image for a course:
+ * admin thumbnail > per-course cover > category > title keywords > default.
  */
 export function getCourseImage(course: { category?: string; title?: string; shortName?: string; thumbnail?: string | null }): string {
-  // If course has a custom thumbnail, use it
+  // Admin-uploaded custom thumbnail always wins
   if (course.thumbnail) return course.thumbnail
+
+  // Dedicated per-course cover
+  const short = (course.shortName || "").trim().toUpperCase()
+  if (short && COURSE_SHORT_IMAGES[short]) {
+    return COURSE_SHORT_IMAGES[short]
+  }
 
   // Match by category
   if (course.category && COURSE_IMAGES[course.category]) {
@@ -32,16 +65,15 @@ export function getCourseImage(course: { category?: string; title?: string; shor
 
   // Match by title keywords
   const title = (course.title || "").toLowerCase()
-  const shortName = (course.shortName || "").toLowerCase()
 
-  if (title.includes("ethical hack") || shortName.includes("ceh")) return COURSE_IMAGES["Ethical Hacking"]
-  if (title.includes("network") || shortName.includes("ccna") || shortName.includes("ccnp")) return COURSE_IMAGES["Networking"]
-  if (title.includes("web") || shortName.includes("wapt")) return COURSE_IMAGES["Web Security"]
+  if (title.includes("ethical hack")) return COURSE_IMAGES["Ethical Hacking"]
+  if (title.includes("network")) return COURSE_IMAGES["Networking"]
+  if (title.includes("web")) return COURSE_IMAGES["Web Security"]
   if (title.includes("cloud")) return COURSE_IMAGES["Cloud Security"]
   if (title.includes("forensic")) return COURSE_IMAGES["Forensics"]
-  if (title.includes("admin") || shortName.includes("rhcsa")) return COURSE_IMAGES["System Administration"]
-  if (title.includes("management") || shortName.includes("cissp")) return COURSE_IMAGES["Security Management"]
-  if (title.includes("identity") || shortName.includes("pam") || shortName.includes("cyberark")) return COURSE_IMAGES["Identity & Access"]
+  if (title.includes("admin")) return COURSE_IMAGES["System Administration"]
+  if (title.includes("management")) return COURSE_IMAGES["Security Management"]
+  if (title.includes("identity") || title.includes("pam")) return COURSE_IMAGES["Identity & Access"]
   if (title.includes("malware") || title.includes("reverse")) return COURSE_IMAGES["Malware Analysis"]
   if (title.includes("penetrat")) return COURSE_IMAGES["Penetration Testing"]
   if (title.includes("ai ") || title.includes("artificial")) return COURSE_IMAGES["AI Security"]

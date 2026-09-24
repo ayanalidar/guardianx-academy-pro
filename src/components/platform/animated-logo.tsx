@@ -260,11 +260,9 @@ export function AnimatedLogoMark({
           filter: "drop-shadow(0 0 8px rgba(124,58,237,0.5))",
         }}
         whileHover={{
-          rotateY: 18,
-          rotateX: -8,
-          scale: 1.1,
+          scale: 1.05,
         }}
-        transition={{ type: "spring", stiffness: 200, damping: 12 }}
+        transition={{ duration: 0.25, ease: "easeOut" }}
         draggable={false}
       />
       <motion.div
@@ -276,8 +274,8 @@ export function AnimatedLogoMark({
           filter: "blur(6px)",
           zIndex: -1,
         }}
-        animate={{ opacity: [0.4, 0.7, 0.4] }}
-        transition={{ duration: 3, repeat: Infinity }}
+        animate={{ opacity: [0.35, 0.5, 0.35] }}
+        transition={{ duration: 4, repeat: Infinity }}
       />
     </div>
   )
