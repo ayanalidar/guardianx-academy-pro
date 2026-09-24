@@ -235,6 +235,32 @@ const SECTION_NAV_ITEMS = [
 
 function StickySectionNav({ items }: { items: { id: string; label: string }[] }) {
   const [active, setActive] = React.useState(items[0]?.id ?? "")
+  // Live stuck-offset: tracks the site header's bottom edge so the nav always
+  // sits flush BELOW the fixed public header when it is shown, and snaps to
+  // the viewport top when the header hides on scroll-down. Prevents both the
+  // header-over-nav collision and the ghost gap that let cards clip under it.
+  const [topOffset, setTopOffset] = React.useState(0)
+
+  React.useEffect(() => {
+    let raf = 0
+    const update = () => {
+      raf = 0
+      const header = document.querySelector("header")
+      const bottom = header ? header.getBoundingClientRect().bottom : 0
+      setTopOffset(Math.max(0, Math.round(bottom)))
+    }
+    const schedule = () => {
+      if (!raf) raf = requestAnimationFrame(update)
+    }
+    update()
+    window.addEventListener("scroll", schedule, { passive: true })
+    window.addEventListener("resize", schedule)
+    return () => {
+      window.removeEventListener("scroll", schedule)
+      window.removeEventListener("resize", schedule)
+      if (raf) cancelAnimationFrame(raf)
+    }
+  }, [])
 
   React.useEffect(() => {
     const observer = new IntersectionObserver(
@@ -251,7 +277,10 @@ function StickySectionNav({ items }: { items: { id: string; label: string }[] })
   }, [items])
 
   return (
-    <div className="sticky top-16 lg:top-12 z-30 border-b border-border/60 bg-background shadow-[0_12px_32px_-24px_rgba(0,0,0,0.65)]">
+    <div
+      className="sticky z-30 border-b border-border/60 bg-background shadow-[0_12px_32px_-24px_rgba(0,0,0,0.65)]"
+      style={{ top: topOffset }}
+    >
       <div className="mx-auto max-w-[1400px] px-0 sm:px-8 lg:px-10 flex sm:grid sm:grid-cols-6 items-stretch overflow-x-auto sm:overflow-visible scrollbar-thin">
         {items.map(({ id, label }, i) => (
           <button
@@ -2296,7 +2325,7 @@ function StatsHeroBar({ course }: { course: any }) {
   ]
 
   return (
-    <section className="relative -mt-2 pb-6 lg:pb-8">
+    <section className="relative pt-4 pb-6 lg:pb-8">
       <div className="mx-auto max-w-[1400px] px-4 sm:px-8 lg:px-10">
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 lg:gap-4">
           {stats.map((s, i) => (
