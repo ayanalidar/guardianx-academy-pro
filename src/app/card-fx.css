@@ -40,9 +40,10 @@
   transition: opacity 0.3s ease;
   pointer-events: none;
 }
-.gx-fx:where(:hover) > .gx-fx-spot {
-  opacity: 1;
-}
+@media (hover: hover) {
+  .gx-fx:where(:hover) > .gx-fx-spot {
+    opacity: 1;
+  }
 
 /* rotating conic glow edge - 1.5px ring inside the card bounds,
    revealed on hover; the angle animation only runs while hovered */
@@ -68,9 +69,10 @@
   transition: opacity 0.35s ease;
   pointer-events: none;
 }
-.gx-fx:where(:hover) > .gx-fx-ring {
-  opacity: 1;
-  animation: gx-fx-spin 7s linear infinite;
+  .gx-fx:where(:hover) > .gx-fx-ring {
+    opacity: 1;
+    animation: gx-fx-spin 7s linear infinite;
+  }
 }
 @keyframes gx-fx-spin {
   to { --gx-angle: 360deg; }
@@ -78,12 +80,14 @@
 
 /* Hover color cues - wrapped in @layer utilities so explicit Tailwind
    hover colors (hover:border-x, group-hover:text-x) keep winning. */
-@layer utilities {
-  .gx-fx:where(:hover) {
-    border-color: rgba(139, 92, 246, 0.35);
-  }
-  .gx-fx:where(:hover) :is(h2, h3, h4) {
-    color: #ddd6fe;
+@media (hover: hover) {
+  @layer utilities {
+    .gx-fx:where(:hover) {
+      border-color: rgba(139, 92, 246, 0.35);
+    }
+    .gx-fx:where(:hover) :is(h2, h3, h4) {
+      color: #ddd6fe;
+    }
   }
 }
 

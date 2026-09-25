@@ -130,8 +130,9 @@ function scan(doc: Document) {
 
 export function CardFx() {
   React.useEffect(() => {
-    // Touch / coarse pointers: hover effects are meaningless - skip all JS.
-    if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return
+    // No mount-time hover guard here: hybrid touch-laptops and some
+    // headless environments report (hover: none) even for fine pointers.
+    // Instead, handlers below gate on e.pointerType === "mouse" per event.
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)")
 
     const state: {
@@ -176,6 +177,7 @@ export function CardFx() {
     mo.observe(document.body, { childList: true, subtree: true })
 
     const onOver = (e: PointerEvent) => {
+      if (e.pointerType && e.pointerType !== "mouse") return
       const t = e.target as Element | null
       if (!t || typeof t.closest !== "function") return
       const card = t.closest<HTMLElement>(".gx-fx")
@@ -185,6 +187,7 @@ export function CardFx() {
       if (card) card.style.willChange = "transform"
     }
     const onMove = (e: PointerEvent) => {
+      if (e.pointerType && e.pointerType !== "mouse") return
       if (!state.active) return
       state.ev = e
       if (!state.raf) state.raf = window.requestAnimationFrame(applyMove)
