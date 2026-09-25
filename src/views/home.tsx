@@ -589,24 +589,6 @@ export function HomeView() {
       </section>
 
       {/* =====================================================
-          SECTION 1.5 - SOCIAL PROOF / LIVE ACTIVITY
-          Platform-wide Live Feed: total learners, enrollments this week,
-          labs solved today, 30-day velocity sparkline and recent
-          enrollments (from /api/enrollment-feed + /api/platform-stats).
-          ===================================================== */}
-      <section
-        aria-labelledby="social-proof-heading"
-        className="relative py-8 lg:py-12 border-y border-border/40"
-      >
-        <h2 id="social-proof-heading" className="sr-only">
-          Live learner activity on GuardianX
-        </h2>
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <PlatformActivityFeed />
-        </div>
-      </section>
-
-      {/* =====================================================
           NEW SECTION - WHO WE TRAIN
           4 audience cards: Aspirants, Freshers, Working Pros, Institutions
           ===================================================== */}
@@ -2322,6 +2304,24 @@ export function HomeView() {
               No credit card required · Free forever tier
             </p>
           </motion.div>
+        </div>
+      </section>
+
+      {/* =====================================================
+          SECTION 14 - LIVE PLATFORM ACTIVITY (closing section)
+          Platform-wide Live Feed: total learners, enrollments this week,
+          labs solved today, 30-day velocity sparkline and recent
+          enrollments (from /api/enrollment-feed + /api/platform-stats).
+          ===================================================== */}
+      <section
+        aria-labelledby="social-proof-heading"
+        className="relative py-8 lg:py-12 border-t border-border/40"
+      >
+        <h2 id="social-proof-heading" className="sr-only">
+          Live learner activity on GuardianX
+        </h2>
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <PlatformActivityFeed />
         </div>
       </section>
     </main>

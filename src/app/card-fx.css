@@ -1,8 +1,9 @@
 /* ============================================================
    Platform-wide card FX (CardFx engine)
    - 3D tilt on mouse move (JS, hiring JobCard math)
-   - cursor-following spotlight (.gx-fx-spot overlay)
-   - rotating conic glow edge (.gx-fx-ring overlay, hover-only)
+   - cursor-following spotlight (.gx-fx-spot overlay, hover-only)
+   - rotating conic glow edge (.gx-fx-ring overlay, ALWAYS on,
+     looping 7s sweep - matches the hiring page GlowEdge)
    - hover color cues (violet border tint + heading lift)
    Overlays are REAL spans injected by
    src/components/platform/card-fx.tsx so they never collide with
@@ -26,7 +27,7 @@
     opacity 0.2s ease;
 }
 
-/* cursor-following spotlight (hiring JobCard violet glow) */
+/* cursor-following spotlight (hiring JobCard violet glow, hover-only) */
 .gx-fx-spot {
   position: absolute;
   inset: 0;
@@ -44,9 +45,12 @@
   .gx-fx:where(:hover) > .gx-fx-spot {
     opacity: 1;
   }
+}
 
 /* rotating conic glow edge - 1.5px ring inside the card bounds,
-   revealed on hover; the angle animation only runs while hovered */
+   ALWAYS visible and looping (same feel as the hiring GlowEdge).
+   The --gx-angle animation repaints the ring gradient each frame;
+   offscreen cards are paint-culled by the browser. */
 .gx-fx-ring {
   position: absolute;
   inset: 0;
@@ -65,16 +69,11 @@
   mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
-  opacity: 0;
-  transition: opacity 0.35s ease;
+  opacity: 1;
   pointer-events: none;
+  animation: gx-fx-orbit 7s linear infinite;
 }
-  .gx-fx:where(:hover) > .gx-fx-ring {
-    opacity: 1;
-    animation: gx-fx-spin 7s linear infinite;
-  }
-}
-@keyframes gx-fx-spin {
+@keyframes gx-fx-orbit {
   to { --gx-angle: 360deg; }
 }
 
