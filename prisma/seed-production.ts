@@ -20,6 +20,7 @@
  *   DATABASE_URL="postgresql://..." bunx tsx prisma/seed-production.ts
  */
 import bcrypt from "bcryptjs"
+import { randomBytes } from "crypto"
 import { db } from "../src/lib/db"
 
 // ---------------------------------------------------------------
@@ -667,17 +668,36 @@ async function upsertTechnologyPartners() {
  *
  * Override via env:
  *   ADMIN_EMAIL    (default admin@guardianx.io)
- *   ADMIN_PASSWORD (default admin123 — only used when creating or when
- *                   ADMIN_RESET_PASSWORD=1 is set)
+ *   ADMIN_PASSWORD (no default - SECURITY: when unset, a strong random
+ *                   password is generated on first creation and printed once;
+ *                   ADMIN_RESET_PASSWORD=1 without ADMIN_PASSWORD is refused)
  *   ADMIN_RESET_PASSWORD=1  → also reset the password hash on existing row
  */
 async function upsertAdminUser() {
   const email = (process.env.ADMIN_EMAIL || "admin@guardianx.io").toLowerCase()
-  const password = process.env.ADMIN_PASSWORD || "admin123"
+  // SECURITY (audit fix): the previous hardcoded "admin123" fallback could
+  // create a production admin with a trivially guessable password whenever
+  // ADMIN_PASSWORD was forgotten. Fail closed instead:
+  //   - ADMIN_RESET_PASSWORD=1 without ADMIN_PASSWORD -> hard error (never reset to a default)
+  //   - first-time creation without ADMIN_PASSWORD -> strong random password, printed ONCE
+  const password = process.env.ADMIN_PASSWORD
   const reset = process.env.ADMIN_RESET_PASSWORD === "1"
 
+  if (!password && reset) {
+    throw new Error(
+      "Refusing to reset the admin password: ADMIN_RESET_PASSWORD=1 requires ADMIN_PASSWORD to be set."
+    )
+  }
+  const effectivePassword =
+    password ?? randomBytes(18).toString("base64url") // 24 chars, 144 bits
+  if (!password) {
+    console.log(
+      `  [security] ADMIN_PASSWORD not set - generated strong admin password (printed ONCE, copy it now): ${effectivePassword}`
+    )
+  }
+
   console.log("→ Admin user")
-  const passwordHash = bcrypt.hashSync(password, 10)
+  const passwordHash = bcrypt.hashSync(effectivePassword, 10)
 
   const existing = await db.user.findUnique({ where: { email } })
   if (!existing) {

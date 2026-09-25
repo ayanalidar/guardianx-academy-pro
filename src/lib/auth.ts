@@ -202,33 +202,39 @@ const authCallbacks: NextAuthOptions["callbacks"] = {
 }
 
 // ---------------------------------------------------------------------------
-// Cookie security - use secure:true in production (HTTPS), false in dev.
+// Cookie security - use secure:true + __Secure-/__Host- name prefixes in
+// production (HTTPS), plain names + secure:false in dev.
+// (Audit fix: browsers enforce that __Secure-/__Host- prefixed cookies are
+// only ever set over HTTPS - defense-in-depth even if `secure` were lost.
+// The middleware already accepts both the plain and prefixed session names.)
 // ---------------------------------------------------------------------------
+const useSecureCookies = process.env.NODE_ENV === "production"
 const authCookies: NextAuthOptions["cookies"] = {
   sessionToken: {
-    name: `next-auth.session-token`,
+    name: useSecureCookies ? `__Secure-next-auth.session-token` : `next-auth.session-token`,
     options: {
       httpOnly: true,
       sameSite: "lax",
       path: "/",
-      secure: process.env.NODE_ENV === "production",
+      secure: useSecureCookies,
     },
   },
   csrfToken: {
-    name: `next-auth.csrf-token`,
+    // __Host- prefix requires: secure, path=/, no Domain attribute - all true here.
+    name: useSecureCookies ? `__Host-next-auth.csrf-token` : `next-auth.csrf-token`,
     options: {
       httpOnly: true,
       sameSite: "lax",
       path: "/",
-      secure: process.env.NODE_ENV === "production",
+      secure: useSecureCookies,
     },
   },
   callbackUrl: {
-    name: `next-auth.callback-url`,
+    name: useSecureCookies ? `__Secure-next-auth.callback-url` : `next-auth.callback-url`,
     options: {
       sameSite: "lax",
       path: "/",
-      secure: process.env.NODE_ENV === "production",
+      secure: useSecureCookies,
     },
   },
 }
@@ -327,8 +333,8 @@ async function buildAuthOptions(): Promise<NextAuthOptions> {
         : []),
     ],
 
-    session: { strategy: "jwt" },
-    // requireSecret throws in production if NEXTAUTH_SECRET is missing - 
+    session: { strategy: "jwt", maxAge: 7 * 24 * 60 * 60 }, // audit fix: 7d (default 30d)
+    // requireSecret throws in production if NEXTAUTH_SECRET is missing -
     // getAuthOptions() catches that and degrades gracefully (see below).
     // In dev, a random ephemeral secret is used (with a loud warning) so
     // the server still boots - but JWTs won't survive a restart.
@@ -368,7 +374,7 @@ export async function getAuthOptions(): Promise<NextAuthOptions> {
     return {
       adapter: prismaAuthAdapter,
       providers: [credentialsProvider, schoolLoginProvider],
-      session: { strategy: "jwt" },
+      session: { strategy: "jwt", maxAge: 7 * 24 * 60 * 60 }, // audit fix: 7d
       secret: process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET,
       pages: { signIn: "/" },
       callbacks: authCallbacks,

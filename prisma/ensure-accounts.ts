@@ -11,14 +11,41 @@
  */
 import { db } from "../src/lib/db"
 import bcrypt from "bcryptjs"
+import { randomBytes } from "crypto"
 
 const hash = (s: string) => bcrypt.hashSync(s, 10)
+
+// ---------------------------------------------------------------------------
+// SECURITY (audit fix): never seed weak default passwords into a production
+// database. When running against a cloud/prod database (or NODE_ENV=production)
+// and no explicit password env vars are provided, each missing account gets a
+// cryptographically random password that is printed ONCE for the operator to
+// copy. Weak defaults are only allowed for local development databases.
+// ---------------------------------------------------------------------------
+const PROD_DB =
+  process.env.NODE_ENV === "production" ||
+  /neon\.tech|neon\.build|amazonaws|azure\.com|render\.com|rds\./i.test(
+    process.env.DATABASE_URL ?? ""
+  )
+
+function resolvePassword(envKey: string, devDefault: string): string {
+  const fromEnv = process.env[envKey]
+  if (fromEnv) return fromEnv
+  if (PROD_DB) {
+    const generated = randomBytes(18).toString("base64url") // 24 chars, 144 bits
+    console.log(
+      `  [security] ${envKey} not set against a PROD database - generated strong password for this account (printed ONCE, copy it now): ${generated}`
+    )
+    return generated
+  }
+  return devDefault
+}
 
 const ACCOUNTS = [
   {
     email: "admin@guardianx.io",
     name: "Alex Mercer",
-    passwordHash: hash("admin123"),
+    passwordHash: hash(resolvePassword("DEMO_ADMIN_PASSWORD", "admin123")),
     role: "ADMIN",
     title: "Platform Administrator",
     bio: "GuardianX platform administrator and lead security architect.",
@@ -26,7 +53,7 @@ const ACCOUNTS = [
   {
     email: "sarah.chen@guardianx.io",
     name: "Dr. Sarah Chen",
-    passwordHash: hash("instructor123"),
+    passwordHash: hash(resolvePassword("DEMO_INSTRUCTOR1_PASSWORD", "instructor123")),
     role: "INSTRUCTOR",
     title: "Principal Security Instructor",
     bio: "15 years in offensive security; OSCP, OSCE and CEH Master certified.",
@@ -34,7 +61,7 @@ const ACCOUNTS = [
   {
     email: "raj.patel@guardianx.io",
     name: "Raj Patel",
-    passwordHash: hash("instructor123"),
+    passwordHash: hash(resolvePassword("DEMO_INSTRUCTOR2_PASSWORD", "instructor123")),
     role: "INSTRUCTOR",
     title: "Senior Instructor — Cloud & DFIR",
     bio: "Cloud security architect turned educator; CISSP, CCSP, GCFE.",
@@ -42,7 +69,7 @@ const ACCOUNTS = [
   {
     email: "student@guardianx.io",
     name: "Jamie Rivera",
-    passwordHash: hash("student123"),
+    passwordHash: hash(resolvePassword("DEMO_STUDENT_PASSWORD", "student123")),
     role: "STUDENT",
     title: "Aspiring Security Analyst",
     bio: "Career switcher from finance to cyber security. Currently grinding CEH.",
