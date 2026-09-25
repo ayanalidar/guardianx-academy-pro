@@ -799,6 +799,7 @@ function JobCard({
     >
       <div
         ref={innerRef}
+        data-gx-fx="off"
         role="button"
         tabIndex={0}
         aria-label={`View role: ${job.title}`}
@@ -923,6 +924,7 @@ function FeaturedStrip({ jobs, onOpen }: { jobs: PublicJob[]; onOpen: (job: Publ
               className="relative min-w-[300px] sm:min-w-[370px] max-w-[370px] snap-start shrink-0"
             >
               <div
+                data-gx-fx="off"
                 className="relative rounded-2xl overflow-hidden h-full group"
                 onMouseMove={(e) => {
                   const el = e.currentTarget

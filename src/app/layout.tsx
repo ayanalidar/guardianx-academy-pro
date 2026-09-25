@@ -6,6 +6,7 @@ import { Toaster as SonnerToaster } from "@/components/ui/sonner";
 import { Providers } from "@/components/providers/providers";
 import { ServiceWorkerRegister } from "@/components/providers/service-worker-register";
 import { HydrationFlag } from "@/components/platform/hydration-flag";
+import { CardFx } from "@/components/platform/card-fx";
 
 /**
  * Client recovery scripts, inlined in <head> so they run before React.
@@ -368,6 +369,7 @@ export default function RootLayout({
           Skip to main content
         </a>
         <HydrationFlag />
+        <CardFx />
         <Providers>{children}</Providers>
         <ServiceWorkerRegister />
         <Toaster />

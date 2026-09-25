@@ -1395,3 +1395,102 @@ html:not(.gx-hydrated) [style*="opacity: 0"] {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
 }
+
+/* ============================================================
+   Platform-wide card FX (CardFx engine)
+   - 3D tilt on mouse move (JS, hiring JobCard math)
+   - cursor-following spotlight (.gx-fx-spot overlay)
+   - rotating conic glow edge (.gx-fx-ring overlay, hover-only)
+   - hover color cues (violet border tint + heading lift)
+   Overlays are REAL spans injected by
+   src/components/platform/card-fx.tsx so they never collide with
+   existing ::before/::after styles (.card-premium etc.).
+   Opt out any subtree with data-gx-fx="off".
+   ============================================================ */
+@property --gx-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+.gx-fx {
+  position: relative;
+  transition:
+    transform 0.3s cubic-bezier(0.16, 1, 0.3, 1),
+    border-color 0.2s ease,
+    background-color 0.2s ease,
+    box-shadow 0.3s ease,
+    color 0.2s ease,
+    opacity 0.2s ease;
+}
+
+/* cursor-following spotlight (hiring JobCard violet glow) */
+.gx-fx-spot {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: radial-gradient(
+    300px circle at var(--sx, 50%) var(--sy, 50%),
+    rgba(139, 92, 246, 0.14),
+    transparent 65%
+  );
+  opacity: 0;
+  transition: opacity 0.3s ease;
+  pointer-events: none;
+}
+.gx-fx:where(:hover) > .gx-fx-spot {
+  opacity: 1;
+}
+
+/* rotating conic glow edge - 1.5px ring inside the card bounds,
+   revealed on hover; the angle animation only runs while hovered */
+.gx-fx-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1.5px;
+  background: conic-gradient(
+    from var(--gx-angle),
+    transparent 0deg,
+    rgba(139, 92, 246, 0.65) 50deg,
+    transparent 110deg,
+    transparent 180deg,
+    rgba(52, 211, 153, 0.5) 220deg,
+    transparent 265deg
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: 0;
+  transition: opacity 0.35s ease;
+  pointer-events: none;
+}
+.gx-fx:where(:hover) > .gx-fx-ring {
+  opacity: 1;
+  animation: gx-fx-spin 7s linear infinite;
+}
+@keyframes gx-fx-spin {
+  to { --gx-angle: 360deg; }
+}
+
+/* Hover color cues - wrapped in @layer utilities so explicit Tailwind
+   hover colors (hover:border-*/group-hover:text-*) keep winning. */
+@layer utilities {
+  .gx-fx:where(:hover) {
+    border-color: rgba(139, 92, 246, 0.35);
+  }
+  .gx-fx:where(:hover) :is(h2, h3, h4) {
+    color: #ddd6fe;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gx-fx-ring {
+    animation: none;
+  }
+  .gx-fx {
+    transition: none;
+  }
+}
+
