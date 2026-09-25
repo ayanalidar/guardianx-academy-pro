@@ -1074,8 +1074,10 @@ function StructuredDataOverview({
         description:
           "Cyber security training operating system - courses, labs, certifications, and a live cyber range.",
         sameAs: [
-          "https://twitter.com/guardianx",
-          "https://linkedin.com/company/guardianx",
+          "https://www.linkedin.com/company/guardianx-academy/",
+          "https://www.youtube.com/@guardianx-academy",
+          "https://www.instagram.com/guardianx.academy",
+          "https://whatsapp.com/channel/0029VbBpCY98KMqcAkZuIJ1e",
         ],
       },
     },

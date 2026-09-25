@@ -299,10 +299,10 @@ const CONTACT: ContentItem[] = [
   {
     page: "contact", section: "formFields", key: "socials",
     value: [
-      { icon: "Twitter", label: "Twitter", href: "#" },
-      { icon: "Linkedin", label: "LinkedIn", href: "#" },
-      { icon: "Github", label: "GitHub", href: "#" },
-      { icon: "Youtube", label: "YouTube", href: "#" },
+      { icon: "Linkedin", label: "LinkedIn", href: "https://www.linkedin.com/company/guardianx-academy/" },
+      { icon: "Youtube", label: "YouTube", href: "https://www.youtube.com/@guardianx-academy" },
+      { icon: "Instagram", label: "Instagram", href: "https://www.instagram.com/guardianx.academy" },
+      { icon: "MessageCircle", label: "WhatsApp Channel", href: "https://whatsapp.com/channel/0029VbBpCY98KMqcAkZuIJ1e" },
     ]
   },
   { page: "contact", section: "formFields", key: "successTitle", value: "Message sent!" },
@@ -648,10 +648,10 @@ const GLOBAL_FOOTER: ContentItem[] = [
   {
     page: "global", section: "footer", key: "socialLinks",
     value: [
-      { icon: "Github", label: "GitHub", href: "#" },
-      { icon: "Linkedin", label: "LinkedIn", href: "#" },
-      { icon: "Twitter", label: "Twitter", href: "#" },
-      { icon: "Youtube", label: "YouTube", href: "#" },
+      { icon: "Linkedin", label: "LinkedIn", href: "https://www.linkedin.com/company/guardianx-academy/" },
+      { icon: "Youtube", label: "YouTube", href: "https://www.youtube.com/@guardianx-academy" },
+      { icon: "Instagram", label: "Instagram", href: "https://www.instagram.com/guardianx.academy" },
+      { icon: "MessageCircle", label: "WhatsApp Channel", href: "https://whatsapp.com/channel/0029VbBpCY98KMqcAkZuIJ1e" },
     ]
   },
   { page: "global", section: "footer", key: "copyright", value: "GuardianX Academy" },

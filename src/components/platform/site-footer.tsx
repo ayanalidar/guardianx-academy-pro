@@ -5,7 +5,7 @@ import { useAppStore, type View } from "@/store/app-store"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import {
-  Shield, Twitter, Linkedin, Github, Youtube, Mail, ArrowRight,
+  Shield, Linkedin, Youtube, Instagram, MessageCircle, Mail, ArrowRight,
   BookOpen, FlaskConical, Radio, Award, Terminal,
   Building2, Heart, MessageSquare, Users,
   Lock, FileText, HelpCircle, CreditCard, Cookie, ScrollText,
@@ -59,10 +59,10 @@ const RESOURCE_LINKS: FooterLink[] = [
 ]
 
 const SOCIAL_LINKS = [
-  { label: "Twitter", icon: Twitter, href: "https://twitter.com/guardianx" },
-  { label: "LinkedIn", icon: Linkedin, href: "https://linkedin.com/company/guardianx" },
-  { label: "GitHub", icon: Github, href: "https://github.com/guardianx" },
-  { label: "YouTube", icon: Youtube, href: "https://youtube.com/@guardianx" },
+  { label: "LinkedIn", icon: Linkedin, href: "https://www.linkedin.com/company/guardianx-academy/" },
+  { label: "YouTube", icon: Youtube, href: "https://www.youtube.com/@guardianx-academy" },
+  { label: "Instagram", icon: Instagram, href: "https://www.instagram.com/guardianx.academy" },
+  { label: "WhatsApp Channel", icon: MessageCircle, href: "https://whatsapp.com/channel/0029VbBpCY98KMqcAkZuIJ1e" },
 ]
 
 function FooterLinkButton({ link }: { link: FooterLink }) {

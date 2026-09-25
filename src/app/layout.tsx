@@ -274,7 +274,10 @@ export default function RootLayout({
               url: "https://academy.guardianx.cloud",
               logo: "https://academy.guardianx.cloud/guardianx-logo-v2.png",
               sameAs: [
-                "https://www.linkedin.com/company/guardianx-academy",
+                "https://www.linkedin.com/company/guardianx-academy/",
+                "https://www.youtube.com/@guardianx-academy",
+                "https://www.instagram.com/guardianx.academy",
+                "https://whatsapp.com/channel/0029VbBpCY98KMqcAkZuIJ1e",
               ],
               address: {
                 "@type": "PostalAddress",
