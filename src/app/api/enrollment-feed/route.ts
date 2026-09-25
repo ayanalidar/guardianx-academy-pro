@@ -7,8 +7,13 @@ export const runtime = "nodejs"
 /**
  * GET /api/enrollment-feed - public.
  *
- * Returns the last 5 enrollments across all courses, anonymized:
- *   { firstName, city, courseTitle, courseShortName, timeAgo, color }
+ * Returns platform-wide enrollment social proof for the homepage Live Feed:
+ *   feed:    last 5 enrollments across all courses, anonymized:
+ *            { firstName, city, courseTitle, courseShortName, timeAgo, color }
+ *   total:   lifetime enrollment count (platform-wide)
+ *   thisWeek:enrollments in the last 7 days (platform-wide)
+ *   daily30: 30-day daily enrollment series (oldest -> newest) for the
+ *            velocity sparkline
  *
  * Uses the Enrollment model + User (for name) + Course (for title).
  * The User model has no direct `city` field, so we join through
@@ -92,9 +97,41 @@ export async function GET() {
       }
     })
 
-    return cachedJson({ feed, count: feed.length }, { sMax: 60, swr: 300 })
+    // Platform-wide counters + 30-day velocity series. createdAt-only selects
+    // keep these queries cheap; bucketing is done in JS to avoid DB-specific
+    // date_trunc differences between Neon/pooled setups.
+    const total = await db.enrollment.count({})
+    const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+    const thisWeek = await db.enrollment.count({
+      where: { enrolledAt: { gte: weekAgo } },
+    })
+
+    let daily30: number[] = []
+    try {
+      const since30 = new Date(Date.now() - 29 * 24 * 60 * 60 * 1000)
+      since30.setHours(0, 0, 0, 0)
+      const rows30 = await db.enrollment.findMany({
+        where: { enrolledAt: { gte: since30 } },
+        select: { enrolledAt: true },
+      })
+      const buckets = new Map<string, number>()
+      for (const r of rows30) {
+        const d = new Date(r.enrolledAt)
+        const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
+        buckets.set(key, (buckets.get(key) ?? 0) + 1)
+      }
+      for (let i = 29; i >= 0; i--) {
+        const d = new Date(Date.now() - i * 24 * 60 * 60 * 1000)
+        const key = `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
+        daily30.push(buckets.get(key) ?? 0)
+      }
+    } catch {
+      daily30 = []
+    }
+
+    return cachedJson({ feed, count: feed.length, total, thisWeek, daily30 }, { sMax: 60, swr: 300 })
   } catch (err) {
     console.error("[api/enrollment-feed] GET failed:", err)
-    return NextResponse.json({ feed: [], count: 0 })
+    return NextResponse.json({ feed: [], count: 0, total: 0, thisWeek: 0, daily30: [] })
   }
 }

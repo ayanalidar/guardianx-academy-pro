@@ -698,7 +698,6 @@ export function CourseDetailView() {
   // back to the derived content above / legacy placeholders.
   const whatYouWillLearn = parseCourseList((course as any).whatYouWillLearn)
   const prerequisiteTexts = parseCourseList((course as any).prerequisites)
-  const whoShouldAttend = parseCourseList((course as any).whoShouldAttend)
   const toolsCovered = parseCourseList((course as any).toolsCovered)
   const careerOutcomes = parseCourseList((course as any).careerOutcomes)
 
@@ -1088,12 +1087,7 @@ export function CourseDetailView() {
         </div>
 
         {/* ====================================================
-            8. IS THIS COURSE RIGHT FOR YOU?
-            ==================================================== */}
-        <FitChecklist level={course.level} category={course.category} whoShouldAttend={whoShouldAttend} />
-
-        {/* ====================================================
-            9. COURSE DIFFICULTY METER
+            8. COURSE DIFFICULTY METER
             ==================================================== */}
         <DifficultyMeter durationHours={course.durationHours} modules={courseModules} />
 
@@ -1108,52 +1102,28 @@ export function CourseDetailView() {
         <LabIntegrationPreview labs={course.labs ?? []} isEnrolled={isEnrolled} navigate={navigate} />
 
         {/* ====================================================
-            12. LIVE BATCH SCHEDULE PREVIEW
+            10. LIVE BATCH SCHEDULE PREVIEW
             ==================================================== */}
         <BatchSchedulePreview courseId={course.id} user={user} navigate={navigate} />
 
         {/* ====================================================
-            13. INSTRUCTOR SPOTLIGHT CARD
+            11. INSTRUCTOR SPOTLIGHT CARD
             ==================================================== */}
         <div id="gx-instructor" className="scroll-mt-28 lg:scroll-mt-24">
           <InstructorSpotlight instructor={course.instructor} navigate={navigate} />
         </div>
 
         {/* ====================================================
-            14. CERTIFICATION EXAM BLUEPRINT
+            12. CERTIFICATION EXAM BLUEPRINT
             ==================================================== */}
         <CertExamBlueprint course={course} />
 
         {/* ====================================================
-            15. PREREQUISITES VISUAL GRAPH
-            ==================================================== */}
-        <PrerequisitesGraph
-          course={course}
-          prerequisites={prerequisites}
-          user={user}
-          navigate={navigate}
-        />
-
-        {/* ====================================================
-            16. LIVE "WHO'S ENROLLED" ACTIVITY FEED
-            ==================================================== */}
-        <ActivityFeed courseId={course.id} />
-
-        {/* ====================================================
-            16b. COMMUNITY PREVIEW (D1) - recent discussion threads
-            ==================================================== */}
-        <CommunityPreview courseId={course.id} navigate={navigate} />
-
-        {/* ====================================================
-            17. SKILLS YOU'LL EARN (TAG CLOUD)
-            ==================================================== */}
-        <SkillsTagCloud tags={course.tags} modules={courseModules} />
-
-        {/* ====================================================
-            REVIEWS - kept from existing implementation
+            REVIEWS - kept from existing implementation + community
             ==================================================== */}
         <div id="gx-reviews" className="scroll-mt-28 lg:scroll-mt-24">
           <ReviewsSection courseId={course.id} isEnrolled={isEnrolled} />
+          <CommunityPreview courseId={course.id} navigate={navigate} embedded />
         </div>
 
         {/* ====================================================
@@ -1779,49 +1749,6 @@ function formatCourseUpdated(value: any): string {
   return d.toLocaleDateString("en-IN", { month: "short", year: "numeric" })
 }
 
-/** D5: compact inline SVG sparkline for the 30-day enrollment series. */
-function EnrollSparkline({ series }: { series: number[] }) {
-  if (!Array.isArray(series) || series.length !== 30) return null
-  const max = Math.max(...series, 1)
-  const W = 240
-  const H = 48
-  const P = 3
-  const stepX = (W - P * 2) / (series.length - 1)
-  const pts = series.map((v, i) => {
-    const x = P + i * stepX
-    const y = H - P - (v / max) * (H - P * 2 - 4)
-    return `${x.toFixed(1)},${y.toFixed(1)}`
-  })
-  const line = pts.join(" ")
-  const area = `M${pts[0]} L${pts.slice(1).join(" L")} L${(W - P).toFixed(1)},${H - P} L${P},${H - P} Z`
-  return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="w-full h-12" preserveAspectRatio="none" role="img" aria-label="Enrollments over the last 30 days">
-      <defs>
-        <linearGradient id="gx-spark-fill" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="rgb(167,139,250)" stopOpacity="0.35" />
-          <stop offset="100%" stopColor="rgb(167,139,250)" stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <path d={area} fill="url(#gx-spark-fill)" stroke="none" />
-      <polyline
-        points={line}
-        fill="none"
-        stroke="rgb(196,181,253)"
-        strokeWidth="1.8"
-        strokeLinejoin="round"
-        strokeLinecap="round"
-        vectorEffect="non-scaling-stroke"
-      />
-      <circle
-        cx={P + (series.length - 1) * stepX}
-        cy={H - P - (series[series.length - 1] / max) * (H - P * 2 - 4)}
-        r="2.5"
-        fill="rgb(221,214,254)"
-      />
-    </svg>
-  )
-}
-
 /** D2: next live session countdown card (renders nothing when unscheduled). */
 function NextLiveSessionCard({ courseId }: { courseId: string }) {
   const { data } = useQuery<{
@@ -1914,7 +1841,16 @@ function NextLiveSessionCard({ courseId }: { courseId: string }) {
 }
 
 /** D1: community preview - recent threads pulled from the discussions API. */
-function CommunityPreview({ courseId, navigate }: { courseId: string; navigate: any }) {
+function CommunityPreview({
+  courseId,
+  navigate,
+  embedded = false,
+}: {
+  courseId: string
+  navigate: any
+  /** embedded: rendered inside the Reviews section (no own section chrome). */
+  embedded?: boolean
+}) {
   const { data, isLoading } = useQuery<{ discussions: any[] }>({
     queryKey: ["course-community-preview", courseId],
     queryFn: () => api(`/api/discussions?courseId=${courseId}`),
@@ -1937,7 +1873,7 @@ function CommunityPreview({ courseId, navigate }: { courseId: string; navigate: 
   }
 
   return (
-    <section className="py-8 lg:py-10 border-t border-border/60">
+    <section className={embedded ? "mt-6" : "py-8 lg:py-10 border-t border-border/60"}>
       <div className="mx-auto max-w-[1400px] px-4 sm:px-8 lg:px-10">
         <div className="rounded-2xl border border-border/60 bg-card/40 backdrop-blur p-6">
           <div className="flex items-center justify-between flex-wrap gap-4 mb-5">
@@ -2054,7 +1990,7 @@ function FaqSection({
       <div className="absolute top-0 left-0 w-[400px] h-[300px] bg-amber-600/5 blur-[120px] rounded-full" />
       <div className="mx-auto max-w-[1000px] px-4 sm:px-8 lg:px-10 relative">
         <div className="mb-6">
-          <SectionLabel index="17" className="text-amber-300">QUESTIONS</SectionLabel>
+          <SectionLabel index="13" className="text-amber-300">QUESTIONS</SectionLabel>
           <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance">
             Questions,
             <span className="text-gradient-premium"> answered.</span>
@@ -2975,121 +2911,6 @@ function CurriculumTimeline({
 }
 
 // ============================================================
-// 8. IS THIS COURSE RIGHT FOR YOU?
-// ============================================================
-function FitChecklist({ level, category, whoShouldAttend }: { level: string; category: string; whoShouldAttend: string[] }) {
-  // Generate fit/non-fit items based on level + category
-  const fitItems: { text: string; icon: any }[] = []
-  const notFitItems: { text: string; icon: any }[] = []
-
-  // Real, admin-authored "Who should attend" list (Course Studio → Course
-  // Details) replaces the level-derived fit items when present.
-  if (whoShouldAttend.length > 0) {
-    whoShouldAttend.forEach((text) => fitItems.push({ text, icon: CheckCircle2 }))
-  } else if (level === "Beginner") {
-    fitItems.push(
-      { text: "You're new to cybersecurity and want a structured entry point", icon: Sparkles },
-      { text: "You have basic IT literacy and want to learn security fundamentals", icon: CheckCircle2 },
-      { text: `You're curious about ${category.toLowerCase()} and want hands-on practice`, icon: Target },
-    )
-    notFitItems.push(
-      { text: "You're an experienced practitioner seeking advanced specialization", icon: X },
-      { text: "You already hold an intermediate certification in this domain", icon: X },
-    )
-  } else if (level === "Intermediate") {
-    fitItems.push(
-      { text: "You understand basic networking and TCP/IP fundamentals", icon: CheckCircle2 },
-      { text: "You have 1-2 years of IT or security experience", icon: CheckCircle2 },
-      { text: `You want to deepen your ${category.toLowerCase()} expertise`, icon: Target },
-    )
-    notFitItems.push(
-      { text: "You're an absolute beginner with no IT background", icon: X },
-      { text: "You're looking for an expert-level / red-team curriculum", icon: X },
-    )
-  } else {
-    fitItems.push(
-      { text: "You have intermediate security experience and want advanced techniques", icon: CheckCircle2 },
-      { text: `You're preparing for a senior ${category.toLowerCase()} role`, icon: Target },
-      { text: "You want hands-on lab challenges with real-world complexity", icon: Rocket },
-    )
-    notFitItems.push(
-      { text: "You're new to cybersecurity - start with a Beginner course", icon: X },
-      { text: "You're looking for foundational theory without lab work", icon: X },
-    )
-  }
-
-  return (
-    <section className="py-8 lg:py-10 border-t border-border/60">
-      <div className="mx-auto max-w-[1400px] px-4 sm:px-8 lg:px-10">
-        <div className="max-w-2xl mb-6">
-          <SectionLabel index="05" className="text-amber-300">FIT CHECK</SectionLabel>
-          <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance">
-            Is this course right
-            <span className="text-gradient-premium"> for you?</span>
-          </h2>
-        </div>
-
-        <div className="grid lg:grid-cols-2 gap-6">
-          {/* Good fit */}
-          <motion.div
-            initial={{ opacity: 0, x: -20 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-            className="rounded-2xl border border-emerald-500/30 bg-emerald-500/[0.03] p-6 lg:p-8"
-          >
-            <div className="flex items-center gap-3 mb-6">
-              <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/15 border border-emerald-500/30">
-                <CheckCircle2 className="h-5 w-5 text-emerald-300" />
-              </div>
-              <div>
-                <p className="text-[10px] font-mono text-emerald-300 tracking-[0.2em]">GOOD FIT IF</p>
-                <h3 className="text-xl font-bold">You&apos;re ready to start</h3>
-              </div>
-            </div>
-            <ul className="space-y-3">
-              {fitItems.map((item, i) => (
-                <li key={i} className="flex items-start gap-3">
-                  <item.icon className="h-5 w-5 text-emerald-300 mt-0.5 shrink-0" />
-                  <span className="text-sm text-foreground/90 leading-relaxed">{item.text}</span>
-                </li>
-              ))}
-            </ul>
-          </motion.div>
-
-          {/* Not ideal */}
-          <motion.div
-            initial={{ opacity: 0, x: 20 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: true, amount: 0.3 }}
-            transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
-            className="rounded-2xl border border-rose-500/30 bg-rose-500/[0.03] p-6 lg:p-8"
-          >
-            <div className="flex items-center gap-3 mb-6">
-              <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-rose-500/15 border border-rose-500/30">
-                <X className="h-5 w-5 text-rose-300" />
-              </div>
-              <div>
-                <p className="text-[10px] font-mono text-rose-300 tracking-[0.2em]">NOT IDEAL IF</p>
-                <h3 className="text-xl font-bold">Consider a different path</h3>
-              </div>
-            </div>
-            <ul className="space-y-3">
-              {notFitItems.map((item, i) => (
-                <li key={i} className="flex items-start gap-3">
-                  <item.icon className="h-5 w-5 text-rose-300 mt-0.5 shrink-0" />
-                  <span className="text-sm text-foreground/90 leading-relaxed">{item.text}</span>
-                </li>
-              ))}
-            </ul>
-          </motion.div>
-        </div>
-      </div>
-    </section>
-  )
-}
-
-// ============================================================
 // 9. COURSE DIFFICULTY METER
 // ============================================================
 function DifficultyMeter({ durationHours, modules }: { durationHours: number; modules: any[] }) {
@@ -3107,7 +2928,7 @@ function DifficultyMeter({ durationHours, modules }: { durationHours: number; mo
       <div className="absolute top-0 right-0 w-[500px] h-[400px] bg-amber-600/5 blur-[120px] rounded-full" />
       <div className="mx-auto max-w-[1400px] px-4 sm:px-8 lg:px-10 relative">
         <div className="max-w-2xl mb-6">
-          <SectionLabel index="06" className="text-amber-300">INTENSITY METER</SectionLabel>
+          <SectionLabel index="05" className="text-amber-300">INTENSITY METER</SectionLabel>
           <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance">
             How intense
             <span className="text-gradient-premium"> is this?</span>
@@ -3195,7 +3016,7 @@ function StudentProjectsShowcase({ labs, category }: { labs: any[]; category: st
       <div className="absolute top-0 left-0 w-[500px] h-[400px] bg-cyan-600/5 blur-[120px] rounded-full" />
       <div className="mx-auto max-w-[1400px] px-4 sm:px-8 lg:px-10 relative">
         <div className="max-w-2xl mb-6">
-          <SectionLabel index="07" className="text-cyan-300">STUDENT PROJECTS</SectionLabel>
+          <SectionLabel index="06" className="text-cyan-300">STUDENT PROJECTS</SectionLabel>
           <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance">
             Build real
             <span className="text-gradient-premium"> projects.</span>
@@ -3268,7 +3089,7 @@ function LabIntegrationPreview({
       <div className="absolute top-0 right-0 w-[500px] h-[400px] bg-violet-600/5 blur-[120px] rounded-full" />
       <div className="mx-auto max-w-[1400px] px-4 sm:px-8 lg:px-10 relative">
         <div className="max-w-2xl mb-6">
-          <SectionLabel index="08" className="text-violet-300">LAB INTEGRATION</SectionLabel>
+          <SectionLabel index="07" className="text-violet-300">LAB INTEGRATION</SectionLabel>
           <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance">
             Every lab
             <span className="text-gradient-premium"> you&apos;ll touch.</span>
@@ -3375,7 +3196,7 @@ function BatchSchedulePreview({
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-violet-600/5 blur-[120px] rounded-full" />
       <div className="mx-auto max-w-[1400px] px-4 sm:px-8 lg:px-10 relative">
         <div className="max-w-2xl mb-6">
-          <SectionLabel index="09" className="text-violet-300">LIVE BATCH SCHEDULE</SectionLabel>
+          <SectionLabel index="08" className="text-violet-300">LIVE BATCH SCHEDULE</SectionLabel>
           <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance">
             Join a
             <span className="text-gradient-premium"> live cohort.</span>
@@ -3568,7 +3389,7 @@ function InstructorSpotlight({ instructor, navigate }: { instructor: any; naviga
     <section className="py-8 lg:py-10 border-t border-border/60 relative overflow-hidden">
       <div className="absolute top-0 right-0 w-[500px] h-[400px] bg-cyan-600/5 blur-[120px] rounded-full" />
       <div className="mx-auto max-w-[1400px] px-4 sm:px-8 lg:px-10 relative">
-        <SectionLabel index="10" className="text-cyan-300">INSTRUCTOR SPOTLIGHT</SectionLabel>
+        <SectionLabel index="09" className="text-cyan-300">INSTRUCTOR SPOTLIGHT</SectionLabel>
         <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance mb-6">
           Learn from a
           <span className="text-gradient-cyan"> practitioner.</span>
@@ -3728,7 +3549,7 @@ function CertExamBlueprint({ course }: { course: any }) {
       <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[600px] h-[400px] bg-amber-600/5 blur-[120px] rounded-full" />
       <div className="mx-auto max-w-[1400px] px-4 sm:px-8 lg:px-10 relative">
         <div className="max-w-2xl mb-6">
-          <SectionLabel index="11" className="text-amber-300">EXAM BLUEPRINT</SectionLabel>
+          <SectionLabel index="10" className="text-amber-300">EXAM BLUEPRINT</SectionLabel>
           <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance">
             Pass the
             <span className="text-gradient-premium"> certification exam.</span>
@@ -3828,381 +3649,6 @@ function CertExamBlueprint({ course }: { course: any }) {
 }
 
 // ============================================================
-// 15. PREREQUISITES VISUAL GRAPH
-// ============================================================
-interface GraphNode {
-  id: string
-  title: string
-  shortName: string
-  level: string
-}
-function PrerequisitesGraph({
-  course,
-  prerequisites,
-  user,
-  navigate,
-}: {
-  course: any
-  prerequisites: Prerequisite[]
-  user: any
-  navigate: any
-}) {
-  // "What this unlocks" - fetch the prerequisites graph (authenticated) and find courses that have THIS as a prerequisite
-  const { data: graphData } = useQuery<{ nodes: GraphNode[]; edges: { from: string; to: string }[] }>({
-    queryKey: ["prereq-graph-for-course", course.id],
-    queryFn: () => api(`/api/prerequisites-graph`),
-    enabled: !!user && !!course.id,
-  })
-
-  // Edges pointing AT this course's prerequisites (prereq -> this course)
-  // For "what unlocks": find edges where from == course.id
-  const unlocks = (graphData?.edges ?? [])
-    .filter((e) => e.from === course.id)
-    .map((e) => graphData?.nodes.find((n) => n.id === e.to))
-    .filter(Boolean) as GraphNode[]
-
-  return (
-    <section className="py-8 lg:py-10 border-t border-border/60 relative overflow-hidden">
-      <div className="absolute top-0 left-0 w-[500px] h-[400px] bg-violet-600/5 blur-[120px] rounded-full" />
-      <div className="mx-auto max-w-[1400px] px-4 sm:px-8 lg:px-10 relative">
-        <div className="max-w-2xl mb-6">
-          <SectionLabel index="12" className="text-violet-300">PATH GRAPH</SectionLabel>
-          <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance">
-            Your learning
-            <span className="text-gradient-premium"> graph.</span>
-          </h2>
-          <p className="text-muted-foreground mt-6 leading-relaxed">
-            See where this course sits in your journey - what to take before, and what it unlocks next.
-          </p>
-        </div>
-
-        {/* Visual graph - 3 columns: prerequisites | this course | unlocks */}
-        <div className="grid lg:grid-cols-[1fr_auto_1fr] gap-6 lg:gap-10 items-center">
-          {/* Prerequisites column */}
-          <div>
-            <div className="text-[10px] font-mono text-amber-300 tracking-[0.2em] mb-4 flex items-center gap-2">
-              <ArrowDown className="h-3 w-3 rotate-90" />
-              COMPLETE FIRST
-            </div>
-            {prerequisites.length > 0 ? (
-              <div className="space-y-3">
-                {prerequisites.map((p) => (
-                  <button
-                    key={p.id}
-                    onClick={() => navigate({ name: "course", courseId: p.id })}
-                    className="group w-full flex items-center gap-3 p-3 rounded-xl border border-amber-500/20 bg-amber-500/[0.03] hover:border-amber-500/40 hover:bg-amber-500/[0.06] transition-all text-left"
-                  >
-                    {p.completed ? (
-                      <CheckCircle2 className="h-5 w-5 text-emerald-300 shrink-0" />
-                    ) : (
-                      <Lock className="h-5 w-5 text-amber-300/70 shrink-0" />
-                    )}
-                    <div className="min-w-0 flex-1">
-                      <div className="text-sm font-medium group-hover:text-amber-200 transition-colors truncate">{p.title}</div>
-                      <div className="text-[10px] font-mono text-muted-foreground tracking-wider">{p.shortName} · {p.level}</div>
-                    </div>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-amber-300 transition-colors shrink-0" />
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <div className="rounded-xl border border-border/40 bg-card/20 p-4 text-center">
-                <Sparkles className="h-6 w-6 text-emerald-300/60 mx-auto mb-2" />
-                <p className="text-xs text-muted-foreground">No prerequisites - start here.</p>
-              </div>
-            )}
-          </div>
-
-          {/* Center - this course */}
-          <div className="flex justify-center my-6 lg:my-0">
-            <div className="relative">
-              {/* Arrows */}
-              {prerequisites.length > 0 && (
-                <div className="hidden lg:block absolute -left-8 top-1/2 -translate-y-1/2">
-                  <ArrowRight className="h-5 w-5 text-violet-400/60" />
-                </div>
-              )}
-              {unlocks.length > 0 && (
-                <div className="hidden lg:block absolute -right-8 top-1/2 -translate-y-1/2">
-                  <ArrowRight className="h-5 w-5 text-violet-400/60" />
-                </div>
-              )}
-              <div className="relative rounded-2xl border-2 border-violet-500/40 bg-violet-500/[0.06] p-5 min-w-[200px] text-center">
-                <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/15 border border-violet-500/30 mb-3">
-                  <Crosshair className="h-5 w-5 text-violet-300" />
-                </div>
-                <div className="text-sm font-bold mb-1">{course.title}</div>
-                <div className="text-[10px] font-mono text-violet-300 tracking-wider">THIS COURSE</div>
-                <div className="text-[10px] font-mono text-muted-foreground tracking-wider mt-1">{course.shortName} · {course.level}</div>
-              </div>
-            </div>
-          </div>
-
-          {/* Unlocks column */}
-          <div>
-            <div className="text-[10px] font-mono text-emerald-300 tracking-[0.2em] mb-4 flex items-center gap-2">
-              UNLOCKS NEXT
-              <ArrowDown className="h-3 w-3 -rotate-90" />
-            </div>
-            {unlocks.length > 0 ? (
-              <div className="space-y-3">
-                {unlocks.map((u) => (
-                  <button
-                    key={u.id}
-                    onClick={() => navigate({ name: "course", courseId: u.id })}
-                    className="group w-full flex items-center gap-3 p-3 rounded-xl border border-emerald-500/20 bg-emerald-500/[0.03] hover:border-emerald-500/40 hover:bg-emerald-500/[0.06] transition-all text-left"
-                  >
-                    <Rocket className="h-5 w-5 text-emerald-300 shrink-0" />
-                    <div className="min-w-0 flex-1">
-                      <div className="text-sm font-medium group-hover:text-emerald-200 transition-colors truncate">{u.title}</div>
-                      <div className="text-[10px] font-mono text-muted-foreground tracking-wider">{u.shortName} · {u.level}</div>
-                    </div>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-emerald-300 transition-colors shrink-0" />
-                  </button>
-                ))}
-              </div>
-            ) : (
-              <div className="rounded-xl border border-border/40 bg-card/20 p-4 text-center">
-                {user ? (
-                  <>
-                    <Trophy className="h-6 w-6 text-amber-300/60 mx-auto mb-2" />
-                    <p className="text-xs text-muted-foreground">Final specialization in this path.</p>
-                  </>
-                ) : (
-                  <>
-                    <Lock className="h-6 w-6 text-muted-foreground/40 mx-auto mb-2" />
-                    <p className="text-xs text-muted-foreground">
-                      <button
-                        onClick={() => navigate({ name: "login" })}
-                        className="text-violet-300 hover:text-violet-200 underline underline-offset-2"
-                      >Sign in</button> to see what this course unlocks.
-                    </p>
-                  </>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </section>
-  )
-}
-
-// ============================================================
-// 16. LIVE "WHO'S ENROLLED" ACTIVITY FEED
-// ============================================================
-interface ActivityItem {
-  id: string
-  name: string
-  avatar?: string | null
-  title?: string | null
-  timeAgo: string
-}
-function ActivityFeed({ courseId }: { courseId: string }) {
-  const { data, isLoading } = useQuery<{ activities: ActivityItem[]; total: number; thisWeek: number; daily30?: number[] }>({
-    queryKey: ["course-activity", courseId],
-    queryFn: () => api(`/api/courses/${courseId}/activity`),
-    enabled: !!courseId,
-  })
-
-  const activities = data?.activities ?? []
-  const total = data?.total ?? 0
-  const thisWeek = data?.thisWeek ?? 0
-  const daily30 = Array.isArray(data?.daily30) && data!.daily30!.length === 30 ? data!.daily30! : []
-
-  return (
-    <section className="py-8 lg:py-10 border-t border-border/60">
-      <div className="mx-auto max-w-[1400px] px-4 sm:px-8 lg:px-10">
-        <div className="grid lg:grid-cols-12 gap-10">
-          {/* Left - heading + stats */}
-          <div className="lg:col-span-4">
-            <SectionLabel index="13" className="text-emerald-300">LIVE FEED</SectionLabel>
-            <h2 className="text-[clamp(2rem,4vw,3rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance mb-6">
-              Who&apos;s
-              <span className="text-gradient-premium"> enrolled.</span>
-            </h2>
-            <div className="space-y-4">
-              <div className="rounded-xl border border-border/60 bg-card/40 backdrop-blur p-5">
-                <div className="flex items-center gap-3">
-                  <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500/15 border border-emerald-500/30">
-                    <Users className="h-5 w-5 text-emerald-300" />
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold tabular-nums">
-                      <AnimatedNumber value={total} />
-                    </div>
-                    <div className="text-[10px] font-mono text-muted-foreground tracking-[0.2em]">TOTAL ENROLLED</div>
-                  </div>
-                </div>
-              </div>
-              <div className="rounded-xl border border-border/60 bg-card/40 backdrop-blur p-5">
-                <div className="flex items-center gap-3">
-                  <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/15 border border-violet-500/30">
-                    <TrendingUp className="h-5 w-5 text-violet-300" />
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold tabular-nums">
-                      <AnimatedNumber value={thisWeek} />
-                    </div>
-                    <div className="text-[10px] font-mono text-muted-foreground tracking-[0.2em]">ENROLLED THIS WEEK</div>
-                  </div>
-                </div>
-              </div>
-              {/* D5: 30-day enrollment velocity sparkline */}
-              {daily30.length === 30 && (
-                <div className="rounded-xl border border-border/60 bg-card/40 backdrop-blur p-5">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="text-[10px] font-mono text-muted-foreground tracking-[0.2em]">ENROLLMENT VELOCITY - 30 DAYS</div>
-                    <div className="text-[10px] font-mono text-violet-300 tabular-nums">+{daily30.reduce((a, b) => a + b, 0)}</div>
-                  </div>
-                  <EnrollSparkline series={daily30} />
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Right - activity feed */}
-          <div className="lg:col-span-8">
-            <div className="rounded-2xl border border-border/60 bg-card/40 backdrop-blur p-6">
-              <p className="text-[10px] font-mono text-muted-foreground tracking-[0.2em] mb-5">RECENT ENROLLMENTS</p>
-              {isLoading ? (
-                <div className="space-y-3">
-                  {Array.from({ length: 3 }).map((_, i) => (
-                    <Skeleton key={i} className="h-14 rounded-lg" />
-                  ))}
-                </div>
-              ) : activities.length === 0 ? (
-                <div className="text-center py-6 lg:py-8">
-                  <Users className="h-8 w-8 text-muted-foreground/40 mx-auto mb-2" />
-                  <p className="text-sm text-muted-foreground">No enrollments yet. Be the first!</p>
-                </div>
-              ) : (
-                <div className="space-y-2 max-h-[400px] overflow-y-auto pr-2">
-                  {activities.map((a, i) => {
-                    const initials = (a.name || "A")
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")
-                      .toUpperCase()
-                      .slice(0, 2)
-                    return (
-                      <motion.div
-                        key={a.id}
-                        initial={{ opacity: 0, x: 20 }}
-                        whileInView={{ opacity: 1, x: 0 }}
-                        viewport={{ once: true, amount: 0.3 }}
-                        transition={{ duration: 0.4, delay: i * 0.05 }}
-                        className="flex items-center gap-3 p-3 rounded-lg border border-border/40 bg-background/30 hover:border-violet-500/30 hover:bg-violet-500/[0.03] transition-all"
-                      >
-                        <Avatar className="h-9 w-9 border border-violet-500/20 shrink-0">
-                          <AvatarFallback className="bg-violet-500/10 text-violet-300 text-xs font-mono">
-                            {initials}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div className="flex-1 min-w-0">
-                          <div className="text-sm font-medium truncate">{a.name}</div>
-                          {a.title && (
-                            <div className="text-[10px] font-mono text-muted-foreground tracking-wider truncate">{a.title}</div>
-                          )}
-                        </div>
-                        <div className="flex items-center gap-1.5 text-[10px] font-mono text-muted-foreground tracking-wider shrink-0">
-                          <Activity className="h-3 w-3 text-emerald-300" />
-                          enrolled {a.timeAgo}
-                        </div>
-                      </motion.div>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  )
-}
-
-// ============================================================
-// 17. SKILLS YOU'LL EARN (TAG CLOUD)
-// ============================================================
-function SkillsTagCloud({ tags, modules }: { tags?: string | null; modules: any[] }) {
-  const tagList = safeParseTags(tags)
-  const [hoveredTag, setHoveredTag] = React.useState<string | null>(null)
-
-  if (tagList.length === 0) return null
-
-  // Build a map: tag -> first module that mentions it
-  const tagToModule = new Map<string, string>()
-  for (const tag of tagList) {
-    const lowerTag = tag.toLowerCase()
-    const match = modules.find((m: any) =>
-      m.title?.toLowerCase().includes(lowerTag) ||
-      m.lessons?.some((l: any) => l.title?.toLowerCase().includes(lowerTag))
-    )
-    if (match) {
-      tagToModule.set(tag, match.title)
-    } else if (modules.length > 0) {
-      // Fallback - cycle through modules
-      const idx = tagList.indexOf(tag) % modules.length
-      tagToModule.set(tag, modules[idx].title)
-    }
-  }
-
-  return (
-    <section className="py-8 lg:py-10 border-t border-border/60 relative overflow-hidden">
-      <div className="absolute top-0 right-0 w-[500px] h-[400px] bg-cyan-600/5 blur-[120px] rounded-full" />
-      <div className="mx-auto max-w-[1400px] px-4 sm:px-8 lg:px-10 relative">
-        <div className="max-w-2xl mb-6">
-          <SectionLabel index="14" className="text-cyan-300">SKILLS YOU&apos;LL EARN</SectionLabel>
-          <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance">
-            Walk away
-            <span className="text-gradient-premium"> with these.</span>
-          </h2>
-          <p className="text-muted-foreground mt-6 leading-relaxed">
-            Hover any skill to see which module covers it. Larger pills = more emphasis.
-          </p>
-        </div>
-
-        <div className="rounded-2xl border border-border/60 bg-card/40 backdrop-blur p-6 lg:p-8">
-          <div className="flex flex-wrap items-center gap-3">
-            {tagList.map((tag, i) => {
-              const sizeClass = TAG_SIZE_BY_INDEX[i % TAG_SIZE_BY_INDEX.length]
-              const moduleTitle = tagToModule.get(tag)
-              return (
-                <div
-                  key={tag}
-                  className="relative group"
-                  onMouseEnter={() => setHoveredTag(tag)}
-                  onMouseLeave={() => setHoveredTag(null)}
-                >
-                  <button
-                    className={cn(
-                      "inline-flex items-center gap-1.5 rounded-full border font-mono tracking-wider transition-all",
-                      "border-cyan-500/30 bg-cyan-500/[0.04] text-cyan-100 hover:border-cyan-400/60 hover:bg-cyan-500/10 hover:scale-105",
-                      sizeClass
-                    )}
-                  >
-                    <Hexagon className="h-3 w-3 text-cyan-300/60" />
-                    {tag}
-                  </button>
-                  {/* Tooltip */}
-                  {hoveredTag === tag && moduleTitle && (
-                    <div className="absolute z-20 bottom-full left-1/2 -translate-x-1/2 mb-2 px-3 py-2 rounded-lg border border-cyan-500/40 bg-popover text-xs whitespace-nowrap shadow-xl pointer-events-none">
-                      <span className="text-cyan-300 font-mono tracking-wider">Covered in: </span>
-                      <span className="text-foreground font-medium">{moduleTitle}</span>
-                    </div>
-                  )}
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      </div>
-    </section>
-  )
-}
-
-// ============================================================
 // 18. RELATED COURSES CAROUSEL
 // ============================================================
 interface RelatedCourse {
@@ -4241,7 +3687,7 @@ function RelatedCoursesCarousel({
       <div className="mx-auto max-w-[1400px] px-4 sm:px-8 lg:px-10 relative">
         <div className="flex items-end justify-between mb-5 flex-wrap gap-3">
           <div>
-            <SectionLabel index="15" className="text-violet-300">RELATED COURSES</SectionLabel>
+            <SectionLabel index="11" className="text-violet-300">RELATED COURSES</SectionLabel>
             <h2 className="text-[clamp(1.5rem,3vw,2.25rem)] font-bold leading-tight tracking-[-0.03em] text-balance">
               Keep
               <span className="text-gradient-premium"> going.</span>
@@ -4463,7 +3909,7 @@ function ReviewsSection({ courseId, isEnrolled }: { courseId: string; isEnrolled
   return (
     <section className="py-8 lg:py-10 border-t border-border/60">
       <div className="mx-auto max-w-[1400px] px-4 sm:px-8 lg:px-10">
-        <SectionLabel index="16" className="text-amber-300">REVIEWS</SectionLabel>
+        <SectionLabel index="12" className="text-amber-300">REVIEWS</SectionLabel>
         <h2 className="text-[clamp(2rem,4.5vw,3.5rem)] font-bold leading-[0.95] tracking-[-0.04em] text-balance mb-6">
           Student
           <span className="text-gradient-premium"> voices.</span>
