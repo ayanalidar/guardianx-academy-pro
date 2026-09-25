@@ -1,7 +1,7 @@
 import { createHmac, timingSafeEqual } from "crypto"
 import { db } from "@/lib/db"
 import { getSettings } from "@/lib/settings"
-import { sendEmailDetailed, type EmailAttachment } from "@/lib/email"
+import { sendEmailDetailed, emailSocialLinksHtml, type EmailAttachment } from "@/lib/email"
 import { parseEmiPurpose } from "@/lib/installments"
 import { buildReceiptPdf } from "@/lib/receipt-pdf"
 
@@ -203,7 +203,8 @@ export async function sendPaymentReceipt(params: {
     </div>
     <div style="padding:16px 28px;background:#ece8fa;border-radius:0 0 16px 16px;">
       <p style="font-size:11px;color:#7c7392;margin:0 0 4px;">Questions? Contact ${esc(billing.supportEmail)}</p>
-      <p style="font-size:11px;color:#9a92b3;margin:0;">${esc(billing.footerNote)}</p>
+      <p style="font-size:11px;color:#9a92b3;margin:0 0 8px;">${esc(billing.footerNote)}</p>
+      ${emailSocialLinksHtml("light")}
     </div>
   </div>
 </body>

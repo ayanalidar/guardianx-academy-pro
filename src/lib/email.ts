@@ -24,6 +24,64 @@ import { getSettings } from "@/lib/settings"
 
 const MAIL_API_BASE = "https://api.mail.hostinger.com"
 
+/**
+ * Official social handles - rendered in every email footer.
+ * Single source of truth for transactional/bulk email branding.
+ */
+export const EMAIL_SOCIAL_LINKS: { label: string; href: string }[] = [
+  { label: "LinkedIn", href: "https://www.linkedin.com/company/guardianx-academy/" },
+  { label: "YouTube", href: "https://www.youtube.com/@guardianx-academy" },
+  { label: "Instagram", href: "https://www.instagram.com/guardianx.academy" },
+  { label: "WhatsApp", href: "https://whatsapp.com/channel/0029VbBpCY98KMqcAkZuIJ1e" },
+]
+
+/**
+ * Email-safe social-links row (table-based, text links - no images, so it
+ * renders even when the client blocks remote content).
+ *
+ * theme "dark"  - for the dark branded shells (links violet #a78bfa)
+ * theme "light" - for light backgrounds like the receipt (links deep purple #2e1065)
+ */
+export function emailSocialLinksHtml(theme: "dark" | "light" = "dark"): string {
+  const linkColor = theme === "dark" ? "#a78bfa" : "#2e1065"
+  const sepColor = theme === "dark" ? "#1f2937" : "#d8d2ee"
+  const cells = EMAIL_SOCIAL_LINKS.map(
+    (s, i) =>
+      `<td style="padding: 0 10px;"><a href="${s.href}" target="_blank" rel="noopener noreferrer" style="color: ${linkColor}; font-size: 12px; font-weight: 600; text-decoration: none; letter-spacing: 0.04em;">${s.label}</a></td>` +
+      (i < EMAIL_SOCIAL_LINKS.length - 1
+        ? `<td style="color: ${sepColor}; font-size: 11px; padding: 0;">|</td>`
+        : ""),
+  ).join("")
+  return `<table role="presentation" cellpadding="0" cellspacing="0" border="0" style="margin: 18px auto 0; text-align: center;"><tr>${cells}</tr></table>`
+}
+
+/**
+ * Branded shell for plain-text emails. sendEmailDetailed() routes every
+ * body-only message through this so transactional mail (enrollments,
+ * contact auto-replies, campaigns, reminders...) carries the GuardianX
+ * brand header and the social-links footer instead of a bare <pre>.
+ */
+export function brandedTextEmailShell(body: string): string {
+  // Body is plain text composed by the system/admins - escape it so angle
+  // brackets etc. render literally instead of being parsed as HTML.
+  const safe = body
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+  return `
+<div style="font-family: -apple-system, BlinkMacSystemFont, sans-serif; max-width: 600px; margin: 0 auto; background: #0a0a0f; padding: 40px; border-radius: 12px;">
+  <div style="text-align: center; margin-bottom: 28px;">
+    <h1 style="color: #ffffff; font-size: 24px; margin: 0;">Guardian<span style="color: #a78bfa;">X</span> Academy</h1>
+    <p style="color: #6b7280; font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; margin-top: 4px;">Secure · Learn · Defend</p>
+  </div>
+  <div style="color: #9ca3af; font-size: 14px; line-height: 1.7; white-space: pre-wrap;">${safe}</div>
+  <hr style="border: none; border-top: 1px solid #1f2937; margin: 32px 0 20px;" />
+  <p style="color: #4b5563; font-size: 11px; text-align: center; margin: 0 0 4px;">GuardianX Academy · Cyber Security Training in India · <a href="https://academy.guardianx.cloud" style="color: #6b7280; text-decoration: none;">academy.guardianx.cloud</a></p>
+  ${emailSocialLinksHtml("dark")}
+</div>
+`
+}
+
 export interface EmailAttachment {
   /** File name shown in the mail client */
   filename: string
@@ -276,7 +334,7 @@ export async function sendEmailDetailed({
   const msg: OutgoingMessage = {
     to,
     subject,
-    html: html || (body ? `<pre style="white-space: pre-wrap;">${body}</pre>` : ""),
+    html: html || (body ? brandedTextEmailShell(body) : ""),
     text: text || body || (html ? html.replace(/<[^>]*>/g, "") : ""),
     attachments,
   }
@@ -331,7 +389,8 @@ export function magicLinkEmailTemplate(name: string, link: string): string {
   </div>
   <p style="color: #6b7280; font-size: 12px; line-height: 1.6;">If you didn't request this login link, you can safely ignore this email. Your account is safe.</p>
   <hr style="border: none; border-top: 1px solid #1f2937; margin: 32px 0;" />
-  <p style="color: #4b5563; font-size: 11px;">GuardianX Academy · Cyber Security Training in India<br>academy.guardianx.cloud</p>
+  <p style="color: #4b5563; font-size: 11px; text-align: center; margin: 0 0 4px;">GuardianX Academy · Cyber Security Training in India · <a href="https://academy.guardianx.cloud" style="color: #6b7280; text-decoration: none;">academy.guardianx.cloud</a></p>
+  ${emailSocialLinksHtml("dark")}
 </div>
 `
 }

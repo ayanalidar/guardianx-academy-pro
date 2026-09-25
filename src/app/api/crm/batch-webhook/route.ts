@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { notifyAdmins, leadNotificationEmailTemplate, sendEmail } from "@/lib/email"
+import { notifyAdmins, leadNotificationEmailTemplate, sendEmail, emailSocialLinksHtml } from "@/lib/email"
 import { getSetting } from "@/lib/settings"
 
 export const runtime = "nodejs"
@@ -130,7 +130,8 @@ export async function POST(req: NextRequest) {
   </div>
   <p style="color: #6b7280; font-size: 12px;">If you have questions, WhatsApp us or email hello@guardianx.in</p>
   <hr style="border: none; border-top: 1px solid #1f2937; margin: 24px 0;" />
-  <p style="color: #4b5563; font-size: 11px;">GuardianX Academy · academy.guardianx.cloud</p>
+  <p style="color: #4b5563; font-size: 11px; text-align: center; margin: 0 0 4px;">GuardianX Academy · <a href="https://academy.guardianx.cloud" style="color: #6b7280; text-decoration: none;">academy.guardianx.cloud</a></p>
+  ${emailSocialLinksHtml("dark")}
 </div>
 `,
       })
