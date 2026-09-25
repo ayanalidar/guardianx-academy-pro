@@ -7,6 +7,8 @@ import { db } from "@/lib/db"
 export async function GET() {
   // Top solvers by number of labs completed + total points earned
   const labProgress = await db.labProgress.findMany({
+    // audit fix D-07: cap response
+    take: 50,
     where: { status: "completed" },
     include: {
       user: { select: { id: true, name: true, title: true, avatar: true, level: true, xp: true } },

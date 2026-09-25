@@ -468,7 +468,7 @@ function PrivacyContent() {
           "IP address, browser type, operating system, and device identifiers",
           "Pages visited, click patterns, and session duration (anonymized analytics)",
           "Cookies and similar tracking technologies (see our Cookie Policy)",
-          "Exam proctoring data: webcam snapshots, screen recordings (only during proctored exams - see below)",
+          "Exam proctoring data: violation flags and environment checks (tab switches, window focus, identity verification) generated during proctored exams - see below",
         ]} />
         <h4 className="text-sm font-semibold text-foreground mt-4 mb-2">Payment Information</h4>
         <BulletList items={[
@@ -509,7 +509,7 @@ function PrivacyContent() {
 
       <Section id="cookies" title="4. Cookies & Tracking Technologies" icon={Cookie} accent="amber">
         <p>
-          We use cookies and similar technologies (local storage, session storage, fingerprinting) to
+          We use cookies and similar technologies (local storage, session storage) to. We do NOT use browser fingerprinting.
           keep you logged in, remember your preferences, and analyze platform usage. A detailed
           breakdown is available in our{" "}
           <button className="text-emerald-400 hover:underline" onClick={() => useAppStore.getState().navigate({ name: "cookies" } as unknown as View)}>
@@ -553,7 +553,7 @@ function PrivacyContent() {
         <BulletList accent="cyan" items={[
           "Active accounts: All data is retained while your account is active",
           "Closed accounts: Anonymized learning records kept for 24 months for analytics, then deleted",
-          "Proctored exam recordings: 90 days post-exam, then permanently deleted",
+          "Proctoring violation flags and check data: 90 days post-exam, then purged by our automated retention job",
           "Lab session data: Deleted within 7 days of session end (Docker containers destroyed at TTL)",
           "Financial records: 7 years (legal requirement in most jurisdictions)",
           "Forum posts & community content: Retained indefinitely (anonymized if account deleted)",
@@ -599,7 +599,7 @@ function PrivacyContent() {
           "Passwords hashed with bcrypt (12 rounds) - never stored in plaintext",
           "Database access restricted to authorized personnel with multi-factor authentication",
           "Lab Docker containers run on isolated networks - no cross-tenant communication",
-          "Proctored exam recordings encrypted at rest with AES-256",
+          "Proctoring data encrypted in transit (TLS) and stored in our managed database with provider-managed encryption at rest",
           "Regular security audits and penetration testing of our platform",
           "Incident response plan with 72-hour breach notification (GDPR-compliant)",
         ]} />
@@ -626,10 +626,19 @@ function PrivacyContent() {
       <Section id="contact" title="12. Contact Us" icon={Mail} accent="emerald">
         <p>For privacy questions, data requests, or to file a complaint:</p>
         <Card className="p-4 glass-card mt-2">
-          <div className="space-y-1 text-sm">
+          <div className="space-y-1.5 text-sm">
+            <div className="font-medium text-foreground">Grievance Officer &amp; Data Protection Officer</div>
+            <div><span className="text-muted-foreground">Name:</span> Ayan Ali, Founder (Grievance Officer &amp; Data Protection Officer)</div>
             <div><span className="text-muted-foreground">Email:</span> <a href="mailto:privacy@guardianx.io" className="text-emerald-400 hover:underline">privacy@guardianx.io</a></div>
-            <div><span className="text-muted-foreground">Mail:</span> GuardianX Academy - Privacy Office, Attn: Data Protection Officer</div>
-            <div><span className="text-muted-foreground">Response time:</span> Within 30 days (GDPR), 45 days (CCPA)</div>
+            <div><span className="text-muted-foreground">Mail:</span> GuardianX Academy - Privacy Office, Attn: Grievance Officer</div>
+            <div><span className="text-muted-foreground">Grievance redressal (DPDPA ss. 13-14):</span> we acknowledge grievances within 72 hours and resolve them within 30 days</div>
+            <div><span className="text-muted-foreground">Other timelines:</span> within 30 days (GDPR), 45 days (CCPA)</div>
+            <div className="text-xs text-muted-foreground pt-1">
+              Under India&apos;s Digital Personal Data Protection Act, 2023 you may request access, correction,
+              completion, updating or erasure of your personal data, withdraw consent, and nominate another
+              individual to exercise your rights. Email the Grievance Officer to exercise any of these; if a
+              grievance is not resolved to your satisfaction you may escalate to the Data Protection Board of India.
+            </div>
           </div>
         </Card>
       </Section>
@@ -853,7 +862,7 @@ function FaqContent() {
         { q: "Are GuardianX certificates recognized by employers?", a: "Yes. Our certificates are verifiable via a unique verify ID and include your proctored exam score. We work directly with hiring partners across the industry. Additionally, many of our courses prepare you for industry-standard certifications (CEH, CISSP, CCNA, etc.) which you can then take with the official certifying body." },
         { q: "Can I get a PDF copy of my certificate?", a: "Absolutely. Once you pass a proctored exam, you can download a beautifully designed PDF certificate with your name, certification, score, issue date, and a unique verify ID. You can also share a public verification link on LinkedIn." },
         { q: "How long are certificates valid?", a: "GuardianX certificates don't expire - they represent that you demonstrated mastery at the time of issuance. However, we recommend recertifying every 3 years as the cyber security landscape evolves. Many industry certs (CEH, CISSP) require CPE credits to maintain - we provide ongoing learning content to earn those." },
-        { q: "What if my exam was voided unfairly?", a: "You can appeal any voided exam within 7 days via the Contact page. Our proctoring team reviews the recording and activity logs. If the violation was a false positive (e.g., a browser crash), we'll reset your exam attempt free of charge." },
+        { q: "What if my exam was voided unfairly?", a: "You can appeal any voided exam within 7 days via the Contact page. Our proctoring team reviews the violation flags and activity logs. If the violation was a false positive (e.g., a browser crash), we'll reset your exam attempt free of charge." },
       ],
     },
     {

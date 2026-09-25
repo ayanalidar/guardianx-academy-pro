@@ -1,5 +1,6 @@
 import { readFileSync } from "node:fs"
 import path from "node:path"
+import { getCurrentUser } from "@/lib/session"
 
 export const runtime = "nodejs"
 export const dynamic = "force-dynamic"
@@ -313,6 +314,15 @@ window.__GX_PAGE_BUILD__ = "__BUILD_ID__";
 `
 
 export async function GET() {
+  // audit fix V-03: the diagnostics tool is for signed-in users troubleshooting
+  // their session - anonymous visitors get a sign-in nudge instead of the tool.
+  const viewer = await getCurrentUser().catch(() => null)
+  if (!viewer) {
+    return new Response(
+      `<!doctype html><html><head><meta name="robots" content="noindex,nofollow"><title>Diagnostics - sign in required</title></head><body style="font-family:system-ui;background:#0f0b1e;color:#e9e4f5;display:grid;place-items:center;min-height:100vh"><div style="text-align:center"><h1 style="font-size:18px">Sign in required</h1><p style="font-size:14px;color:#9b93b3">Diagnostics are available to signed-in accounts.<br>Please sign in, then reload this page.</p></div></body></html>`,
+      { status: 200, headers: { "Content-Type": "text/html; charset=utf-8", "X-Robots-Tag": "noindex, nofollow" } }
+    )
+  }
   const buildId = readBuildId()
   const html = PAGE_SHELL.replace("__BUILD_ID__", buildId)
   return new Response(html, {

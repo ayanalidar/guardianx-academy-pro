@@ -274,14 +274,14 @@ async function buildAuthOptions(): Promise<NextAuthOptions> {
       schoolLoginProvider,
 
       // Google OAuth provider - "Sign in with Google" button
-      // allowDangerousEmailAccountLinking TRUE:
-      //   With the adapter registered, next-auth resolves OAuth users by
-      //   email. Setting this to `true` keeps the exact access semantics
-      //   the app ALWAYS had (pre-adapter): a Google account whose email
-      //   matches an existing user signs in as that user, and the signIn
-      //   callback auto-creates STUDENT accounts for brand-new emails.
-      //   Google-verified emails only - no email enumeration beyond what
-      //   Google itself guarantees.
+      // allowDangerousEmailAccountLinking FALSE (audit fix C-04):
+      //   Google sign-in no longer auto-links onto an existing
+      //   credentials/school account with the same email. Users whose
+      //   email was originally registered with a password continue to
+      //   sign in with their password or magic link; a Google login for
+      //   that email gets OAuthAccountNotLinked instead of silently
+      //   inheriting the account. Brand-new emails still auto-create
+      //   STUDENT accounts via the signIn callback.
       // Registered only when configured (DB → env fallback) so that the
       // login UI can hide the button when Google OAuth is not set up.
       ...(googleConfigured
@@ -289,7 +289,7 @@ async function buildAuthOptions(): Promise<NextAuthOptions> {
             GoogleProvider({
               clientId: s.GOOGLE_CLIENT_ID!,
               clientSecret: s.GOOGLE_CLIENT_SECRET!,
-              allowDangerousEmailAccountLinking: true,
+              allowDangerousEmailAccountLinking: false,
             }),
           ]
         : []),

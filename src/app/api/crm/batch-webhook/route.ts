@@ -121,7 +121,7 @@ export async function POST(req: NextRequest) {
     <h1 style="color: #ffffff; font-size: 24px; margin: 0;">Guardian<span style="color: #a78bfa;">X</span> Academy</h1>
   </div>
   <h2 style="color: #ffffff; font-size: 18px; margin-bottom: 16px;">Registration Received ✅</h2>
-  <p style="color: #9ca3af; font-size: 14px; line-height: 1.6;">Hi ${String(lead.name).trim()},</p>
+  <p style="color: #9ca3af; font-size: 14px; line-height: 1.6;">Hi ${String(lead.name ?? "").trim().replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;")},</p> <!-- audit fix C-12: HTML-escaped -->
   <p style="color: #9ca3af; font-size: 14px; line-height: 1.6;">We've received your registration for <strong style="color: #a78bfa;">${batch.name}</strong> (${batch.certification}). Our team will contact you on WhatsApp within 24 hours to complete the enrollment process.</p>
   <div style="background: #11111a; border-radius: 8px; padding: 16px; margin: 24px 0;">
     <p style="color: #6b7280; font-size: 12px; margin: 0;">Batch details:</p>

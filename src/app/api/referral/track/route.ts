@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { withErrorHandler } from "@/lib/session"
+import { withErrorHandler, rateLimit } from "@/lib/session"
+import { randomInt } from "crypto" // audit fix C-10
 
 export const runtime = "nodejs"
 
@@ -15,7 +16,7 @@ function generateCouponCode(prefix: string): string {
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789" // no I, O, 0, 1
   let suffix = ""
   for (let i = 0; i < 8; i++) {
-    suffix += alphabet[Math.floor(Math.random() * alphabet.length)]
+    suffix += alphabet[randomInt(alphabet.length)] // crypto-secure (audit fix C-10)
   }
   return `${prefix}-${suffix}`
 }
@@ -34,6 +35,12 @@ function generateCouponCode(prefix: string): string {
  * Response: { ok: true, status, referrerCouponCode, referredCouponCode }
  */
 export const POST = withErrorHandler(async (req: NextRequest) => {
+  // audit fix C-02: throttle coupon minting (per IP) - this endpoint is
+  // unauthenticated and mints discount coupons, so it needs real friction.
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown"
+  if (!rateLimit(`referral-track:${ip}`, { max: 10, windowMs: 60 * 1000 })) {
+    return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 })
+  }
   const body = await req.json().catch(() => null)
   if (!body) {
     return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })

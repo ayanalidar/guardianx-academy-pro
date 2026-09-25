@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
+import { createHash, timingSafeEqual } from "crypto"
 import { db } from "@/lib/db"
-import { getCurrentUser, withErrorHandler } from "@/lib/session"
+import { getCurrentUser, withErrorHandler, rateLimit } from "@/lib/session"
 import { awardXp, XP_REWARDS, awardSpecificAchievement } from "@/lib/gamification"
 
 export const POST = withErrorHandler(async (req: NextRequest, { params }: { params: Promise<{ slug: string }> }) => {
@@ -12,6 +13,11 @@ export const POST = withErrorHandler(async (req: NextRequest, { params }: { para
   if (!lab) return NextResponse.json({ error: "Lab not found" }, { status: 404 })
 
   const { flag, action, timeSpentMs } = await req.json()
+
+  // audit fix C-05: throttle flag guessing / reveal spam (per user, 10 per 5 min)
+  if (!rateLimit(`lab-submit:${user.id}`, { max: 10, windowMs: 5 * 60 * 1000 })) {
+    return NextResponse.json({ error: "Too many submissions. Slow down and try again shortly." }, { status: 429 })
+  }
 
   // start / hint / submit / heartbeat
   let progress = await db.labProgress.findUnique({ where: { userId_labId: { userId: user.id, labId: lab.id } } })
@@ -60,7 +66,11 @@ export const POST = withErrorHandler(async (req: NextRequest, { params }: { para
       select: { id: true, dynamicFlag: true },
     })
     const expectedFlag = activeSession?.dynamicFlag || lab.flag
-    const correct = !!flag?.trim() && flag.trim() === expectedFlag
+    // audit fix C-05: constant-time comparison (compare SHA-256 digests) so the
+    // endpoint cannot be used as a byte-by-byte flag oracle.
+    const flagBuf = createHash("sha256").update((flag ?? "").trim()).digest()
+    const expectedBuf = createHash("sha256").update(expectedFlag).digest()
+    const correct = !!flag?.trim() && flagBuf.length === expectedBuf.length && timingSafeEqual(flagBuf, expectedBuf)
     let gamification: Awaited<ReturnType<typeof awardXp>> | null = null
     let autoGrade: { passed: boolean; score: number; xpAwarded: number } | null = null
     if (correct && progress.status !== "completed") {

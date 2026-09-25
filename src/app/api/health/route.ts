@@ -3,6 +3,7 @@ import { promises as fs } from "fs"
 import path from "path"
 import { db } from "@/lib/db"
 import { ensureTable } from "@/lib/db-safe"
+import { getCurrentUser } from "@/lib/session"
 
 /**
  * Health endpoint - the single source of truth for "is the platform OK".
@@ -151,6 +152,35 @@ export async function GET(req: Request) {
   }
 
   payload.watchdog = await readWatchdog()
+
+  // audit fix V-02: the full payload (uptime, DB latency, row counts, schema
+  // state, probe errors, watchdog board) is operations data. Anonymous callers
+  // get the minimal liveness shape the client VersionWatch needs (ok, buildId,
+  // time); the host watchdog (x-watchdog-token: CRON_SECRET) and ADMIN sessions
+  // still receive everything.
+  const url2 = new URL(req.url)
+  const isOpsProbe = url2.searchParams.get("probe") === "courses"
+  const watchdogHeader = req.headers.get("x-watchdog-token")
+  const watchdogOk = !!process.env.CRON_SECRET && !!watchdogHeader && watchdogHeader === process.env.CRON_SECRET
+  let privileged = watchdogOk
+  if (!privileged) {
+    try {
+      const viewer = await getCurrentUser()
+      privileged = !!viewer && (viewer.role === "ADMIN" || viewer.role === "SUPER_ADMIN")
+    } catch {
+      privileged = false
+    }
+  }
+  if (!privileged) {
+    const minimal: Record<string, any> = {
+      ok: payload.ok,
+      service: payload.service,
+      buildId: payload.buildId, // client VersionWatch reload signal
+      time: payload.time,
+    }
+    if (isOpsProbe) minimal.probe = { note: "auth required for probe detail" }
+    return NextResponse.json(minimal, { headers: { "Cache-Control": "no-store" } })
+  }
 
   return NextResponse.json(payload, { headers: { "Cache-Control": "no-store" } })
 }

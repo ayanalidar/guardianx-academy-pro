@@ -7,6 +7,8 @@ import { db } from "@/lib/db"
 export async function GET() {
   // Top users by courses completed + certificates earned
   const enrollments = await db.enrollment.findMany({
+    // audit fix D-07: cap response (was unpaginated full-table read)
+    take: 50,
     where: { completed: true },
     include: {
       user: { select: { id: true, name: true, title: true, avatar: true, level: true, xp: true } },

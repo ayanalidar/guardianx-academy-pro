@@ -2,6 +2,25 @@
 import { PrismaClient } from "@prisma/client"
 import bcrypt from "bcryptjs"
 
+import { randomBytes } from "crypto"
+
+// audit fix C-01 (residual): refuse weak demo passwords against prod databases
+const PROD_DB =
+  process.env.NODE_ENV === "production" ||
+  /neon\.tech|neon\.build|amazonaws|azure\.com|render\.com|rds\./i.test(process.env.DATABASE_URL ?? "")
+
+function secureDemoPassword(envKey: string, devDefault: string): string {
+  const fromEnv = process.env[envKey]
+  if (fromEnv) return fromEnv
+  if (PROD_DB) {
+    const generated = randomBytes(18).toString("base64url")
+    console.log(`  [security] ${envKey} not set against a PROD database - strong password generated (printed ONCE): ${generated}`)
+    return generated
+  }
+  return devDefault
+}
+
+
 const db = new PrismaClient()
 
 async function main() {
@@ -21,7 +40,7 @@ async function main() {
       website: "https://dpscyber.edu.in",
       adminName: "Dr. Anita Sharma",
       adminEmail: "admin@dpscyber.edu.in",
-      password: "school123",
+      password: secureDemoPassword("DEMO_SCHOOL_PASSWORD", "school123"),
       maxStudents: 300,
     },
     {
@@ -37,7 +56,7 @@ async function main() {
       website: "https://mitcyber.ac.in",
       adminName: "Prof. Rajesh Iyer",
       adminEmail: "principal@mitcyber.ac.in",
-      password: "college123",
+      password: secureDemoPassword("DEMO_COLLEGE_PASSWORD", "college123"),
       maxStudents: 1000,
     },
     {
@@ -53,14 +72,14 @@ async function main() {
       website: "https://bcsu.edu.in",
       adminName: "Dr. Lakshmi Venkatesh",
       adminEmail: "vc@bcsu.edu.in",
-      password: "university123",
+      password: secureDemoPassword("DEMO_UNIVERSITY_PASSWORD", "university123"),
       maxStudents: 2000,
     },
   ]
 
   for (const s of schools) {
     const { password, ...rest } = s
-    const passwordHash = bcrypt.hashSync(password, 10)
+    const passwordHash = bcrypt.hashSync(password, 10) // password resolved below via secureDemoPassword
     const existing = await db.school.findUnique({ where: { schoolCode: rest.schoolCode } })
     if (existing) {
       await db.school.update({ where: { id: existing.id }, data: { ...rest, passwordHash } })
@@ -72,9 +91,9 @@ async function main() {
   }
 
   console.log("\nDemo school login credentials:")
-  console.log("  School:     GXS-DELHI-001 | admin@dpscyber.edu.in | school123")
-  console.log("  College:    GXC-MUMBAI-002 | principal@mitcyber.ac.in | college123")
-  console.log("  University: GXU-BANGALORE-003 | vc@bcsu.edu.in | university123")
+  console.log("  School:     GXS-DELHI-001 | admin@dpscyber.edu.in | (see DEMO_SCHOOL_PASSWORD)")
+  console.log("  College:    GXC-MUMBAI-002 | principal@mitcyber.ac.in | (see DEMO_COLLEGE_PASSWORD)")
+  console.log("  University: GXU-BANGALORE-003 | vc@bcsu.edu.in | (see DEMO_UNIVERSITY_PASSWORD)")
   console.log("\nDone.")
 }
 

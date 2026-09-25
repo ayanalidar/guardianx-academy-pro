@@ -179,6 +179,9 @@ export function AuthScreen() {
   const [regName, setRegName] = React.useState("")
   const [regEmail, setRegEmail] = React.useState("")
   const [regPass, setRegPass] = React.useState("")
+  // DPDPA audit fixes D-01 + D-02: affirmative consent + age declaration
+  const [regAge16, setRegAge16] = React.useState(false)
+  const [regConsent, setRegConsent] = React.useState(false)
 
   // After successful auth, redirect to the pendingView if the user was
   // sent here from a protected page (e.g. they clicked "Career Paths"
@@ -276,6 +279,10 @@ export function AuthScreen() {
 
   async function handleRegister(e: React.FormEvent) {
     e.preventDefault()
+    if (!regAge16 || !regConsent) {
+      toast.error("Please confirm the age requirement and privacy consent to continue.")
+      return
+    }
     setLoading(true)
     try {
       // Capture referral id from localStorage (set by `?ref=` capture script
@@ -288,7 +295,7 @@ export function AuthScreen() {
       }
       await api("/api/auth/register", {
         method: "POST",
-        body: JSON.stringify({ name: regName, email: regEmail, password: regPass, role: "STUDENT", ref }),
+        body: JSON.stringify({ name: regName, email: regEmail, password: regPass, role: "STUDENT", ref, consent: regConsent, age16: regAge16 }),
       })
       // Clear the stored ref so it can't be reused on a future signup.
       try { window.localStorage.removeItem("gx_ref") } catch {}
@@ -714,9 +721,25 @@ export function AuthScreen() {
                         {loading ? "Creating account..." : "Create Account"}
                         <ChevronRight className="h-4 w-4 ml-1" />
                       </Button>
-                      <p className="text-[11px] text-muted-foreground text-center leading-relaxed">
-                        By signing up, you agree to our Terms of Service and Privacy Policy.
-                      </p>
+                      {/* DPDPA audit fixes D-01 + D-02: affirmative, unchecked-by-default consent with itemised notice links */}
+                      <label className="flex items-start gap-2 text-[11px] text-muted-foreground leading-relaxed cursor-pointer select-none">
+                        <input type="checkbox" checked={regAge16} onChange={(e) => setRegAge16(e.target.checked)} required className="mt-0.5 h-3.5 w-3.5 shrink-0 accent-emerald-500" />
+                        <span>
+                          I confirm I am at least <strong className="text-foreground">16 years old</strong>. Younger learners join
+                          through our school programs with guardian consent.
+                        </span>
+                      </label>
+                      <label className="flex items-start gap-2 text-[11px] text-muted-foreground leading-relaxed cursor-pointer select-none">
+                        <input type="checkbox" checked={regConsent} onChange={(e) => setRegConsent(e.target.checked)} required className="mt-0.5 h-3.5 w-3.5 shrink-0 accent-emerald-500" />
+                        <span>
+                          I have read and agree to the{" "}
+                          <a href="#" onClick={(e) => { e.preventDefault(); navigate({ name: "legal", pageType: "terms" }) }} className="text-emerald-400 hover:underline">Terms</a>
+                          {" "}and{" "}
+                          <a href="#" onClick={(e) => { e.preventDefault(); navigate({ name: "legal", pageType: "privacy" }) }} className="text-emerald-400 hover:underline">Privacy Notice</a>
+                          , and consent to GuardianX processing my name, email and learning activity to provide the
+                          service. I can withdraw consent anytime.
+                        </span>
+                      </label>
                     </form>
                   </TabsContent>
                 </Tabs>

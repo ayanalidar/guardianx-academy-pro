@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { withErrorHandler } from "@/lib/session"
+import { withErrorHandler, rateLimit } from "@/lib/session"
 
 export const runtime = "nodejs"
 
@@ -24,6 +24,11 @@ export const runtime = "nodejs"
  *      or { valid: false, error }
  */
 export const POST = withErrorHandler(async (req: NextRequest) => {
+  // audit fix C-03: throttle the public coupon oracle against bulk enumeration.
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown"
+  if (!rateLimit(`coupon-verify:${ip}`, { max: 20, windowMs: 60 * 1000 })) {
+    return NextResponse.json({ error: "Too many requests. Please try again later." }, { status: 429 })
+  }
   const body = await req.json().catch(() => null)
   if (!body) return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
 

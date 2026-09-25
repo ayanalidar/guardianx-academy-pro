@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/session"
+import { randomInt } from "crypto"
 
 export async function GET(req: NextRequest) {
   const user = await getCurrentUser()
@@ -76,7 +77,7 @@ export async function POST(req: NextRequest) {
     isPrivate && typeof body.joinCode === "string"
       ? body.joinCode.trim()
       : isPrivate
-      ? Math.random().toString(36).slice(2, 8).toUpperCase()
+      ? Array.from({ length: 6 }, () => "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[randomInt(32)]).join("") // crypto-secure (audit fix C-10)
       : null
   const meetingLink = typeof body.meetingLink === "string" && body.meetingLink.trim() ? body.meetingLink.trim() : null
   const tags = Array.isArray(body.tags)

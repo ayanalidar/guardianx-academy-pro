@@ -1,5 +1,22 @@
 import { db } from "../src/lib/db"
 import bcrypt from "bcryptjs"
+import { randomBytes } from "crypto"
+
+// audit fix C-01 (residual): refuse weak demo passwords against prod databases
+const PROD_DB =
+  process.env.NODE_ENV === "production" ||
+  /neon\.tech|neon\.build|amazonaws|azure\.com|render\.com|rds\./i.test(process.env.DATABASE_URL ?? "")
+
+function demoPassword(envKey: string, devDefault: string): string {
+  const fromEnv = process.env[envKey]
+  if (fromEnv) return fromEnv
+  if (PROD_DB) {
+    const generated = randomBytes(18).toString("base64url")
+    console.log(`  [security] ${envKey} not set against a PROD database - strong password generated (printed ONCE): ${generated}`)
+    return generated
+  }
+  return devDefault
+}
 
 const hash = (s: string) => bcrypt.hashSync(s, 10)
 
@@ -17,7 +34,7 @@ async function main() {
     create: {
       email: "admin@guardianx.io",
       name: "Alex Mercer",
-      passwordHash: hash("admin123"),
+      passwordHash: hash(demoPassword("DEMO_ADMIN_PASSWORD", "admin123")),
       role: "ADMIN",
       title: "Platform Administrator",
       bio: "GuardianX platform administrator and lead security architect.",
@@ -33,7 +50,7 @@ async function main() {
     create: {
       email: "sarah.chen@guardianx.io",
       name: "Dr. Sarah Chen",
-      passwordHash: hash("instructor123"),
+      passwordHash: hash(demoPassword("DEMO_INSTRUCTOR1_PASSWORD", "instructor123")),
       role: "INSTRUCTOR",
       title: "Principal Security Instructor",
       bio: "15 years in offensive security; OSCP, OSCE and CEH Master certified.",
@@ -45,7 +62,7 @@ async function main() {
     create: {
       email: "raj.patel@guardianx.io",
       name: "Raj Patel",
-      passwordHash: hash("instructor123"),
+      passwordHash: hash(demoPassword("DEMO_INSTRUCTOR2_PASSWORD", "instructor123")),
       role: "INSTRUCTOR",
       title: "Senior Instructor — Cloud & DFIR",
       bio: "Cloud security architect turned educator; CISSP, CCSP, GCFE.",
@@ -58,7 +75,7 @@ async function main() {
     create: {
       email: "student@guardianx.io",
       name: "Jamie Rivera",
-      passwordHash: hash("student123"),
+      passwordHash: hash(demoPassword("DEMO_STUDENT_PASSWORD", "student123")),
       role: "STUDENT",
       title: "Aspiring Security Analyst",
       bio: "Career switcher from finance to cyber security. Currently grinding CEH.",

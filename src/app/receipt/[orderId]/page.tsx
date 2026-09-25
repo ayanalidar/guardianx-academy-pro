@@ -4,6 +4,8 @@ import { getReceiptBilling, receiptNumberFor } from "@/lib/receipt"
 import { parseEmiPurpose } from "@/lib/installments"
 import { ReceiptDownloadButton } from "@/components/receipt/receipt-download"
 import { ShieldCheck } from "lucide-react"
+import { getCurrentUser } from "@/lib/session"
+import { verifyReceiptToken } from "@/lib/receipt"
 
 /* GET /receipt/[orderId]
  * ---------------------
@@ -31,13 +33,45 @@ function Row({ label, value, mono, strong }: { label: string; value: React.React
   )
 }
 
-export default async function ReceiptPage({ params }: { params: Promise<{ orderId: string }> }) {
+export default async function ReceiptPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ orderId: string }>
+  searchParams: Promise<{ t?: string }>
+}) {
   const { orderId } = await params
+  const { t } = await searchParams
+
+  // audit fix V-01: the receipt renders buyer personal data, so access now
+  // requires EITHER the signed token embedded in the emailed link OR a
+  // session belonging to the order's buyer (or platform staff).
+  const [viewer, tokenValid] = await Promise.all([
+    getCurrentUser(),
+    verifyReceiptToken(orderId, t),
+  ])
 
   const order = await db.order.findUnique({
     where: { id: orderId },
     include: { user: { select: { name: true, email: true } }, course: { select: { title: true } } },
   })
+
+  const canView = tokenValid || (!!viewer && (viewer.id === order?.userId || viewer.role === "ADMIN" || viewer.role === "SUPER_ADMIN"))
+
+  if (order && !canView) {
+    return (
+      <main className="min-h-screen bg-[#f4f2fb] flex items-center justify-center p-6">
+        <div className="bg-white rounded-2xl border border-[#e5e1f5] p-10 text-center max-w-md">
+          <div className="text-[#2e1065] text-lg font-bold mb-2">Sign in to view this receipt</div>
+          <p className="text-sm text-[#7c7392]">
+            This receipt link needs its original email link (with the access key) or an
+            account signed in as the buyer. Open the link from your payment confirmation
+            email, or sign in to your GuardianX account and view the receipt from the dashboard.
+          </p>
+        </div>
+      </main>
+    )
+  }
 
   if (!order) {
     return (

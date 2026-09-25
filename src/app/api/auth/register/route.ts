@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
 import { z } from "zod"
+import { randomInt } from "crypto" // audit fix C-10: crypto-secure code generation
 import { db } from "@/lib/db"
 
 // Rate limiting - simple in-memory counter (per IP, per window)
@@ -32,7 +33,20 @@ const schema = z.object({
   email: z.string().email().max(255),
   password: passwordSchema,
   ref: z.string().max(64).optional(), // referral id (from ?ref= URL / localStorage)
+  // DPDPA audit fixes D-01 + D-02: affirmative consent and a 16+ age
+  // declaration are now REQUIRED (matching the platform's own Terms: "at
+  // least 16 years old or parental consent for school cohorts").
+  consent: z.boolean().refine((v) => v === true, {
+    message: "DPDPA consent is required to create an account",
+  }),
+  age16: z.boolean().refine((v) => v === true, {
+    message: "You must be at least 16 years old to create an account",
+  }),
 })
+
+// DPDPA audit fix D-01: version of the notice/consent text shown at signup.
+// Bump this whenever the privacy notice materially changes.
+const NOTICE_VERSION = "dpdpa-notice-2026-09-v1"
 
 // Reward config - duplicated from /api/referral/track to keep register
 // self-contained (no cross-route import). See referral/track for full docs.
@@ -44,7 +58,7 @@ const REWARD_VALID_DAYS = 90
 function generateCouponCode(): string {
   const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"
   let suffix = ""
-  for (let i = 0; i < 8; i++) suffix += alphabet[Math.floor(Math.random() * alphabet.length)]
+  for (let i = 0; i < 8; i++) suffix += alphabet[randomInt(alphabet.length)] // crypto-secure
   return `REF-${suffix}`
 }
 
@@ -163,6 +177,32 @@ export async function POST(req: NextRequest) {
       },
       select: { id: true, email: true, name: true, role: true },
     })
+
+    // DPDPA audit fix D-01: persist a consent record (version, timestamp,
+    // source) as the legally-relevant proof of the notice accepted at
+    // collection. Stored in AuditLog so no schema migration is required.
+    try {
+      await db.auditLog.create({
+        data: {
+          userId: user.id,
+          userName: email,
+          action: "dpdpa.consent.capture",
+          resource: "User",
+          resourceId: user.id,
+          details: JSON.stringify({
+            noticeVersion: NOTICE_VERSION,
+            consentAt: new Date().toISOString(),
+            source: "web-signup",
+            ageDeclared: "16+",
+            granular: { marketing: false, proctoring: "on-exam", cookies: "essential-only" },
+          }),
+        },
+      })
+    } catch (e) {
+      // Consent logging must never block account creation, but the failure
+      // should be visible in server logs for compliance review.
+      console.error("[register] consent record failed:", e)
+    }
 
     // Referral tracking - only if a valid `ref` id was supplied (from the
     // ?ref= URL captured client-side and stored in localStorage).

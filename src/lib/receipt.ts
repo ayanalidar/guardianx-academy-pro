@@ -1,3 +1,4 @@
+import { createHmac, timingSafeEqual } from "crypto"
 import { db } from "@/lib/db"
 import { getSettings } from "@/lib/settings"
 import { sendEmailDetailed, type EmailAttachment } from "@/lib/email"
@@ -53,8 +54,36 @@ export function receiptNumberFor(orderId: string): string {
   return `GX-RCPT-${new Date().getFullYear()}-${orderId.slice(-8).toUpperCase()}`
 }
 
+/* ------------------------------------------------------------
+ * Signed receipt capability tokens (audit fix V-01).
+ * The receipt URL used to be the raw order id - any holder of the id
+ * could read buyer PII (name, email, amounts). Receipt links emailed
+ * to buyers now carry an HMAC signature over the order id, making the
+ * capability URL genuinely unguessable. The page accepts EITHER a
+ * valid signature OR a session belonging to the order's buyer.
+ * ------------------------------------------------------------ */
+function receiptTokenSecret(): string {
+  return process.env.RECEIPT_TOKEN_SECRET || process.env.NEXTAUTH_SECRET || ""
+}
+
+export function signReceiptToken(orderId: string): string {
+  const secret = receiptTokenSecret()
+  if (!secret) return ""
+  return createHmac("sha256", secret).update(`gx-receipt:${orderId}`).digest("base64url")
+}
+
+export function verifyReceiptToken(orderId: string, token: string | null | undefined): boolean {
+  const secret = receiptTokenSecret()
+  if (!secret || !token) return false
+  const expected = Buffer.from(signReceiptToken(orderId))
+  const provided = Buffer.from(token)
+  return expected.length === provided.length && timingSafeEqual(expected, provided)
+}
+
 export function receiptUrlFor(orderId: string): string {
-  return `https://academy.guardianx.cloud/receipt/${orderId}`
+  const token = signReceiptToken(orderId)
+  const query = token ? `?t=${token}` : ""
+  return `https://academy.guardianx.cloud/receipt/${orderId}${query}`
 }
 
 function esc(s: string): string {

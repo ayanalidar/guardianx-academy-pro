@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/session"
 import { awardXp } from "@/lib/gamification"
+import { randomInt } from "crypto"
 
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -54,7 +55,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
   if (pct === 100) {
     const existingCert = await db.certificate.findFirst({ where: { userId: user.id, courseId: lesson.module.courseId } })
     if (!existingCert) {
-      const certId = `GX-${Date.now().toString(36).toUpperCase()}${Math.random().toString(36).slice(2, 6).toUpperCase()}`
+      // audit fix C-10: crypto-secure certificate reference (was Math.random)
+      const certSuffix = Array.from({ length: 6 }, () => "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"[randomInt(32)]).join("")
+      const certId = `GX-${Date.now().toString(36).toUpperCase()}${certSuffix}`
       const issuedAt = new Date()
       const { generateVerificationHash, sendEmail } = await import("@/lib/email")
       const verificationHash = await generateVerificationHash(certId, user.id, lesson.module.courseId, issuedAt)
