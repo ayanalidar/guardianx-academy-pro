@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/session"
 
+// Uses Prisma/Node APIs - pin the Node.js runtime explicitly.
+export const runtime = "nodejs";
+
+
 // GET - student fetches submissions assigned to them for peer review.
 // Lazily selects up to `assignment.peerReviewCount` random other students'
 // submissions (excluding their own and ones they've already reviewed).

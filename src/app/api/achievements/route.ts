@@ -3,6 +3,10 @@ import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/session"
 import { levelFromXp, rankTitle, ACHIEVEMENT_DEFS, checkAchievements, getAllProgress } from "@/lib/gamification"
 
+// Uses Prisma/Node APIs - pin the Node.js runtime explicitly.
+export const runtime = "nodejs";
+
+
 export async function GET() {
   const user = await getCurrentUser()
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })

@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { requireRole } from "@/lib/session"
 
+// Uses Prisma/Node APIs - pin the Node.js runtime explicitly.
+export const runtime = "nodejs";
+
+
 const VALID_STATUSES = new Set(["present", "absent", "late", "excused"])
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/
 

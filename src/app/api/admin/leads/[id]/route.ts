@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { requireAdmin, withErrorHandler } from "@/lib/session"
 
+// Uses Prisma/Node APIs - pin the Node.js runtime explicitly.
+export const runtime = "nodejs";
+
+
 const LEAD_STATUSES = ["New", "Contacted", "Qualified", "Proposal", "Negotiation", "Converted", "Lost"]
 
 // PATCH /api/admin/leads/[id] - update lead status, followUpDate, assignedTo

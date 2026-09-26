@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { requireAdmin, withErrorHandler } from "@/lib/session"
 
+// Uses Prisma/Node APIs - pin the Node.js runtime explicitly.
+export const runtime = "nodejs";
+
+
 // PATCH /api/admin/labs/[id] - update any lab field
 export const PATCH = withErrorHandler(
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {

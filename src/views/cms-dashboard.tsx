@@ -50,7 +50,6 @@ import {
 
 type PageId =
   | "home"
-  | "impact"
   | "contact"
   | "institutions"
   | "catalog"
@@ -67,7 +66,6 @@ interface PageMeta {
 
 const PAGES: PageMeta[] = [
   { id: "home",          label: "Home",              icon: HomeIcon,        description: "Landing page hero, audiences, courses, labs, partners", accent: "text-violet-300" },
-  { id: "impact",        label: "Impact",            icon: TrendingUp,      description: "Outcomes, success stories, partner counts",            accent: "text-amber-300" },
   { id: "contact",       label: "Contact",           icon: Mail,            description: "Contact form, office info, FAQ",                       accent: "text-cyan-300" },
   { id: "institutions",  label: "Institutions",      icon: Building2,       description: "Hub page: hero, partner types, benefits, flow, models, final CTA", accent: "text-emerald-300" },
   { id: "catalog",       label: "Catalog",           icon: BookOpen,        description: "Course catalog hero and filter labels",                accent: "text-violet-300" },

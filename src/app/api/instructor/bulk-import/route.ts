@@ -5,6 +5,10 @@ import { requireRole } from "@/lib/session"
 import { sendEmail } from "@/lib/email"
 import { parseCsvObjects, isValidEmail, generateTempPassword } from "@/lib/csv"
 
+// Uses Prisma/Node APIs - pin the Node.js runtime explicitly.
+export const runtime = "nodejs";
+
+
 interface StudentInput {
   name: string
   email: string

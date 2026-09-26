@@ -118,7 +118,7 @@ const LEGAL_PAGES = ["about", "privacy", "terms", "faq", "refund", "cookies", "c
 
 /** Every view name that maps 1:1 to `/<name>` (the bridge-space routes). */
 const KNOWN_FLAT_VIEWS = new Set<View["name"]>([
-  "impact", "dashboard", "learning", "notes", "live", "labs", "certificates",
+  "dashboard", "learning", "notes", "live", "labs", "certificates",
   "cyber-range",
   "achievements", "leaderboard", "community", "profile", "assignments",
   "messaging", "study-groups", "office-hours", "book-session", "auth",
@@ -312,7 +312,7 @@ export function readViewFromUrl(): View {
 
 /** Views renderable without a session (header/footer shell). */
 export const PUBLIC_VIEWS = new Set<View["name"]>([
-  "home", "impact", "contact", "institutions", "institutions-schools",
+  "home", "contact", "institutions", "institutions-schools",
   "institutions-colleges", "institutions-universities",
   "institutions-open-schooling",
   "corporate-training",
@@ -339,7 +339,6 @@ export const PUBLIC_VIEWS = new Set<View["name"]>([
 /** Human-readable titles for bridge-route metadata (SEO). */
 const VIEW_TITLES: Partial<Record<View["name"], string>> = {
   home: "Cybersecurity Training & Certifications",
-  impact: "Our Impact",
   login: "Log In",
   labs: "Hands-on Cyber Labs",
   "institutions": "Institution Partnerships",

@@ -3,6 +3,10 @@ import { db } from "@/lib/db"
 import { getCurrentUser, withErrorHandler } from "@/lib/session"
 import { cachedJson, noStore } from "@/lib/http-cache"
 
+// Uses Prisma/Node APIs - pin the Node.js runtime explicitly.
+export const runtime = "nodejs";
+
+
 export const GET = withErrorHandler(async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
   const { id } = await params
   const user = await getCurrentUser()

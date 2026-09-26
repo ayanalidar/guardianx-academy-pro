@@ -3,6 +3,10 @@ import { db } from "@/lib/db"
 import { requireRole } from "@/lib/session"
 import { ensureTable, filterToColumns, getTableColumns, isDriftError } from "@/lib/db-safe"
 
+// Uses Prisma/Node APIs - pin the Node.js runtime explicitly.
+export const runtime = "nodejs";
+
+
 // Create a new course (instructor + admin only)
 export async function POST(req: NextRequest) {
   const user = await requireRole(["INSTRUCTOR", "ADMIN", "SUPER_ADMIN"])

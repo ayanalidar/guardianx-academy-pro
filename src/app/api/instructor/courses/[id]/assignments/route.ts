@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentUser, requireRole } from "@/lib/session"
 
+// Uses Prisma/Node APIs - pin the Node.js runtime explicitly.
+export const runtime = "nodejs";
+
+
 // GET - list assignments for a course.
 // Instructors (owner) and enrolled students can view.
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {

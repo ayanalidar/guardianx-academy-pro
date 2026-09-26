@@ -9,19 +9,17 @@ export const runtime = "nodejs";
 
    Generates a dynamic XML sitemap covering:
      - Homepage (/)
-     - All public hash routes (/, #/catalog, #/batches, etc.)
-     - All published courses (/#/course/<slug>)
-     - All published blog posts (/#/blog/<slug>)
-     - All published events (/#/event/<slug>)
-     - All published certifications (/#/cert/<slug>)
+     - All public path routes (/courses, /batches, /placements, etc.)
+     - All published courses (/courses/<slug>)
+     - All published blog posts (/blog/<slug>)
+     - All published events (/events/<slug>)
+     - All published certifications (/cert/<slug>)
 
-   The platform is a hash-routed SPA on a single `/` Next.js
-   route, so the sitemap uses fragment URLs (#/...). Search
-   engines that follow hash-fragment URLs (Google does for
-   crawlable hashbang patterns) get a complete URL set; the
-   static `/sitemap.ts` (Next.js MetadataRoute.Sitemap) handles
-   the no-fragment version for crawlers that don't follow
-   fragments.
+   The platform is a path-routed SPA: every public view has a real,
+   crawlable URL (hash URLs like /#/catalog are legacy and are
+   rewritten to clean paths on first load). Sitemaps must never use
+   fragment URLs - crawlers ignore fragments - so all entries are
+   real paths, mirroring the static /sitemap.xml.
 
    Set Content-Type: text/xml.
    ============================================================ */
@@ -35,30 +33,33 @@ interface SitemapEntry {
   priority: number;
 }
 
-const STATIC_HASH_ROUTES: Array<{
-  hash: string;
+const STATIC_PATH_ROUTES: Array<{
+  path: string;
   changefreq: SitemapEntry["changefreq"];
   priority: number;
 }> = [
-  { hash: "", changefreq: "daily", priority: 1.0 }, // Homepage
-  { hash: "#/catalog", changefreq: "weekly", priority: 0.9 },
-  { hash: "#/batches", changefreq: "weekly", priority: 0.9 },
-  { hash: "#/instructors", changefreq: "monthly", priority: 0.8 },
-  { hash: "#/events", changefreq: "weekly", priority: 0.8 },
-  { hash: "#/learning-paths", changefreq: "monthly", priority: 0.8 },
-  { hash: "#/cyber-range", changefreq: "monthly", priority: 0.8 },
-  { hash: "#/skill-tree", changefreq: "monthly", priority: 0.7 },
-  { hash: "#/exams", changefreq: "monthly", priority: 0.7 },
-  { hash: "#/credentials", changefreq: "monthly", priority: 0.6 },
-  { hash: "#/blog", changefreq: "weekly", priority: 0.8 },
-  { hash: "#/pricing", changefreq: "monthly", priority: 0.7 },
-  { hash: "#/impact", changefreq: "monthly", priority: 0.6 },
-  { hash: "#/contact", changefreq: "yearly", priority: 0.5 },
-  { hash: "#/support", changefreq: "monthly", priority: 0.5 },
-  { hash: "#/verify", changefreq: "yearly", priority: 0.5 },
-  { hash: "#/institutions-schools", changefreq: "monthly", priority: 0.7 },
-  { hash: "#/institutions-colleges", changefreq: "monthly", priority: 0.7 },
-  { hash: "#/institutions-universities", changefreq: "monthly", priority: 0.7 },
+  { path: "", changefreq: "daily", priority: 1.0 }, // Homepage
+  { path: "/courses", changefreq: "weekly", priority: 0.9 },
+  { path: "/batches", changefreq: "weekly", priority: 0.9 },
+  { path: "/instructors", changefreq: "monthly", priority: 0.8 },
+  { path: "/events", changefreq: "weekly", priority: 0.8 },
+  { path: "/learning-paths", changefreq: "monthly", priority: 0.8 },
+  { path: "/cyber-range", changefreq: "monthly", priority: 0.8 },
+  { path: "/skill-tree", changefreq: "monthly", priority: 0.7 },
+  { path: "/exams", changefreq: "monthly", priority: 0.7 },
+  { path: "/credentials", changefreq: "monthly", priority: 0.6 },
+  { path: "/blog", changefreq: "weekly", priority: 0.8 },
+  { path: "/pricing", changefreq: "monthly", priority: 0.7 },
+  { path: "/hiring", changefreq: "weekly", priority: 0.8 },
+  { path: "/placements", changefreq: "weekly", priority: 0.8 },
+  { path: "/contact", changefreq: "yearly", priority: 0.5 },
+  { path: "/support", changefreq: "monthly", priority: 0.5 },
+  { path: "/verify", changefreq: "yearly", priority: 0.5 },
+  { path: "/institutions/schools", changefreq: "monthly", priority: 0.7 },
+  { path: "/institutions/colleges", changefreq: "monthly", priority: 0.7 },
+  { path: "/institutions/universities", changefreq: "monthly", priority: 0.7 },
+  { path: "/corporate-training", changefreq: "monthly", priority: 0.7 },
+  { path: "/cyber-quiz", changefreq: "monthly", priority: 0.8 },
 ];
 
 function isoDate(d: Date | string | null | undefined): string | undefined {
@@ -89,10 +90,10 @@ function renderEntry(e: SitemapEntry): string {
 export const GET = withErrorHandler(async () => {
   const entries: SitemapEntry[] = [];
 
-  // 1. Static hash routes
-  for (const r of STATIC_HASH_ROUTES) {
+  // 1. Static path routes
+  for (const r of STATIC_PATH_ROUTES) {
     entries.push({
-      loc: r.hash ? `${BASE_URL}/${r.hash}` : `${BASE_URL}/`,
+      loc: r.path ? `${BASE_URL}${r.path}` : `${BASE_URL}/`,
       changefreq: r.changefreq,
       priority: r.priority,
       lastmod: isoDate(new Date()),
@@ -132,7 +133,7 @@ export const GET = withErrorHandler(async () => {
   // 3. Append dynamic entries
   for (const c of courses) {
     entries.push({
-      loc: `${BASE_URL}/#/course/${encodeURIComponent(c.slug)}`,
+      loc: `${BASE_URL}/courses/${encodeURIComponent(c.slug)}`,
       lastmod: isoDate(c.updatedAt),
       changefreq: "weekly",
       priority: 0.9,
@@ -140,7 +141,7 @@ export const GET = withErrorHandler(async () => {
   }
   for (const b of blogPosts) {
     entries.push({
-      loc: `${BASE_URL}/#/blog/${encodeURIComponent(b.slug)}`,
+      loc: `${BASE_URL}/blog/${encodeURIComponent(b.slug)}`,
       lastmod: isoDate(b.updatedAt),
       changefreq: "monthly",
       priority: 0.7,
@@ -148,7 +149,7 @@ export const GET = withErrorHandler(async () => {
   }
   for (const e of events) {
     entries.push({
-      loc: `${BASE_URL}/#/event/${encodeURIComponent(e.slug)}`,
+      loc: `${BASE_URL}/events/${encodeURIComponent(e.slug)}`,
       lastmod: isoDate(e.updatedAt),
       changefreq: "weekly",
       priority: 0.7,
@@ -156,7 +157,7 @@ export const GET = withErrorHandler(async () => {
   }
   for (const cert of certifications) {
     entries.push({
-      loc: `${BASE_URL}/#/cert/${encodeURIComponent(cert.slug)}`,
+      loc: `${BASE_URL}/cert/${encodeURIComponent(cert.slug)}`,
       lastmod: isoDate(cert.updatedAt),
       changefreq: "monthly",
       priority: 0.8,

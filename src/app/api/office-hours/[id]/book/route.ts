@@ -3,6 +3,10 @@ import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/session"
 import { sendEmail } from "@/lib/email"
 
+// Uses Prisma/Node APIs - pin the Node.js runtime explicitly.
+export const runtime = "nodejs";
+
+
 export async function POST(
   req: NextRequest,
   { params }: { params: Promise<{ id: string }> }

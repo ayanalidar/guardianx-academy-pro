@@ -4,7 +4,7 @@ import * as React from "react"
 import { useQuery } from "@tanstack/react-query"
 
 /**
- * Fetch all editable content for a given page (e.g. "home", "global", "impact").
+ * Fetch all editable content for a given page (e.g. "home", "global", "contact").
  * Returns the shape: { page, sections: { [section]: { [key]: value } } }
  *
  * Uses localStorage cache for instant initial render, then refetches in

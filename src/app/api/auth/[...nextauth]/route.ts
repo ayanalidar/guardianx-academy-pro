@@ -2,6 +2,10 @@ import type { NextRequest } from "next/server"
 import NextAuth from "next-auth"
 import { getAuthOptions } from "@/lib/auth"
 
+// Uses Prisma/Node APIs - pin the Node.js runtime explicitly.
+export const runtime = "nodejs";
+
+
 /**
  * NextAuth route handler - builds options PER REQUEST via getAuthOptions().
  *

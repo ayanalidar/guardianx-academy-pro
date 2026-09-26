@@ -21,8 +21,7 @@
  */
 
 import * as React from "react"
-import { AuthScreen } from "@/components/platform/auth-screen"
-import { AppShell } from "@/components/platform/app-shell"
+import dynamic from "next/dynamic"
 import { PublicPageShell } from "@/components/platform/public-page-shell"
 import { ErrorBoundary } from "@/components/platform/error-boundary"
 import { ViewRouter } from "@/components/platform/view-router"
@@ -30,6 +29,38 @@ import { useAppStore, type View } from "@/store/app-store"
 import { hashToView, replaceViewInUrl, pathToView, PUBLIC_VIEWS } from "@/lib/url-router"
 import { roleHomeFor } from "@/lib/nav-data"
 import { startIdlePreload, attachIntentPrefetch } from "@/lib/view-preloader"
+
+/* PERF: AuthScreen and AppShell never render at first paint - the splash
+   below always shows until the session check resolves, and only THEN does
+   exactly one of them render. Shipping both (plus their subtrees - global
+   search, notification bell, tab bar, auth marketing panel) in the initial
+   bundle made every visitor download code they would never use on that
+   visit. Lazy chunks are requested in parallel with the session fetch, so
+   the splash hides the load; the fallback matches the splash markup. */
+function ShellLoading() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background bg-grid">
+      <div className="flex flex-col items-center gap-4">
+        <div className="relative">
+          <div className="h-12 w-12 rounded-full border-2 border-emerald-500/20 border-t-emerald-400 animate-spin" />
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-emerald-400 font-mono text-xs">GX</span>
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground font-mono">INITIALIZING SECURE SESSION...</p>
+      </div>
+    </div>
+  )
+}
+
+const AuthScreen = dynamic(
+  () => import("@/components/platform/auth-screen").then(m => ({ default: m.AuthScreen })),
+  { ssr: false, loading: ShellLoading },
+)
+const AppShell = dynamic(
+  () => import("@/components/platform/app-shell").then(m => ({ default: m.AppShell })),
+  { ssr: false, loading: ShellLoading },
+)
 
 export function AppRoot({ initialView }: { initialView?: View }) {
   const { view, pendingView, setPendingView } = useAppStore()
@@ -182,11 +213,11 @@ export function AppRoot({ initialView }: { initialView?: View }) {
     )
   }
 
-  // If logged in and view is a public page (home/impact/contact), still show the app shell
+  // If logged in and view is a public page (home/contact), still show the app shell
   // so the user can navigate back to their dashboard via the sidebar.
   // If NOT logged in:
   //   - "login" view → show AuthScreen (full-screen, has its own header)
-  //   - public views (home/impact/contact) → show PublicPageShell with header + footer
+  //   - public views (home/contact) → show PublicPageShell with header + footer
   //   - any other view → remember where the user was trying to go (pendingView)
   //     and show AuthScreen. After login, AuthScreen redirects them back to
   //     pendingView instead of the role dashboard.

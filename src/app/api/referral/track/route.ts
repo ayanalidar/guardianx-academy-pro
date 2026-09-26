@@ -88,7 +88,43 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
     return NextResponse.json({ error: "Cannot refer yourself" }, { status: 400 })
   }
 
-  // Generate two unique coupon codes (retry on collision).
+  // ATOMIC CLAIM (audit fix C-02 follow-up): the previous check-then-act
+  // flow (read status PENDING → mint → update REWARDED) was raceable across
+  // concurrent serverless instances - two parallel POSTs could both pass the
+  // PENDING check and mint FOUR coupons instead of two. The authoritative
+  // gate is now a conditional updateMany that only succeeds ONCE per
+  // referral: whichever request flips PENDING→REWARDED wins the right to
+  // mint; every other concurrent request sees count === 0 and falls through
+  // to the idempotent already-tracked response. The in-memory rate limit
+  // above remains as defense-in-depth (it is per-instance on serverless,
+  // which is exactly why the DB-level claim is the real guarantee).
+  const claimed = await db.referral.updateMany({
+    where: { id: referral.id, status: "PENDING" },
+    data: {
+      status: "REWARDED",
+      referredEmail: email,
+      referredUserId: userId ?? null,
+    },
+  })
+  if (claimed.count === 0) {
+    // Lost the race (or state changed between our read and the claim).
+    // Re-read and return the idempotent response the repeat-call contract
+    // promises, so legitimate double-clicks still resolve cleanly.
+    const fresh = await db.referral.findUnique({ where: { id: referral.id } })
+    if (fresh?.status === "REWARDED" || fresh?.status === "ENROLLED") {
+      return NextResponse.json({
+        ok: true,
+        status: fresh.status,
+        referrerCouponCode: fresh.couponCode,
+        referredCouponCode: null,
+        alreadyTracked: true,
+      })
+    }
+    return NextResponse.json({ error: "Referral has expired" }, { status: 410 })
+  }
+
+  // Generate two unique coupon codes (retry on collision). Only the winner
+  // of the atomic claim reaches this point, so minting happens exactly once.
   const now = new Date()
   const validUntil = new Date(now.getTime() + REWARD_VALID_DAYS * 24 * 60 * 60 * 1000)
 
@@ -114,27 +150,33 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
     throw new Error(`Failed to allocate unique coupon for ${ownerLabel} (${ownerEmail})`)
   }
 
-  const [referrerCoupon, referredCoupon] = await Promise.all([
-    createCoupon("referrer", referrer.email),
-    createCoupon("referred", email),
-  ])
+  try {
+    const [referrerCoupon, referredCoupon] = await Promise.all([
+      createCoupon("referrer", referrer.email),
+      createCoupon("referred", email),
+    ])
 
-  // Materialise the reward: stamp the referral with the referrer's coupon code,
-  // mark it REWARDED, and record the referred user.
-  await db.referral.update({
-    where: { id: referral.id },
-    data: {
+    // Stamp the referrer's coupon code onto the claimed referral.
+    await db.referral.update({
+      where: { id: referral.id },
+      data: { couponCode: referrerCoupon.code },
+    })
+
+    return NextResponse.json({
+      ok: true,
       status: "REWARDED",
-      referredEmail: email,
-      referredUserId: userId ?? null,
-      couponCode: referrerCoupon.code,
-    },
-  })
-
-  return NextResponse.json({
-    ok: true,
-    status: "REWARDED",
-    referrerCouponCode: referrerCoupon.code,
-    referredCouponCode: referredCoupon.code,
-  })
+      referrerCouponCode: referrerCoupon.code,
+      referredCouponCode: referredCoupon.code,
+    })
+  } catch (err) {
+    // Minting failed after the claim - revert to PENDING so the referral
+    // stays redeemable instead of being stuck REWARDED with no coupon.
+    await db.referral
+      .updateMany({
+        where: { id: referral.id, status: "REWARDED", couponCode: null },
+        data: { status: "PENDING", referredEmail: null, referredUserId: null },
+      })
+      .catch(() => null)
+    throw err
+  }
 })

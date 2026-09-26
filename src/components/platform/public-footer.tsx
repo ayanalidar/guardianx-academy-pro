@@ -128,7 +128,6 @@ export function PublicFooter() {
     {
       title: "COMPANY",
       links: [
-        { label: "About", view: { name: "impact" } },
         { label: "Instructors", view: { name: "instructors" } },
         { label: "Careers", view: { name: "career-planner" } },
         { label: "Hiring - Job Openings", view: { name: "hiring" } },

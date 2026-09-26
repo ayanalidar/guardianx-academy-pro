@@ -4,6 +4,10 @@ import { getCurrentUser, rateLimit, getClientIp } from "@/lib/session"
 import { awardXp, XP_REWARDS } from "@/lib/gamification"
 import { ORCHESTRATOR_URL, signOrchestratorRequest } from "@/lib/orchestrator"
 
+// Uses Prisma/Node APIs - pin the Node.js runtime explicitly.
+export const runtime = "nodejs";
+
+
 // Lab orchestration endpoint - connects to the lab-orchestrator mini-service.
 // All requests are HMAC-signed with LAB_SHARED_SECRET (see src/lib/orchestrator.ts).
 // SECURITY: session.dynamicFlag is NEVER returned to the browser - it is

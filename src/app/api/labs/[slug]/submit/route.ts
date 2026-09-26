@@ -4,6 +4,10 @@ import { db } from "@/lib/db"
 import { getCurrentUser, withErrorHandler, rateLimit } from "@/lib/session"
 import { awardXp, XP_REWARDS, awardSpecificAchievement } from "@/lib/gamification"
 
+// Uses Prisma/Node APIs - pin the Node.js runtime explicitly.
+export const runtime = "nodejs";
+
+
 export const POST = withErrorHandler(async (req: NextRequest, { params }: { params: Promise<{ slug: string }> }) => {
   const { slug } = await params
   const user = await getCurrentUser()

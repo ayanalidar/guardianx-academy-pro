@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { requireAdmin, withErrorHandler } from "@/lib/session"
 
+// Uses Prisma/Node APIs - pin the Node.js runtime explicitly.
+export const runtime = "nodejs";
+
+
 // GET /api/admin/labs - list all labs with progress counts
 export const GET = withErrorHandler(async (req: NextRequest) => {
   const user = await requireAdmin()

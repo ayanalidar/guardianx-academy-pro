@@ -4,6 +4,10 @@ import { getCurrentUser } from "@/lib/session"
 import { awardXp } from "@/lib/gamification"
 import { randomInt } from "crypto"
 
+// Uses Prisma/Node APIs - pin the Node.js runtime explicitly.
+export const runtime = "nodejs";
+
+
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const user = await getCurrentUser()

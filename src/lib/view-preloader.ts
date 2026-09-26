@@ -29,7 +29,6 @@ type ViewImporter = () => Promise<any>
 
 /** view chunk importers, keyed by the file basename under src/views/ */
 export const VIEW_IMPORTERS: Record<string, ViewImporter> = {
-  "impact": () => import("@/views/impact"),
   "contact": () => import("@/views/contact"),
   "institutions-schools": () => import("@/views/institutions-schools"),
   "institutions-colleges": () => import("@/views/institutions-colleges"),

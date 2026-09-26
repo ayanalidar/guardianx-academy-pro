@@ -5,6 +5,10 @@ import { logAction } from "@/lib/audit"
 import { ensureTable } from "@/lib/db-safe"
 import { COURSE_LIST_FIELDS, normalizeCourseListInput } from "@/lib/course-lists"
 
+// Uses Prisma/Node APIs - pin the Node.js runtime explicitly.
+export const runtime = "nodejs";
+
+
 // GET /api/admin/courses - list all courses with enrollment counts, module counts, lesson counts
 export const GET = withErrorHandler(async (req: NextRequest) => {
   const user = await requireAdmin()

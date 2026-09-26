@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { requireRole } from "@/lib/session"
 
+// Uses Prisma/Node APIs - pin the Node.js runtime explicitly.
+export const runtime = "nodejs";
+
+
 export async function GET() {
   const user = await requireRole(["INSTRUCTOR", "ADMIN", "SUPER_ADMIN"])
   if (user instanceof NextResponse) return user

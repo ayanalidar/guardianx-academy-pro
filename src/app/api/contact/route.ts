@@ -3,6 +3,10 @@ import { z } from "zod"
 import { db } from "@/lib/db"
 import { sendEmail } from "@/lib/email"
 
+// Uses Prisma/Node APIs - pin the Node.js runtime explicitly.
+export const runtime = "nodejs";
+
+
 // Rate limiting - prevent spam abuse
 const RATE_LIMIT_WINDOW = 60 * 1000 // 1 minute
 const RATE_LIMIT_MAX = 3 // 3 messages per minute per IP

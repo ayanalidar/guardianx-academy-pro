@@ -3,6 +3,10 @@ import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/session"
 import { createNotification } from "@/lib/notifications"
 
+// Uses Prisma/Node APIs - pin the Node.js runtime explicitly.
+export const runtime = "nodejs";
+
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url)
   const courseId = searchParams.get("courseId")

@@ -3,6 +3,10 @@ import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/session"
 import { sendEmail } from "@/lib/email"
 
+// Uses Prisma/Node APIs - pin the Node.js runtime explicitly.
+export const runtime = "nodejs";
+
+
 // POST - student submits an assignment.
 // Body: { content?, fileUrl? }
 // Mark late if past dueDate (only allowLate submissions accepted past due).

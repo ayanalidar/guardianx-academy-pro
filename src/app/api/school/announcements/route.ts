@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { requireRole } from "@/lib/session"
 
+// Uses Prisma/Node APIs - pin the Node.js runtime explicitly.
+export const runtime = "nodejs";
+
+
 // POST /api/school/announcements
 // Body: { batchId?: string, title, message, color?, icon? }
 // If batchId provided, notify all students in that batch. Otherwise notify all school's students.

@@ -1,4 +1,4 @@
-import nodemailer from "nodemailer"
+import nodemailer, { type Transporter } from "nodemailer"
 import { getSettings } from "@/lib/settings"
 
 /**
@@ -117,7 +117,7 @@ export interface SendEmailResult {
   error?: string
 }
 
-let _transporter: nodemailer.Transporter | null = null
+let _transporter: Transporter | null = null
 let _cachedSettings: EmailSettings | null = null
 let _settingsCheckedAt = 0
 let _mailboxIdCache: { id: string; address: string; at: number } | null = null
@@ -167,7 +167,7 @@ export function clearEmailCache() {
   _mailboxIdCache = null
 }
 
-async function getTransporter(smtp: { host: string; port: number; user: string; pass: string }): Promise<nodemailer.Transporter> {
+async function getTransporter(smtp: { host: string; port: number; user: string; pass: string }): Promise<Transporter> {
   if (_transporter) return _transporter
   _transporter = nodemailer.createTransport({
     host: smtp.host,

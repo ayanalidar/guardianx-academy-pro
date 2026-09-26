@@ -2,6 +2,10 @@ import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/session"
 
+// Uses Prisma/Node APIs - pin the Node.js runtime explicitly.
+export const runtime = "nodejs";
+
+
 // Returns the best "continue where you left off" lesson - the most recently
 // accessed lesson that isn't complete, falling back to the first incomplete
 // lesson in the most-recently-accessed enrolled course.

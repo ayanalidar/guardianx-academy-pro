@@ -158,90 +158,6 @@ const HOME: ContentItem[] = [
 ]
 
 // ============================================================
-// IMPACT PAGE
-// ============================================================
-const IMPACT: ContentItem[] = [
-  // Hero
-  { page: "impact", section: "hero", key: "badge", value: "OUR IMPACT" },
-  { page: "impact", section: "hero", key: "title", value: "Transforming careers," },
-  { page: "impact", section: "hero", key: "titleAccent", value: "securing the future." },
-  {
-    page: "impact", section: "hero", key: "description",
-    value: "Every number tells a story - a learner who leveled up their career, an institution that transformed its curriculum, and a community quietly making the digital world safer."
-  },
-  {
-    page: "impact", section: "hero", key: "pills",
-    value: [
-      { icon: "ShieldCheck", label: "Verified outcomes" },
-      { icon: "Network", label: "Pan-India reach" },
-      { icon: "Cpu", label: "Industry-aligned" },
-    ]
-  },
-
-  // Stats
-  { page: "impact", section: "stats", key: "eyebrow", value: "BY THE NUMBERS" },
-  { page: "impact", section: "stats", key: "title", value: "Scale that creates real opportunity" },
-  {
-    page: "impact", section: "stats", key: "items",
-    value: [
-      { value: 12000, suffix: "+", label: "Active Learners", icon: "Users", accent: "text-violet-300", tint: "bg-violet-500/10" },
-      { value: 8500, suffix: "+", label: "Certificates Issued", icon: "Award", accent: "text-amber-300", tint: "bg-amber-500/10" },
-      { value: 94, suffix: "%", label: "Exam Pass Rate", icon: "Target", accent: "text-cyan-300", tint: "bg-cyan-500/10" },
-      { value: 150, suffix: "+", label: "Partner Institutions", icon: "Building2", accent: "text-violet-300", tint: "bg-violet-500/10" },
-      { value: 31, suffix: "", label: "Hands-on Labs", icon: "Zap", accent: "text-rose-300", tint: "bg-rose-500/10" },
-      { value: 28, suffix: "+", label: "Certification Tracks", icon: "Trophy", accent: "text-teal-300", tint: "bg-teal-500/10" },
-    ]
-  },
-
-  // Career outcomes
-  { page: "impact", section: "outcomes", key: "eyebrow", value: "CAREER OUTCOMES" },
-  { page: "impact", section: "outcomes", key: "title", value: "Real results, real careers" },
-  {
-    page: "impact", section: "outcomes", key: "description",
-    value: "Measured impact on our learners' professional trajectories, tracked 6-12 months post-certification."
-  },
-  {
-    page: "impact", section: "outcomes", key: "items",
-    value: [
-      { icon: "TrendingUp", value: 68, prefix: "", suffix: "%", label: "Career advancement", accent: "text-violet-300", desc: "of certified learners report a promotion or new role within 6 months." },
-      { icon: "Briefcase", value: 12, prefix: "₹", suffix: "L", label: "Avg salary increase", accent: "text-amber-300", desc: "post-certification compensation jump for Indian professionals." },
-      { icon: "Rocket", value: 3.2, prefix: "", suffix: "x", label: "More interview calls", accent: "text-cyan-300", desc: "compared to non-certified peers in the same talent pool." },
-      { icon: "BadgeCheck", value: 92, prefix: "", suffix: "%", label: "Job placement rate", accent: "text-teal-300", desc: "for graduates of our intensive cyber security bootcamps." },
-    ]
-  },
-
-  // Success stories
-  { page: "impact", section: "stories", key: "eyebrow", value: "SUCCESS STORIES" },
-  { page: "impact", section: "stories", key: "title", value: "Learners who became guardians" },
-  { page: "impact", section: "stories", key: "description", value: "Real journeys from our community - verified by their certificates." },
-  {
-    page: "impact", section: "stories", key: "items",
-    value: [
-      { name: "Priya Sharma", transition: "Security Analyst → SOC Lead", company: "TCS Cyber Defense", avatar: "PS", tint: "bg-violet-500/15 text-violet-200", cert: "CEH", quote: "GuardianX's CEH track was a complete game-changer. The hands-on labs gave me real confidence during incident response. Within 4 months of certification, I was promoted to SOC Lead." },
-      { name: "Rahul Verma", transition: "Network Engineer → Security Engineer", company: "Infosys", avatar: "RV", tint: "bg-cyan-500/15 text-cyan-200", cert: "CCNP Security", quote: "The CCNA + CCNP Security tracks were exactly what I needed. Live sessions with industry experts were invaluable - I now lead security initiatives across enterprise networks." },
-      { name: "Ananya Reddy", transition: "Student → Penetration Tester", company: "Wipro", avatar: "AR", tint: "bg-amber-500/15 text-amber-200", cert: "WAPT", quote: "As a fresher, the WAPT labs gave me hands-on experience no textbook could. I landed my pentest role directly because of the skills I demonstrated in the technical interview." },
-    ]
-  },
-
-  // Partner institutions (impact page)
-  { page: "impact", section: "mission", key: "eyebrow", value: "PARTNER INSTITUTIONS" },
-  { page: "impact", section: "mission", key: "title", value: "Educating the next generation" },
-  {
-    page: "impact", section: "mission", key: "description",
-    value: "We partner with schools, colleges, and universities to bring cyber security education to their students - verified curricula, shared labs, and joint certifications."
-  },
-  {
-    page: "impact", section: "mission", key: "partners",
-    value: [
-      { type: "Schools", count: 85, icon: "Building2", accent: "text-violet-300", tint: "bg-violet-500/10" },
-      { type: "Colleges", count: 45, icon: "GraduationCap", accent: "text-cyan-300", tint: "bg-cyan-500/10" },
-      { type: "Universities", count: 20, icon: "Trophy", accent: "text-amber-300", tint: "bg-amber-500/10" },
-    ]
-  },
-  { page: "impact", section: "mission", key: "cta", value: "Become a Partner" },
-]
-
-// ============================================================
 // CONTACT PAGE
 // ============================================================
 const CONTACT: ContentItem[] = [
@@ -610,7 +526,6 @@ const GLOBAL_HEADER: ContentItem[] = [
       { label: "Home", view: "home", icon: "Home" },
       { label: "Courses", view: "catalog", icon: "Shield" },
       { label: "Partners", view: "institutions", icon: "Building2" },
-      { label: "Impact", view: "impact", icon: "TrendingUp" },
       { label: "Contact", view: "contact", icon: "Mail" },
     ]
   },
@@ -640,7 +555,6 @@ const GLOBAL_FOOTER: ContentItem[] = [
       ]},
       { title: "Company", items: [
         { label: "Home", view: "home" },
-        { label: "Impact", view: "impact" },
         { label: "Contact", view: "contact" },
         { label: "School Portal", view: "login" },
       ]},
@@ -672,7 +586,6 @@ const GLOBAL_FOOTER: ContentItem[] = [
 
 export const SEED_CMS: CmsSeedItem[] = [
   ...HOME,
-  ...IMPACT,
   ...CONTACT,
   ...INSTITUTIONS,
   ...CATALOG,

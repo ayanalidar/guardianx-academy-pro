@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { requireRole } from "@/lib/session"
 
+// Uses Prisma/Node APIs - pin the Node.js runtime explicitly.
+export const runtime = "nodejs";
+
+
 // Helper: load rubric and verify ownership
 async function loadOwnedRubric(id: string, user: { id: string; role: string }) {
   const rubric = await db.gradingRubric.findUnique({

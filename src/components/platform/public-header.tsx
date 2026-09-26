@@ -210,12 +210,6 @@ const MEGA_MENU_GROUPS: MegaMenuGroup[] = [
     label: "About",
     items: [
       {
-        icon: TrendingUp,
-        title: "Impact",
-        description: "Outcomes, learner stats & milestones",
-        view: { name: "impact" },
-      },
-      {
         icon: Users,
         title: "Instructors",
         description: "Meet the practitioners teaching our courses",

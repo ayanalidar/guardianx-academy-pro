@@ -46,7 +46,6 @@ function ViewLoading() {
 }
 
 // ── Lazy-loaded views (only loaded when the user navigates to them) ──
-const ImpactView = dynamic(() => import("@/views/impact").then(m => ({ default: m.ImpactView })), { ssr: false, loading: ViewLoading })
 const ContactView = dynamic(() => import("@/views/contact").then(m => ({ default: m.ContactView })), { ssr: false, loading: ViewLoading })
 const InstitutionsHubView = dynamic(() => import("@/views/institutions").then(m => ({ default: m.InstitutionsView })), { ssr: false, loading: ViewLoading })
 const InstitutionsSchoolsView = dynamic(() => import("@/views/institutions-schools").then(m => ({ default: m.InstitutionsSchoolsView })), { ssr: false, loading: ViewLoading })
@@ -153,7 +152,6 @@ export function ViewRouter() {
   return (
     <div key={JSON.stringify(view)} className="page-transition">
       {view.name === "home" && <HomeView />}
-      {view.name === "impact" && <ImpactView />}
       {view.name === "contact" && <ContactView />}
       {/* "institutions" = CMS-driven hub linking to the three product pages */}
       {view.name === "institutions" && <InstitutionsHubView />}

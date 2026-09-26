@@ -3,6 +3,10 @@ import { db } from "@/lib/db"
 import { getCurrentUser, withErrorHandler } from "@/lib/session"
 import { levelFromXp, rankTitle } from "@/lib/gamification"
 
+// Uses Prisma/Node APIs - pin the Node.js runtime explicitly.
+export const runtime = "nodejs";
+
+
 /**
  * GET /api/leaderboard
  *

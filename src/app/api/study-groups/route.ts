@@ -3,6 +3,10 @@ import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/session"
 import { randomInt } from "crypto"
 
+// Uses Prisma/Node APIs - pin the Node.js runtime explicitly.
+export const runtime = "nodejs";
+
+
 export async function GET(req: NextRequest) {
   const user = await getCurrentUser()
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })

@@ -2,6 +2,10 @@ import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { requireAdmin } from "@/lib/session"
 
+// Uses Prisma/Node APIs - pin the Node.js runtime explicitly.
+export const runtime = "nodejs";
+
+
 // Platform-wide analytics for the admin dashboard
 export async function GET() {
   const user = await requireAdmin()

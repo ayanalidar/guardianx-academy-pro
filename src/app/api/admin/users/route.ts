@@ -4,6 +4,10 @@ import { db } from "@/lib/db"
 import { requireAdmin, withErrorHandler } from "@/lib/session"
 import { logAction } from "@/lib/audit"
 
+// Uses Prisma/Node APIs - pin the Node.js runtime explicitly.
+export const runtime = "nodejs";
+
+
 // GET /api/admin/users - list all users with pagination (50/page), search, role filter
 export const GET = withErrorHandler(async (req: NextRequest) => {
   const currentUser = await requireAdmin()

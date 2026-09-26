@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
 
+// Uses Prisma/Node APIs - pin the Node.js runtime explicitly.
+export const runtime = "nodejs";
+
+
 // Returns course completion leaderboard:
 // - top users by courses completed
 // - most popular courses (by enrollment)

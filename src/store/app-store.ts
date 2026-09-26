@@ -9,7 +9,6 @@ import {
 
 export type View =
   | { name: "home" }
-  | { name: "impact" }
   | { name: "contact" }
   | { name: "login" }
   | { name: "institutions" }

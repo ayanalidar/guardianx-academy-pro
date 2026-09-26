@@ -3,6 +3,10 @@ import { db } from "@/lib/db"
 import { requireRole } from "@/lib/session"
 import { randomBytes } from "crypto"
 
+// Uses Prisma/Node APIs - pin the Node.js runtime explicitly.
+export const runtime = "nodejs";
+
+
 // Generate a unique school code (e.g. "GXA-7K3M9P")
 function generateSchoolCode(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789" // no confusing chars (0/O, 1/I)

@@ -3,6 +3,10 @@ import { db } from "@/lib/db"
 import { getCurrentUser, withErrorHandler } from "@/lib/session"
 import { safeLab } from "@/lib/safe-lab"
 
+// Uses Prisma/Node APIs - pin the Node.js runtime explicitly.
+export const runtime = "nodejs";
+
+
 export const GET = withErrorHandler(async (_req: NextRequest, { params }: { params: Promise<{ slug: string }> }) => {
   const { slug } = await params
   const lab = await db.lab.findUnique({ where: { slug } })

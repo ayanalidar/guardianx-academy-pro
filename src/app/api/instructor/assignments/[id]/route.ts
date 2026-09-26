@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { requireRole } from "@/lib/session"
 
+// Uses Prisma/Node APIs - pin the Node.js runtime explicitly.
+export const runtime = "nodejs";
+
+
 // Helper: load an assignment and verify instructor ownership (or admin)
 async function loadOwnedAssignment(id: string, user: { id: string; role: string }) {
   const assignment = await db.assignment.findUnique({

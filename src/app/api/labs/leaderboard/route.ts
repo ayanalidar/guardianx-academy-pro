@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
 
+// Uses Prisma/Node APIs - pin the Node.js runtime explicitly.
+export const runtime = "nodejs";
+
+
 // Returns lab leaderboards:
 // - top solvers by count + points
 // - fastest solve times per lab (and overall)

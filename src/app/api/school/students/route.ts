@@ -4,6 +4,10 @@ import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/session"
 import { sendEmail } from "@/lib/email"
 
+// Uses Prisma/Node APIs - pin the Node.js runtime explicitly.
+export const runtime = "nodejs";
+
+
 function generateTempPassword(len = 10): string {
   const chars = "ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789"
   let out = ""

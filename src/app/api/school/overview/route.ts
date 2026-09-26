@@ -2,6 +2,10 @@ import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getCurrentUser } from "@/lib/session"
 
+// Uses Prisma/Node APIs - pin the Node.js runtime explicitly.
+export const runtime = "nodejs";
+
+
 /** Shared guard for SCHOOL_ADMIN access - returns user + school, or an error response. */
 export async function getSchoolAdminContext() {
   const user = await getCurrentUser()

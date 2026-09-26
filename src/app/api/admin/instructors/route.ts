@@ -4,6 +4,10 @@ import { db } from "@/lib/db"
 import { requireAdmin, requireRole, withErrorHandler } from "@/lib/session"
 import { logAction } from "@/lib/audit"
 
+// Uses Prisma/Node APIs - pin the Node.js runtime explicitly.
+export const runtime = "nodejs";
+
+
 // GET /api/admin/instructors - list all instructors with their profiles + workload
 export const GET = withErrorHandler(async () => {
   const currentUser = await requireRole(["INSTRUCTOR", "ADMIN", "SUPER_ADMIN"])

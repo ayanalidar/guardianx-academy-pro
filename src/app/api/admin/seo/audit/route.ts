@@ -63,15 +63,6 @@ const STATIC_PAGES: PublicPageDef[] = [
     minWords: 600,
   },
   {
-    name: "Impact",
-    pageKey: "impact",
-    url: "/#/impact",
-    defaultTitle: "Our Impact - GuardianX Academy",
-    defaultDescription:
-      "Every number tells a story - learners who leveled up their careers, institutions that transformed their curriculum, and a community quietly making the digital world safer.",
-    minWords: 300,
-  },
-  {
     name: "Contact",
     pageKey: "contact",
     url: "/#/contact",

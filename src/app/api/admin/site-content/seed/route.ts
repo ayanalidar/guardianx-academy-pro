@@ -10,7 +10,7 @@ export const runtime = "nodejs"
  * empty Content Studio from the UI without shell access.
  *
  * Body:
- *   { page?: "home" | "impact" | "contact" | "institutions" | "catalog" | "auth" | "global" }
+ *   { page?: "home" | "contact" | "institutions" | "catalog" | "auth" | "global" }
  *   - If page is omitted or "*", all pages are (re)seeded.
  *   - Existing rows are upserted (their values are overwritten with the
  *     seed defaults). Rows whose page+section+key does NOT appear in the

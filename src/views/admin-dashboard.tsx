@@ -1874,7 +1874,6 @@ function ContentTab() {
   const { navigate } = useAppStore()
   const pages = [
     { id: "home",         label: "Home Page",             desc: "Hero, audiences, courses, labs, partners, final CTA",         icon: BookMarked,    accent: "text-violet-300" },
-    { id: "impact",       label: "Impact Page",           desc: "Stats, career outcomes, success stories, partner counts",    icon: TrendingUp,    accent: "text-amber-300" },
     { id: "contact",      label: "Contact Page",          desc: "Contact info, form labels, response times, FAQ",             icon: Mail,          accent: "text-cyan-300" },
     { id: "institutions", label: "Institutions Page",     desc: "Partner types, benefits, flow steps, partnership models",    icon: Building2,     accent: "text-emerald-300" },
     { id: "catalog",      label: "Catalog Page",          desc: "Hero copy, filter labels, stat cards",                       icon: BookOpen,      accent: "text-violet-300" },

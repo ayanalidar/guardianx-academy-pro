@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { requireAdmin } from "@/lib/session"
 
+// Uses Prisma/Node APIs - pin the Node.js runtime explicitly.
+export const runtime = "nodejs";
+
+
 // POST /api/admin/leads/[id]/notes - add a note to a lead
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const currentUser = await requireAdmin()

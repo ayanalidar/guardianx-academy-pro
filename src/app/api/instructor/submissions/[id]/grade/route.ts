@@ -4,6 +4,10 @@ import { requireRole } from "@/lib/session"
 import { sendEmail } from "@/lib/email"
 import { createNotification } from "@/lib/notifications"
 
+// Uses Prisma/Node APIs - pin the Node.js runtime explicitly.
+export const runtime = "nodejs";
+
+
 // POST - grade a submission.
 // Body: { grade (0-100), feedback, rubricScores? (JSON array) }
 // Sets gradedAt, gradedBy, status "graded". Sends email + notification to student.

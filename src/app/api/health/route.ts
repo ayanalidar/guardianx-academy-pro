@@ -5,6 +5,10 @@ import { db } from "@/lib/db"
 import { ensureTable } from "@/lib/db-safe"
 import { getCurrentUser } from "@/lib/session"
 
+// Uses Prisma/Node APIs - pin the Node.js runtime explicitly.
+export const runtime = "nodejs";
+
+
 /**
  * Health endpoint - the single source of truth for "is the platform OK".
  *

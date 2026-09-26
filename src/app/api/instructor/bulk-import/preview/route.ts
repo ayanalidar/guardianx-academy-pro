@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server"
 import { requireRole } from "@/lib/session"
 import { parseCsvObjects, isValidEmail } from "@/lib/csv"
 
+// Uses Prisma/Node APIs - pin the Node.js runtime explicitly.
+export const runtime = "nodejs";
+
+
 export async function POST(req: NextRequest) {
   try {
     const user = await requireRole(["INSTRUCTOR", "ADMIN", "SUPER_ADMIN"])

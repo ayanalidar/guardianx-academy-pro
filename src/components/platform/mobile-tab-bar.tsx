@@ -46,7 +46,7 @@ export function MobileTabBar() {
 
   /** Views where the tab bar makes sense (app surfaces, not marketing). */
   const NON_APP_VIEWS = new Set([
-    "home", "impact", "contact", "login", "pricing", "blog", "blog-post",
+    "home", "contact", "login", "pricing", "blog", "blog-post",
     "verify", "cert-landing", "legal", "events", "event-detail", "cms",
   ])
 

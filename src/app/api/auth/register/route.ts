@@ -4,6 +4,10 @@ import { z } from "zod"
 import { randomInt } from "crypto" // audit fix C-10: crypto-secure code generation
 import { db } from "@/lib/db"
 
+// Uses Prisma/Node APIs - pin the Node.js runtime explicitly.
+export const runtime = "nodejs";
+
+
 // Rate limiting - simple in-memory counter (per IP, per window)
 const RATE_LIMIT_WINDOW = 60 * 1000 // 1 minute
 const RATE_LIMIT_MAX = 5 // 5 registrations per minute per IP

@@ -2,6 +2,10 @@ import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { verifyVerificationHash } from "@/lib/credentials"
 
+// Uses Prisma/Node APIs - pin the Node.js runtime explicitly.
+export const runtime = "nodejs";
+
+
 /**
  * PUBLIC certificate verification endpoint.
  * Anyone (including non-authenticated visitors on the homepage) can verify

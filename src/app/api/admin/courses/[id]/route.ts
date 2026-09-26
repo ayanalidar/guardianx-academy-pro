@@ -5,6 +5,10 @@ import { logAction } from "@/lib/audit"
 import { ensureTable } from "@/lib/db-safe"
 import { COURSE_LIST_FIELDS, normalizeCourseListInput } from "@/lib/course-lists"
 
+// Uses Prisma/Node APIs - pin the Node.js runtime explicitly.
+export const runtime = "nodejs";
+
+
 // PATCH /api/admin/courses/[id] - update any course field (incl. published toggle)
 export const PATCH = withErrorHandler(
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
