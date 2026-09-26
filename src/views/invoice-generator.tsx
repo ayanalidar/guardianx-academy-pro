@@ -948,12 +948,13 @@ export function InvoiceGeneratorView() {
                           <span className="gx-glass-soft inline-flex items-center gap-1 px-2 py-0.5"><Mail className="h-3 w-3 text-cyan-300" /> academy@guardianx.in</span>
                           <span className="gx-glass-soft inline-flex items-center gap-1 px-2 py-0.5"><Mail className="h-3 w-3 text-cyan-300" /> academy@guardianx.cloud</span>
                           <span className="gx-glass-soft inline-flex items-center gap-1 px-2 py-0.5"><MapPin className="h-3 w-3 text-cyan-300" /> Nooripora, Baramulla, Kashmir 193401 &amp; Gautam Buddha Nagar, Noida 201301</span>
+                          <span className="gx-glass-soft inline-flex items-center gap-1 px-2 py-0.5"><Hash className="h-3 w-3 text-cyan-300" /> Reg No: UDYAM-JK-03-0034470</span>
                         </div>
                       </div>
                     </div>
                     <div className="text-right">
                       <div className="text-4xl sm:text-5xl font-bold tracking-[0.14em] text-gradient-premium">INVOICE</div>
-                      <div className="text-sm text-violet-200/90 font-mono mt-1.5">{invoiceNumber}</div>
+                      <div className="text-sm text-violet-200/90 font-mono mt-1.5 break-all">{invoiceNumber}</div>
                       {/* Status stamp - rubber-stamp treatment */}
                       <div className="mt-4">
                         {(() => {
@@ -981,20 +982,20 @@ export function InvoiceGeneratorView() {
                     <div className="size-10 rounded-full bg-gradient-to-br from-cyan-500/30 to-violet-500/30 border border-border/60 flex items-center justify-center text-sm font-bold text-cyan-100 shrink-0">
                       {(clientName || clientOrg || "?").charAt(0).toUpperCase()}
                     </div>
-                    <div>
-                      <p className="font-semibold text-slate-100">{clientName || "Client Name"}</p>
-                      {clientOrg && <p className="text-sm text-slate-400">{clientOrg}</p>}
+                    <div className="min-w-0">
+                      <p className="font-semibold text-slate-100 break-words">{clientName || "Client Name"}</p>
+                      {clientOrg && <p className="text-sm text-slate-400 break-words">{clientOrg}</p>}
                       {clientEmail && (
-                        <p className="text-xs text-slate-300 mt-1 flex items-center gap-1">
-                          <Mail className="h-3 w-3 text-violet-300" /> {clientEmail}
+                        <p className="text-xs text-slate-300 mt-1 flex items-center gap-1 break-all">
+                          <Mail className="h-3 w-3 text-violet-300 shrink-0" /> {clientEmail}
                         </p>
                       )}
                       {clientPhone && (
                         <p className="text-xs text-slate-300 flex items-center gap-1">
-                          <Phone className="h-3 w-3 text-violet-300" /> {clientPhone}
+                          <Phone className="h-3 w-3 text-violet-300 shrink-0" /> {clientPhone}
                         </p>
                       )}
-                      {clientAddress && <p className="text-xs text-slate-400 mt-1 whitespace-pre-line">{clientAddress}</p>}
+                      {clientAddress && <p className="text-xs text-slate-400 mt-1 whitespace-pre-line break-words">{clientAddress}</p>}
                     </div>
                   </div>
                 </div>
@@ -1024,7 +1025,7 @@ export function InvoiceGeneratorView() {
               {/* Line items table - frosted panel */}
               <div className="px-6 sm:px-8 pb-2">
                 <div className="gx-glass p-4 sm:p-5">
-                <table className="w-full">
+                <table className="w-full table-fixed">
                   <thead>
                     <tr className="bg-gradient-to-r from-violet-600/30 via-fuchsia-500/20 to-cyan-400/20">
                       <th className="text-left py-3 px-3 rounded-l-lg text-[10px] font-bold uppercase tracking-wider text-cyan-200">Item</th>
@@ -1043,7 +1044,7 @@ export function InvoiceGeneratorView() {
                               <div className={cn("inline-flex p-1.5 rounded-md border border-white/15", cfg.bg)}>
                                 <cfg.icon className={cn("h-3.5 w-3.5", cfg.color)} />
                               </div>
-                              <span className="text-sm text-slate-100">{item.description || "-"}</span>
+                              <span className="text-sm text-slate-100 break-words min-w-0">{item.description || "-"}</span>
                             </div>
                           </td>
                           <td className="py-3 text-center text-sm text-slate-300 tabular-nums">{item.quantity}</td>
@@ -1075,11 +1076,11 @@ export function InvoiceGeneratorView() {
                             <QrCode className="size-full text-zinc-900" />
                           )}
                         </div>
-                        <div className="text-xs space-y-1">
+                        <div className="text-xs space-y-1 min-w-0">
                           <p className="font-semibold text-slate-100 flex items-center gap-1.5">
-                            <QrCode className="h-3.5 w-3.5 text-violet-300" /> Scan to Pay (UPI)
+                            <QrCode className="h-3.5 w-3.5 text-violet-300 shrink-0" /> Scan to Pay (UPI)
                           </p>
-                          <p className="text-slate-400">UPI ID: <span className="font-mono text-slate-100">{upiId}</span></p>
+                          <p className="text-slate-400 break-all">UPI ID: <span className="font-mono text-slate-100">{upiId}</span></p>
                           <p className="text-slate-400">Amount: <span className="font-mono text-slate-100">{formatMoney(total)}</span></p>
                           <p className="text-slate-400">Account: <span className="font-mono text-slate-100">{accountNumber}</span></p>
                           <p className="text-slate-400">IFSC: <span className="font-mono text-slate-100">{ifscCode}</span></p>
@@ -1142,11 +1143,11 @@ export function InvoiceGeneratorView() {
                     <Landmark className="h-3.5 w-3.5 text-emerald-300" /> Bank Details
                   </p>
                   <div className="text-xs space-y-1">
-                    <div className="flex gap-2"><span className="text-slate-400 w-24">Bank:</span><span className="font-medium text-slate-100">{bankName}</span></div>
-                    <div className="flex gap-2"><span className="text-slate-400 w-24">Account Name:</span><span className="font-medium text-slate-100">{accountName}</span></div>
-                    <div className="flex gap-2"><span className="text-slate-400 w-24">Account No:</span><span className="font-mono text-slate-100">{accountNumber}</span></div>
-                    <div className="flex gap-2"><span className="text-slate-400 w-24">IFSC:</span><span className="font-mono text-slate-100">{ifscCode}</span></div>
-                    <div className="flex gap-2"><span className="text-slate-400 w-24">UPI:</span><span className="font-mono text-slate-100">{upiId}</span></div>
+                    <div className="flex gap-2"><span className="text-slate-400 w-24 shrink-0">Bank:</span><span className="font-medium text-slate-100 break-words min-w-0">{bankName}</span></div>
+                    <div className="flex gap-2"><span className="text-slate-400 w-24 shrink-0">Account Name:</span><span className="font-medium text-slate-100 break-words min-w-0">{accountName}</span></div>
+                    <div className="flex gap-2"><span className="text-slate-400 w-24 shrink-0">Account No:</span><span className="font-mono text-slate-100 break-all min-w-0">{accountNumber}</span></div>
+                    <div className="flex gap-2"><span className="text-slate-400 w-24 shrink-0">IFSC:</span><span className="font-mono text-slate-100">{ifscCode}</span></div>
+                    <div className="flex gap-2"><span className="text-slate-400 w-24 shrink-0">UPI:</span><span className="font-mono text-slate-100 break-all min-w-0">{upiId}</span></div>
                   </div>
                 </div>
                 <div className="gx-glass p-5 sm:text-right">
@@ -1190,6 +1191,9 @@ export function InvoiceGeneratorView() {
                     </div>
                     <div className="flex items-center gap-1.5 text-[10px] text-slate-400">
                       <Award className="h-3.5 w-3.5 text-violet-400" /> ISO-Aligned Curriculum
+                    </div>
+                    <div className="flex items-center gap-1.5 text-[10px] text-slate-400">
+                      <Hash className="h-3.5 w-3.5 text-violet-400" /> Reg No: UDYAM-JK-03-0034470
                     </div>
                   </div>
                   <div className="text-[10px] text-slate-400 font-mono">

@@ -436,8 +436,9 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
       gradientBand3(pdf, ML, 285.5, 42, 0.9, C.accentA, C.accentB, C.accentC, 24)
     }
     setFont(pdf, "reg", 7, C.faint)
-    pdf.text(safe("GuardianX Academy  ·  Nooripora, Baramulla, Kashmir 193401  ·  Gautam Buddha Nagar, Noida 201301"), ML, 289.4)
-    pdf.text(safe(`Page ${pageNo} of {total_pages_count_string}`), MR, 289.4, { align: "right" })
+    pdf.text(safe("GuardianX Academy  ·  Reg No: UDYAM-JK-03-0034470"), ML, 288.4)
+    pdf.text(safe("Nooripora, Baramulla, Kashmir 193401  ·  Gautam Buddha Nagar, Noida 201301"), ML, 292)
+    pdf.text(safe(`Page ${pageNo} of {total_pages_count_string}`), MR, 290.2, { align: "right" })
     footerMarked = true
   }
 
@@ -558,12 +559,29 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
   setFont(pdf, "reg", 7.4, [161, 140, 250])
   pdf.text(safe("academy@guardianx.in   ·   academy@guardianx.cloud"), brandX, 31)
   pdf.text(safe("Nooripora, Baramulla, Kashmir 193401   ·   Gautam Buddha Nagar, Noida 201301"), brandX, 35.5)
+  pdf.text(safe("Reg No: UDYAM-JK-03-0034470"), brandX, 40)
 
   // right: INVOICE display wordmark + number + status stamp
   setFont(pdf, "bold", 27, C.white)
   pdf.text("INVOICE", MR, 21.5, { align: "right", charSpace: 1.2 })
-  setFont(pdf, "med", 11.5, C.violetSoft)
-  pdf.text(safe(data.number || " - "), MR, 28, { align: "right" })
+  // Shrink-to-fit: a long invoice number must never collide with the brand
+  // tagline on its left - step the font down first, ellipsis as a last resort.
+  setFont(pdf, "med", 8.6, C.violetSoft)
+  const numLeftLimit = brandX + pdf.getTextWidth(safe("Cybersecurity Training & Certification")) + 6
+  let numText = safe(data.number || " - ")
+  let numSize = 11.5
+  setFont(pdf, "med", numSize, C.violetSoft)
+  while (numSize > 7.5 && pdf.getTextWidth(numText) > MR - numLeftLimit) {
+    numSize -= 0.5
+    setFont(pdf, "med", numSize, C.violetSoft)
+  }
+  if (pdf.getTextWidth(numText) > MR - numLeftLimit) {
+    while (numText.length > 4 && pdf.getTextWidth(`${numText}...`) > MR - numLeftLimit) {
+      numText = numText.slice(0, -1)
+    }
+    numText = `${numText}...`
+  }
+  pdf.text(numText, MR, 28, { align: "right" })
 
   const stColor = ST(data.status)
   setFont(pdf, "bold", 8.6, C.white)
@@ -603,17 +621,54 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
   // =========================================================================
   let y = 63
 
-  // backdrop panels behind both columns (drawn first, content sits on top)
+  // ---- client block: measure pass (no drawing) so the BILL TO card can
+  // GROW to fit long names/emails instead of letting text overflow it ----
+  const CLIENT_W = 72 // panel right edge 102.5 - text x 26 - breathing room
+  // wrap + trim to maxLines, appending "..." when lines had to be dropped;
+  // metrics use whichever font is active when this is called
+  const fitText = (text: string, maxW: number, maxLines: number): string[] => {
+    const lines = pdf.splitTextToSize(safe(text), maxW) as string[]
+    if (lines.length <= maxLines) return lines
+    const cut = lines.slice(0, maxLines) as string[]
+    let last = cut[maxLines - 1]
+    while (last.length > 1 && pdf.getTextWidth(`${last}...`) > maxW) last = last.slice(0, -1)
+    cut[maxLines - 1] = `${last}...`
+    return cut
+  }
+
+  setFont(pdf, "bold", 11, C.ink)
+  const nameLines = fitText(data.clientName || "Client Name", CLIENT_W, 2)
+  setFont(pdf, "med", 8.6, C.sub)
+  const orgLines = data.clientOrg ? fitText(data.clientOrg, CLIENT_W, 2) : []
+  setFont(pdf, "reg", 8.2, C.sub)
+  const emailLines = data.clientEmail ? fitText(data.clientEmail, CLIENT_W, 2) : []
+  const phoneLines = data.clientPhone ? fitText(data.clientPhone, CLIENT_W, 1) : []
+  setFont(pdf, "reg", 8, C.faint)
+  const addrLines = data.clientAddress ? fitText(data.clientAddress, 74, 3) : []
+
+  // baseline walk identical to the draw pass below (y is still 63 here)
+  let simCy = y + 6.5 + 1.2
+  simCy += (nameLines.length - 1) * 4.7 + 5.4
+  if (orgLines.length) simCy += (orgLines.length - 1) * 3.6 + 4.8
+  if (emailLines.length) simCy += (emailLines.length - 1) * 3.4 + 4.4
+  if (phoneLines.length) simCy += (phoneLines.length - 1) * 3.4 + 4.4
+  const clientBottom = addrLines.length
+    ? simCy + (addrLines.length - 1) * 3.3
+    : simCy - 4.4 // no address: the last field's trailing gap was already added
+
+  // backdrop panels behind both columns (drawn first, content sits on top);
+  // the left panel grows when the contact block is taller than its fixed 43mm
   const PANEL_TOP = 58
-  const PANEL_BOTTOM = PANEL_TOP + 43
+  const PANEL_BOTTOM = Math.max(PANEL_TOP + 43, clientBottom + 6)
+  const panelH = PANEL_BOTTOM - PANEL_TOP
   if (DARK) {
-    glassPanel(pdf, ML - 2.5, PANEL_TOP, 91, 43, 3)
+    glassPanel(pdf, ML - 2.5, PANEL_TOP, 91, panelH, 3)
     glassPanel(pdf, 105.5, PANEL_TOP, MR - 103, 27, 3)
   } else {
     pdf.setFillColor(C.violetTint[0], C.violetTint[1], C.violetTint[2])
     pdf.setDrawColor(C.avatarBorder[0], C.avatarBorder[1], C.avatarBorder[2])
     pdf.setLineWidth(0.25)
-    pdf.roundedRect(ML - 2.5, PANEL_TOP, 91, 43, 3, 3, "FD")
+    pdf.roundedRect(ML - 2.5, PANEL_TOP, 91, panelH, 3, 3, "FD")
     pdf.roundedRect(105.5, PANEL_TOP, MR - 103, 27, 3, 3, "FD")
   }
 
@@ -637,26 +692,41 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
 
   let cy = y + 1.2
   setFont(pdf, "bold", 11, C.ink)
-  pdf.text(safe(data.clientName || "Client Name"), ML + 12, cy)
+  nameLines.forEach((ln, i) => {
+    pdf.text(ln, ML + 12, cy)
+    if (i < nameLines.length - 1) cy += 4.7
+  })
   cy += 5.4
-  if (data.clientOrg) {
+  if (orgLines.length) {
     setFont(pdf, "med", 8.6, C.sub)
-    pdf.text(safe(data.clientOrg), ML + 12, cy)
+    orgLines.forEach((ln, i) => {
+      pdf.text(ln, ML + 12, cy)
+      if (i < orgLines.length - 1) cy += 3.6
+    })
     cy += 4.8
   }
-  setFont(pdf, "reg", 8.2, C.sub)
-  if (data.clientEmail) {
-    pdf.text(safe(data.clientEmail), ML + 12, cy)
+  if (emailLines.length) {
+    setFont(pdf, "reg", 8.2, C.sub)
+    emailLines.forEach((ln, i) => {
+      pdf.text(ln, ML + 12, cy)
+      if (i < emailLines.length - 1) cy += 3.4
+    })
     cy += 4.4
   }
-  if (data.clientPhone) {
-    pdf.text(safe(data.clientPhone), ML + 12, cy)
+  if (phoneLines.length) {
+    setFont(pdf, "reg", 8.2, C.sub)
+    phoneLines.forEach((ln, i) => {
+      pdf.text(ln, ML + 12, cy)
+      if (i < phoneLines.length - 1) cy += 3.4
+    })
     cy += 4.4
   }
-  if (data.clientAddress) {
+  if (addrLines.length) {
     setFont(pdf, "reg", 8, C.faint)
-    const addrLines = pdf.splitTextToSize(safe(data.clientAddress), 74).slice(0, 3)
-    pdf.text(addrLines, ML + 12, cy)
+    addrLines.forEach((ln, i) => {
+      pdf.text(ln, ML + 12, cy)
+      if (i < addrLines.length - 1) cy += 3.3
+    })
   }
 
   // right column - dates / currency (right aligned rows)
@@ -854,7 +924,13 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
       setFont(pdf, "reg", 8, C.faint)
       pdf.text(safe(label), ML, by)
       setFont(pdf, "med", 8.2, C.ink)
-      pdf.text(safe(value), ML + 30, by)
+      // wrap long bank/account names; right edge stays clear of the
+      // signature band (flourish starts at MR-54, dash line at MR-58)
+      const vLines = fitText(value, 88, 2)
+      vLines.forEach((ln, i) => {
+        pdf.text(ln, ML + 30, by)
+        if (i < vLines.length - 1) by += 3.5
+      })
       by += 4.6
     }
     bankBottom = by
