@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { cachedJson } from "@/lib/http-cache"
+import { ensureLiveFeedTable, seedLiveFeedEntriesIfEmpty } from "@/lib/live-feed-bootstrap"
 
 export const runtime = "nodejs"
 
@@ -8,18 +9,21 @@ export const runtime = "nodejs"
  * GET /api/enrollment-feed - public.
  *
  * Returns platform-wide enrollment social proof for the homepage Live Feed:
- *   feed:    last 5 enrollments across all courses, anonymized:
- *            { firstName, city, courseTitle, courseShortName, timeAgo, color }
- *   total:   lifetime enrollment count (platform-wide)
- *   thisWeek:enrollments in the last 7 days (platform-wide)
+ *   feed:    admin-curated entries (LiveFeedEntry, active only, ordered)
+ *            FIRST - managed from Admin → Platform Stats → Live Feed -
+ *            then real recent enrollments across all courses to fill the
+ *            widget. Items: { firstName, city, courseTitle,
+ *            courseShortName, timeAgo, color, isSample }
+ *   total:   lifetime enrollment count - overridable via the PlatformStat
+ *            key "enrolled_total" (manual value), else computed
+ *   thisWeek:enrollments in the last 7 days - overridable via the
+ *            PlatformStat key "enrolled_this_week", else computed
  *   daily30: 30-day daily enrollment series (oldest -> newest) for the
  *            velocity sparkline
  *
- * Uses the Enrollment model + User (for name) + Course (for title).
- * The User model has no direct `city` field, so we join through
- * User.schoolId → School.city. When the school/city is unknown we
- * fall back to a rotating list of major Indian metros (the platform's
- * primary market) so the widget always shows a credible location.
+ * Enrollment items join User + Course; city resolves via
+ * User.schoolId → School.city, falling back to major Indian metros so the
+ * widget always shows a credible location.
  */
 
 const FALLBACK_CITIES = [
@@ -44,8 +48,67 @@ function firstName(full: string): string {
   return trimmed.split(/\s+/)[0]
 }
 
+/** Optional manual overrides for the two count tiles. Reads the
+ *  PlatformStat keys "enrolled_total" / "enrolled_this_week"; a missing
+ *  or non-numeric value falls back to the computed count. */
+async function tileOverrides(): Promise<{ total?: number; thisWeek?: number }> {
+  try {
+    const rows = await db.platformStat.findMany({
+      where: { key: { in: ["enrolled_total", "enrolled_this_week"] } },
+      select: { key: true, value: true },
+    })
+    const out: { total?: number; thisWeek?: number } = {}
+    for (const r of rows) {
+      const n = parseFloat(String(r.value).replace(/[^0-9.]/g, ""))
+      if (!Number.isFinite(n) || n < 0) continue
+      if (r.key === "enrolled_total") out.total = Math.round(n)
+      if (r.key === "enrolled_this_week") out.thisWeek = Math.round(n)
+    }
+    return out
+  } catch {
+    return {}
+  }
+}
+
 export async function GET() {
   try {
+    // Curated entries: self-heal the table on first hit, seed clearly-marked
+    // samples when empty. Never let bootstrap failures break the endpoint.
+    let curated: Array<{
+      id: string
+      firstName: string
+      city: string
+      courseTitle: string
+      courseShortName: string
+      color: string
+      timeAgo: string
+      enrolledAt: string
+      isSample: boolean
+    }> = []
+    try {
+      if (await ensureLiveFeedTable()) {
+        await seedLiveFeedEntriesIfEmpty()
+        const rows = await db.liveFeedEntry.findMany({
+          where: { active: true },
+          orderBy: [{ order: "asc" }, { occurredAt: "desc" }],
+          take: 8,
+        })
+        curated = rows.map((e) => ({
+          id: e.id,
+          firstName: e.displayName,
+          city: e.city ?? "",
+          courseTitle: e.courseTitle,
+          courseShortName: e.courseShortName ?? "",
+          color: e.color,
+          timeAgo: timeAgo(e.occurredAt.toISOString()),
+          enrolledAt: e.occurredAt.toISOString(),
+          isSample: e.isSample,
+        }))
+      }
+    } catch (err) {
+      console.error("[api/enrollment-feed] curated entries unavailable:", err)
+    }
+
     const enrollments = await db.enrollment.findMany({
       orderBy: { enrolledAt: "desc" },
       take: 5,
@@ -82,7 +145,7 @@ export async function GET() {
       : []
     const schoolCityMap = new Map(schools.map((s) => [s.id, s.city]))
 
-    const feed = enrollments.map((e, idx) => {
+    const realFeed = enrollments.map((e, idx) => {
       const city = (e.user?.schoolId && schoolCityMap.get(e.user.schoolId)?.trim()) || undefined
       const fallbackCity = FALLBACK_CITIES[idx % FALLBACK_CITIES.length]!
       return {
@@ -94,17 +157,24 @@ export async function GET() {
         color: e.course?.color ?? "emerald",
         timeAgo: timeAgo(e.enrolledAt.toISOString()),
         enrolledAt: e.enrolledAt.toISOString(),
+        isSample: false,
       }
     })
+
+    // Curated entries lead the widget; real enrollments fill the rest.
+    const feed = [...curated, ...realFeed].slice(0, 8)
 
     // Platform-wide counters + 30-day velocity series. createdAt-only selects
     // keep these queries cheap; bucketing is done in JS to avoid DB-specific
     // date_trunc differences between Neon/pooled setups.
-    const total = await db.enrollment.count({})
+    const overrides = await tileOverrides()
+    const total = overrides.total ?? (await db.enrollment.count({}))
     const weekAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
-    const thisWeek = await db.enrollment.count({
-      where: { enrolledAt: { gte: weekAgo } },
-    })
+    const thisWeek =
+      overrides.thisWeek ??
+      (await db.enrollment.count({
+        where: { enrolledAt: { gte: weekAgo } },
+      }))
 
     let daily30: number[] = []
     try {

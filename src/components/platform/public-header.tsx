@@ -268,6 +268,12 @@ export function PublicHeader() {
   const [hidden, setHidden] = React.useState(false)
   const [openMenuId, setOpenMenuId] = React.useState<string | null>(null)
   const [mobileOpen, setMobileOpen] = React.useState(false)
+  // Mega panel horizontal anchor: the panel is absolutely positioned inside
+  // the header bar, and this holds its LEFT edge (px, relative to the bar)
+  // so it opens directly BELOW the hovered tab instead of always centered
+  // under the bar (which made right-side tabs open their dropdown far left).
+  const barRef = React.useRef<HTMLDivElement | null>(null)
+  const [panelLeft, setPanelLeft] = React.useState(0)
   // Session awareness: without this, a LOGGED-IN user browsing public
   // "website" pages saw a bare "Login" button and concluded they had been
   // signed out. We fetch the session once and re-check when auth screens
@@ -321,7 +327,8 @@ export function PublicHeader() {
     if (closeTimer.current) clearTimeout(closeTimer.current)
   }, [])
 
-  // Escape closes any open menu
+  // Escape closes any open menu; a window resize re-anchors nothing, so we
+  // just close the panel to avoid a stale offset.
   React.useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -330,7 +337,12 @@ export function PublicHeader() {
       }
     }
     window.addEventListener("keydown", handler)
-    return () => window.removeEventListener("keydown", handler)
+    const onResize = () => setOpenMenuId(null)
+    window.addEventListener("resize", onResize)
+    return () => {
+      window.removeEventListener("keydown", handler)
+      window.removeEventListener("resize", onResize)
+    }
   }, [])
 
   const cancelCloseTimer = React.useCallback(() => {
@@ -340,10 +352,28 @@ export function PublicHeader() {
     }
   }, [])
 
-  const handleOpenMenu = React.useCallback((id: string) => {
-    cancelCloseTimer()
-    setOpenMenuId(id)
-  }, [cancelCloseTimer])
+  const MEGA_PANEL_WIDTH = 544 // matches the panel's w-[34rem]
+
+  const handleOpenMenu = React.useCallback(
+    (id: string, anchor: HTMLElement) => {
+      cancelCloseTimer()
+      // Anchor the shared panel horizontally to the hovered tab: center it
+      // under the tab, then clamp so it never spills past either edge of
+      // the header bar.
+      const bar = barRef.current
+      if (bar) {
+        const barRect = bar.getBoundingClientRect()
+        const aRect = anchor.getBoundingClientRect()
+        const center = aRect.left + aRect.width / 2 - barRect.left
+        const panelW = Math.min(MEGA_PANEL_WIDTH, barRect.width - 16)
+        const min = 8
+        const max = Math.max(min, barRect.width - panelW - 8)
+        setPanelLeft(Math.min(Math.max(center - panelW / 2, min), max))
+      }
+      setOpenMenuId(id)
+    },
+    [cancelCloseTimer]
+  )
 
   const scheduleCloseMenu = React.useCallback(() => {
     cancelCloseTimer()
@@ -394,6 +424,7 @@ export function PublicHeader() {
       className="fixed top-0 left-0 right-0 z-50 px-4 sm:px-6 lg:px-8 pt-4"
     >
       <motion.div
+        ref={barRef}
         animate={{
           maxWidth: scrolled ? "64rem" : "80rem",
         }}
@@ -478,12 +509,12 @@ export function PublicHeader() {
               <div
                 key={group.id}
                 className="relative"
-                onMouseEnter={() => handleOpenMenu(group.id)}
+                onMouseEnter={(e) => handleOpenMenu(group.id, e.currentTarget)}
                 onMouseLeave={scheduleCloseMenu}
               >
                 <button
                   type="button"
-                  onClick={() => (isOpen ? setOpenMenuId(null) : handleOpenMenu(group.id))}
+                  onClick={(e) => (isOpen ? setOpenMenuId(null) : handleOpenMenu(group.id, e.currentTarget))}
                   aria-expanded={isOpen}
                   aria-haspopup="true"
                   className={cn(
@@ -673,10 +704,11 @@ export function PublicHeader() {
               exit={{ opacity: 0, y: 8 }}
               transition={{ duration: 0.2, ease: "easeOut" }}
               className={cn(
-                "absolute left-1/2 -translate-x-1/2 top-full mt-2 z-50",
+                "absolute top-full mt-2 z-50",
                 "w-[34rem] max-w-[92vw]",
                 "glass-strong rounded-xl border border-border/60 shadow-xl p-4"
               )}
+              style={{ left: panelLeft }}
               role="menu"
               aria-label={`${openGroup.label} menu`}
               onMouseEnter={cancelCloseTimer}

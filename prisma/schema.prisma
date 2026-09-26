@@ -1542,6 +1542,24 @@ model PlatformStat {
   updatedBy   String?
 }
 
+/// Homepage Live Feed - admin-curated entries shown in the
+/// "RECENT ENROLLMENTS" widget (merged ahead of real Enrollment rows).
+/// The owner manages these from Admin → Platform Stats → Live Feed.
+model LiveFeedEntry {
+  id              String   @id @default(cuid())
+  displayName     String   // "Rahul K." - shown as-is (short name form)
+  city            String?  // "Srinagar" (with MapPin)
+  courseTitle     String   // "CEH v13 Practical Ethical Hacking"
+  courseShortName String?  // "CEHv13" chip label
+  color           String   @default("emerald") // emerald | violet | cyan | amber | rose
+  occurredAt      DateTime @default(now()) // drives the "time ago" label
+  active          Boolean  @default(true)
+  isSample        Boolean  @default(false) // clearly-marked sample rows
+  order           Int      @default(0) // lower = higher in the feed
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
 /// Technology ecosystem — replaces fake "Trusted by Google" logos
 model TechnologyPartner {
   id          String   @id @default(cuid())

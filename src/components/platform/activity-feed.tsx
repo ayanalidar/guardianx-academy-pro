@@ -35,6 +35,8 @@ interface FeedItem {
   color: string
   timeAgo: string
   enrolledAt: string
+  /** True for admin-curated placeholder rows (amber "Sample" chip). */
+  isSample?: boolean
 }
 
 interface PlatformStat {
@@ -305,10 +307,15 @@ export function PlatformActivityFeed() {
                       {initials}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="text-sm font-medium truncate">
+                      <div className="text-sm font-medium truncate flex items-center gap-1.5">
                         {a.firstName}
+                        {a.isSample && (
+                          <span className="shrink-0 font-mono px-1 py-px rounded border border-amber-500/40 text-amber-300 text-[8px] tracking-wider">
+                            SAMPLE
+                          </span>
+                        )}
                         {a.city && (
-                          <span className="inline-flex items-center gap-0.5 ml-1.5 text-[10px] font-mono text-muted-foreground tracking-wider">
+                          <span className="inline-flex items-center gap-0.5 text-[10px] font-mono text-muted-foreground tracking-wider">
                             <MapPin className="size-2.5" />
                             {a.city}
                           </span>
