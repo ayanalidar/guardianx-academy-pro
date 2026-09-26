@@ -111,6 +111,7 @@ export type View =
   | { name: "pricing" }
   | { name: "admin-seo" }
   | { name: "hiring" }
+  | { name: "placements" }
   | { name: "admin-hiring" }
 
 interface AppState {

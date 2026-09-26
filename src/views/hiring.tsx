@@ -454,6 +454,26 @@ export function HiringView() {
         </div>
       </section>
 
+      {/* cross-link: the placements wall (Hiring → Placements) */}
+      <section className="px-4 sm:px-6 lg:px-8 pb-2">
+        <div className="mx-auto max-w-7xl">
+          <button
+            type="button"
+            onClick={() => navigate({ name: "placements" })}
+            className="group flex w-full items-center justify-center gap-2.5 rounded-2xl border border-emerald-500/25 bg-emerald-500/[0.06] backdrop-blur px-5 py-3 text-sm transition-colors hover:border-emerald-500/45"
+          >
+            <Trophy className="h-4 w-4 text-emerald-300" />
+            <span className="text-foreground/85">
+              New: meet students already placed via our placement cell
+            </span>
+            <span className="inline-flex items-center gap-1 text-[12px] font-medium text-emerald-300">
+              Open the Placement Wall
+              <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+            </span>
+          </button>
+        </div>
+      </section>
+
       {/* ================= FEATURED OPENINGS ================= */}
       {featuredJobs.length > 0 && (
         <FeaturedStrip jobs={featuredJobs} onOpen={openJob} />

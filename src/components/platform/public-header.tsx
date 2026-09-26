@@ -242,11 +242,23 @@ const MEGA_MENU_GROUPS: MegaMenuGroup[] = [
     ],
   },
   {
-    // Direct tab - no dropdown; clicking goes straight to /hiring.
+    // Hiring dropdown: open roles (job board) + the placements wall.
     id: "hiring",
     label: "Hiring",
-    items: [],
-    directView: { name: "hiring" },
+    items: [
+      {
+        icon: Briefcase,
+        title: "Jobs",
+        description: "Openings at GuardianX & partner companies",
+        view: { name: "hiring" },
+      },
+      {
+        icon: Trophy,
+        title: "Placements",
+        description: "Verified student outcomes - the placement wall",
+        view: { name: "placements" },
+      },
+    ],
   },
 ]
 

@@ -1006,6 +1006,37 @@ model JobApplication {
   @@unique([jobId, userId])
 }
 
+// ============================================================
+// PLACEMENTS - student outcome records shown on /placements
+// ("Hiring → Placements"). The proof-of-outcomes wall: real
+// (admin-verified) students who landed roles after training.
+// `isSample` rows are clearly-marked placeholders the owner
+// replaces from Admin → Hiring & Jobs → Placements.
+// ============================================================
+model Placement {
+  id          String   @id @default(cuid())
+  studentName String
+  photoUrl    String?  // optional; gradient-initials fallback when empty
+  role        String   // job title landed, e.g. "SOC Analyst — Tier 1"
+  company     String
+  companyLogo String?
+  ctc         String?  // optional package display text, e.g. "9.6 LPA"
+  track       String   @default("General") // course/track taken
+  year        Int      // placement year, e.g. 2025
+  quote       String?  // one-liner for the card
+  story       String?  // longer success story for the detail modal
+  linkedIn    String?  // optional public profile link
+  featured    Boolean  @default(false) // pinned first on the wall
+  status      String   @default("published") // published | draft
+  verified    Boolean  @default(false) // admin-verified offer
+  isSample    Boolean  @default(false) // clearly-marked sample row
+  order       Int      @default(0) // manual sort priority (lower first)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([status, featured, order])
+}
+
 // --- 6. Mock Interview ---
 model MockInterview {
   id          String   @id @default(cuid())

@@ -130,6 +130,7 @@ export const PUBLIC_NAV: NavItem[] = [
   { label: "Events", icon: Calendar, view: { name: "events" } },
   { label: "Instructors", icon: Users, view: { name: "instructors" } },
   { label: "Hiring", icon: Briefcase, view: { name: "hiring" } },
+  { label: "Placements", icon: Trophy, view: { name: "placements" } },
   { label: "Contact", icon: MessageSquare, view: { name: "contact" } },
   { label: "Verify Certificate", icon: ShieldCheck, view: { name: "verify" } },
 ]

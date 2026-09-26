@@ -44,6 +44,7 @@ import {
   Plus, Search, Globe2, MapPin, Home, Building2, Wallet, Users, Pencil,
   Trash2, Loader2, Briefcase, Eye, EyeOff, ExternalLink, RotateCcw,
   Inbox, CheckCircle2, UserPlus, Mail, Phone, Link2, FileText, Clock, Star,
+  Trophy, BadgeCheck, GraduationCap,
 } from "lucide-react"
 
 // ============================================================
@@ -132,7 +133,7 @@ function deriveCountry(location: string): string {
 export function AdminHiringView() {
   const { navigate } = useAppStore()
   const queryClient = useQueryClient()
-  const [tab, setTab] = React.useState<"openings" | "applicants">("openings")
+  const [tab, setTab] = React.useState<"openings" | "applicants" | "placements">("openings")
   const [search, setSearch] = React.useState("")
   const [statusFilter, setStatusFilter] = React.useState("all")
   const [editing, setEditing] = React.useState<AdminJob | null>(null)
@@ -209,9 +210,11 @@ export function AdminHiringView() {
             Manage the openings shown on the public <button className="text-violet-300 hover:underline" onClick={() => navigate({ name: "hiring" })}>/hiring page</button> - post roles from anywhere in the world.
           </p>
         </div>
-        <Button className="bg-gradient-to-r from-violet-600 to-violet-500 text-white" onClick={() => setCreating(true)}>
-          <Plus className="h-4 w-4 mr-1.5" /> Post a Job Opening
-        </Button>
+        {tab !== "placements" && (
+          <Button className="bg-gradient-to-r from-violet-600 to-violet-500 text-white" onClick={() => setCreating(true)}>
+            <Plus className="h-4 w-4 mr-1.5" /> Post a Job Opening
+          </Button>
+        )}
       </div>
 
       {/* Tabs: Openings | Applicants */}
@@ -219,6 +222,7 @@ export function AdminHiringView() {
         {([
           { id: "openings", label: "Openings", icon: Briefcase },
           { id: "applicants", label: "Applicants", icon: UserPlus },
+          { id: "placements", label: "Placements", icon: Trophy },
         ] as const).map((t) => (
           <button
             key={t.id}
@@ -238,6 +242,8 @@ export function AdminHiringView() {
 
       {tab === "applicants" ? (
         <ApplicantsPanel onOpenCrm={() => navigate({ name: "admin-lead-crm" })} />
+      ) : tab === "placements" ? (
+        <PlacementsPanel />
       ) : (
       <>
 
@@ -733,5 +739,448 @@ function ApplicantsPanel({ onOpenCrm }: { onOpenCrm: () => void }) {
         </div>
       )}
     </div>
+  )
+}
+
+// ============================================================
+// Placements panel - outcome records on the public /placements
+// wall (Hiring → Placements). Full CRUD over /api/admin/placements
+// plus one-click loading of the clearly-marked sample rows.
+// ============================================================
+
+type AdminPlacement = {
+  id: string
+  studentName: string
+  photoUrl: string | null
+  role: string
+  company: string
+  companyLogo: string | null
+  ctc: string | null
+  track: string
+  year: number
+  quote: string | null
+  story: string | null
+  linkedIn: string | null
+  featured: boolean
+  status: string
+  verified: boolean
+  isSample: boolean
+  order: number
+  createdAt: string
+}
+
+type AdminPlacementsResponse = {
+  placements: AdminPlacement[]
+  count: number
+  byStatus: Record<string, number>
+  samples: number
+}
+
+const EMPTY_PLACEMENT_FORM = {
+  studentName: "",
+  role: "",
+  company: "",
+  photoUrl: "",
+  companyLogo: "",
+  ctc: "",
+  track: "General",
+  year: String(new Date().getFullYear()),
+  quote: "",
+  story: "",
+  linkedIn: "",
+  featured: false,
+  verified: false,
+  isSample: false,
+  status: "published",
+  order: "0",
+}
+
+function toPlacementForm(p: AdminPlacement) {
+  return {
+    studentName: p.studentName,
+    role: p.role,
+    company: p.company,
+    photoUrl: p.photoUrl || "",
+    companyLogo: p.companyLogo || "",
+    ctc: p.ctc || "",
+    track: p.track,
+    year: String(p.year),
+    quote: p.quote || "",
+    story: p.story || "",
+    linkedIn: p.linkedIn || "",
+    featured: p.featured,
+    verified: p.verified,
+    isSample: p.isSample,
+    status: p.status,
+    order: String(p.order ?? 0),
+  }
+}
+
+function placementInitials(name: string): string {
+  const parts = name.trim().split(/\s+/).filter(Boolean)
+  if (parts.length === 0) return "?"
+  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase()
+  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase()
+}
+
+function PlacementsPanel() {
+  const queryClient = useQueryClient()
+  const [search, setSearch] = React.useState("")
+  const [statusFilter, setStatusFilter] = React.useState("all")
+  const [editing, setEditing] = React.useState<AdminPlacement | null>(null)
+  const [creating, setCreating] = React.useState(false)
+
+  const { data, isLoading } = useQuery<AdminPlacementsResponse>({
+    queryKey: ["admin-placements"],
+    queryFn: () => api("/api/admin/placements"),
+    refetchInterval: 60_000,
+  })
+
+  const placements = data?.placements ?? []
+  const byStatus = data?.byStatus ?? { published: 0, draft: 0 }
+  const samples = data?.samples ?? 0
+
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: ["admin-placements"] })
+
+  const seedMutation = useMutation({
+    mutationFn: () => api("/api/admin/placements/seed", { method: "POST" }),
+    onSuccess: (d: any) => {
+      toast.success(
+        d?.inserted > 0
+          ? `Loaded ${d.inserted} sample rows - replace them with real students`
+          : "Sample rows are already present - nothing to load",
+      )
+      invalidate()
+    },
+    onError: (e: any) => toast.error(e?.message || "Could not load samples"),
+  })
+
+  const statusMutation = useMutation({
+    mutationFn: ({ id, status }: { id: string; status: string }) =>
+      api(`/api/admin/placements/${id}`, { method: "PATCH", body: JSON.stringify({ status }) }),
+    onSuccess: (_d, vars) => {
+      toast.success(vars.status === "published" ? "Record is live on /placements" : "Record hidden (draft)")
+      invalidate()
+    },
+    onError: (e: any) => toast.error(e?.message || "Update failed"),
+  })
+
+  const patchMutation = useMutation({
+    mutationFn: ({ id, patch }: { id: string; patch: Record<string, unknown> }) =>
+      api(`/api/admin/placements/${id}`, { method: "PATCH", body: JSON.stringify(patch) }),
+    onSuccess: () => invalidate(),
+    onError: (e: any) => toast.error(e?.message || "Update failed"),
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => api(`/api/admin/placements/${id}`, { method: "DELETE" }),
+    onSuccess: () => {
+      toast.success("Placement record deleted")
+      invalidate()
+    },
+    onError: (e: any) => toast.error(e?.message || "Delete failed"),
+  })
+
+  const visible = React.useMemo(() => {
+    const q = search.trim().toLowerCase()
+    return placements.filter((p) => {
+      if (statusFilter !== "all" && p.status !== statusFilter) return false
+      if (q && !`${p.studentName} ${p.role} ${p.company} ${p.track}`.toLowerCase().includes(q)) return false
+      return true
+    })
+  }, [placements, search, statusFilter])
+
+  return (
+    <div className="space-y-4">
+      {/* header strip: stats + actions */}
+      <div className="flex items-start justify-between gap-3 flex-wrap">
+        <div className="grid grid-cols-3 gap-2">
+          <StatTile label="Live on wall" value={byStatus.published ?? 0} tone="text-emerald-400" />
+          <StatTile label="Drafts" value={byStatus.draft ?? 0} tone="text-zinc-400" />
+          <StatTile label="Samples left" value={samples} tone="text-amber-400" />
+        </div>
+        <div className="flex items-center gap-2">
+          <Button variant="outline" size="sm" onClick={() => seedMutation.mutate()} disabled={seedMutation.isPending}>
+            {seedMutation.isPending ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <RotateCcw className="h-3.5 w-3.5 mr-1.5" />}
+            Load sample rows
+          </Button>
+          <Button className="bg-gradient-to-r from-violet-600 to-violet-500 text-white" size="sm" onClick={() => setCreating(true)}>
+            <Plus className="h-4 w-4 mr-1.5" /> Add Placement
+          </Button>
+        </div>
+      </div>
+
+      <p className="text-xs text-muted-foreground">
+        Rows marked <span className="font-mono text-amber-300">Sample</span> are placeholders shown on the public wall - edit
+        one with a real student (name, role, company, package), untick Sample, and it goes live. Verified badges appear on the wall too.
+      </p>
+
+      {/* filters */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <div className="relative flex-1 min-w-[200px] max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search students, roles, companies…" className="pl-8 h-9 text-xs" />
+        </div>
+        <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <SelectTrigger className="w-[150px] h-9 text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All statuses</SelectItem>
+            <SelectItem value="published">Published</SelectItem>
+            <SelectItem value="draft">Draft</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* list */}
+      {isLoading ? (
+        <div className="flex items-center justify-center py-16">
+          <Loader2 className="h-5 w-5 animate-spin text-violet-300" />
+        </div>
+      ) : visible.length === 0 ? (
+        <div className="rounded-2xl border border-border/60 bg-card/40 p-10 text-center">
+          <Trophy className="mx-auto h-7 w-7 text-violet-300/70" />
+          <p className="mt-3 text-sm font-medium">No placement records{search || statusFilter !== "all" ? " match those filters" : " yet"}.</p>
+          <p className="mt-1 text-xs text-muted-foreground">Add your first real outcome, or load the sample rows as a template.</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {visible.map((p) => (
+            <div
+              key={p.id}
+              className="flex items-center gap-3 rounded-xl border border-border/60 bg-card/40 px-3.5 py-3 flex-wrap"
+            >
+              <div className="flex items-center justify-center h-9 w-9 rounded-full bg-gradient-to-br from-violet-500/60 to-fuchsia-500/60 text-[11px] font-bold text-white shrink-0">
+                {placementInitials(p.studentName)}
+              </div>
+              <div className="min-w-0 flex-1">
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <span className="text-sm font-semibold">{p.studentName}</span>
+                  {p.verified && <span title="Verified"><BadgeCheck className="h-3.5 w-3.5 text-emerald-400" /></span>}
+                  {p.featured && <span title="Featured on wall"><Star className="h-3.5 w-3.5 text-amber-300 fill-amber-300" /></span>}
+                  {p.isSample && (
+                    <span className="rounded-full border border-amber-500/40 bg-amber-500/10 px-1.5 py-0.5 text-[9px] font-mono uppercase tracking-wide text-amber-300">
+                      Sample
+                    </span>
+                  )}
+                  {p.status === "draft" && (
+                    <span className="rounded-full border border-zinc-500/40 bg-zinc-500/10 px-1.5 py-0.5 text-[9px] font-mono uppercase tracking-wide text-zinc-300">
+                      Draft
+                    </span>
+                  )}
+                </div>
+                <div className="text-[11px] text-muted-foreground mt-0.5 truncate">
+                  {p.role} · {p.company} · {p.track} · {p.year}
+                  {p.ctc ? ` · ${p.ctc}` : ""}
+                </div>
+              </div>
+              <div className="flex items-center gap-1">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  title={p.featured ? "Unpin from wall top" : "Pin to wall top (featured)"}
+                  onClick={() => patchMutation.mutate({ id: p.id, patch: { featured: !p.featured } })}
+                  className={cn("h-8 px-2", p.featured ? "text-amber-300" : "text-zinc-400")}
+                >
+                  <Star className="h-4 w-4" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  title={p.verified ? "Remove verified badge" : "Mark offer as verified"}
+                  onClick={() => patchMutation.mutate({ id: p.id, patch: { verified: !p.verified } })}
+                  className={cn("h-8 px-2", p.verified ? "text-emerald-400" : "text-zinc-400")}
+                >
+                  <BadgeCheck className="h-4 w-4" />
+                </Button>
+                <Select value={p.status} onValueChange={(s) => statusMutation.mutate({ id: p.id, status: s })}>
+                  <SelectTrigger className="w-[120px] h-8 text-[11px]">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="published">Live on wall</SelectItem>
+                    <SelectItem value="draft">Draft (hidden)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Button size="sm" variant="ghost" title="Edit" onClick={() => setEditing(p)} className="h-8 px-2 text-violet-300 hover:bg-violet-500/10">
+                  <Pencil className="h-3.5 w-3.5" />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  title="Delete"
+                  onClick={() => {
+                    if (window.confirm(`Delete the placement record for ${p.studentName}?`)) deleteMutation.mutate(p.id)
+                  }}
+                  className="h-8 px-2 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {(creating || editing) && (
+        <PlacementFormDialog
+          record={editing}
+          onClose={() => {
+            setCreating(false)
+            setEditing(null)
+          }}
+          onSaved={invalidate}
+        />
+      )}
+    </div>
+  )
+}
+
+function PlacementFormDialog({ record, onClose, onSaved }: { record: AdminPlacement | null; onClose: () => void; onSaved: () => void }) {
+  const [form, setForm] = React.useState(record ? toPlacementForm(record) : EMPTY_PLACEMENT_FORM)
+  const [saving, setSaving] = React.useState(false)
+  const isEdit = !!record
+  const set = <K extends keyof typeof form>(key: K, value: (typeof form)[K]) =>
+    setForm((f) => ({ ...f, [key]: value }))
+
+  const saveMutation = useMutation({
+    mutationFn: async () => {
+      const payload = {
+        ...form,
+        photoUrl: form.photoUrl.trim() || null,
+        companyLogo: form.companyLogo.trim() || null,
+        ctc: form.ctc.trim() || null,
+        quote: form.quote.trim() || null,
+        story: form.story.trim() || null,
+        linkedIn: form.linkedIn.trim() || null,
+        year: parseInt(form.year, 10),
+        order: parseInt(form.order || "0", 10) || 0,
+      }
+      if (isEdit) return api(`/api/admin/placements/${record!.id}`, { method: "PATCH", body: JSON.stringify(payload) })
+      return api("/api/admin/placements", { method: "POST", body: JSON.stringify(payload) })
+    },
+    onSuccess: () => {
+      toast.success(isEdit ? "Placement updated" : "Placement added - it's live on /placements")
+      onSaved()
+      onClose()
+    },
+    onError: (e: any) => toast.error(e?.message || "Save failed"),
+  })
+
+  const canSave = form.studentName.trim() && form.role.trim() && form.company.trim() && /^\d{4}$/.test(form.year.trim()) && !saving
+
+  return (
+    <Dialog open onOpenChange={(o) => !o && onClose()}>
+      <DialogContent className="max-w-2xl max-h-[88vh] overflow-y-auto custom-scrollbar">
+        <DialogHeader>
+          <DialogTitle>{isEdit ? `Edit - ${record!.studentName}` : "Add a Placement Outcome"}</DialogTitle>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          <div className="grid sm:grid-cols-2 gap-3">
+            <Field label="Student name *">
+              <Input value={form.studentName} onChange={(e) => set("studentName", e.target.value)} placeholder="e.g. Priya Sharma" />
+            </Field>
+            <Field label="Role landed *">
+              <Input value={form.role} onChange={(e) => set("role", e.target.value)} placeholder="SOC Analyst - Tier 1" />
+            </Field>
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-3">
+            <Field label="Company *">
+              <Input value={form.company} onChange={(e) => set("company", e.target.value)} placeholder="Company name" />
+            </Field>
+            <Field label="Package (display text, optional)">
+              <Input value={form.ctc} onChange={(e) => set("ctc", e.target.value)} placeholder="9.6 LPA (leave blank to hide)" />
+            </Field>
+          </div>
+
+          <div className="grid sm:grid-cols-3 gap-3">
+            <Field label="Track / course taken">
+              <Input value={form.track} onChange={(e) => set("track", e.target.value)} placeholder="SOC Analyst Track" />
+            </Field>
+            <Field label="Placement year *">
+              <Input value={form.year} onChange={(e) => set("year", e.target.value)} placeholder="2026" inputMode="numeric" />
+            </Field>
+            <Field label="Sort order (lower first)">
+              <Input value={form.order} onChange={(e) => set("order", e.target.value)} placeholder="0" inputMode="numeric" />
+            </Field>
+          </div>
+
+          <div className="grid sm:grid-cols-2 gap-3">
+            <Field label="Student photo URL (optional)">
+              <Input value={form.photoUrl} onChange={(e) => set("photoUrl", e.target.value)} placeholder="https://…" />
+            </Field>
+            <Field label="Company logo URL (optional)">
+              <Input value={form.companyLogo} onChange={(e) => set("companyLogo", e.target.value)} placeholder="https://…" />
+            </Field>
+          </div>
+
+          <Field label="LinkedIn / portfolio URL (optional)">
+            <Input value={form.linkedIn} onChange={(e) => set("linkedIn", e.target.value)} placeholder="https://linkedin.com/in/…" />
+          </Field>
+
+          <Field label="One-line quote (shows on the card)">
+            <Input value={form.quote} onChange={(e) => set("quote", e.target.value)} placeholder="The mock interviews made all the difference…" />
+          </Field>
+
+          <Field label="Full story (shows in the detail popup)">
+            <Textarea rows={4} value={form.story} onChange={(e) => set("story", e.target.value)} placeholder="The journey: track enrolled, projects, interview rounds…" />
+          </Field>
+
+          <div className="grid sm:grid-cols-4 gap-3">
+            <Field label="Status">
+              <Select value={form.status} onValueChange={(v) => set("status", v)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="published">Live on wall</SelectItem>
+                  <SelectItem value="draft">Draft (hidden)</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="Featured">
+              <Select value={form.featured ? "yes" : "no"} onValueChange={(v) => set("featured", v === "yes")}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="no">No</SelectItem>
+                  <SelectItem value="yes">Yes (pinned first)</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="Verified offer">
+              <Select value={form.verified ? "yes" : "no"} onValueChange={(v) => set("verified", v === "yes")}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="no">No</SelectItem>
+                  <SelectItem value="yes">Yes (badge)</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+            <Field label="Sample row">
+              <Select value={form.isSample ? "yes" : "no"} onValueChange={(v) => set("isSample", v === "yes")}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="no">No - real outcome</SelectItem>
+                  <SelectItem value="yes">Yes (marked on wall)</SelectItem>
+                </SelectContent>
+              </Select>
+            </Field>
+          </div>
+
+          <div className="flex items-center justify-end gap-2 pt-1">
+            <Button variant="outline" onClick={onClose} disabled={saving}>Cancel</Button>
+            <Button
+              className="bg-gradient-to-r from-violet-600 to-violet-500 text-white"
+              disabled={!canSave}
+              onClick={() => saveMutation.mutate()}
+            >
+              {saving ? <Loader2 className="h-4 w-4 mr-1.5 animate-spin" /> : null}
+              {isEdit ? "Save changes" : "Add to the wall"}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
+    </Dialog>
   )
 }
