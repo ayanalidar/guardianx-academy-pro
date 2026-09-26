@@ -37,15 +37,23 @@ const DDL: string[] = [
     "updatedAt" TIMESTAMP(3) NOT NULL,
     CONSTRAINT "LiveFeedEntry_pkey" PRIMARY KEY ("id")
   )`,
+  // --- column-drift insurance (Postgres 9.6+ ADD COLUMN IF NOT EXISTS) ---
+  `ALTER TABLE "LiveFeedEntry" ADD COLUMN IF NOT EXISTS "city" TEXT`,
+  `ALTER TABLE "LiveFeedEntry" ADD COLUMN IF NOT EXISTS "courseShortName" TEXT`,
+  `ALTER TABLE "LiveFeedEntry" ADD COLUMN IF NOT EXISTS "color" TEXT NOT NULL DEFAULT 'emerald'`,
+  `ALTER TABLE "LiveFeedEntry" ADD COLUMN IF NOT EXISTS "active" BOOLEAN NOT NULL DEFAULT true`,
+  `ALTER TABLE "LiveFeedEntry" ADD COLUMN IF NOT EXISTS "isSample" BOOLEAN NOT NULL DEFAULT false`,
+  `ALTER TABLE "LiveFeedEntry" ADD COLUMN IF NOT EXISTS "order" INTEGER NOT NULL DEFAULT 0`,
   `CREATE INDEX IF NOT EXISTS "LiveFeedEntry_active_order_idx" ON "LiveFeedEntry"("active", "order")`,
 ]
 
 export async function ensureLiveFeedTable(): Promise<boolean> {
   if (tableReady) return true
 
-  // 1) Cheap probe - succeeds instantly once the table exists.
+  // 1) Full-row probe - catches P2021 (table missing) AND P2022 (column
+  // missing) so both fall through to the DDL path.
   try {
-    await db.liveFeedEntry.findFirst({ select: { id: true }, take: 1 })
+    await db.liveFeedEntry.findFirst({ take: 1 })
     tableReady = true
     return true
   } catch {
@@ -55,7 +63,7 @@ export async function ensureLiveFeedTable(): Promise<boolean> {
   // 2) Idempotent DDL, then re-probe.
   try {
     for (const stmt of DDL) await db.$executeRawUnsafe(stmt)
-    await db.liveFeedEntry.findFirst({ select: { id: true }, take: 1 })
+    await db.liveFeedEntry.findFirst({ take: 1 })
     tableReady = true
     return true
   } catch (error) {

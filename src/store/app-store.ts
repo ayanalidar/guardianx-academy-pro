@@ -20,7 +20,7 @@ export type View =
   | { name: "corporate-training" }
   | { name: "cyber-quiz" }
   | { name: "cyber-quiz-runner"; difficulty: "Easy" | "Hard" | "Advanced" }
-  | { name: "cyber-quiz-results"; attemptId: string }
+  | { name: "cyber-quiz-results"; attemptId: string; resultToken?: string }
   | { name: "cyber-quiz-certificate"; credentialId: string }
   | { name: "cyber-quiz-progress"; credentialId: string }
   | { name: "dashboard" }

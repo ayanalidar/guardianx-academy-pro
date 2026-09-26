@@ -34,13 +34,14 @@ export const GET = withErrorHandler(async (_req, { params }: { params: Promise<{
     certificate: {
       credentialId: cert.credentialId,
       candidateName: cert.candidateName,
-      email: cert.email,
+      // Privacy: email + verificationHash are deliberately NOT returned.
+      // This endpoint is public and unauthenticated - PII and the hash
+      // used for internal verification must never leave the server.
       difficulty: cert.difficulty,
       score: cert.score,
       totalQuestions: cert.totalQuestions,
       percentage: cert.percentage,
       issueDate: cert.issueDate.toISOString(),
-      verificationHash: cert.verificationHash,
       verificationUrl: cert.verificationUrl,
       status: cert.status,
     },

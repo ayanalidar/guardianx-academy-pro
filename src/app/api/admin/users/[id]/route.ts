@@ -13,6 +13,8 @@ export const GET = withErrorHandler(
 
     const user = await db.user.findUnique({
       where: { id },
+      // Never expose the password hash to the admin UI (or anything else).
+      omit: { passwordHash: true },
       include: {
         enrollments: {
           take: 50,
@@ -65,6 +67,13 @@ export const PATCH = withErrorHandler(
 
     const existing = await db.user.findUnique({ where: { id } })
     if (!existing) return NextResponse.json({ error: "User not found" }, { status: 404 })
+
+    // Role hierarchy: only a SUPER_ADMIN may modify a SUPER_ADMIN account
+    // (password reset, demotion, role escalation) - otherwise a plain ADMIN
+    // could take over super-admin accounts.
+    if (existing.role === "SUPER_ADMIN" && currentUser.role !== "SUPER_ADMIN") {
+      return NextResponse.json({ error: "Only a SUPER_ADMIN can modify a SUPER_ADMIN account" }, { status: 403 })
+    }
 
     const body = await req.json().catch(() => ({}))
     const { name, role, title, bio, avatar, password } = body as {
@@ -135,6 +144,11 @@ export const DELETE = withErrorHandler(
 
     const existing = await db.user.findUnique({ where: { id } })
     if (!existing) return NextResponse.json({ error: "User not found" }, { status: 404 })
+
+    // Role hierarchy: only a SUPER_ADMIN may delete a SUPER_ADMIN account.
+    if (existing.role === "SUPER_ADMIN" && currentUser.role !== "SUPER_ADMIN") {
+      return NextResponse.json({ error: "Only a SUPER_ADMIN can delete a SUPER_ADMIN account" }, { status: 403 })
+    }
 
     await db.user.delete({ where: { id } })
 

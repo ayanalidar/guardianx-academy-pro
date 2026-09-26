@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
+import { timingSafeEqual } from "crypto"
 import { db } from "@/lib/db"
 import { sendEmail } from "@/lib/email"
 import { isEmiRemindersEnabled, EMI_PURPOSE_PREFIX, parseEmiPurpose } from "@/lib/installments"
@@ -101,7 +102,15 @@ function authorized(req: NextRequest): boolean {
   const secret = process.env.CRON_SECRET
   if (!secret) return false // cron not configured - refuse to run unprotected
   const header = req.headers.get("authorization") || ""
-  return header === `Bearer ${secret}`
+  const expected = `Bearer ${secret}`
+  // Timing-safe compare so the secret cannot be recovered bit-by-bit
+  // from response-time analysis.
+  if (header.length !== expected.length) return false
+  try {
+    return timingSafeEqual(Buffer.from(header), Buffer.from(expected))
+  } catch {
+    return false
+  }
 }
 
 export async function GET(req: NextRequest) {

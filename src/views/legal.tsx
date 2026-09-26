@@ -40,20 +40,19 @@ interface LegalNavItem {
   label: string
   icon: React.ComponentType<{ className?: string }>
   description: string
-  // Allow non-View names (about / privacy / terms / faq / refund / cookies /
-  // conduct) so the legal nav can link to CMS-rendered pages that aren't
-  // part of the SPA View union. The call site casts to View.
-  view: View | { name: string }
+  // Legal pages are one SPA view with a pageType discriminator
+  // ("legal" + about/privacy/terms/faq/refund/cookies/conduct).
+  view: View
 }
 
 const LEGAL_NAV: LegalNavItem[] = [
-  { type: "about", label: "About Us", icon: Building2, description: "Our story & mission", view: { name: "about" } },
-  { type: "privacy", label: "Privacy Policy", icon: Lock, description: "How we handle your data", view: { name: "privacy" } },
-  { type: "terms", label: "Terms & Conditions", icon: FileText, description: "Rules of the platform", view: { name: "terms" } },
-  { type: "faq", label: "FAQ", icon: HelpCircle, description: "Frequently asked questions", view: { name: "faq" } },
-  { type: "refund", label: "Refund Policy", icon: CreditCard, description: "Refunds & cancellations", view: { name: "refund" } },
-  { type: "cookies", label: "Cookie Policy", icon: Cookie, description: "How we use cookies", view: { name: "cookies" } },
-  { type: "conduct", label: "Code of Conduct", icon: ScrollText, description: "Student expectations", view: { name: "conduct" } },
+  { type: "about", label: "About Us", icon: Building2, description: "Our story & mission", view: { name: "legal", pageType: "about" } },
+  { type: "privacy", label: "Privacy Policy", icon: Lock, description: "How we handle your data", view: { name: "legal", pageType: "privacy" } },
+  { type: "terms", label: "Terms & Conditions", icon: FileText, description: "Rules of the platform", view: { name: "legal", pageType: "terms" } },
+  { type: "faq", label: "FAQ", icon: HelpCircle, description: "Frequently asked questions", view: { name: "legal", pageType: "faq" } },
+  { type: "refund", label: "Refund Policy", icon: CreditCard, description: "Refunds & cancellations", view: { name: "legal", pageType: "refund" } },
+  { type: "cookies", label: "Cookie Policy", icon: Cookie, description: "How we use cookies", view: { name: "legal", pageType: "cookies" } },
+  { type: "conduct", label: "Code of Conduct", icon: ScrollText, description: "Student expectations", view: { name: "legal", pageType: "conduct" } },
 ]
 
 const PAGE_META: Record<LegalPageType, { title: string; subtitle: string; lastUpdated: string; icon: React.ComponentType<{ className?: string }>; accent: string }> = {
@@ -222,7 +221,7 @@ function LegalSidebar({ active }: { active: LegalPageType }) {
             return (
               <button
                 key={item.type}
-                onClick={() => navigate(item.view as View)}
+                onClick={() => navigate(item.view)}
                 className={cn(
                   "w-full text-left p-2.5 rounded-lg transition-all group flex items-center gap-3",
                   isActive
@@ -430,7 +429,7 @@ function AboutContent() {
       </Section>
 
       <div className="pt-4">
-        <Button size="lg" className="bg-emerald-500 text-emerald-950 hover:bg-emerald-400 breathe neon-border" onClick={() => navigate({ name: "auth" })}>
+        <Button size="lg" className="bg-emerald-500 text-emerald-950 hover:bg-emerald-400 breathe neon-border" onClick={() => navigate({ name: "login" })}>
           <Rocket className="h-4 w-4 mr-2" /> Start Your Journey
         </Button>
       </div>
@@ -509,10 +508,10 @@ function PrivacyContent() {
 
       <Section id="cookies" title="4. Cookies & Tracking Technologies" icon={Cookie} accent="amber">
         <p>
-          We use cookies and similar technologies (local storage, session storage) to. We do NOT use browser fingerprinting.
-          keep you logged in, remember your preferences, and analyze platform usage. A detailed
-          breakdown is available in our{" "}
-          <button className="text-emerald-400 hover:underline" onClick={() => useAppStore.getState().navigate({ name: "cookies" } as unknown as View)}>
+          We use cookies and similar technologies (local storage, session storage) to keep you
+          logged in, remember your preferences, and analyze platform usage. We do NOT use browser
+          fingerprinting. A detailed breakdown is available in our{" "}
+          <button className="text-emerald-400 hover:underline" onClick={() => useAppStore.getState().navigate({ name: "legal", pageType: "cookies" })}>
             Cookie Policy
           </button>.
         </p>
@@ -1520,7 +1519,7 @@ export function LegalPage({ pageType }: LegalPageProps) {
               <Button variant="outline" size="sm" className="glass-card border-emerald-500/30 text-emerald-400 hover:bg-emerald-500/10" onClick={() => navigate({ name: "contact" })}>
                 <Mail className="h-3.5 w-3.5 mr-1.5" /> Contact Us
               </Button>
-              <Button size="sm" className="bg-emerald-500 text-emerald-950 hover:bg-emerald-400" onClick={() => navigate({ name: "auth" })}>
+              <Button size="sm" className="bg-emerald-500 text-emerald-950 hover:bg-emerald-400" onClick={() => navigate({ name: "login" })}>
                 <Rocket className="h-3.5 w-3.5 mr-1.5" /> Get Started
               </Button>
             </div>
@@ -1532,7 +1531,7 @@ export function LegalPage({ pageType }: LegalPageProps) {
           {LEGAL_NAV.filter(n => n.type !== pageType).slice(0, 6).map((item) => (
             <button
               key={item.type}
-              onClick={() => navigate(item.view as View)}
+              onClick={() => navigate(item.view)}
               className="text-left p-4 rounded-xl border border-border bg-background/40 hover:bg-emerald-500/5 hover:border-emerald-500/30 transition-all group flex items-center gap-3"
             >
               <div className="p-2 rounded-lg bg-muted/40 text-muted-foreground group-hover:text-emerald-400 group-hover:bg-emerald-500/10 transition-colors">

@@ -100,15 +100,11 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
   if (!password || password.length < 6) {
     return NextResponse.json({ error: "Password must be at least 6 characters" }, { status: 400 })
   }
-  const validRoles = [
-    "STUDENT",
-    "INSTRUCTOR",
-    "ADMIN",
-    "SUPER_ADMIN",
-    "PROCTOR",
-    "SCHOOL_ADMIN",
-    "INSTITUTION_ADMIN",
-  ]
+  // Role hierarchy: only a SUPER_ADMIN may mint another SUPER_ADMIN
+  // (otherwise a plain ADMIN could escalate itself via user creation).
+  const validRoles = currentUser.role === "SUPER_ADMIN"
+    ? ["STUDENT", "INSTRUCTOR", "ADMIN", "SUPER_ADMIN", "PROCTOR", "SCHOOL_ADMIN", "INSTITUTION_ADMIN"]
+    : ["STUDENT", "INSTRUCTOR", "ADMIN", "PROCTOR", "SCHOOL_ADMIN", "INSTITUTION_ADMIN"]
   const finalRole = validRoles.includes(role ?? "") ? (role as string) : "STUDENT"
 
   const existing = await db.user.findUnique({ where: { email: email.trim() } })

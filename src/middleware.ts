@@ -14,7 +14,8 @@
  * We just check that *a* session cookie is present. If absent, return 401
  * for API routes or redirect to / for non-API routes.
  *
- * Public allowlist: see PUBLIC_API_ROUTES + PUBLIC_PAGES below.
+ * Public allowlist: PUBLIC_API_ROUTES below (page gating lives in the SPA
+ * shell via PUBLIC_VIEWS in src/lib/url-router.ts, not in middleware).
  */
 
 import { NextResponse, type NextRequest } from "next/server"
@@ -112,26 +113,6 @@ const PUBLIC_API_ROUTES = new Set<string>([
   "/api/study-groups",
 ])
 
-// Pages that don't require auth (everything else redirects to / which shows
-// the auth screen). The app is a SPA so this is mostly a no-op.
-const PUBLIC_PAGES = new Set<string>([
-  "/",
-  "/login",
-  "/courses",
-  "/batches",
-  "/events",
-  "/blog",
-  "/contact",
-  "/instructors",
-  "/institutions",
-  "/cyber-range",
-  "/cyber-quiz",
-  "/verify",
-  "/pricing",
-  "/corporate-training",
-  "/learning-paths",
-])
-
 function getSessionCookie(req: NextRequest): string | null {
   // NextAuth sets `next-auth.session-token` (dev) or
   // `__Secure-next-auth.session-token` (prod). Check both.
@@ -140,15 +121,6 @@ function getSessionCookie(req: NextRequest): string | null {
     req.cookies.get("__Secure-next-auth.session-token")?.value ||
     null
   )
-}
-
-function isPublicApiRoute(pathname: string): boolean {
-  if (PUBLIC_API_ROUTES.has(pathname)) return true
-  // Allow exact-prefix public routes (e.g. "/api/blog" matches "/api/blog/some-post")
-  for (const route of PUBLIC_API_ROUTES) {
-    if (pathname.startsWith(route + "/") || pathname === route) return true
-  }
-  return false
 }
 
 function matchProtectedPrefix(

@@ -79,7 +79,16 @@ async function parentApi<T = any>(
     credentials: "include",
   })
   const text = await res.text()
-  const data = text ? JSON.parse(text) : null
+  let data: any = null
+  if (text) {
+    try {
+      data = JSON.parse(text)
+    } catch {
+      // A proxy/CDN error page (HTML) or corrupted body must surface as a
+      // clean Request failed error, never a raw SyntaxError.
+      throw new Error(res.ok ? "Invalid response from server" : `Request failed: ${res.status}`)
+    }
+  }
   if (!res.ok) {
     throw new Error(data?.error || `Request failed: ${res.status}`)
   }

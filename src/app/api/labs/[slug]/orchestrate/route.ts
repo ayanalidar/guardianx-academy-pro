@@ -153,7 +153,12 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ slu
     })
     if (!session) return NextResponse.json({ error: "No active session" }, { status: 404 })
 
-    const mins = additionalMinutes || 30
+    // Clamp extension length + rate limit: without this a user could keep
+    // lab containers alive indefinitely (orchestrator cost DoS).
+    if (!rateLimit(`lab-extend:${getClientIp(req)}:${user.id}`, { max: 10, windowMs: 10 * 60 * 1000 })) {
+      return NextResponse.json({ error: "Too many extensions. Try again in a few minutes." }, { status: 429 })
+    }
+    const mins = Math.min(Math.max(Number(additionalMinutes) || 30, 1), 120)
     const newExpiry = new Date(Date.now() + mins * 60 * 1000)
 
     await db.labSession.update({

@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
       status,
       scheduledAt,
       startedAt,
-      maxStudents: body.maxStudents || 50,
+      maxStudents: Math.min(Math.max(Number(body.maxStudents) || 50, 1), 500),
     },
     include: {
       host: { select: { id: true, name: true, title: true, avatar: true } },

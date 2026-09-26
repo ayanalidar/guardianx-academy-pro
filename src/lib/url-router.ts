@@ -65,8 +65,12 @@ export function viewToPath(view: View): string {
         : "/admin-batch-hub"
     case "cyber-quiz-runner":
       return `/cyber-quiz/start/${encodeURIComponent(view.difficulty)}`
-    case "cyber-quiz-results":
-      return `/cyber-quiz/results/${encodeURIComponent(view.attemptId)}`
+    case "cyber-quiz-results": {
+      // Guest attempts are authorized by an HMAC result token (?t=). Without
+      // it the results API 403s for any signed-out visitor on refresh/deep-link.
+      const t = view.resultToken ? `?t=${encodeURIComponent(view.resultToken)}` : ""
+      return `/cyber-quiz/results/${encodeURIComponent(view.attemptId)}${t}`
+    }
     case "cyber-quiz-certificate":
       return `/cyber-quiz/certificate/${encodeURIComponent(view.credentialId)}`
     case "cyber-quiz-progress":
@@ -115,6 +119,7 @@ const LEGAL_PAGES = ["about", "privacy", "terms", "faq", "refund", "cookies", "c
 /** Every view name that maps 1:1 to `/<name>` (the bridge-space routes). */
 const KNOWN_FLAT_VIEWS = new Set<View["name"]>([
   "impact", "dashboard", "learning", "notes", "live", "labs", "certificates",
+  "cyber-range",
   "achievements", "leaderboard", "community", "profile", "assignments",
   "messaging", "study-groups", "office-hours", "book-session", "auth",
   "ai-assistant", "threat-feed", "code-review", "career-planner", "job-board",
@@ -216,7 +221,8 @@ export function pathToView(pathWithSearch: string): View | null {
       }
     }
     if (parts[1] === "results" && parts[2]) {
-      return { name: "cyber-quiz-results", attemptId: parts[2] }
+      // ?t= carries the HMAC result token for guest attempts.
+      return { name: "cyber-quiz-results", attemptId: parts[2], resultToken: search.get("t") ?? undefined }
     }
     if (parts[1] === "certificate" && parts[2]) {
       return { name: "cyber-quiz-certificate", credentialId: parts[2] }
@@ -314,6 +320,13 @@ export const PUBLIC_VIEWS = new Set<View["name"]>([
   "cyber-quiz-certificate", "cyber-quiz-progress",
   "catalog", "batches", "batch-detail", "course", "cyber-range", "learning-paths", "skill-tree",
   "exams", "credentials", "support", "verify",
+  // Advertised in the public header/footer mega menus. These views render
+  // for anonymous visitors from real pages (PublicRouteView does not gate),
+  // so the bridge must not login-wall them either (same bug class as the
+  // original /placements report). Gated features inside each view show
+  // their own sign-in prompts.
+  "labs", "certificates", "ctf-platform", "weekly-challenges",
+  "career-planner", "skill-assessments", "resume-builder",
   "instructors", "instructor-detail", "events", "event-detail",
   "blog", "blog-post",
   "cert-landing",
@@ -328,6 +341,13 @@ const VIEW_TITLES: Partial<Record<View["name"], string>> = {
   home: "Cybersecurity Training & Certifications",
   impact: "Our Impact",
   login: "Log In",
+  labs: "Hands-on Cyber Labs",
+  "institutions": "Institution Partnerships",
+  "institutions-schools": "Cybersecurity for Schools",
+  "institutions-colleges": "Cybersecurity for Colleges",
+  "institutions-universities": "Cybersecurity for Universities",
+  "institutions-open-schooling": "Open Schooling Program",
+  "cyber-quiz": "Cybersecurity Awareness Quiz",
   dashboard: "Student Dashboard",
   catalog: "Cybersecurity Courses & Certifications",
   batches: "Training Batches",

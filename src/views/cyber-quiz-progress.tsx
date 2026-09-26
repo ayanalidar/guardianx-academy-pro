@@ -22,14 +22,12 @@ interface CertResponse {
   certificate: {
     credentialId: string
     candidateName: string
-    email: string
-    difficulty: string
+      difficulty: string
     score: number
     totalQuestions: number
     percentage: number
     issueDate: string
-    verificationHash: string
-    verificationUrl: string | null
+      verificationUrl: string | null
     status: string
   }
   domainScores: Record<string, { correct: number; total: number }>

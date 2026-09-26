@@ -451,6 +451,16 @@ function LiveRoom({ session, onLeave, userName, userId, isHost }: {
       session_.disconnect()
       remoteVoicePeers.current.forEach((el) => { el.srcObject = null; el.remove() })
       remoteVoicePeers.current.clear()
+      // Recording cleanup: leaving the session mid-recording must stop the
+      // MediaRecorder and its 1s timer, otherwise both keep running against
+      // the unmounted component.
+      const recorder = mediaRecorderRef.current
+      if (recorder && recorder.state !== "inactive") recorder.stop()
+      mediaRecorderRef.current = null
+      if (recordTimerRef.current) {
+        clearInterval(recordTimerRef.current)
+        recordTimerRef.current = null
+      }
     }
   }, [session.id])
 

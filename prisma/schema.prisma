@@ -394,6 +394,8 @@ model Course {
   officeHourSlots OfficeHourSlot[]
   // Payment relations (PAYMENT-COUPON-SEARCH feature)
   orders        Order[]
+
+  @@index([instructorId]) // matches Course_instructorId_idx in db-safe bootstrap
 }
 
 model Module {
@@ -404,6 +406,8 @@ model Module {
   description String?
   order       Int      @default(0)
   lessons     Lesson[]
+
+  @@index([courseId]) // matches Module_courseId_idx in db-safe bootstrap
 }
 
 model Lesson {
@@ -422,6 +426,8 @@ model Lesson {
   progress    LessonProgress[]
   notes       Note[]
   quiz        Quiz?
+
+  @@index([moduleId]) // matches Lesson_moduleId_idx in db-safe bootstrap
 }
 
 model Enrollment {
@@ -1402,6 +1408,8 @@ model AuthoredCourse {
   version     Int      @default(1)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+
+  @@index([authorId]) // matches AuthoredCourse_authorId_idx in db-safe bootstrap
 }
 
 // Update User model with new relations
@@ -1558,6 +1566,8 @@ model LiveFeedEntry {
   order           Int      @default(0) // lower = higher in the feed
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+
+  @@index([active, order]) // matches LiveFeedEntry_active_order_idx in live-feed-bootstrap
 }
 
 /// Technology ecosystem — replaces fake "Trusted by Google" logos

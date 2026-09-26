@@ -45,15 +45,32 @@ const DDL: string[] = [
     "updatedAt" TIMESTAMP(3) NOT NULL,
     CONSTRAINT "Placement_pkey" PRIMARY KEY ("id")
   )`,
+  // --- column-drift insurance (Postgres 9.6+ ADD COLUMN IF NOT EXISTS) ---
+  // If the table already exists but predates a column added later, the
+  // probe's P2022 lands here and these ALTERs patch it in place.
+  `ALTER TABLE "Placement" ADD COLUMN IF NOT EXISTS "photoUrl" TEXT`,
+  `ALTER TABLE "Placement" ADD COLUMN IF NOT EXISTS "companyLogo" TEXT`,
+  `ALTER TABLE "Placement" ADD COLUMN IF NOT EXISTS "ctc" TEXT`,
+  `ALTER TABLE "Placement" ADD COLUMN IF NOT EXISTS "quote" TEXT`,
+  `ALTER TABLE "Placement" ADD COLUMN IF NOT EXISTS "story" TEXT`,
+  `ALTER TABLE "Placement" ADD COLUMN IF NOT EXISTS "linkedIn" TEXT`,
+  `ALTER TABLE "Placement" ADD COLUMN IF NOT EXISTS "track" TEXT NOT NULL DEFAULT 'General'`,
+  `ALTER TABLE "Placement" ADD COLUMN IF NOT EXISTS "featured" BOOLEAN NOT NULL DEFAULT false`,
+  `ALTER TABLE "Placement" ADD COLUMN IF NOT EXISTS "status" TEXT NOT NULL DEFAULT 'published'`,
+  `ALTER TABLE "Placement" ADD COLUMN IF NOT EXISTS "verified" BOOLEAN NOT NULL DEFAULT false`,
+  `ALTER TABLE "Placement" ADD COLUMN IF NOT EXISTS "isSample" BOOLEAN NOT NULL DEFAULT false`,
+  `ALTER TABLE "Placement" ADD COLUMN IF NOT EXISTS "order" INTEGER NOT NULL DEFAULT 0`,
   `CREATE INDEX IF NOT EXISTS "Placement_status_featured_order_idx" ON "Placement"("status", "featured", "order")`,
 ]
 
 export async function ensurePlacementTable(): Promise<boolean> {
   if (tableReady) return true
 
-  // 1) Cheap probe - succeeds instantly once the table exists.
+  // 1) Full-row probe - succeeds instantly once the table AND all its
+  // columns exist (P2021 table-missing and P2022 column-missing both
+  // fall through to the DDL path).
   try {
-    await db.placement.findFirst({ select: { id: true }, take: 1 })
+    await db.placement.findFirst({ take: 1 })
     tableReady = true
     return true
   } catch {
@@ -63,7 +80,7 @@ export async function ensurePlacementTable(): Promise<boolean> {
   // 2) Idempotent DDL, then re-probe.
   try {
     for (const stmt of DDL) await db.$executeRawUnsafe(stmt)
-    await db.placement.findFirst({ select: { id: true }, take: 1 })
+    await db.placement.findFirst({ take: 1 })
     tableReady = true
     return true
   } catch (error) {
