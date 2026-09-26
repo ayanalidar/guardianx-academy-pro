@@ -313,7 +313,7 @@ const authCookies: NextAuthOptions["cookies"] = {
 export const CANONICAL_AUTH_ORIGIN =
   process.env.NEXTAUTH_URL && !process.env.NEXTAUTH_URL.includes(".vercel.app")
     ? process.env.NEXTAUTH_URL.replace(/\/+$/, "")
-    : "https://www.academy.guardianx.cloud"
+    : "https://academy.guardianx.cloud"
 
 function canonicalizeAuthUrl(url: string): string {
   try {
