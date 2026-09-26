@@ -318,10 +318,43 @@ export function InvoiceGeneratorView() {
     }
   }
 
+  /** Load the owner's signature assets (public/signature-*.png). Both are
+   *  pre-flattened OPAQUE PNGs - transparent/SMask'd images are dropped by
+   *  Chrome's print / Save-as-PDF renderer (same lesson as buildLogoPng).
+   *  dark  = light periwinkle ink over the dark page background (dark theme)
+   *  light = original blue-violet ink over white (print theme) */
+  async function buildSignaturePngs(): Promise<{ dark: string | null; light: string | null }> {
+    const load = async (src: string): Promise<string | null> => {
+      try {
+        const img = new Image()
+        img.src = src
+        await img.decode()
+        const canvas = document.createElement("canvas")
+        canvas.width = img.naturalWidth
+        canvas.height = img.naturalHeight
+        const ctx = canvas.getContext("2d")
+        if (!ctx) return null
+        ctx.drawImage(img, 0, 0)
+        return canvas.toDataURL("image/png")
+      } catch (e) {
+        console.warn("[invoice-pdf] signature load failed - falling back to flourish", e)
+        return null
+      }
+    }
+    const [dark, light] = await Promise.all([load("/signature-dark.png"), load("/signature-light.png")])
+    return { dark, light }
+  }
+
   async function generateInvoicePdf() {
     const { buildInvoicePdf } = await import("@/lib/invoice-pdf")
-    const [qrPngDataUrl, logoPngDataUrl] = await Promise.all([buildQrPng(), buildLogoPng()])
-    return buildInvoicePdf(collectPdfData(), { qrPngDataUrl, logoPngDataUrl, theme: pdfTheme })
+    const [qrPngDataUrl, logoPngDataUrl, signatures] = await Promise.all([buildQrPng(), buildLogoPng(), buildSignaturePngs()])
+    return buildInvoicePdf(collectPdfData(), {
+      qrPngDataUrl,
+      logoPngDataUrl,
+      signatureDarkThemeDataUrl: signatures.dark,
+      signatureLightThemeDataUrl: signatures.light,
+      theme: pdfTheme,
+    })
   }
 
   async function handleGeneratePdf() {
@@ -1155,7 +1188,8 @@ export function InvoiceGeneratorView() {
                     <Signature className="h-3.5 w-3.5 text-violet-300" /> Authorized Signatory
                   </p>
                   <div className="sm:ml-auto mt-3 mb-2 w-48 flex flex-col items-center">
-                    <span className="gx-script text-2xl text-violet-200/85 leading-none" aria-hidden>GuardianX</span>
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src="/signature-dark.png" alt="Authorized signature" className="mx-auto mb-1 h-12 w-auto object-contain" />
                     <div className="mt-2 h-px w-full border-b-2 border-dashed border-white/25" />
                     <span className="text-[10px] text-slate-400 italic mt-1">For GuardianX Academy</span>
                   </div>

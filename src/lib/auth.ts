@@ -202,6 +202,68 @@ const authCallbacks: NextAuthOptions["callbacks"] = {
 }
 
 // ---------------------------------------------------------------------------
+// Redirect callback - keeps users on the host they are actually browsing.
+//
+// next-auth v4 resolves its base URL from NEXTAUTH_URL / VERCEL_URL, which on
+// this deployment is guardianx-academy-pro.vercel.app. Its DEFAULT redirect
+// callback then rewrites every callbackUrl that does not start with that base
+// back to it - so a client signing in on www.academy.guardianx.cloud was
+// bounced to guardianx-academy-pro.vercel.app after login AND logout.
+//
+// This callback instead rewrites known-GuardianX hosts to the CURRENT request
+// origin (captured per request in the route handler), and keeps relative URLs
+// on that origin too. Foreign hosts are never redirected to (anti-open-
+// redirect) - they collapse to the request origin root.
+// ---------------------------------------------------------------------------
+const CUSTOM_HOST_SUFFIXES = ["guardianx.cloud"]
+const TRUSTED_HOSTS = new Set([
+  "guardianx-academy-pro.vercel.app",
+  "localhost",
+  "127.0.0.1",
+])
+
+function isKnownGuardianXHost(host: string): boolean {
+  const h = host.toLowerCase()
+  return (
+    TRUSTED_HOSTS.has(h) ||
+    CUSTOM_HOST_SUFFIXES.some((s) => h === s || h.endsWith(`.${s}`)) ||
+    // Vercel preview/branch deployments of this project
+    h.endsWith(".vercel.app")
+  )
+}
+
+function hostSafeRedirect(requestOrigin: string): NonNullable<NextAuthOptions["callbacks"]>["redirect"] {
+  return async ({ url }) => {
+    let origin = requestOrigin
+    try {
+      origin = new URL(requestOrigin).origin
+    } catch {
+      /* keep requestOrigin as-is */
+    }
+    // Relative URLs always stay on the current host
+    if (url.startsWith("/")) {
+      try {
+        return new URL(url, origin).toString()
+      } catch {
+        return origin
+      }
+    }
+    try {
+      const target = new URL(url)
+      if (isKnownGuardianXHost(target.host) || target.origin === origin) {
+        // Same property, different host (e.g. the vercel.app URL coming from
+        // NEXTAUTH_URL or a stale callback-url cookie) -> stay on the host
+        // the user is browsing.
+        return `${origin}${target.pathname}${target.search}${target.hash}`
+      }
+      return origin
+    } catch {
+      return origin
+    }
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Cookie security - use secure:true + __Secure-/__Host- name prefixes in
 // production (HTTPS), plain names + secure:false in dev.
 // (Audit fix: browsers enforce that __Secure-/__Host- prefixed cookies are
@@ -240,11 +302,35 @@ const authCookies: NextAuthOptions["cookies"] = {
 }
 
 /**
+ * Canonical origin for URLs we generate ourselves (magic-link login emails).
+ * NEXTAUTH_URL on this deployment still points at the vercel.app deployment
+ * URL; emailed links built from it would log clients in on the wrong host
+ * (the session cookie would be scoped to that host and be lost on the
+ * redirect to the main domain). Until NEXTAUTH_URL is corrected in the
+ * deployment environment, we build email links on the canonical custom
+ * domain directly.
+ */
+export const CANONICAL_AUTH_ORIGIN =
+  process.env.NEXTAUTH_URL && !process.env.NEXTAUTH_URL.includes(".vercel.app")
+    ? process.env.NEXTAUTH_URL.replace(/\/+$/, "")
+    : "https://www.academy.guardianx.cloud"
+
+function canonicalizeAuthUrl(url: string): string {
+  try {
+    const u = new URL(url)
+    if (u.origin === CANONICAL_AUTH_ORIGIN) return url
+    return `${CANONICAL_AUTH_ORIGIN}${u.pathname}${u.search}`
+  } catch {
+    return url
+  }
+}
+
+/**
  * buildAuthOptions() - assembles the full options from live settings.
  * The ONLY dynamic part is the optional Google / Email providers; every
  * thing else (adapter, callbacks, cookies) is module-scope and shared.
  */
-async function buildAuthOptions(): Promise<NextAuthOptions> {
+async function buildAuthOptions(callbacks: NextAuthOptions["callbacks"]): Promise<NextAuthOptions> {
   const s = await getSettings([
     "GOOGLE_CLIENT_ID",
     "GOOGLE_CLIENT_SECRET",
@@ -315,15 +401,19 @@ async function buildAuthOptions(): Promise<NextAuthOptions> {
               },
               from: s.EMAIL_FROM || s.SMTP_USER || undefined,
               maxAge: 24 * 60 * 60, // 24 hours
-              // Custom sendMagicLink - uses our branded email template
+              // Custom sendMagicLink - uses our branded email template.
+              // The login URL is rebuilt on the canonical origin so the
+              // callback (and therefore the session cookie) lands on the
+              // custom domain, not the vercel.app deployment URL.
               async sendVerificationRequest({ identifier: email, url }) {
+                const loginUrl = canonicalizeAuthUrl(url)
                 // Look up the user to personalize the email
                 const user = await db.user.findUnique({ where: { email: email.toLowerCase() } })
                 const name = user?.name || "there"
                 await sendEmail({
                   to: email,
                   subject: "Your GuardianX Academy login link",
-                  html: magicLinkEmailTemplate(name, url),
+                  html: magicLinkEmailTemplate(name, loginUrl),
                 })
               },
               // Auto-create a STUDENT account on first magic-link login
@@ -340,7 +430,7 @@ async function buildAuthOptions(): Promise<NextAuthOptions> {
     // the server still boots - but JWTs won't survive a restart.
     secret: requireSecret("NEXTAUTH_SECRET"),
     pages: { signIn: "/" },
-    callbacks: authCallbacks,
+    callbacks,
     cookies: authCookies,
   }
 }
@@ -362,9 +452,17 @@ async function buildAuthOptions(): Promise<NextAuthOptions> {
  *     MissingSecret error (server logs say exactly what's wrong) instead of
  *     an unhandled route-handler 500.
  */
-export async function getAuthOptions(): Promise<NextAuthOptions> {
+export async function getAuthOptions(requestOrigin?: string): Promise<NextAuthOptions> {
+  // The redirect callback is installed only when the caller could capture the
+  // real request origin (the [...nextauth] route handler). Other callers
+  // (getServerSession consumers) never trigger redirects, so the default is
+  // fine for them.
+  const callbacks: NextAuthOptions["callbacks"] = requestOrigin
+    ? { ...authCallbacks, redirect: hostSafeRedirect(requestOrigin) }
+    : authCallbacks
+
   try {
-    return await buildAuthOptions()
+    return await buildAuthOptions(callbacks)
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error(
@@ -377,7 +475,7 @@ export async function getAuthOptions(): Promise<NextAuthOptions> {
       session: { strategy: "jwt", maxAge: 7 * 24 * 60 * 60 }, // audit fix: 7d
       secret: process.env.NEXTAUTH_SECRET || process.env.AUTH_SECRET,
       pages: { signIn: "/" },
-      callbacks: authCallbacks,
+      callbacks,
       cookies: authCookies,
     }
   }
