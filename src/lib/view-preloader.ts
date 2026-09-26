@@ -173,8 +173,13 @@ function scheduleIdle(fn: () => void): void {
   }
 }
 
-/** Progressively warm every view chunk during idle time, priority first.
- *  Runs at most once per page session. */
+/** Progressively warm view chunks during idle time, priority first.
+ *  PERF: only the PRIORITY_VIEWS set (what students/admins actually tap in
+ *  their first minutes) is warmed - the queue previously continued through
+ *  every registered view (~60 chunks), hundreds of KB of background
+ *  downloads competing with interaction on mobile. Less-common views are
+ *  covered by hover/touch intent prefetch, which gives a ~100-500ms head
+ *  start before the click. Runs once per session. */
 export function startIdlePreload(): void {
   if (idleStarted || typeof window === "undefined") return
   idleStarted = true
@@ -186,7 +191,6 @@ export function startIdlePreload(): void {
     if (VIEW_IMPORTERS[file] && !seen.has(file)) { seen.add(file); queue.push(file) }
   }
   PRIORITY_VIEWS.forEach(push)
-  Object.keys(VIEW_IMPORTERS).forEach(push)
 
   let i = 0
   const step = () => {
