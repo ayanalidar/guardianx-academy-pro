@@ -641,7 +641,7 @@ const GLOBAL_FOOTER: ContentItem[] = [
     page: "global", section: "footer", key: "contactInfo",
     value: [
       { icon: "Mail", value: "academy@guardianx.in" },
-      { icon: "Phone", value: "+91 80 1234 5678" },
+      { icon: "Phone", value: "+91 70067 12347" },
       { icon: "MapPin", value: "Nooripora, Baramulla, Kashmir 193401 & Gautam Buddha Nagar, Noida 201301" },
     ]
   },

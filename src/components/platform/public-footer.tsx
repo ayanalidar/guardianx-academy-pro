@@ -26,6 +26,14 @@ import { getCmsIcon } from "@/lib/cms-icons"
  * shareable, middle-click safe - with SPA click interception.
  * Bottom bar (contact info + copyright + Privacy/Terms/Security buttons) is unchanged.
  */
+
+// Real public phone number (matches Contact page, tel:+917006712347).
+const REAL_PHONE = "+91 70067 12347"
+// Placeholder numbers shipped in early CMS seeds before the real phone
+// existed. The footer swaps any of these (if still stored in SiteContent)
+// for REAL_PHONE at render time.
+const LEGACY_PLACEHOLDER_PHONES = ["+91 80 1234 5678", "+91 80 4567 8900"]
+
 export function PublicFooter() {
   const { navigate } = useAppStore()
 
@@ -47,13 +55,23 @@ export function PublicFooter() {
   const brandDesc = getContent(cmsData, "footer", "brandDesc", "Building tomorrow's cyber guardians.")
   const copyright = getContent(cmsData, "footer", "copyright", "GuardianX Academy")
 
+  // Real contact data (matches the Contact page). The hardcoded array below
+  // is only the fallback - the CMS (Admin → Content Studio → Global → Footer)
+  // overrides it when rows exist in the DB.
   const contactInfo = getContentArray<{ icon: string; value: string }>(
     cmsData, "footer", "contactInfo",
     [
       { icon: "Mail", value: "academy@guardianx.in" },
-      { icon: "Phone", value: "+91 80 1234 5678" },
+      { icon: "Phone", value: REAL_PHONE },
       { icon: "MapPin", value: "Nooripora, Baramulla, Kashmir 193401 & Gautam Buddha Nagar, Noida 201301" },
     ],
+  ).map((item) =>
+    // Legacy placeholder numbers were seeded into SiteContent before the
+    // real phone existed. If the DB still serves one, show the real number.
+    // (Safe to remove once the Content Studio row carries the real number.)
+    LEGACY_PLACEHOLDER_PHONES.includes(item.value?.trim() ?? "")
+      ? { ...item, value: REAL_PHONE }
+      : item,
   )
   const socialLinks = getContentArray<{ icon: string; label: string; href: string }>(
     cmsData, "footer", "socialLinks",
