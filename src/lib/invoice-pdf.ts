@@ -119,8 +119,8 @@ const C_BASE: Palette = {
 }
 
 const C_DARK: Palette = {
-  headerLeft: [48, 32, 102], // deep indigo
-  headerRight: [20, 14, 44],
+  headerLeft: [38, 25, 84], // deep indigo
+  headerRight: [16, 11, 36],
   accentA: [139, 92, 246], // violet-500 (brighter on dark)
   accentB: [232, 121, 249], // fuchsia-400
   accentC: [34, 211, 238], // cyan-400
@@ -333,9 +333,9 @@ function withOpacity(pdf: jsPDF, opacity: number, fn: () => void) {
 
 /** Full-page vertical aurora gradient - indigo → violet → deep navy. */
 function paintPageBg(pdf: jsPDF, pw: number, ph = 297) {
-  const top: RGB = [34, 24, 72] // indigo glow
-  const mid: RGB = [23, 16, 50] // violet night
-  const bottom: RGB = [11, 12, 28] // deep navy
+  const top: RGB = [15, 11, 34] // deep indigo glow
+  const mid: RGB = [10, 8, 24] // violet night
+  const bottom: RGB = [6, 6, 14] // near-black navy
   const steps = 44
   const sh = ph / steps
   for (let i = 0; i < steps; i++) {
@@ -358,15 +358,27 @@ function drawOrb(pdf: jsPDF, cx: number, cy: number, r: number, color: RGB, ring
   }
 }
 
-/** Frosted glass panel - translucent white fill + hairline light border. */
-function glassPanel(pdf: jsPDF, x: number, y: number, w: number, h: number, r = 3) {
-  withOpacity(pdf, 0.055, () => {
+/** Frosted glass panel - translucent fill + crisp brand border (the sample's
+ * boxed-card look: a thin coloured outline instead of a bare white hairline). */
+function glassPanel(
+  pdf: jsPDF,
+  x: number,
+  y: number,
+  w: number,
+  h: number,
+  r = 3,
+  border: RGB = [255, 255, 255],
+  borderOpacity = 0.16,
+  borderWidth = 0.25,
+  fillOpacity = 0.055
+) {
+  withOpacity(pdf, fillOpacity, () => {
     pdf.setFillColor(255, 255, 255)
     pdf.roundedRect(x, y, w, h, r, r, "F")
   })
-  withOpacity(pdf, 0.16, () => {
-    pdf.setDrawColor(255, 255, 255)
-    pdf.setLineWidth(0.25)
+  withOpacity(pdf, borderOpacity, () => {
+    pdf.setDrawColor(border[0], border[1], border[2])
+    pdf.setLineWidth(borderWidth)
     pdf.roundedRect(x, y, w, h, r, r, "S")
   })
 }
@@ -408,6 +420,30 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
 
   const safe = (s: string) => (rupeeFallback ? s.replace(/₹/g, "Rs. ") : s)
 
+  // single-line shrink-to-fit: step the font down first, ellipsize as a last
+  // resort; leaves the font set at the final size so the caller draws at once
+  const fitOne = (
+    text: string,
+    maxW: number,
+    kind: "reg" | "med" | "bold",
+    size: number,
+    minSize: number,
+    color: RGB
+  ): string => {
+    let t = safe(text)
+    let s = size
+    setFont(pdf, kind, s, color)
+    while (s > minSize && pdf.getTextWidth(t) > maxW) {
+      s -= 0.2
+      setFont(pdf, kind, s, color)
+    }
+    if (pdf.getTextWidth(t) > maxW) {
+      while (t.length > 1 && pdf.getTextWidth(`${t}...`) > maxW) t = t.slice(0, -1)
+      t = `${t}...`
+    }
+    return t
+  }
+
   // ---- theme ---------------------------------------------------------------
   const theme: InvoiceTheme = opts.theme ?? "dark"
   const DARK = theme === "dark"
@@ -420,25 +456,105 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
 
   let footerMarked = false
 
+  // page-frame inset - everything (header band, content, footer) lives inside
+  const FRAME = 5
+
+  // ---- page frame (both themes): the sample's signature background - a thin
+  // rounded border around the whole page. Brand-gradient on dark, softer
+  // violet on light, plus cyan L-bracket accents at the four corners. ----
+  function drawFrame() {
+    const y1 = 293 // 4mm bottom inset (5mm top/sides) - imperceptible, but
+    // gives the two footer lines clean clearance inside the frame
+    const x0 = FRAME
+    const y0 = FRAME
+    const x1 = PW - FRAME
+    const R = 3.2
+    const sx = x1 - x0 - 2 * R
+    const sy = y1 - y0 - 2 * R
+    const arc = (Math.PI * R) / 2
+    const perim = 2 * sx + 2 * sy + 4 * arc
+    const pos = (d: number): [number, number] => {
+      if (d < sx) return [x0 + R + d, y0]
+      d -= sx
+      if (d < arc) {
+        const a = -Math.PI / 2 + (d / arc) * (Math.PI / 2)
+        return [x1 - R + R * Math.cos(a), y0 + R + R * Math.sin(a)]
+      }
+      d -= arc
+      if (d < sy) return [x1, y0 + R + d]
+      d -= sy
+      if (d < arc) {
+        const a = (d / arc) * (Math.PI / 2)
+        return [x1 - R + R * Math.cos(a), y1 - R + R * Math.sin(a)]
+      }
+      d -= arc
+      if (d < sx) return [x1 - R - d, y1]
+      d -= sx
+      if (d < arc) {
+        const a = Math.PI / 2 + (d / arc) * (Math.PI / 2)
+        return [x0 + R + R * Math.cos(a), y1 - R + R * Math.sin(a)]
+      }
+      d -= arc
+      if (d < sy) return [x0, y1 - R - d]
+      d -= sy
+      const a = Math.PI + (d / arc) * (Math.PI / 2)
+      return [x0 + R + R * Math.cos(a), y0 + R + R * Math.sin(a)]
+    }
+    const N = 220
+    pdf.setLineWidth(0.5)
+    for (let i = 0; i < N; i++) {
+      const t = i / N
+      const c = t < 0.5 ? lerp(C.accentA, C.accentB, t * 2) : lerp(C.accentB, C.accentC, (t - 0.5) * 2)
+      pdf.setDrawColor(c[0], c[1], c[2])
+      const p0 = pos(t * perim)
+      const p1 = pos((i + 1) / N * perim)
+      pdf.line(p0[0], p0[1], p1[0], p1[1])
+    }
+    // corner accent ticks (the sample's double-line corner marks) - short
+    // L-brackets just inside each corner; no full inner hairline, which
+    // would cross the footer text
+    const tick = (tx: number, ty: number, dx: number, dy: number) => {
+      withOpacity(pdf, 0.75, () => {
+        pdf.setDrawColor(C.accentC[0], C.accentC[1], C.accentC[2])
+        pdf.setLineWidth(0.45)
+        pdf.line(tx, ty, tx + dx, ty + dy)
+      })
+    }
+    const T = 6
+    const O = 1.6
+    tick(x0 + O, y0 + O, T, 0)
+    tick(x0 + O, y0 + O, 0, T)
+    tick(x1 - O, y0 + O, -T, 0)
+    tick(x1 - O, y0 + O, 0, T)
+    tick(x0 + O, y1 - O, T, 0)
+    tick(x0 + O, y1 - O, 0, -T)
+    tick(x1 - O, y1 - O, -T, 0)
+    tick(x1 - O, y1 - O, 0, -T)
+  }
+
   function drawFooter() {
     if (footerMarked) return
     const pageNo = pdf.getNumberOfPages()
+    drawFrame()
     if (DARK) {
       withOpacity(pdf, 0.04, () => {
         pdf.setFillColor(255, 255, 255)
-        pdf.rect(0, 284.2, PW, 12.8, "F")
+        pdf.rect(FRAME + 0.5, 283.6, PW - 2 * (FRAME + 0.5), 7.2, "F")
       })
-      gradientBand3(pdf, 0, 285.5, PW, 0.7, C.accentA, C.accentB, C.accentC, 72)
+      gradientBand3(pdf, FRAME + 0.5, 284.4, PW - 2 * (FRAME + 0.5), 0.7, C.accentA, C.accentB, C.accentC, 72)
     } else {
       pdf.setDrawColor(C.line[0], C.line[1], C.line[2])
       pdf.setLineWidth(0.2)
-      pdf.line(ML, 285.5, MR, 285.5)
-      gradientBand3(pdf, ML, 285.5, 42, 0.9, C.accentA, C.accentB, C.accentC, 24)
+      pdf.line(ML, 284.4, MR, 284.4)
+      gradientBand3(pdf, ML, 284.4, 42, 0.9, C.accentA, C.accentB, C.accentC, 24)
     }
+    // two short lines sit fully inside the frame (bottom edge at y=293):
+    // the old layout pushed the address to y=292 - across the page edge -
+    // with the page number floating between the two baselines
     setFont(pdf, "reg", 7, C.faint)
-    pdf.text(safe("GuardianX Academy  ·  Reg No: UDYAM-JK-03-0034470"), ML, 288.4)
-    pdf.text(safe("Nooripora, Baramulla, Kashmir 193401  ·  Gautam Buddha Nagar, Noida 201301"), ML, 292)
-    pdf.text(safe(`Page ${pageNo} of {total_pages_count_string}`), MR, 290.2, { align: "right" })
+    pdf.text(safe("GuardianX Academy  ·  Reg No: UDYAM-JK-03-0034470"), ML, 286.5)
+    pdf.text(safe("Nooripora, Baramulla, Kashmir 193401  ·  Gautam Buddha Nagar, Noida 201301"), ML, 290)
+    pdf.text(safe(`Page ${pageNo} of {total_pages_count_string}`), MR, 286.5, { align: "right" })
     footerMarked = true
   }
 
@@ -449,11 +565,16 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
     if (DARK) {
       paintPageBg(pdf, PW)
       drawOrb(pdf, 202, 18, 22, C.accentA, 7, 0.05)
-      gradientBand3(pdf, 0, 0, PW, 1.6, C.accentA, C.accentB, C.accentC, 64)
     }
-    // slim continuation band
-    gradientBand(pdf, 0, 0, PW, 16, C.headerLeft, C.headerRight, 32)
-    gradientBand3(pdf, 0, 16, PW, 1.4, C.accentA, C.accentB, C.accentC, 48)
+    // slim continuation band, inset inside the page frame (rounded top corners)
+    pdf.saveGraphicsState()
+    pdf.roundedRect(FRAME, FRAME, PW - 2 * FRAME, 11, 3.2, 3.2, null)
+    pdf.clip()
+    pdf.discardPath()
+    gradientBand(pdf, FRAME, FRAME, PW - 2 * FRAME, 11, C.headerLeft, C.headerRight, 32)
+    if (DARK) gradientBand3(pdf, FRAME, FRAME, PW - 2 * FRAME, 1.4, C.accentA, C.accentB, C.accentC, 64)
+    pdf.restoreGraphicsState()
+    gradientBand3(pdf, FRAME, 16, PW - 2 * FRAME, 1.4, C.accentA, C.accentB, C.accentC, 48)
     setFont(pdf, "bold", 9.5, C.white)
     pdf.text("GUARDIANX ACADEMY", ML, 9.6)
     setFont(pdf, "med", 8, C.violetSoft)
@@ -463,7 +584,7 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
 
   function drawTableHeader(y: number) {
     if (DARK) {
-      glassPanel(pdf, ML, y, CW, 8, 2)
+      glassPanel(pdf, ML, y, CW, 8, 2, C.violet, 0.4, 0.32)
     } else {
       pdf.setFillColor(C.violetDark[0], C.violetDark[1], C.violetDark[2])
       pdf.rect(ML, y, CW, 8, "F")
@@ -491,25 +612,32 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
   }
 
   // =========================================================================
-  // HEADER BAND (full-bleed aurora hero - 52mm tall, Aurora Luxe)
+  // HEADER BAND (aurora hero, inset inside the page frame, 5→52mm)
   // =========================================================================
-  gradientBand(pdf, 0, 0, PW, 52, C.headerLeft, C.headerRight, 56)
+  pdf.saveGraphicsState()
+  pdf.roundedRect(FRAME, FRAME, PW - 2 * FRAME, 47, 3.2, 3.2, null)
+  pdf.clip()
+  pdf.discardPath()
+  gradientBand(pdf, FRAME, FRAME, PW - 2 * FRAME, 47, C.headerLeft, C.headerRight, 56)
   if (DARK) {
-    // glass edge: top aurora bar + hairline under the band
-    gradientBand3(pdf, 0, 0, PW, 2.4, C.accentA, C.accentB, C.accentC, 72)
-    gradientBand3(pdf, 0, 52, PW, 1.1, C.accentA, C.accentB, C.accentC, 72)
+    // glass edge: top aurora bar inside the band
+    gradientBand3(pdf, FRAME, FRAME, PW - 2 * FRAME, 2.2, C.accentA, C.accentB, C.accentC, 72)
     // soft glass sheen over the band
     withOpacity(pdf, 0.05, () => {
       pdf.setFillColor(255, 255, 255)
-      pdf.rect(0, 2.4, PW, 49.6, "F")
+      pdf.rect(FRAME, FRAME + 2.2, PW - 2 * FRAME, 44.8, "F")
     })
-  } else {
-    gradientBand3(pdf, 0, 52, PW, 2.2, C.accentA, C.accentB, C.accentC, 72)
   }
   // aurora mesh glows INSIDE the band (fuchsia top-right, cyan lower-center)
   drawOrb(pdf, 178, 9, 17, C.accentB, 6, 0.06)
   drawOrb(pdf, 96, 45, 14, C.accentC, 5, 0.05)
   drawOrb(pdf, 205, 40, 12, C.accentA, 5, 0.05)
+  pdf.restoreGraphicsState()
+  if (DARK) {
+    gradientBand3(pdf, FRAME, 52, PW - 2 * FRAME, 1.1, C.accentA, C.accentB, C.accentC, 72)
+  } else {
+    gradientBand3(pdf, FRAME, 52, PW - 2 * FRAME, 2.2, C.accentA, C.accentB, C.accentC, 72)
+  }
 
   // logo - large GuardianX shield on a glowing 40mm badge (Aurora Luxe hero);
   // falls back to the drawn GX badge if the image is unavailable.
@@ -662,22 +790,29 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
   const PANEL_BOTTOM = Math.max(PANEL_TOP + 43, clientBottom + 6)
   const panelH = PANEL_BOTTOM - PANEL_TOP
   if (DARK) {
-    glassPanel(pdf, ML - 2.5, PANEL_TOP, 91, panelH, 3)
-    glassPanel(pdf, 105.5, PANEL_TOP, MR - 103, 27, 3)
+    glassPanel(pdf, ML - 2.5, PANEL_TOP, 91, panelH, 3, C.violet, 0.38, 0.32)
+    glassPanel(pdf, 105.5, PANEL_TOP, MR - 103, 27, 3, C.violet, 0.38, 0.32)
   } else {
+    const bLight = lerp(C.white, C.accentA, 0.5)
     pdf.setFillColor(C.violetTint[0], C.violetTint[1], C.violetTint[2])
-    pdf.setDrawColor(C.avatarBorder[0], C.avatarBorder[1], C.avatarBorder[2])
-    pdf.setLineWidth(0.25)
+    pdf.setDrawColor(bLight[0], bLight[1], bLight[2])
+    pdf.setLineWidth(0.3)
     pdf.roundedRect(ML - 2.5, PANEL_TOP, 91, panelH, 3, 3, "FD")
     pdf.roundedRect(105.5, PANEL_TOP, MR - 103, 27, 3, 3, "FD")
   }
+  // right text edge inside the details panel (panel spans 105.5→198.5)
+  const DET_RIGHT = 194.5
 
   setFont(pdf, "bold", 7.4, C.violet)
   pdf.text("BILL TO", ML, y, { charSpace: 0.7 })
-  pdf.text("INVOICE DETAILS", MR, y, { align: "right", charSpace: 0.7 })
+  // manual width incl. letter-spacing - jsPDF's align:"right" ignores
+  // charSpace, which pushed "INVOICE DETAILS" past the panel border
+  const dtTitle = "INVOICE DETAILS"
+  const dtW = pdf.getTextWidth(dtTitle) + 0.7 * (dtTitle.length - 1)
+  pdf.text(dtTitle, DET_RIGHT - dtW, y, { charSpace: 0.7 })
   if (DARK) {
     accentTick(ML, y + 1.8, 11)
-    accentTick(MR - 11, y + 1.8, 11)
+    accentTick(DET_RIGHT - 11, y + 1.8, 11)
   }
 
   y += 6.5
@@ -729,7 +864,10 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
     })
   }
 
-  // right column - dates / currency (right aligned rows)
+  // right column - dates / currency. The old fixed label x (MR-34) collided
+  // with longer values ("Issue Date26 Sept 2026") and values sat flush on
+  // the panel edge. Now: value shrink-to-fit, label right-aligned against
+  // the value column with a fixed 3mm gutter, 4mm inner padding both sides.
   const rows: Array<[string, string]> = [
     ["Issue Date", fmtDate(data.issueDate)],
     ["Due Date", data.dueDate ? fmtDate(data.dueDate) : " - "],
@@ -737,10 +875,11 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
   ]
   let ry = y + 1.6
   for (const [label, value] of rows) {
+    const v = fitOne(value, 50, "med", 8.6, 6.8, C.ink)
+    const vw = pdf.getTextWidth(v)
+    pdf.text(v, DET_RIGHT, ry, { align: "right" })
     setFont(pdf, "reg", 8.2, C.faint)
-    pdf.text(label, MR - 34, ry)
-    setFont(pdf, "med", 8.6, C.ink)
-    pdf.text(safe(value), MR, ry, { align: "right" })
+    pdf.text(label, DET_RIGHT - vw - 3, ry, { align: "right" })
     ry += 5.6
   }
 
@@ -835,11 +974,12 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
   if (data.upiId && opts.qrPngDataUrl && total > 0) {
     const cardH = 40
     if (DARK) {
-      glassPanel(pdf, ML, y, 88, cardH, 2.4)
+      glassPanel(pdf, ML, y, 88, cardH, 2.4, C.violet, 0.38, 0.32)
     } else {
+      const bLight = lerp(C.white, C.accentA, 0.5)
       pdf.setFillColor(255, 255, 255)
-      pdf.setDrawColor(C.line[0], C.line[1], C.line[2])
-      pdf.setLineWidth(0.25)
+      pdf.setDrawColor(bLight[0], bLight[1], bLight[2])
+      pdf.setLineWidth(0.3)
       pdf.roundedRect(ML, y, 88, cardH, 2.4, 2.4, "FD")
     }
     setFont(pdf, "bold", 7.2, C.violet)
@@ -849,20 +989,23 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
     pdf.roundedRect(ML + 3.2, y + 7.7, qrSize + 1.6, qrSize + 1.6, 1.4, 1.4, "F")
     pdf.addImage(opts.qrPngDataUrl, "PNG", ML + 4, y + 8.5, qrSize, qrSize)
     let qy = y + 12.5
-    setFont(pdf, "reg", 7.4, C.sub)
-    pdf.text("UPI ID", ML + 32, qy)
-    setFont(pdf, "med", 7.8, C.ink)
-    pdf.text(safe(data.upiId), ML + 84, qy, { align: "right" })
-    qy += 5
-    setFont(pdf, "reg", 7.4, C.sub)
-    pdf.text("Amount", ML + 32, qy)
-    setFont(pdf, "bold", 7.8, C.ink)
-    pdf.text(sym(total), ML + 84, qy, { align: "right" })
-    qy += 5
-    setFont(pdf, "reg", 7.4, C.sub)
-    pdf.text("A/C · IFSC", ML + 30, qy)
-    setFont(pdf, "med", 7.2, C.ink)
-    pdf.text(safe(`${data.accountNumber ?? " - "}  ${data.ifscCode ?? ""}`), ML + 84, qy, { align: "right" })
+    // labels start 4mm clear of the QR (it ends at ML+31 - the old ML+30/32
+    // labels sat under the QR corner); each value is shrink-to-fit within
+    // the space LEFT of the value column after its own label + 3mm gutter
+    const upiLabelX = ML + 35
+    const upiRight = ML + 84.5
+    const upiRow = (label: string, value: string, kind: "med" | "bold", size: number) => {
+      setFont(pdf, "reg", 7.4, C.sub)
+      pdf.text(label, upiLabelX, qy)
+      const lw = pdf.getTextWidth(label)
+      const v = fitOne(value, upiRight - upiLabelX - lw - 3, kind, size, 5.6, C.ink)
+      pdf.text(v, upiRight, qy, { align: "right" })
+      qy += 5.2
+    }
+    upiRow("UPI ID", data.upiId || " - ", "med", 7.8)
+    upiRow("Amount", sym(total), "bold", 7.8)
+    upiRow("Account", data.accountNumber || " - ", "med", 7.2)
+    upiRow("IFSC", data.ifscCode || " - ", "med", 7.2)
     leftBottom = y + cardH
   }
 
@@ -877,7 +1020,7 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
   }
   // total pill - oversized hero total (dark: frosted glass, light: solid)
   if (DARK) {
-    glassPanel(pdf, 108, ty + 1, MR - 108, 15, 2.6)
+    glassPanel(pdf, 108, ty + 1, MR - 108, 15, 2.6, C.violet, 0.38, 0.32)
     gradientBand3(pdf, 108, ty + 0.2, MR - 108, 0.8, C.accentA, C.accentB, C.accentC, 48)
     gradientBand3(pdf, 108, ty + 16.1, MR - 108, 0.8, C.accentC, C.accentB, C.accentA, 48)
   } else {
