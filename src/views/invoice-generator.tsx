@@ -3,6 +3,7 @@
 import * as React from "react"
 import { QRCodeSVG } from "qrcode.react"
 import type { InvoicePdfData, InvoiceTheme } from "@/lib/invoice-pdf"
+import { computeEmiPlan, EMI_SPLITS, type EmiPlanRow } from "@/lib/invoice-utils"
 import { motion, AnimatePresence } from "framer-motion"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useAppStore } from "@/store/app-store"
@@ -66,6 +67,12 @@ interface SavedInvoice {
   accountNumber?: string | null
   ifscCode?: string | null
   upiId?: string | null
+  emiEnabled?: boolean
+  emiSplit?: number
+  emiDue1?: string | null
+  emiDue2?: string | null
+  emiPaidCount?: number
+  emiPlan?: string | null
 }
 
 const ITEM_ICON_CONFIG: Record<ItemIcon, { icon: React.ElementType; label: string; color: string; bg: string }> = {
@@ -151,6 +158,15 @@ export function InvoiceGeneratorView() {
   const [currency, setCurrency] = React.useState("INR")
   const [gstSplit, setGstSplit] = React.useState(true) // CGST + SGST split for India
 
+  // EMI / installment plan - students may pay the invoice in 2 installments.
+  // Amounts are derived live from the current total; the server recomputes
+  // them from its own total on save (emiPlan snapshot is server-owned).
+  const [emiEnabled, setEmiEnabled] = React.useState(false)
+  const [emiSplit, setEmiSplit] = React.useState(50) // % charged in installment 1
+  const [emiDue1, setEmiDue1] = React.useState("")
+  const [emiDue2, setEmiDue2] = React.useState("")
+  const [emiPaidCount, setEmiPaidCount] = React.useState(0) // 0 | 1 | 2
+
   // Bank details - GuardianX official banking
   const [bankName, setBankName] = React.useState("Jammu & Kashmir Bank")
   const [accountName, setAccountName] = React.useState("GuardianX")
@@ -223,6 +239,13 @@ export function InvoiceGeneratorView() {
 
   const cur = CURRENCY_LOCALE[currency] ?? CURRENCY_LOCALE.INR
 
+  // EMI schedule derived live from the current editor total (the server
+  // recomputes the authoritative snapshot from its own total on save)
+  const emiPlanRows: EmiPlanRow[] | null = emiEnabled
+    ? computeEmiPlan(total, emiSplit, emiDue1, emiDue2, emiPaidCount)
+    : null
+  const emiNextDue = emiPlanRows?.find((r) => r.status !== "Paid") ?? null
+
   function formatMoney(amount: number) {
     return `${cur.symbol}${amount.toLocaleString(cur.locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
   }
@@ -257,6 +280,7 @@ export function InvoiceGeneratorView() {
       accountNumber,
       ifscCode,
       upiId,
+      emiPlan: emiEnabled ? computeEmiPlan(total, emiSplit, emiDue1, emiDue2, emiPaidCount) : null,
     }
   }
 
@@ -439,6 +463,11 @@ export function InvoiceGeneratorView() {
       accountNumber,
       ifscCode,
       upiId,
+      emiEnabled,
+      emiSplit,
+      emiDue1,
+      emiDue2,
+      emiPaidCount,
     }
     saveMutation.mutate({ id: editingInvoiceId, body })
   }
@@ -467,6 +496,11 @@ export function InvoiceGeneratorView() {
     setAccountNumber(inv.accountNumber || "")
     setIfscCode(inv.ifscCode || "")
     setUpiId(inv.upiId || "")
+    setEmiEnabled(inv.emiEnabled ?? false)
+    setEmiSplit(inv.emiSplit ?? 50)
+    setEmiDue1(inv.emiDue1 || "")
+    setEmiDue2(inv.emiDue2 || "")
+    setEmiPaidCount(inv.emiPaidCount ?? 0)
     try {
       const parsed = typeof inv.items === "string" ? JSON.parse(inv.items) : inv.items
       if (Array.isArray(parsed) && parsed.length > 0) {
@@ -691,6 +725,16 @@ export function InvoiceGeneratorView() {
                             <span className={cn("inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[9px] font-semibold border", cfg.bg, cfg.color, cfg.border)}>
                               <StatusIcon className="h-2.5 w-2.5" /> {cfg.label}
                             </span>
+                            {inv.emiEnabled && (
+                              <span className={cn(
+                                "inline-flex items-center gap-1 rounded-full px-1.5 py-0.5 text-[9px] font-semibold border",
+                                (inv.emiPaidCount ?? 0) >= 2
+                                  ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/30"
+                                  : "bg-fuchsia-500/10 text-fuchsia-300 border-fuchsia-500/30",
+                              )}>
+                                <Wallet className="h-2.5 w-2.5" /> EMI {(inv.emiPaidCount ?? 0)}/2 paid
+                              </span>
+                            )}
                           </div>
                           <p className="text-[10px] text-muted-foreground truncate">
                             {inv.clientName}{inv.clientOrg ? ` · ${inv.clientOrg}` : ""} · {inv.issueDate}
@@ -891,6 +935,111 @@ export function InvoiceGeneratorView() {
                   )
                 })}
               </div>
+            </Card>
+
+            <Card className="p-5 card-premium">
+              <h2 className="text-sm font-semibold mb-4 flex items-center gap-2">
+                <Wallet className="h-4 w-4 text-fuchsia-400" /> Payment Plan (EMI)
+              </h2>
+              <div className="flex items-center gap-2">
+                <input
+                  type="checkbox"
+                  id="emi-enabled"
+                  checked={emiEnabled}
+                  onChange={(e) => {
+                    const on = e.target.checked
+                    setEmiEnabled(on)
+                    if (on) {
+                      // sensible defaults: part 1 due now, part 2 on the invoice due date
+                      setEmiDue1((d) => d || issueDate)
+                      setEmiDue2((d) => d || dueDate || issueDate)
+                    }
+                  }}
+                  className="size-4 rounded border-border accent-violet-500"
+                />
+                <Label htmlFor="emi-enabled" className="text-xs cursor-pointer">
+                  Allow payment in 2 installments (EMI plan shown on the invoice)
+                </Label>
+              </div>
+
+              {emiEnabled && (
+                <div className="mt-4 space-y-3">
+                  <div className="grid sm:grid-cols-3 gap-3">
+                    <div>
+                      <Label className="text-xs">Split</Label>
+                      <Select
+                        value={String(emiSplit)}
+                        onValueChange={(v) => setEmiSplit(Number(v))}
+                      >
+                        <SelectTrigger className="h-9 text-xs"><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          {EMI_SPLITS.map((pct) => (
+                            <SelectItem key={pct} value={String(pct)}>
+                              {pct}% / {100 - pct}%
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label className="text-xs">Installment 1 Due</Label>
+                      <Input type="date" value={emiDue1} onChange={(e) => setEmiDue1(e.target.value)} />
+                    </div>
+                    <div>
+                      <Label className="text-xs">Installment 2 Due</Label>
+                      <Input type="date" value={emiDue2} onChange={(e) => setEmiDue2(e.target.value)} />
+                    </div>
+                  </div>
+
+                  {emiPlanRows ? (
+                    <div className="space-y-2">
+                      {emiPlanRows.map((row, idx) => {
+                        const paid = row.status === "Paid"
+                        const prevPaid = idx === 0 || emiPlanRows[idx - 1].status === "Paid"
+                        return (
+                          <div
+                            key={row.label}
+                            className="flex items-center justify-between gap-2 rounded-lg border border-border/60 px-3 py-2"
+                          >
+                            <div className="min-w-0">
+                              <p className="text-xs font-medium">
+                                {row.label}
+                                <span className="text-muted-foreground"> · {row.percent}%</span>
+                                <span className="ml-2 font-semibold tabular-nums text-violet-300">{formatMoney(row.amount)}</span>
+                              </p>
+                              <p className="text-[10px] text-muted-foreground">
+                                {row.dueDate ? `Due ${new Date(row.dueDate).toLocaleDateString(cur.locale, { day: "numeric", month: "short", year: "numeric" })}` : "No due date set"}
+                              </p>
+                            </div>
+                            <Button
+                              size="sm"
+                              variant={paid ? "outline" : "ghost"}
+                              disabled={statusMutation.isPending || (!paid && !prevPaid)}
+                              className={cn(
+                                "h-7 px-2 text-[10px] shrink-0",
+                                paid ? "text-emerald-300 border-emerald-500/40" : "text-emerald-300 hover:text-emerald-200",
+                              )}
+                              onClick={() =>
+                                setEmiPaidCount(paid ? idx : idx + 1)
+                              }
+                            >
+                              <CheckCircle2 className="h-3 w-3 mr-1" />
+                              {paid ? "Paid" : "Mark Paid"}
+                            </Button>
+                          </div>
+                        )
+                      })}
+                      <p className="text-[10px] text-muted-foreground">
+                        Mark installments paid as the student clears them - the PDF schedule and UPI QR update to charge the next due part.
+                      </p>
+                    </div>
+                  ) : (
+                    <p className="text-[10px] text-amber-300/90">
+                      Add at least one line item so installment amounts can be calculated.
+                    </p>
+                  )}
+                </div>
+              )}
             </Card>
 
             <Card className="p-5 card-premium">
@@ -1100,7 +1249,7 @@ export function InvoiceGeneratorView() {
                         <div id="upi-qr-holder" className="size-20 sm:size-24 rounded-lg bg-white p-2 flex items-center justify-center shrink-0">
                           {total > 0 && upiId ? (
                             <QRCodeSVG
-                              value={`upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(accountName || "GuardianX")}&am=${total.toFixed(2)}&cu=${currency === "INR" ? "INR" : "USD"}&tn=${encodeURIComponent(invoiceNumber)}`}
+                              value={`upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(accountName || "GuardianX")}&am=${(emiNextDue ? emiNextDue.amount : total).toFixed(2)}&cu=${currency === "INR" ? "INR" : "USD"}&tn=${encodeURIComponent(invoiceNumber)}`}
                               size={88}
                               level="M"
                               className="size-full"
@@ -1114,7 +1263,10 @@ export function InvoiceGeneratorView() {
                             <QrCode className="h-3.5 w-3.5 text-violet-300 shrink-0" /> Scan to Pay (UPI)
                           </p>
                           <p className="text-slate-400 break-all">UPI ID: <span className="font-mono text-slate-100">{upiId}</span></p>
-                          <p className="text-slate-400">Amount: <span className="font-mono text-slate-100">{formatMoney(total)}</span></p>
+                          <p className="text-slate-400">
+                            Amount: <span className="font-mono text-slate-100">{formatMoney(emiNextDue ? emiNextDue.amount : total)}</span>
+                            {emiNextDue && <span className="text-violet-300"> · {emiNextDue.label}</span>}
+                          </p>
                           <p className="text-slate-400">Account: <span className="font-mono text-slate-100">{accountNumber}</span></p>
                           <p className="text-slate-400">IFSC: <span className="font-mono text-slate-100">{ifscCode}</span></p>
                         </div>
@@ -1168,6 +1320,55 @@ export function InvoiceGeneratorView() {
                     </div>
                   </div>
                 </div>
+
+              {/* Payment Schedule (EMI) - mirrors the PDF section */}
+              {emiPlanRows && (
+                <div className="px-6 sm:px-8 pb-2 mt-4">
+                  <div className="gx-glass p-4 sm:p-5">
+                    <div className="flex items-center justify-between mb-3">
+                      <p className="gx-label">Payment Schedule</p>
+                      <p className="text-[10px] text-slate-400">2 installments - pay each part by its due date</p>
+                    </div>
+                    <div className="space-y-0">
+                      {emiPlanRows.map((row, idx) => (
+                        <div
+                          key={row.label}
+                          className={cn(
+                            "flex items-center gap-3 py-2.5",
+                            idx > 0 && "border-t border-white/10",
+                          )}
+                        >
+                          <div className="size-7 rounded-full bg-violet-500/15 border border-violet-400/40 flex items-center justify-center text-xs font-bold text-violet-200 shrink-0">
+                            {idx + 1}
+                          </div>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-medium text-slate-100">
+                              {row.label} <span className="text-slate-400">· {row.percent}% of invoice</span>
+                            </p>
+                            <p className="text-[11px] text-slate-400">
+                              {row.dueDate
+                                ? `Due ${new Date(row.dueDate).toLocaleDateString(cur.locale, { day: "numeric", month: "short", year: "numeric" })}`
+                                : "Due on receipt"}
+                            </p>
+                          </div>
+                          <span
+                            className={cn(
+                              "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[9px] font-semibold border shrink-0",
+                              row.status === "Paid"
+                                ? "bg-emerald-500/10 text-emerald-300 border-emerald-500/30"
+                                : "bg-amber-500/10 text-amber-300 border-amber-500/30",
+                            )}
+                          >
+                            {row.status === "Paid" ? <CheckCircle2 className="h-2.5 w-2.5" /> : <Clock className="h-2.5 w-2.5" />}
+                            {row.status.toUpperCase()}
+                          </span>
+                          <span className="text-sm font-semibold text-slate-100 tabular-nums shrink-0">{formatMoney(row.amount)}</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {/* Bank details + Signature - frosted panels */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 px-6 sm:px-8 pb-4">

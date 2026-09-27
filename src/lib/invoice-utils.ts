@@ -27,6 +27,53 @@ export interface InvoiceTotals {
   total: number
 }
 
+/** One row of the EMI / installment payment schedule (2 installments). */
+export interface EmiPlanRow {
+  label: string
+  percent: number
+  amount: number
+  dueDate: string | null
+  status: "Pending" | "Paid"
+}
+
+export const EMI_SPLITS = [50, 40, 30, 60, 70] as const // % charged in installment 1 (rest in installment 2)
+
+/**
+ * Build the 2-installment payment schedule from the authoritative total.
+ * Installment 1 charges `split`% of the total; installment 2 absorbs the
+ * remainder so the two amounts ALWAYS sum exactly to the total (no paise
+ * drift). Returns null when there is nothing to schedule (total <= 0).
+ */
+export function computeEmiPlan(
+  total: number,
+  split: number,
+  due1: string | null | undefined,
+  due2: string | null | undefined,
+  paidCount: number,
+): EmiPlanRow[] | null {
+  if (!Number.isFinite(total) || total <= 0) return null
+  const pct = Number.isFinite(split) ? Math.min(90, Math.max(10, Math.round(split))) : 50
+  const paid = Math.min(2, Math.max(0, Math.round(paidCount || 0)))
+  const first = round2((total * pct) / 100)
+  const second = round2(total - first)
+  return [
+    {
+      label: "Installment 1",
+      percent: pct,
+      amount: first,
+      dueDate: due1 || null,
+      status: paid >= 1 ? "Paid" : "Pending",
+    },
+    {
+      label: "Installment 2",
+      percent: 100 - pct,
+      amount: second,
+      dueDate: due2 || null,
+      status: paid >= 2 ? "Paid" : "Pending",
+    },
+  ]
+}
+
 const MAX_ITEMS = 100
 const MAX_TEXT = 500
 const MAX_SHORT_TEXT = 200
@@ -179,6 +226,26 @@ export function parseInvoicePayload(
       out[key] = v && v.trim() ? v : null
     }
   }
+
+  // EMI / installment plan (amounts are NOT accepted from the client - the
+  // server derives emiPlan from its own recomputed total via computeEmiPlan)
+  if (body.emiEnabled !== undefined) out.emiEnabled = body.emiEnabled === true
+  if (body.emiSplit !== undefined) {
+    const n = typeof body.emiSplit === "number" ? body.emiSplit : parseInt(String(body.emiSplit), 10)
+    out.emiSplit = Number.isFinite(n) ? Math.min(90, Math.max(10, Math.round(n))) : 50
+  }
+  for (const key of ["emiDue1", "emiDue2"] as const) {
+    if (body[key] !== undefined) {
+      const v = asTruncatedString(body[key], 10)?.trim()
+      out[key] = v && /^\d{4}-\d{2}-\d{2}$/.test(v) ? v : null
+    }
+  }
+  if (body.emiPaidCount !== undefined) {
+    const n = typeof body.emiPaidCount === "number" ? body.emiPaidCount : parseInt(String(body.emiPaidCount), 10)
+    out.emiPaidCount = Number.isFinite(n) ? Math.min(2, Math.max(0, Math.round(n))) : 0
+  }
+  // emiPlan is always server-computed - silently drop any client value
+  delete (out as Record<string, unknown>).emiPlan
 
   // Bank details
   for (const key of ["bankName", "accountName", "accountNumber", "ifscCode", "upiId"] as const) {

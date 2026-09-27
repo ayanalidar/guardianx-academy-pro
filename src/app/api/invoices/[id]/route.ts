@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { requireAdmin, withErrorHandler, readJsonBody } from "@/lib/session"
-import { parseInvoicePayload, computeTotals } from "@/lib/invoice-utils"
+import { parseInvoicePayload, computeTotals, computeEmiPlan } from "@/lib/invoice-utils"
 
 export const runtime = "nodejs"
 
@@ -66,9 +66,34 @@ export const PATCH = withErrorHandler(async (req: NextRequest, { params }: { par
     totalsPatch = { subtotal: totals.subtotal, taxAmount: totals.taxAmount, total: totals.total }
   }
 
+  // EMI plan is server-derived from the (recomputed) total - refresh it when
+  // the total or any EMI input changed. Client-sent emiPlan is always ignored.
+  const emiAffected =
+    affectsTotals ||
+    data.emiEnabled !== undefined ||
+    data.emiSplit !== undefined ||
+    data.emiDue1 !== undefined ||
+    data.emiDue2 !== undefined ||
+    data.emiPaidCount !== undefined
+
+  let emiPlanPatch: string | null | undefined = undefined
+  if (emiAffected) {
+    const enabled = data.emiEnabled ?? existing.emiEnabled
+    const plan = enabled
+      ? computeEmiPlan(
+          totalsPatch.total ?? existing.total,
+          data.emiSplit ?? existing.emiSplit,
+          data.emiDue1 !== undefined ? data.emiDue1 : existing.emiDue1,
+          data.emiDue2 !== undefined ? data.emiDue2 : existing.emiDue2,
+          data.emiPaidCount ?? existing.emiPaidCount,
+        )
+      : null
+    emiPlanPatch = plan ? JSON.stringify(plan) : null
+  }
+
   const invoice = await db.invoice.update({
     where: { id },
-    data: { ...data, ...totalsPatch },
+    data: { ...data, ...totalsPatch, ...(emiPlanPatch !== undefined ? { emiPlan: emiPlanPatch } : {}) },
   })
   return NextResponse.json({ invoice })
 })

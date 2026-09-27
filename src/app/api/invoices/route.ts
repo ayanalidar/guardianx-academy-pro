@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { requireAdmin, withErrorHandler, readJsonBody } from "@/lib/session"
-import { parseInvoicePayload, computeTotals } from "@/lib/invoice-utils"
+import { parseInvoicePayload, computeTotals, computeEmiPlan } from "@/lib/invoice-utils"
 
 export const runtime = "nodejs"
 
@@ -55,12 +55,24 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
     (data.roundingAdjustment as number) ?? 0,
   )
 
+  // EMI plan is derived from the SERVER-computed total (never client amounts)
+  const emiPlan = data.emiEnabled
+    ? computeEmiPlan(
+        totals.total,
+        (data.emiSplit as number) ?? 50,
+        (data.emiDue1 as string | null) ?? null,
+        (data.emiDue2 as string | null) ?? null,
+        (data.emiPaidCount as number) ?? 0,
+      )
+    : null
+
   const invoice = await db.invoice.create({
     data: {
       ...(data as any),
       subtotal: totals.subtotal,
       taxAmount: totals.taxAmount,
       total: totals.total,
+      emiPlan: emiPlan ? JSON.stringify(emiPlan) : null,
       createdById: user.id,
     },
   })

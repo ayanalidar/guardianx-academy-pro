@@ -23,6 +23,7 @@
  * degrade gracefully to Helvetica + "Rs." substitution.
  */
 import { jsPDF } from "jspdf"
+import type { EmiPlanRow } from "./invoice-utils"
 
 export type InvoiceStatus = "Draft" | "Sent" | "Paid" | "Overdue"
 
@@ -56,6 +57,8 @@ export interface InvoicePdfData {
   accountNumber?: string | null
   ifscCode?: string | null
   upiId?: string | null
+  /** 2-installment payment schedule (EMI) - rendered when present. */
+  emiPlan?: EmiPlanRow[] | null
 }
 
 export interface InvoicePdfOptions {
@@ -411,6 +414,11 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
   const sgst = cgst
   // minus BEFORE the symbol for negative money (₹-12 looks wrong, -₹12 is right)
   const signed = (v: number) => (v < 0 ? `-${sym(Math.abs(v))}` : sym(v))
+
+  // EMI plan - when installments are pending, the UPI QR charges the NEXT
+  // unpaid installment (not the full total) so a scan pays exactly one part.
+  const emiPlan = data.emiPlan && data.emiPlan.length > 0 ? data.emiPlan : null
+  const nextDue = emiPlan?.find((r) => r.status !== "Paid") ?? null
 
   // ---- geometry -----------------------------------------------------------
   const PW = 210
@@ -1019,7 +1027,12 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
       qy += 5.2
     }
     upiRow("UPI ID", data.upiId || " - ", "med", 7.8)
-    upiRow("Amount", sym(total), "bold", 7.8)
+    upiRow(
+      "Amount",
+      nextDue ? `${sym(nextDue.amount)} · ${nextDue.label}` : sym(total),
+      "bold",
+      7.8,
+    )
     upiRow("Account", data.accountNumber || " - ", "med", 7.2)
     upiRow("IFSC", data.ifscCode || " - ", "med", 7.2)
     leftBottom = y + cardH
@@ -1063,6 +1076,81 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
   ty += wordsLines.length * 3.6 + 2
 
   y = Math.max(leftBottom, ty) + 6
+
+  // =========================================================================
+  // PAYMENT SCHEDULE (EMI / 2 installments) - rendered when a plan exists
+  // =========================================================================
+  if (emiPlan) {
+    if (y > 246) y = newContentPage() + 4
+
+    setFont(pdf, "bold", 7.4, C.violet)
+    pdf.text("PAYMENT SCHEDULE", ML, y, { charSpace: 0.7 })
+    if (DARK) accentTick(ML, y + 1.8, 11)
+    setFont(pdf, "reg", 7.2, C.faint)
+    pdf.text(safe("2 installments - pay each part by its due date"), MR, y, { align: "right" })
+    y += 5.8
+
+    const rowH = 9.2
+    const planH = emiPlan.length * rowH
+    if (DARK) {
+      glassPanel(pdf, ML, y, CW, planH, 2.4, C.violet, 0.38, 0.32)
+    } else {
+      const bLight = lerp(C.white, C.accentA, 0.5)
+      pdf.setFillColor(255, 255, 255)
+      pdf.setDrawColor(bLight[0], bLight[1], bLight[2])
+      pdf.setLineWidth(0.3)
+      pdf.roundedRect(ML, y, CW, planH, 2.4, 2.4, "FD")
+    }
+
+    const paidFg: RGB = DARK ? [110, 231, 183] : [4, 120, 87]
+    const paidBg: RGB = DARK ? [13, 46, 38] : [236, 253, 245]
+    const pendFg: RGB = DARK ? [252, 211, 77] : [180, 83, 9]
+    const pendBg: RGB = DARK ? [56, 42, 15] : [255, 251, 235]
+
+    emiPlan.forEach((row, i) => {
+      const ry = y + i * rowH
+      if (i > 0) {
+        pdf.setDrawColor(C.rowLine[0], C.rowLine[1], C.rowLine[2])
+        pdf.setLineWidth(0.15)
+        pdf.line(ML, ry, MR, ry)
+      }
+
+      // installment number badge
+      const badgeCy = ry + rowH / 2
+      pdf.setFillColor(C.violetTint[0], C.violetTint[1], C.violetTint[2])
+      pdf.setDrawColor(C.avatarBorder[0], C.avatarBorder[1], C.avatarBorder[2])
+      pdf.setLineWidth(0.25)
+      pdf.circle(ML + 5.4, badgeCy, 2.7, "FD")
+      setFont(pdf, "bold", 8, C.violet)
+      pdf.text(String(i + 1), ML + 5.4, badgeCy + 1.15, { align: "center" })
+
+      // label + due date (two stacked lines)
+      setFont(pdf, "bold", 8, C.ink)
+      pdf.text(safe(`${row.label} · ${row.percent}% of invoice`), ML + 11.5, ry + 4.1)
+      setFont(pdf, "reg", 7.2, C.faint)
+      pdf.text(safe(row.dueDate ? `Due ${fmtDate(row.dueDate)}` : "Due on receipt"), ML + 11.5, ry + 7.5)
+
+      // status chip (left of the amount)
+      const chipText = row.status.toUpperCase()
+      const amtText = safe(sym(row.amount))
+      setFont(pdf, "med", 9, C.ink)
+      const amtW = pdf.getTextWidth(amtText)
+      const fg = row.status === "Paid" ? paidFg : pendFg
+      const bg = row.status === "Paid" ? paidBg : pendBg
+      setFont(pdf, "bold", 6.2, fg)
+      const chipW = pdf.getTextWidth(chipText) + 3.6
+      const chipX = MR - 2 - amtW - 5 - chipW
+      pdf.setFillColor(bg[0], bg[1], bg[2])
+      pdf.roundedRect(chipX, ry + 2.9, chipW, 4.2, 1.2, 1.2, "F")
+      pdf.text(chipText, chipX + chipW / 2, ry + 5.95, { align: "center", charSpace: 0.3 })
+
+      // amount
+      setFont(pdf, "med", 9, C.ink)
+      pdf.text(amtText, MR - 2, ry + 5.9, { align: "right" })
+    })
+
+    y += planH + 5
+  }
 
   // =========================================================================
   // BANK DETAILS + SIGNATURE
