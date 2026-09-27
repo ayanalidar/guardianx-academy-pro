@@ -27,7 +27,7 @@ import {
   MapPin, Calendar, Hash, Calculator, Shield, Award, Sparkles, Printer,
   Copy, Save, QrCode, Landmark, Signature, GraduationCap, FlaskConical,
   Award as CertIcon, Wrench, CheckCircle2, Clock, AlertTriangle, Send,
-  Wallet, TrendingUp, FileCheck, PenLine, Zap, Loader2,
+  Wallet, TrendingUp, FileCheck, PenLine, Zap, Loader2, Share2,
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -94,6 +94,24 @@ const CURRENCY_LOCALE: Record<string, { locale: string; symbol: string; label: s
   USD: { locale: "en-US", symbol: "$", label: "US Dollar" },
   EUR: { locale: "de-DE", symbol: "€", label: "Euro" },
   GBP: { locale: "en-GB", symbol: "£", label: "Pound Sterling" },
+}
+
+/** "27 Sept 2026" style date for WhatsApp/email copy. */
+function fmtDateShort(iso: string | null | undefined): string {
+  if (!iso) return "—"
+  const d = new Date(iso)
+  if (isNaN(d.getTime())) return iso
+  return d.toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
+}
+
+/** wa.me deep link - WhatsApp requires the FULL international number (no +). */
+function waMeUrl(phone: string, text: string): string {
+  let digits = (phone || "").replace(/\D/g, "")
+  if (digits.length === 10) digits = `91${digits}`
+  else if (digits.length === 11 && digits.startsWith("0")) digits = `91${digits.slice(1)}`
+  return digits
+    ? `https://wa.me/${digits}?text=${encodeURIComponent(text)}`
+    : `https://wa.me/?text=${encodeURIComponent(text)}`
 }
 
 export function InvoiceGeneratorView() {
@@ -182,6 +200,11 @@ export function InvoiceGeneratorView() {
     "1. Training includes instructor-led sessions, study materials, and lab access.\n2. Certification exam fee is separate unless stated.\n3. Cancellation: 50% refund if cancelled 7+ days before start. No refund within 7 days.\n4. GuardianX Academy is not liable for third-party certification exam outcomes.",
   )
 
+  // Sharing - "Email to client" runs the server-side pipeline (PDF built on
+  // the server from the SAVED record + emailed with full details); the toggle
+  // chains it automatically after every save.
+  const [autoEmailOnSave, setAutoEmailOnSave] = React.useState(false)
+
   // Saved invoices - persisted in the DB via /api/invoices (was: React state,
   // lost on every refresh).
   const invoicesQuery = useQuery<{ invoices: SavedInvoice[] }>({
@@ -216,6 +239,18 @@ export function InvoiceGeneratorView() {
       toast.success("Invoice deleted")
     },
     onError: (e: any) => toast.error(e?.message || "Delete failed"),
+  })
+
+  // "Email invoice to client" - the server builds the PDF from the SAVED
+  // record (authoritative totals + EMI snapshot) and emails it with details.
+  const emailMutation = useMutation({
+    mutationFn: (id: string) => api<{ ok: boolean; error?: string }>(`/api/invoices/${id}/email`, { method: "POST" }),
+    onSuccess: (res, id) => {
+      const inv = savedInvoices.find((i) => i.id === id)
+      if (res?.ok) toast.success(inv?.clientEmail ? `Invoice emailed to ${inv.clientEmail}` : "Invoice emailed")
+      else toast.error(res?.error || "Email failed")
+    },
+    onError: (e: any) => toast.error(e?.message || "Email failed"),
   })
 
   function addItem() {
@@ -439,7 +474,9 @@ export function InvoiceGeneratorView() {
     toast.success("Invoice number copied!")
   }
 
-  function handleSaveInvoice() {
+  /** Persist the current editor state (create or update) and resolve to the
+   *  saved invoice id so the email flow can chain off it. */
+  async function ensureInvoiceSaved(): Promise<string | null> {
     const body = {
       number: invoiceNumber,
       clientName: clientName || "Untitled",
@@ -469,7 +506,113 @@ export function InvoiceGeneratorView() {
       emiDue2,
       emiPaidCount,
     }
-    saveMutation.mutate({ id: editingInvoiceId, body })
+    try {
+      const res: any = await saveMutation.mutateAsync({ id: editingInvoiceId, body })
+      const savedId: string | null = editingInvoiceId ?? res?.invoice?.id ?? null
+      if (savedId) setEditingInvoiceId(savedId) // promote new saves to edit mode
+      return savedId
+    } catch {
+      return null // saveMutation.onError already toasted the failure
+    }
+  }
+
+  async function handleSaveInvoice() {
+    const savedId = await ensureInvoiceSaved()
+    if (!savedId) return
+    if (autoEmailOnSave) {
+      if (!clientEmail.trim()) {
+        toast.error("Auto-email skipped - add the client's email address first")
+        return
+      }
+      try {
+        toast.info(`Emailing invoice to ${clientEmail.trim()}…`)
+        const res: any = await api(`/api/invoices/${savedId}/email`, { method: "POST" })
+        if (res?.ok) toast.success(`Invoice emailed to ${clientEmail.trim()}`)
+        else toast.error(res?.error || "Auto-email failed")
+      } catch (e: any) {
+        toast.error(e?.message || "Auto-email failed")
+      }
+    }
+  }
+
+  /** Editor "Email" button - save first (so the server emails the latest
+   *  state), then run the server-side email pipeline. */
+  async function handleEmailInvoice() {
+    if (!clientEmail.trim()) {
+      toast.error("Add the client's email address first")
+      return
+    }
+    toast.info("Saving invoice, then emailing…")
+    const savedId = await ensureInvoiceSaved()
+    if (!savedId) return
+    try {
+      const res: any = await api(`/api/invoices/${savedId}/email`, { method: "POST" })
+      if (res?.ok) toast.success(`Invoice emailed to ${clientEmail.trim()}`)
+      else toast.error(res?.error || "Email failed")
+    } catch (e: any) {
+      toast.error(e?.message || "Email failed")
+    }
+  }
+
+  // ---------------------------------------------------------------------------
+  // WhatsApp share - mobile gets the ACTUAL PDF via the native share sheet
+  // (Web Share API level 2); desktop falls back to download + wa.me with the
+  // details pre-typed (WhatsApp Web cannot receive files via URL scheme).
+  // ---------------------------------------------------------------------------
+  function buildWhatsAppMessage(): string {
+    const lines: string[] = []
+    lines.push(`*GUARDIANX ACADEMY* - Invoice ${invoiceNumber}`)
+    lines.push("")
+    lines.push(`Billed to: ${clientName || "Client"}${clientOrg ? ` (${clientOrg})` : ""}`)
+    if (items.length) {
+      lines.push("")
+      lines.push("Items:")
+      for (const i of items) {
+        lines.push(`- ${i.description || "Item"} x ${i.quantity} - ${formatMoney(i.quantity * i.unitPrice)}`)
+      }
+    }
+    lines.push("")
+    lines.push(`Total: *${formatMoney(total)}*${dueDate ? ` (due ${fmtDateShort(dueDate)})` : ""}`)
+    if (emiEnabled && emiPlanRows) {
+      lines.push("")
+      lines.push("Payment plan (2 installments):")
+      for (const r of emiPlanRows) {
+        lines.push(`- ${r.label}: ${formatMoney(r.amount)} - ${r.status === "Paid" ? "PAID" : `due ${fmtDateShort(r.dueDate)}`}`)
+      }
+    }
+    if (upiId) {
+      lines.push("")
+      lines.push(`Pay via UPI: ${upiId}`)
+    }
+    lines.push("")
+    lines.push("The invoice PDF is attached.")
+    return lines.join("\n")
+  }
+
+  async function handleShareWhatsApp() {
+    try {
+      toast.info("Preparing the invoice for WhatsApp…")
+      const pdf = await generateInvoicePdf()
+      const filename = `${invoiceNumber || "invoice"}.pdf`
+      try {
+        const blob = pdf.output("blob")
+        const file = new File([blob], filename, { type: "application/pdf" })
+        const nav = navigator as Navigator & { canShare?: (data: ShareData) => boolean }
+        if (typeof nav.share === "function" && nav.canShare?.({ files: [file] })) {
+          await nav.share({ files: [file], title: `Invoice ${invoiceNumber}`, text: buildWhatsAppMessage() })
+          return
+        }
+      } catch (e: any) {
+        if (e?.name === "AbortError") return // user closed the share sheet
+        console.warn("[invoice-share] native share unavailable - falling back to download + wa.me", e)
+      }
+      pdf.save(filename)
+      window.open(waMeUrl(clientPhone, buildWhatsAppMessage()), "_blank", "noopener,noreferrer")
+      toast.info("Invoice PDF downloaded - attach it in the WhatsApp window that just opened")
+    } catch (err: any) {
+      console.error("[invoice-share]", err)
+      toast.error(err?.message || "Failed to share the invoice")
+    }
   }
 
   /** Load a saved invoice back into the editor for re-editing. */
@@ -594,6 +737,20 @@ export function InvoiceGeneratorView() {
               )}
               {editingInvoiceId ? "Update" : "Save"}
             </Button>
+            <button
+              type="button"
+              onClick={() => setAutoEmailOnSave((v) => !v)}
+              aria-pressed={autoEmailOnSave}
+              title="Automatically email the invoice PDF to the client after saving"
+              className={cn(
+                "flex items-center gap-1 h-8 px-2.5 rounded-lg border text-xs font-medium transition-colors",
+                autoEmailOnSave
+                  ? "bg-cyan-500/15 text-cyan-200 border-cyan-500/40"
+                  : "border-zinc-700/60 text-zinc-400 hover:text-zinc-200",
+              )}
+            >
+              <Send className={cn("h-3.5 w-3.5", autoEmailOnSave && "text-cyan-300")} /> Auto-email
+            </button>
             <div
               className="flex items-center rounded-lg border border-zinc-700/60 overflow-hidden h-8"
               role="group"
@@ -628,6 +785,21 @@ export function InvoiceGeneratorView() {
             </Button>
             <Button size="sm" variant="outline" onClick={handlePrintPdf} className="border-violet-500/40 hover:bg-violet-500/10">
               <FileText className="h-3.5 w-3.5 mr-1.5" /> Print / Save PDF
+            </Button>
+            <Button
+              size="sm" variant="outline" onClick={handleShareWhatsApp}
+              title="Share the invoice PDF + full details on WhatsApp"
+              className="border-emerald-500/40 hover:bg-emerald-500/10"
+            >
+              <Share2 className="h-3.5 w-3.5 mr-1.5" /> WhatsApp
+            </Button>
+            <Button
+              size="sm" variant="outline" onClick={handleEmailInvoice}
+              disabled={saveMutation.isPending}
+              title="Email the invoice PDF + full details to the client"
+              className="border-cyan-500/40 hover:bg-cyan-500/10"
+            >
+              <Mail className="h-3.5 w-3.5 mr-1.5" /> Email
             </Button>
           </div>
         </div>
@@ -743,6 +915,19 @@ export function InvoiceGeneratorView() {
                       </button>
                       <div className="flex items-center gap-2 shrink-0">
                         <span className="text-sm font-bold tabular-nums">{formatMoneyFor(inv.total, inv.currency)}</span>
+                        <Button
+                          size="sm" variant="ghost"
+                          className="h-7 px-2 text-cyan-300 hover:text-cyan-200"
+                          title={inv.clientEmail ? `Email invoice PDF to ${inv.clientEmail}` : "No client email on this invoice"}
+                          disabled={emailMutation.isPending}
+                          onClick={() => emailMutation.mutate(inv.id)}
+                        >
+                          {emailMutation.isPending && emailMutation.variables === inv.id ? (
+                            <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                          ) : (
+                            <Mail className="h-3.5 w-3.5" />
+                          )}
+                        </Button>
                         {inv.status !== "Paid" && (
                           <Button
                             size="sm" variant="ghost"

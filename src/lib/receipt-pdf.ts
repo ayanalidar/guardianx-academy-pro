@@ -40,7 +40,7 @@ const SITE_ORIGIN = "https://academy.guardianx.cloud"
 /** Module-level font cache - one fetch per lambda/container instance. */
 const _fontCache = new Map<string, Promise<ArrayBuffer>>()
 
-function serverFontLoader(): (path: string) => Promise<ArrayBuffer> {
+export function serverFontLoader(): (path: string) => Promise<ArrayBuffer> {
   return (path: string) => {
     let p = _fontCache.get(path)
     if (!p) {
