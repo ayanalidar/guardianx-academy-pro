@@ -907,12 +907,12 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
     ry += 5.6
   }
 
-  y = Math.max(cy, ry, PANEL_BOTTOM) + 6
+  y = Math.max(cy, ry, PANEL_BOTTOM) + 5
   pdf.setDrawColor(C.line[0], C.line[1], C.line[2])
   pdf.setLineWidth(0.2)
   pdf.line(ML, y, MR, y)
   gradientBand3(pdf, ML, y, 26, 0.7, C.accentA, C.accentB, C.accentC, 40)
-  y += 8
+  y += 7
 
   // =========================================================================
   // ITEMS TABLE
@@ -975,7 +975,7 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
     y += 9.6
   }
 
-  y += 6
+  y += 5
 
   // =========================================================================
   // UPI QR CARD (left) + TOTALS (right)
@@ -995,8 +995,12 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
 
   // left: UPI card (frosted glass; QR sits on a white patch for scannability)
   let leftBottom = y
-  if (data.upiId && opts.qrPngDataUrl && total > 0) {
-    const cardH = 40
+  // flag reused by BANK DETAILS below: when the card is printed, Account No /
+  // IFSC / UPI rows are already on the page and must not repeat there (EMI
+  // schedule + notes/terms have to share this page)
+  const upiCardDrawn = !!(data.upiId && opts.qrPngDataUrl && total > 0)
+  if (upiCardDrawn && opts.qrPngDataUrl) {
+    const cardH = 38
     if (DARK) {
       glassPanel(pdf, ML, y, 88, cardH, 2.4, C.violet, 0.38, 0.32)
     } else {
@@ -1073,9 +1077,9 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
   setFont(pdf, "reg", 7.4, C.sub)
   const wordsLines = pdf.splitTextToSize(safe(`Amount in words: ${amountToWords(data.currency, total)}`), 88).slice(0, 3)
   pdf.text(wordsLines, MR - 88 + 0.5, ty + 1)
-  ty += wordsLines.length * 3.6 + 2
+  ty += wordsLines.length * 3.6 + 1.6
 
-  y = Math.max(leftBottom, ty) + 6
+  y = Math.max(leftBottom, ty) + 4.5
 
   // =========================================================================
   // PAYMENT SCHEDULE (EMI / 2 installments) - rendered when a plan exists
@@ -1088,9 +1092,9 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
     if (DARK) accentTick(ML, y + 1.8, 11)
     setFont(pdf, "reg", 7.2, C.faint)
     pdf.text(safe("2 installments - pay each part by its due date"), MR, y, { align: "right" })
-    y += 5.8
+    y += 5.2
 
-    const rowH = 9.2
+    const rowH = 8.2
     const planH = emiPlan.length * rowH
     if (DARK) {
       glassPanel(pdf, ML, y, CW, planH, 2.4, C.violet, 0.38, 0.32)
@@ -1149,7 +1153,7 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
       pdf.text(amtText, MR - 2, ry + 5.9, { align: "right" })
     })
 
-    y += planH + 5
+    y += planH + 4
   }
 
   // =========================================================================
@@ -1166,13 +1170,20 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
   if (data.ifscCode) bankRows.push(["IFSC", data.ifscCode])
   if (data.upiId) bankRows.push(["UPI", data.upiId])
 
+  // the scan-to-pay card already prints Account No / IFSC / UPI - keep only
+  // the rows it lacks so the schedule + bank + signature + notes/terms all
+  // fit a single A4 page (full list still prints when no card is drawn)
+  const shownBankRows = upiCardDrawn
+    ? bankRows.filter(([label]) => label === "Bank" || label === "Account Name")
+    : bankRows
+
   let bankBottom = y
-  if (bankRows.length) {
+  if (shownBankRows.length) {
     setFont(pdf, "bold", 7.4, C.violet)
     pdf.text("BANK DETAILS", ML, y, { charSpace: 0.7 })
     if (DARK) accentTick(ML, y + 1.8, 11)
     let by = y + 5.4
-    for (const [label, value] of bankRows) {
+    for (const [label, value] of shownBankRows) {
       setFont(pdf, "reg", 8, C.faint)
       pdf.text(safe(label), ML, by)
       setFont(pdf, "med", 8.2, C.ink)
@@ -1183,7 +1194,7 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
         pdf.text(ln, ML + 30, by)
         if (i < vLines.length - 1) by += 3.5
       })
-      by += 4.6
+      by += 4.4
     }
     bankBottom = by
   }
@@ -1191,7 +1202,7 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
   // signature (right, same band as bank details) - the owner's real signature
   // image above the dashed line; the drawn cursive flourish remains as the
   // fallback when the image asset is unavailable.
-  const sigY = y + 2
+  const sigY = y + 1
   setFont(pdf, "reg", 7.4, C.faint)
   pdf.text("For GUARDIANX ACADEMY", MR, sigY, { align: "right" })
   const sigImg = DARK ? opts.signatureDarkThemeDataUrl : opts.signatureLightThemeDataUrl
@@ -1212,10 +1223,10 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
     pdf.setDrawColor(161, 161, 170)
     pdf.setLineWidth(0.3)
     pdf.setLineDashPattern([1, 0.9], 0)
-    pdf.line(MR - 58, sigY + 14.2, MR, sigY + 14.2)
+    pdf.line(MR - 58, sigY + 13.6, MR, sigY + 13.6)
     pdf.setLineDashPattern([], 0)
     setFont(pdf, "bold", 8.8, C.ink)
-    pdf.text("Authorized Signatory", MR, sigY + 19.1, { align: "right" })
+    pdf.text("Authorized Signatory", MR, sigY + 18.5, { align: "right" })
   } else {
     // hand-signed flourish above the line (three bezier strokes, kept clear
     // of the "For GUARDIANX ACADEMY" text which starts ~33mm left of MR)
@@ -1239,25 +1250,34 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
     pdf.text("Authorized Signatory", MR, sigY + 9.4, { align: "right" })
   }
 
-  y = Math.max(bankBottom, sigDrawn ? sigY + 20.8 : sigY + 11) + 4
+  y = Math.max(bankBottom, sigDrawn ? sigY + 20.2 : sigY + 11) + 3
 
   // =========================================================================
   // NOTES & TERMS
   // =========================================================================
   const FOOTER_TOP = 283
-  let notesTermsTop = y + 2
-  if (notesTermsTop > FOOTER_TOP - 34) {
-    notesTermsTop = newContentPage() + 4
-  }
+  const ntStart = y + 1
+  let notesTermsTop = ntStart
   if (data.notes || data.terms) {
+    // Measure the REAL notes/terms height and continue onto a second page
+    // only when the blocks genuinely cannot fit above the footer rule. The
+    // old fixed "start by 249mm or bust" threshold pushed short notes/terms
+    // to a near-empty page 2 the moment the EMI schedule joined page 1.
+    setFont(pdf, "reg", 7.4, C.sub)
+    const notesCount = data.notes ? (pdf.splitTextToSize(safe(data.notes), 86) as string[]).length : 0
+    const termsCount = data.terms ? (pdf.splitTextToSize(safe(data.terms), 90) as string[]).length : 0
+    const ntNeeded = 5 + Math.max(notesCount, termsCount) * 3.55
+    if (ntStart + ntNeeded > FOOTER_TOP - 2.5) {
+      notesTermsTop = newContentPage() + 4
+    }
     const colW = 86
-    const spaceFor = (FOOTER_TOP - 4 - notesTermsTop - 6) / 3.7
+    const spaceFor = (FOOTER_TOP - 2.5 - notesTermsTop - 5) / 3.55
     if (data.notes) {
       setFont(pdf, "bold", 7.4, C.violet)
       pdf.text("NOTES", ML, notesTermsTop, { charSpace: 0.7 })
       if (DARK) accentTick(ML, notesTermsTop + 1.8, 11)
       setFont(pdf, "reg", 7.4, C.sub)
-      const lines = pdf.splitTextToSize(safe(data.notes), colW).slice(0, Math.max(2, Math.floor(spaceFor)))
+      const lines = pdf.splitTextToSize(safe(data.notes), colW).slice(0, Math.max(2, Math.ceil(spaceFor)))
       pdf.text(lines, ML, notesTermsTop + 5)
     }
     if (data.terms) {
@@ -1265,7 +1285,7 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
       pdf.text("TERMS & CONDITIONS", 106, notesTermsTop, { charSpace: 0.7 })
       if (DARK) accentTick(106, notesTermsTop + 1.8, 11)
       setFont(pdf, "reg", 7.4, C.sub)
-      const lines = pdf.splitTextToSize(safe(data.terms), 90).slice(0, Math.max(2, Math.floor(spaceFor)))
+      const lines = pdf.splitTextToSize(safe(data.terms), 90).slice(0, Math.max(2, Math.ceil(spaceFor)))
       pdf.text(lines, 106, notesTermsTop + 5)
     }
   }
