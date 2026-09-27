@@ -35,22 +35,44 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
     return NextResponse.json({ error: "Not found" }, { status: 404 })
   }
 
+  const results: Array<{ sql: string; ok: boolean; error?: string }> = []
   for (const sql of STATEMENTS) {
-    await db.$executeRawUnsafe(sql)
+    try {
+      await db.$executeRawUnsafe(sql)
+      results.push({ sql, ok: true })
+    } catch (e: any) {
+      results.push({ sql, ok: false, error: e?.message ?? String(e) })
+    }
   }
 
-  const columns = (await db.$queryRawUnsafe<{ column_name: string; data_type: string }[]>(
-    `SELECT column_name, data_type FROM information_schema.columns
-     WHERE table_name = 'Invoice' AND column_name LIKE 'emi%' ORDER BY column_name`,
-  )) as { column_name: string; data_type: string }[]
+  let emiColumns: Array<{ column_name: string; data_type: string }> = []
+  let columnError: string | undefined
+  try {
+    emiColumns = (await db.$queryRawUnsafe<{ column_name: string; data_type: string }[]>(
+      `SELECT column_name, data_type FROM information_schema.columns
+       WHERE table_name = 'Invoice' AND column_name LIKE 'emi%' ORDER BY column_name`,
+    )) as { column_name: string; data_type: string }[]
+  } catch (e: any) {
+    columnError = e?.message ?? String(e)
+  }
 
-  const invoiceCount = (await db.$queryRawUnsafe<{ count: bigint }[]>(
-    `SELECT COUNT(*)::bigint AS count FROM "Invoice"`,
-  )) as { count: bigint }[]
+  let invoiceCount = -1
+  let countError: string | undefined
+  try {
+    const rows = (await db.$queryRawUnsafe<{ count: bigint }[]>(
+      `SELECT COUNT(*)::bigint AS count FROM "Invoice"`,
+    )) as { count: bigint }[]
+    invoiceCount = Number(rows[0]?.count ?? 0)
+  } catch (e: any) {
+    countError = e?.message ?? String(e)
+  }
 
   return NextResponse.json({
-    ok: true,
-    emiColumns: columns,
-    invoicesTouched: Number(invoiceCount[0]?.count ?? 0),
+    ok: results.every((r) => r.ok),
+    results,
+    emiColumns,
+    columnError,
+    invoiceCount,
+    countError,
   })
 })
