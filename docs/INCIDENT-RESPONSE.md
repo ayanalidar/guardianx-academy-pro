@@ -7,7 +7,7 @@ Review: quarterly tabletop drill; update after every real incident.
 | Channel | Signal | Who watches |
 |---|---|---|
 | Sentry | server/client error spikes, auth errors | on-call engineer |
-| /api/health + watchdog | uptime, DB failure | host watchdog |
+| /api/health + watchdog | uptime, DB failure | Watchdog v4 sweeps (prod: in-app + daily cron; sandbox: ops/watchdog.py + nurse) |
 | /api/cron/* alerts | payment/cron anomalies | ops |
 | user reports | privacy@guardianx.io, support inbox | Grievance Officer |
 

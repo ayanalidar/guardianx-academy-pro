@@ -1,9 +1,10 @@
-import { NextResponse } from "next/server"
+import { NextResponse, after } from "next/server"
 import { promises as fs } from "fs"
 import path from "path"
 import { db } from "@/lib/db"
 import { ensureTable } from "@/lib/db-safe"
 import { getCurrentUser } from "@/lib/session"
+import { maybeOpportunisticSweep, synthesizeWatchdogBoard } from "@/lib/watchdog"
 
 // Uses Prisma/Node APIs - pin the Node.js runtime explicitly.
 export const runtime = "nodejs";
@@ -64,11 +65,13 @@ async function readBuildId(): Promise<string | null> {
 }
 
 /**
- * Host-level self-healing state, written every cycle by watchdog v3
- * (scripts/watchdog.py). Surfaced here so /status and anyone can see the
+ * Host-level self-healing state, written every cycle by the host watchdog
+ * (ops/watchdog.py, v3/v4). Surfaced here so /status and admins can see the
  * platform is being actively supervised - probe results, repairs, sweep.
- * Missing/stale file simply means the watchdog is not running (or was
- * wiped); it must NEVER break the health response itself.
+ * Missing/stale file means the host watchdog is not running - on serverless
+ * (Vercel) it never exists, so we fall back to the Watchdog v4 DB-synthesized
+ * board (PlatformSetting state + SystemEvent history). It must NEVER break
+ * the health response itself.
  */
 async function readWatchdog(): Promise<Record<string, any> | null> {
   try {
@@ -91,6 +94,12 @@ async function readWatchdog(): Promise<Record<string, any> | null> {
       repairs: w.repairs ?? null,
       lastAction: Array.isArray(w.actions) && w.actions.length ? w.actions[w.actions.length - 1] : null,
     }
+  } catch {
+    // No host status file (serverless, or host watchdog not running) - fall
+    // through to the v4 DB-synthesized board below.
+  }
+  try {
+    return await synthesizeWatchdogBoard()
   } catch {
     return null
   }
@@ -155,7 +164,11 @@ export async function GET(req: Request) {
     }
   }
 
-  payload.watchdog = await readWatchdog()
+  // Watchdog v4: opportunistic supervision. While ANY client (VersionWatch,
+  // uptime monitor, a /status viewer) polls health, run a full sweep when the
+  // last one is >5 min stale. Runs after the response is sent; no-ops when
+  // paused, fresh, or the DB is unreachable.
+  after(() => maybeOpportunisticSweep().catch(() => {}))
 
   // audit fix V-02: the full payload (uptime, DB latency, row counts, schema
   // state, probe errors, watchdog board) is operations data. Anonymous callers
@@ -186,5 +199,8 @@ export async function GET(req: Request) {
     return NextResponse.json(minimal, { headers: { "Cache-Control": "no-store" } })
   }
 
+  // The board is ops data AND costs 2-3 DB reads - compute it only for
+  // privileged viewers so anonymous VersionWatch polls stay ultra-cheap.
+  payload.watchdog = await readWatchdog()
   return NextResponse.json(payload, { headers: { "Cache-Control": "no-store" } })
 }

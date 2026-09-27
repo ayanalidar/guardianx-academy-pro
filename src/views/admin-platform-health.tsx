@@ -10,9 +10,44 @@ import { cn } from "@/lib/utils"
 import {
   ArrowLeft, Activity, Server, Database, Zap, Clock,
   CheckCircle2, AlertTriangle, Cpu, HardDrive, Wifi, Award, Mail, RefreshCw,
+  ShieldCheck, Play, BellRing,
 } from "lucide-react"
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { api } from "@/lib/api"
+import { Switch } from "@/components/ui/switch"
+
+// ------------------------------------------------------------------
+// Watchdog v4 types + helpers
+// ------------------------------------------------------------------
+type WdReport = {
+  ts?: string
+  trigger?: string
+  healthy?: boolean
+  durationMs?: number
+  cycle?: number
+  checks?: { name: string; ok: boolean; detail: string; latencyMs?: number }[]
+  routes?: { checked?: number; bad?: string[] }
+  repairs?: string[]
+  alerts?: string[]
+}
+type WdEvent = { id: string; level: string; message: string; timestamp: string | Date }
+type WdState = {
+  watchdogVersion?: number
+  enabled?: boolean
+  lastSweepAt?: string | null
+  cycle?: number
+  report?: WdReport | null
+  events?: WdEvent[]
+  emailConfigured?: boolean
+}
+
+function timeAgo(iso: string): string {
+  const s = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 1000))
+  if (s < 60) return `${s}s ago`
+  if (s < 3600) return `${Math.floor(s / 60)}m ago`
+  if (s < 86400) return `${Math.floor(s / 3600)}h ago`
+  return `${Math.floor(s / 86400)}d ago`
+}
 
 export function PlatformHealthView() {
   const { navigate } = useAppStore()
@@ -25,6 +60,43 @@ export function PlatformHealthView() {
     queryFn: () => api<{ overall: string; services: Array<{ name: string; status: string; latency: number; detail?: string }>; timestamp: string }>(
       "/api/sentinel/health"
     ),
+  })
+
+  // ------------------------------------------------------------------
+  // Watchdog v4 - autonomous protection (state + controls)
+  // ------------------------------------------------------------------
+  const queryClient = useQueryClient()
+  const [wdMsg, setWdMsg] = React.useState<string | null>(null)
+  const wd = useQuery<WdState>({
+    queryKey: ["watchdog-state"],
+    refetchInterval: 30_000,
+    queryFn: () => api<WdState>("/api/admin/watchdog"),
+  })
+  const refreshWd = () => queryClient.invalidateQueries({ queryKey: ["watchdog-state"] })
+  const setEnabledMut = useMutation({
+    mutationFn: (enabled: boolean) =>
+      api("/api/admin/watchdog", { method: "POST", body: JSON.stringify({ action: "set-enabled", enabled }) }),
+    onSuccess: (r: any) => {
+      setWdMsg(`Watchdog ${r?.enabled ? "ENABLED - full protection active" : "PAUSED - sweeps stopped (manual sweeps still allowed)"}.`)
+      refreshWd()
+    },
+    onError: (e: any) => setWdMsg(`Toggle failed: ${e?.message ?? e}`),
+  })
+  const sweepMut = useMutation({
+    mutationFn: () => api("/api/admin/watchdog", { method: "POST", body: JSON.stringify({ action: "sweep" }) }),
+    onSuccess: (r: any) => {
+      setWdMsg(r?.report ? `Sweep #${r.report.cycle} finished in ${r.report.durationMs ?? "?"}ms - ${r.report.healthy ? "ALL HEALTHY" : "UNHEALTHY (see repairs/alerts)"}` : "Sweep finished.")
+      refreshWd()
+    },
+    onError: (e: any) => setWdMsg(`Sweep failed: ${e?.message ?? e}`),
+  })
+  const testAlertMut = useMutation({
+    mutationFn: () => api("/api/admin/watchdog", { method: "POST", body: JSON.stringify({ action: "test-alert" }) }),
+    onSuccess: () => {
+      setWdMsg("Test alert sent - check the ops inbox to confirm the escalation path.")
+      refreshWd()
+    },
+    onError: (e: any) => setWdMsg(`Test alert failed: ${e?.message ?? e}`),
   })
 
   const SERVICE_ICONS: Record<string, any> = {
@@ -120,6 +192,89 @@ export function PlatformHealthView() {
                 </div>
               </div>
             ))}
+          </div>
+        </Card>
+
+        {/* Watchdog v4 - autonomous protection */}
+        <Card className="p-5">
+          <div className="flex items-center justify-between flex-wrap gap-3 mb-4">
+            <h2 className="text-sm font-semibold flex items-center gap-2">
+              <ShieldCheck className="h-4 w-4 text-emerald-400" />
+              Watchdog v4 — Autonomous Protection
+            </h2>
+            <div className="flex items-center gap-2">
+              <span className={cn("text-[10px] font-mono tracking-wider", wd.data?.enabled ? "text-emerald-300" : "text-amber-300")}>
+                {wd.isLoading ? "…" : wd.data?.enabled ? "ENABLED" : "PAUSED"}
+              </span>
+              <Switch
+                checked={!!wd.data?.enabled}
+                onCheckedChange={(v) => setEnabledMut.mutate(v)}
+                disabled={setEnabledMut.isPending || wd.isLoading}
+              />
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground mb-4">
+            Supervises the database, data counts, schema drift and key routes — and self-repairs what is safe
+            (schema sync, emergency admin access). If something needs a human, it emails the ops inbox.
+            Sweeps run automatically every ~5 minutes while the platform has visitors, plus a daily backstop.
+          </p>
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+            <div className="p-3 rounded-lg bg-muted/30">
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Last sweep</div>
+              <div className="text-sm font-semibold mt-0.5">{wd.data?.lastSweepAt ? timeAgo(wd.data.lastSweepAt) : "never"}</div>
+            </div>
+            <div className="p-3 rounded-lg bg-muted/30">
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Total sweeps</div>
+              <div className="text-sm font-semibold mt-0.5">{wd.data?.cycle ?? 0}</div>
+            </div>
+            <div className="p-3 rounded-lg bg-muted/30">
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Status</div>
+              <div className={cn("text-sm font-semibold mt-0.5", wd.data?.report ? (wd.data.report.healthy ? "text-emerald-300" : "text-rose-300") : "text-muted-foreground")}>
+                {wd.data?.report ? (wd.data.report.healthy ? "Healthy" : "Unhealthy") : "—"}
+              </div>
+            </div>
+            <div className="p-3 rounded-lg bg-muted/30">
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Routes failing</div>
+              <div className={cn("text-sm font-semibold mt-0.5", (wd.data?.report?.routes?.bad?.length ?? 0) > 0 ? "text-rose-300" : "text-emerald-300")}>
+                {wd.data?.report?.routes?.bad?.length ?? 0}
+              </div>
+            </div>
+          </div>
+
+          <div className="flex flex-wrap items-center gap-2 mb-3">
+            <Button size="sm" variant="outline" onClick={() => sweepMut.mutate()} disabled={sweepMut.isPending}>
+              <Play className="h-3.5 w-3.5 mr-1.5" /> {sweepMut.isPending ? "Sweeping…" : "Run full sweep now"}
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => testAlertMut.mutate()} disabled={testAlertMut.isPending}>
+              <BellRing className="h-3.5 w-3.5 mr-1.5" /> {testAlertMut.isPending ? "Sending…" : "Test alert email"}
+            </Button>
+            {wd.data && !wd.data.emailConfigured && (
+              <span className="text-[11px] text-amber-300">Alerts inactive — configure email in Admin → Settings</span>
+            )}
+          </div>
+
+          {wdMsg && <div className="mb-3 text-xs text-cyan-300">{wdMsg}</div>}
+
+          {!!wd.data?.report?.repairs?.length && (
+            <div className="mb-3 text-xs text-emerald-300">Last repairs: {wd.data.report.repairs.join(" · ")}</div>
+          )}
+
+          <div>
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">Recent watchdog activity</div>
+            {(wd.data?.events ?? []).length === 0 ? (
+              <div className="text-xs text-muted-foreground">No sweeps recorded yet — run one now, or wait for the automatic cycle.</div>
+            ) : (
+              <div className="space-y-1">
+                {(wd.data?.events ?? []).slice(0, 5).map((e) => (
+                  <div key={e.id} className="flex items-center gap-2 text-xs p-2 rounded bg-muted/20">
+                    <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", e.level === "error" ? "bg-rose-400" : e.level === "warn" ? "bg-amber-400" : "bg-emerald-400")} />
+                    <span className="text-muted-foreground font-mono text-[10px] shrink-0">{new Date(e.timestamp).toLocaleTimeString()}</span>
+                    <span className="truncate">{e.message}</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </Card>
 
