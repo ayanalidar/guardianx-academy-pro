@@ -313,7 +313,7 @@ function LeadDetailDialog({ lead, onClose, onUpdated }: { lead: CorporateLead; o
         </DialogHeader>
 
         <div className="space-y-4 py-2">
-          <div className="grid sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <InfoRow label="Company" value={lead.companyName} icon={Building2} />
             <InfoRow label="Contact" value={lead.contactName} icon={Users} />
             <InfoRow label="Work email" value={lead.workEmail} icon={Mail} />

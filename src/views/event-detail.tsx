@@ -125,7 +125,7 @@ export function EventDetailView() {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4 }}
-              className="grid lg:grid-cols-3 gap-6"
+              className="grid grid-cols-1 lg:grid-cols-3 gap-6"
             >
               {/* Left: hero card */}
               <div className="lg:col-span-2">
@@ -169,7 +169,7 @@ export function EventDetailView() {
                   )}
 
                   {/* Quick facts grid */}
-                  <div className="grid sm:grid-cols-2 gap-3 pt-5 border-t border-border/40">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-5 border-t border-border/40">
                     <Fact icon={Calendar} label="Date" value={event.startDate || "TBD"} tint={accent.text} />
                     {event.endDate && event.endDate !== event.startDate && (
                       <Fact icon={Calendar} label="Ends" value={event.endDate} tint={accent.text} />
@@ -245,7 +245,7 @@ export function EventDetailView() {
                 All events <ArrowRight className="h-3.5 w-3.5 ml-1.5" />
               </Button>
             </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {related.map((r, i) => {
                 const a = TYPE_ACCENTS[r.type] ?? TYPE_ACCENTS.workshop!
                 return (

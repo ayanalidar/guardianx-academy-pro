@@ -237,7 +237,7 @@ export function CyberQuizLandingView() {
           <p className="text-muted-foreground mb-6 max-w-2xl">
             Pass the quiz, pay ₹199, and instantly receive both a verifiable certificate + a detailed progress report - like a college report card, but for cyber awareness.
           </p>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {WHAT_YOU_GET.map((item) => {
               const Icon = item.icon
               return (
@@ -274,7 +274,7 @@ export function CyberQuizLandingView() {
             The difficulty you pick is shown on your certificate. Higher difficulty = more bragging rights.
           </p>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {DIFFICULTIES.map((d) => {
               const Icon = d.icon
               const isSelected = selectedDifficulty === d.id

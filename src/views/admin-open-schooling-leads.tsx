@@ -356,7 +356,7 @@ function LeadDetailDialog({
 
         <div className="space-y-4 py-2">
           {/* Contact info */}
-          <div className="grid sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <InfoRow label="Email" value={lead.email} icon={Mail} />
             <InfoRow label="Phone" value={lead.phone} icon={Phone} />
             <InfoRow label="Course" value={lead.course} icon={GraduationCap} />

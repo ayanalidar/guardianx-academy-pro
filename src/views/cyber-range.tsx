@@ -280,7 +280,7 @@ export function CyberRangeView() {
             What it looks like the moment you start a lab.
           </h2>
 
-          <div className="grid lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Left: Target info card */}
             <div className="space-y-4">
               <TargetInfoCard />
@@ -329,7 +329,7 @@ export function CyberRangeView() {
             From web app pentesting to Active Directory compromise - every category ships with beginner-friendly entry points and insane-mode nightmares.
           </p>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {LAB_CATEGORIES.map((cat, i) => (
               <motion.div
                 key={cat.id}
@@ -394,7 +394,7 @@ export function CyberRangeView() {
           </div>
 
           {isLoading ? (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {[...Array(6)].map((_, i) => (
                 <Skeleton key={i} className="h-44 rounded-xl" />
               ))}
@@ -407,7 +407,7 @@ export function CyberRangeView() {
               </p>
             </div>
           ) : (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {featuredLabs.map((lab, i) => (
                 <motion.div
                   key={lab.id}
@@ -451,7 +451,7 @@ export function CyberRangeView() {
             From zero to flag in four steps.
           </h2>
 
-          <div className="relative grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="relative grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Connecting line - hidden on mobile */}
             <div
               aria-hidden

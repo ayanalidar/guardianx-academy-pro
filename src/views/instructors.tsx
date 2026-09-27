@@ -268,7 +268,7 @@ export function InstructorsView() {
       <section className="relative py-8 lg:py-10 border-t border-border/40">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           {isLoading ? (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {Array.from({ length: 6 }).map((_, i) => (
                 <div key={i} className="h-72 rounded-xl border border-border/60 bg-card animate-pulse" />
               ))}
@@ -286,7 +286,7 @@ export function InstructorsView() {
               onAction={() => navigate({ name: "contact" })}
             />
           ) : (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {instructors.map((instr, i) => {
                 const accent = ACCENTS[i % ACCENTS.length]!
                 return (
@@ -452,7 +452,7 @@ export function InstructorsView() {
             </p>
           </motion.div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {WHY_FEATURES.map((f, i) => (
               <motion.div
                 key={f.title}
@@ -511,7 +511,7 @@ export function InstructorsView() {
             </p>
           </motion.div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {EXPERTISE_DOMAINS.map((d, i) => {
               const count = countDomain(instructors, [...d.keywords])
               return (

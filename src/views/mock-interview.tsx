@@ -249,7 +249,7 @@ export function MockInterviewView() {
                 <Target className="h-4 w-4 text-violet-300" />
                 <h2 className="font-semibold">Configure your interview</h2>
               </div>
-              <div className="grid sm:grid-cols-2 gap-4 mb-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
                 <div>
                   <label className="text-[10px] font-mono text-muted-foreground uppercase mb-1.5 block">
                     Role
@@ -356,7 +356,7 @@ export function MockInterviewView() {
               </div>
 
               {/* Question + answer */}
-              <div className="grid lg:grid-cols-12 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
                 <div className="lg:col-span-7">
                   <div className="flex items-center gap-2 mb-3">
                     <Badge variant="outline" className="text-[10px]">
@@ -529,7 +529,7 @@ export function MockInterviewView() {
                           {q.category}
                         </Badge>
                       </div>
-                      <div className="grid sm:grid-cols-2 gap-3 mt-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
                         <div className="rounded-md border border-amber-500/30 bg-amber-500/5 p-2.5">
                           <p className="text-[10px] text-amber-300/80 font-mono uppercase mb-1">
                             Your Answer
@@ -571,7 +571,7 @@ export function MockInterviewView() {
                   No previous interviews yet. Start one above!
                 </div>
               ) : (
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {(historyData?.interviews ?? []).map((iv) => (
                     <div
                       key={iv.id}

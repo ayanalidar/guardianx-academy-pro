@@ -334,7 +334,7 @@ function MyCoursesTab() {
               {filteredCourses.length} of {courses.length} courses
             </p>
           )}
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
             {filteredCourses.map((c) => (
               <InstructorCourseCard
                 key={c.id}
@@ -472,7 +472,7 @@ function CreateCourseDialog({ open, onOpenChange, onCreated }: {
           <DialogTitle>Create New Course</DialogTitle>
         </DialogHeader>
         <div className="space-y-4 py-2">
-          <div className="grid sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="title">Course Title</Label>
               <Input id="title" placeholder="e.g. Certified Ethical Hacker" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
@@ -483,7 +483,7 @@ function CreateCourseDialog({ open, onOpenChange, onCreated }: {
             </div>
           </div>
 
-          <div className="grid sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="slug">Slug (optional)</Label>
               <Input id="slug" placeholder="auto-generated from title" value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} />
@@ -514,7 +514,7 @@ function CreateCourseDialog({ open, onOpenChange, onCreated }: {
             )}
           </div>
 
-          <div className="grid sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="space-y-1.5">
               <Label>Category</Label>
               <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
@@ -544,7 +544,7 @@ function CreateCourseDialog({ open, onOpenChange, onCreated }: {
             </div>
           </div>
 
-          <div className="grid sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="duration">Duration (hours)</Label>
               <Input id="duration" type="number" min={1} value={form.durationHours} onChange={(e) => setForm({ ...form, durationHours: Number(e.target.value) })} />
@@ -759,7 +759,7 @@ function EditCourseMetaForm({ courseId, course, onClose }: {
         <span className="text-sm font-semibold">Course Settings</span>
         <Button size="sm" variant="ghost" className="ml-auto h-7" onClick={onClose}><X className="h-3.5 w-3.5" /></Button>
       </div>
-      <div className="grid sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Title" />
         <Input value={form.shortName} onChange={(e) => setForm({ ...form, shortName: e.target.value.toUpperCase() })} placeholder="Short name" maxLength={6} />
       </div>
@@ -774,7 +774,7 @@ function EditCourseMetaForm({ courseId, course, onClose }: {
           </div>
         )}
       </div>
-      <div className="grid sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
           <SelectTrigger><SelectValue /></SelectTrigger>
           <SelectContent>
@@ -794,7 +794,7 @@ function EditCourseMetaForm({ courseId, course, onClose }: {
           </SelectContent>
         </Select>
       </div>
-      <div className="grid sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <Input type="number" value={form.durationHours} onChange={(e) => setForm({ ...form, durationHours: Number(e.target.value) })} placeholder="Hours" />
         <Input type="number" value={form.price} onChange={(e) => setForm({ ...form, price: Number(e.target.value) })} placeholder="Price" />
         <Input value={form.certBody} onChange={(e) => setForm({ ...form, certBody: e.target.value })} placeholder="Cert body" />
@@ -930,7 +930,7 @@ function LessonEditor({ lessonId, courseId, onClose }: { lessonId: string; cours
         <Button size="sm" variant="ghost" className="ml-auto h-7" onClick={onClose}><X className="h-3.5 w-3.5" /></Button>
       </div>
       <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Lesson title" />
-      <div className="grid sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <Select value={type} onValueChange={setType}>
           <SelectTrigger><SelectValue /></SelectTrigger>
           <SelectContent>
@@ -1261,7 +1261,7 @@ function NewLessonForm({ moduleId, courseId, onClose }: { moduleId: string; cour
         <Button size="sm" variant="ghost" className="ml-auto h-7" onClick={onClose}><X className="h-3.5 w-3.5" /></Button>
       </div>
       <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Lesson title" />
-      <div className="grid sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <Select value={type} onValueChange={setType}>
           <SelectTrigger className="w-full"><SelectValue /></SelectTrigger>
           <SelectContent>
@@ -1455,7 +1455,7 @@ function LiveSessionsTab() {
               <Label>Description (optional)</Label>
               <Textarea placeholder="What will you cover?" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} className="min-h-[60px]" />
             </div>
-            <div className="grid sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div className="space-y-1.5">
                 <Label>Course (optional)</Label>
                 <Select value={form.courseId} onValueChange={(v) => setForm({ ...form, courseId: v })}>
@@ -1636,7 +1636,7 @@ function MyStudentsTab() {
                       </Badge>
                     )}
                   </div>
-                  <div className="grid sm:grid-cols-2 gap-2 mt-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-2">
                     {s.enrollments.map((e) => {
                       const col = colorFor(e.courseColor)
                       return (
@@ -1680,7 +1680,7 @@ function CalendarTab() {
         </h2>
         <p className="text-sm text-muted-foreground">Your scheduled sessions and deadlines</p>
       </div>
-      <div className="grid lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2">
           <CalendarWidget />
         </div>
@@ -1712,7 +1712,7 @@ function AnalyticsTab() {
 
   if (isLoading) {
     return (
-      <div className="grid lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <Skeleton className="h-72" />
         <Skeleton className="h-72" />
       </div>
@@ -1731,7 +1731,7 @@ function AnalyticsTab() {
         <p className="text-sm text-muted-foreground">Engagement, completion, and enrollment insights</p>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         {/* Enrollment over time */}
         <Card className="p-5">
           <div className="flex items-center justify-between mb-4">

@@ -210,7 +210,7 @@ export function ContactView() {
           ============================================================ */}
       <section className="py-8 lg:py-10">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <Stagger className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4" staggerChildren={0.1}>
+          <Stagger className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" staggerChildren={0.1}>
             {CONTACT_METHODS.map((m) => (
               <StaggerItem key={m.label} className="h-full">
                 <a href={m.href} target={m.label === "Website" || m.label === "Address" ? "_blank" : undefined} rel="noreferrer" className="group block h-full">
@@ -238,7 +238,7 @@ export function ContactView() {
           ============================================================ */}
       <section className="py-8 lg:py-10 border-t border-border">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="grid lg:grid-cols-2 gap-6 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
             {/* ---- LEFT: Contact Form (solid card) ---- */}
             <ScrollReveal>
               <Card className="bg-card shadow-lg border border-border p-6 sm:p-8 lg:p-10">
@@ -277,7 +277,7 @@ export function ContactView() {
                     }}
                     className="space-y-5"
                   >
-                    <div className="grid sm:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label htmlFor="c-name">{nameLabel}</Label>
                         <Input

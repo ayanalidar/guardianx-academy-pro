@@ -84,7 +84,7 @@ export function AdvancedSkillMap() {
   const activeMeta = SKILL_DOMAINS[active]
 
   return (
-    <div className="grid lg:grid-cols-[minmax(0,1fr)_330px] gap-4 lg:gap-6 items-center">
+    <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_330px] gap-4 lg:gap-6 items-center">
       {/* ================= orbital map ================= */}
       <div className="relative w-full max-w-[560px] mx-auto aspect-square">
         {/* faint radial glow behind the core */}

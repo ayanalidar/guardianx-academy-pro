@@ -172,7 +172,7 @@ export function BlogView() {
           {isLoading ? (
             <div className="space-y-8">
               <Skeleton className="h-80 rounded-2xl" />
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-64 rounded-2xl" />)}
               </div>
             </div>
@@ -196,7 +196,7 @@ export function BlogView() {
                   onClick={() => navigate({ name: "blog-post", slug: featured.slug })}
                   className="block w-full text-left group"
                 >
-                  <article className="relative overflow-hidden rounded-2xl border border-border/60 bg-card/60 backdrop-blur-sm grid md:grid-cols-2">
+                  <article className="relative overflow-hidden rounded-2xl border border-border/60 bg-card/60 backdrop-blur-sm grid grid-cols-1 md:grid-cols-2">
                     <div className="relative h-56 md:h-auto overflow-hidden bg-muted/30">
                       {featured.thumbnail ? (
                         <img
@@ -240,7 +240,7 @@ export function BlogView() {
 
               {/* Grid of regular posts */}
               {regular.length > 0 && (
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                   {regular.map((post, i) => (
                     <motion.button
                       key={post.id}

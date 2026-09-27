@@ -206,7 +206,7 @@ export function CourseStudioView() {
     return (
       <div className="max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
         <Skeleton className="h-28 w-full rounded-2xl" />
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {Array.from({ length: 3 }).map((_, i) => (
             <Skeleton key={i} className="h-48 rounded-xl" />
           ))}
@@ -400,7 +400,7 @@ function ListView({ onOpen }: { onOpen: (c: CourseListItem) => void }) {
 
       {/* Course grid */}
       {isLoading ? (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {Array.from({ length: 6 }).map((_, i) => (
             <Skeleton key={i} className="h-56 rounded-xl" />
           ))}
@@ -437,7 +437,7 @@ function ListView({ onOpen }: { onOpen: (c: CourseListItem) => void }) {
           )}
         </Card>
       ) : (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {filtered.map((c) => (
             <CourseCard key={c.id} course={c} onOpen={() => onOpen(c)} />
           ))}
@@ -694,7 +694,7 @@ function CreateCourseDialog({
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4 py-2">
-          <div className="grid sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="sm:col-span-2 space-y-1.5">
               <Label className="text-xs font-medium">Title</Label>
               <Input
@@ -725,7 +725,7 @@ function CreateCourseDialog({
               className="bg-background/60 border-border/60 min-h-[80px]"
             />
           </div>
-          <div className="grid sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label className="text-xs font-medium">Category</Label>
               <Select
@@ -763,7 +763,7 @@ function CreateCourseDialog({
               </Select>
             </div>
           </div>
-          <div className="grid sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label className="text-xs font-medium">Duration (hours)</Label>
               <Input
@@ -1003,7 +1003,7 @@ function EditorView({
     return (
       <div className="space-y-4">
         <Skeleton className="h-16 w-full rounded-xl" />
-        <div className="grid lg:grid-cols-[320px_1fr] gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr] gap-4">
           <Skeleton className="h-[70vh] rounded-xl" />
           <Skeleton className="h-[70vh] rounded-xl" />
         </div>
@@ -1102,7 +1102,7 @@ function EditorView({
       {tab === "details" ? (
         <CourseDetailsEditor key={course.id} course={course} />
       ) : (
-        <div className="grid lg:grid-cols-[340px_1fr] gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] gap-4">
         {/* LEFT - module/lesson outline */}
         <Card className="bg-card/40 border-border/60 flex flex-col max-h-[80vh] overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3 border-b border-border/60">
@@ -1401,7 +1401,7 @@ function CourseDetailsEditor({
 
       <div className="p-5 space-y-5 max-h-[72vh] overflow-y-auto custom-scroll">
         {/* Basics */}
-        <div className="grid sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <Label className="text-xs">Title</Label>
             <Input value={form.title} onChange={(e) => set("title", e.target.value)} className="bg-background/60" />
@@ -1421,7 +1421,7 @@ function CourseDetailsEditor({
           <Textarea rows={5} value={form.longDescription} onChange={(e) => set("longDescription", e.target.value)} className="bg-background/60" />
         </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="space-y-1.5">
             <Label className="text-xs">Category</Label>
             <Select value={form.category} onValueChange={(v) => set("category", v)}>
@@ -1446,7 +1446,7 @@ function CourseDetailsEditor({
           </div>
         </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="space-y-1.5">
             <Label className="text-xs">Theme color</Label>
             <Select value={form.color} onValueChange={(v) => set("color", v)}>
@@ -1477,7 +1477,7 @@ function CourseDetailsEditor({
             <h4 className="text-sm font-semibold">Course page sections</h4>
             <span className="text-[11px] text-muted-foreground">one item per line - shown exactly as typed</span>
           </div>
-          <div className="grid lg:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {COURSE_LIST_FIELDS.map(({ key, label, hint, placeholder }) => (
               <div key={key} className="space-y-1.5">
                 <Label className="text-xs">{label}</Label>
@@ -2020,7 +2020,7 @@ function LessonEditor({ lesson, courseId, course }: { lesson: AdminLesson; cours
         </div>
 
         {/* Type + Duration */}
-        <div className="grid sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div className="space-y-1.5">
             <Label htmlFor="lesson-type" className="text-xs font-medium">
               Type

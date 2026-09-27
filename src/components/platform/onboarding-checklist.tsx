@@ -142,7 +142,7 @@ export function OnboardingChecklist() {
               : " Everything below is already done - nice work!"}
           </p>
 
-          <ul className="grid sm:grid-cols-2 gap-1.5">
+          <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
             {steps.map((s, i) => (
               <motion.li
                 key={s.id}

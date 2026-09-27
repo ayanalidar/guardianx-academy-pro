@@ -137,7 +137,7 @@ export function BatchDetailView({ slug }: { slug: string }) {
           </motion.div>
         )}
 
-        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.2 }} className="grid sm:grid-cols-2 gap-3 mb-8">
+        <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.2 }} className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
           <DetailRow icon={Calendar} label="Start Date" value={batch.startDate || "TBA"} />
           <DetailRow icon={Clock} label="Schedule" value={batch.schedule || "TBA"} />
           <DetailRow icon={Video} label="Mode" value={batch.mode} />

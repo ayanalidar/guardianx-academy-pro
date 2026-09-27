@@ -116,10 +116,10 @@ function SchoolHero() {
 
 function OverviewTab() {
   const { data, isLoading } = useQuery<any>({ queryKey: ["school-overview"], queryFn: () => api("/api/school/overview") })
-  if (isLoading) return <div className="grid lg:grid-cols-2 gap-4"><Skeleton className="h-64" /><Skeleton className="h-64" /></div>
+  if (isLoading) return <div className="grid grid-cols-1 lg:grid-cols-2 gap-4"><Skeleton className="h-64" /><Skeleton className="h-64" /></div>
   if (!data) return null
   return (
-    <div className="grid lg:grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
       <Card className="p-5">
         <h3 className="font-semibold flex items-center gap-2 mb-3"><TrendingUp className="h-4 w-4 text-emerald-400" /> Quick Stats</h3>
         <div className="space-y-2">
@@ -197,7 +197,7 @@ function BatchesTab() {
       {isLoading ? <Skeleton className="h-32" /> : batches.length === 0 ? (
         <Card className="p-12 text-center border-dashed"><Layers className="h-10 w-10 text-muted-foreground mx-auto mb-3" /><p className="text-sm text-muted-foreground">No batches yet.</p></Card>
       ) : (
-        <div className="grid sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           {batches.map((b: any) => (
             <Card key={b.id} className="p-4">
               <div className="flex items-center gap-2 mb-2"><Layers className="h-4 w-4 text-violet-400" /><span className="font-medium">{b.name}</span></div>
@@ -231,7 +231,7 @@ function ReportsTab() {
   const { data, isLoading } = useQuery<any>({ queryKey: ["school-reports"], queryFn: () => api("/api/school/reports") })
   if (isLoading) return <Skeleton className="h-64" />
   return (
-    <div className="grid lg:grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
       <Card className="p-5">
         <h3 className="font-semibold flex items-center gap-2 mb-3"><Crown className="h-4 w-4 text-amber-400" /> Top Performers</h3>
         {data?.topPerformers?.length === 0 ? <p className="text-sm text-muted-foreground text-center py-4">No data.</p> : (
@@ -275,12 +275,12 @@ function SettingsTab() {
       <h3 className="font-semibold flex items-center gap-2 mb-4"><Building2 className="h-4 w-4 text-violet-400" /> Institution Settings</h3>
       <div className="space-y-3">
         <div><Label className="text-xs">Name</Label><Input value={form.name ?? ""} onChange={(e) => setForm({ ...form, name: e.target.value })} /></div>
-        <div className="grid sm:grid-cols-2 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <div><Label className="text-xs">Email</Label><Input value={form.email ?? ""} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
           <div><Label className="text-xs">Phone</Label><Input value={form.phone ?? ""} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
         </div>
         <div><Label className="text-xs">Address</Label><Input value={form.address ?? ""} onChange={(e) => setForm({ ...form, address: e.target.value })} /></div>
-        <div className="grid sm:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div><Label className="text-xs">City</Label><Input value={form.city ?? ""} onChange={(e) => setForm({ ...form, city: e.target.value })} /></div>
           <div><Label className="text-xs">State</Label><Input value={form.state ?? ""} onChange={(e) => setForm({ ...form, state: e.target.value })} /></div>
           <div><Label className="text-xs">Country</Label><Input value={form.country ?? ""} onChange={(e) => setForm({ ...form, country: e.target.value })} /></div>

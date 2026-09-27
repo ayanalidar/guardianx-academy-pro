@@ -308,7 +308,7 @@ function AboutContent() {
       </Section>
 
       <Section id="values" title="Our Values" icon={Heart} accent="violet">
-        <div className="grid sm:grid-cols-2 gap-4 mt-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
           {[
             { icon: Shield, title: "Integrity First", desc: "We hold ourselves to the highest ethical standards. Hackers we train are guardians, not attackers - sworn to use skills lawfully and defensively." },
             { icon: FlaskConical, title: "Practice over Theory", desc: "Real Docker containers, real exploits, real flags. We don't just teach concepts - we put a terminal in your hands from day one." },
@@ -355,7 +355,7 @@ function AboutContent() {
           and technologists with combined experience exceeding 500 years across offensive security,
           defense, governance, and identity & access management.
         </p>
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-2">
           {[
             { name: "Founder & CEO", focus: "Former OSCP / CISSP · ex-Fortune 500 CISO", icon: Shield },
             { name: "Head of Curriculum", focus: "Author of 4 cyber textbooks · CEH Master", icon: BookOpen },
@@ -525,7 +525,7 @@ function PrivacyContent() {
 
       <Section id="third-parties" title="5. Third-Party Services" icon={Network} accent="teal">
         <p>We share specific data with carefully vetted third-party service providers:</p>
-        <div className="grid sm:grid-cols-2 gap-3 mt-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
           {[
             { name: "NextAuth.js", purpose: "Authentication & session management", data: "Email, hashed password" },
             { name: "Payment Processor", purpose: "Course purchases & subscriptions", data: "Billing name, address, card token" },
@@ -1163,7 +1163,7 @@ function CookiesContent() {
       </Section>
 
       <Section id="types" title="2. Types of Cookies We Use" icon={Server} accent="violet">
-        <div className="grid sm:grid-cols-2 gap-4 mt-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
           {cookieTypes.map((c, i) => {
             const accentColor =
               c.accent === "emerald" ? "text-emerald-400 bg-emerald-500/10 border-emerald-500/20"
@@ -1266,7 +1266,7 @@ function ConductContent() {
       </Callout>
 
       <Section id="principles" title="1. Our Core Principles" icon={Heart} accent="emerald">
-        <div className="grid sm:grid-cols-2 gap-4 mt-2">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
           {[
             { icon: Shield, title: "Defend, Don't Attack", desc: "Skills learned here are for protection. Using them offensively against systems you don't own or lack permission to test is strictly forbidden." },
             { icon: Users, title: "Respect Everyone", desc: "Discrimination, harassment, or hostility based on race, gender, sexuality, religion, nationality, or ability is not tolerated." },
@@ -1463,7 +1463,7 @@ export function LegalPage({ pageType }: LegalPageProps) {
     : "text-emerald-400"
 
   return (
-    <div className="grid lg:grid-cols-[280px_1fr] gap-6 lg:gap-10">
+    <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6 lg:gap-10">
       <LegalSidebar active={pageType} />
 
       <div className="min-w-0 space-y-10">
@@ -1527,7 +1527,7 @@ export function LegalPage({ pageType }: LegalPageProps) {
         </Card>
 
         {/* === QUICK LINKS === */}
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {LEGAL_NAV.filter(n => n.type !== pageType).slice(0, 6).map((item) => (
             <button
               key={item.type}

@@ -585,7 +585,7 @@ function AddInstructorDialog({
 
         <div className="space-y-4">
           {/* Basic info */}
-          <div className="grid sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label className="text-xs">Name *</Label>
               <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Dr. Jane Smith" />
@@ -637,7 +637,7 @@ function AddInstructorDialog({
           </div>
 
           {/* Years + max batches */}
-          <div className="grid sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label className="text-xs">Years of Experience</Label>
               <Input type="number" min={0} max={50} value={yearsExperience} onChange={(e) => setYearsExperience(Number(e.target.value))} />
@@ -660,7 +660,7 @@ function AddInstructorDialog({
           </div>
 
           {/* Avatar + LinkedIn */}
-          <div className="grid sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label className="text-xs">Avatar URL (optional)</Label>
               <Input value={avatar} onChange={(e) => setAvatar(e.target.value)} placeholder="https://..." className="text-xs" />
@@ -748,7 +748,7 @@ function ViewProfileDialog({
           {inst.bio && <p className="text-xs text-muted-foreground">{inst.bio}</p>}
 
           {/* Contact */}
-          <div className="grid sm:grid-cols-2 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
             <div className="rounded-lg border border-border/40 bg-card/40 p-2.5">
               <p className="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1 mb-0.5">
                 <Mail className="h-3 w-3" /> Email

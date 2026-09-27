@@ -177,7 +177,7 @@ export function AdminPlatformStatsView() {
                   {isEditing ? (
                     /* ----- Edit mode ----- */
                     <div className="space-y-3">
-                      <div className="grid sm:grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         <div>
                           <Label className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-1 block">Label</Label>
                           <Input value={editForm.label || ""} onChange={(e) => setEditForm((f) => ({ ...f, label: e.target.value }))} />
@@ -414,7 +414,7 @@ function TileOverridesCard({ stats }: { stats: PlatformStat[] }) {
       <p className="text-xs text-muted-foreground mb-3">
         Manual values for the &quot;Total learners enrolled&quot; and &quot;Enrolled this week&quot; tiles on the homepage Live Feed. Without a value here, the tile shows the real computed count. To remove an override, delete its row in the stats list above (keys: enrolled_total, enrolled_this_week).
       </p>
-      <div className="grid sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="space-y-1.5">
           <Label className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground block">
             Total learners enrolled {totalRow && <span className="text-emerald-400">· override active</span>}
@@ -695,7 +695,7 @@ function LiveFeedDialog({ initial, onClose, onSaved }: { initial: EntryForm; onC
       <div className="rounded-xl border border-border/60 bg-card p-6 max-w-lg w-full space-y-4 max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
         <h3 className="text-lg font-semibold">{isEdit ? "Edit feed entry" : "New feed entry"}</h3>
         <div className="space-y-3">
-          <div className="grid sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-1 block">Name shown *</Label>
               <Input value={form.displayName} onChange={(e) => set("displayName", e.target.value)} placeholder="e.g. Rahul K." />
@@ -709,7 +709,7 @@ function LiveFeedDialog({ initial, onClose, onSaved }: { initial: EntryForm; onC
             <Label className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-1 block">Course / program *</Label>
             <Input value={form.courseTitle} onChange={(e) => set("courseTitle", e.target.value)} placeholder="e.g. CEH v13 Practical Ethical Hacking" />
           </div>
-          <div className="grid sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <Label className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-1 block">Short chip (optional)</Label>
               <Input value={form.courseShortName} onChange={(e) => set("courseShortName", e.target.value)} placeholder="e.g. CEHv13" />
@@ -730,7 +730,7 @@ function LiveFeedDialog({ initial, onClose, onSaved }: { initial: EntryForm; onC
               <Input value={form.order} onChange={(e) => set("order", e.target.value)} inputMode="numeric" placeholder="0" />
             </div>
           </div>
-          <div className="grid sm:grid-cols-2 gap-3 items-end">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-end">
             <div>
               <Label className="text-[10px] font-mono uppercase tracking-wider text-muted-foreground mb-1 block">When (drives the time label)</Label>
               <Input

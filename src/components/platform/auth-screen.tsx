@@ -331,7 +331,7 @@ export function AuthScreen() {
       {/* ===== Content starts BELOW the fixed header (pt-20) ===== */}
       <main className="flex-1 pt-20 lg:pt-24">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 lg:py-12">
-          <div className="grid lg:grid-cols-2 gap-8 lg:gap-12 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-start">
             {/* ============================================================
                 LEFT - Branding (desktop only)
                 ============================================================ */}

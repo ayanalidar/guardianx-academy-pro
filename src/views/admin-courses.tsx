@@ -752,7 +752,7 @@ function CourseFormDialog({
 
         <div className="space-y-4 py-2">
           {/* Title + shortName */}
-          <div className="grid sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div className="sm:col-span-2 space-y-1.5">
               <Label htmlFor="course-title" className="text-xs font-medium">Title</Label>
               <Input
@@ -800,7 +800,7 @@ function CourseFormDialog({
           </div>
 
           {/* Tags + Cert Body */}
-          <div className="grid sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="course-tags" className="text-xs font-medium">Tags (comma-separated)</Label>
               <Input
@@ -824,7 +824,7 @@ function CourseFormDialog({
           </div>
 
           {/* Category + Level */}
-          <div className="grid sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="course-category" className="text-xs font-medium">Category</Label>
               <Select
@@ -860,7 +860,7 @@ function CourseFormDialog({
           </div>
 
           {/* Duration + Price */}
-          <div className="grid sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label htmlFor="course-duration" className="text-xs font-medium">Duration (hours)</Label>
               <Input
@@ -895,7 +895,7 @@ function CourseFormDialog({
               </div>
               <p className="text-[10px] text-muted-foreground">One item per line - rendered exactly as typed on the public course page.</p>
             </div>
-            <div className="grid sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {COURSE_LIST_FIELDS.map(({ key, label, hint, placeholder }) => (
                 <div key={key} className="space-y-1.5">
                   <Label htmlFor={`course-${key}`} className="text-xs font-medium">{label}</Label>

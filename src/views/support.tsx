@@ -185,7 +185,7 @@ function HelpContent({ search }: { search: string }) {
   )
 
   return (
-    <div className="grid sm:grid-cols-2 gap-3">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
       {filtered.map((a, i) => (
         <Card key={i} className="p-4 hover:border-violet-500/30 transition-colors cursor-pointer">
           <div className="flex items-start gap-3">

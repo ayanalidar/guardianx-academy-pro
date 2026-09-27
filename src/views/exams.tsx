@@ -102,7 +102,7 @@ export function ExamsView() {
             <p className="text-[10px] font-mono text-cyan-400 tracking-[0.25em] mb-2">HOW IT WORKS</p>
             <h2 className="text-[clamp(1.5rem,3vw,2.25rem)] font-bold tracking-[-0.02em]">The certification journey.</h2>
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
               { step: "01", icon: FileCheck, title: "Prepare", desc: "Complete courses, labs, and mock exams to build readiness.", color: "text-violet-300", bg: "bg-violet-500/10" },
               { step: "02", icon: Clock, title: "Schedule", desc: "Choose an exam slot that fits your schedule.", color: "text-cyan-300", bg: "bg-cyan-500/10" },
@@ -138,7 +138,7 @@ export function ExamsView() {
               They are distinct from official external certifications.
             </p>
           </div>
-          <div className="grid sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {certifications.map((cert, i) => (
               <motion.div key={cert.id} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: i * 0.05 }} className="card-premium rounded-xl p-5">
                 <div className="flex items-start justify-between mb-3">
@@ -175,7 +175,7 @@ export function ExamsView() {
             <p className="text-[10px] font-mono text-cyan-400 tracking-[0.25em] mb-2">PROCTORING FEATURES</p>
             <h2 className="text-[clamp(1.5rem,3vw,2.25rem)] font-bold tracking-[-0.02em]">Secure, monitored examinations.</h2>
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {[
               { icon: ScanFace, title: "Identity Verification", desc: "Verify candidate identity before exam starts.", color: "text-violet-300", bg: "bg-violet-500/10" },
               { icon: Camera, title: "Camera Monitoring", desc: "Camera check and live monitoring during exam.", color: "text-cyan-300", bg: "bg-cyan-500/10" },
@@ -205,7 +205,7 @@ export function ExamsView() {
             <p className="text-[10px] font-mono text-violet-400 tracking-[0.25em] mb-2">EXAM TYPES</p>
             <h2 className="text-[clamp(1.5rem,3vw,2.25rem)] font-bold tracking-[-0.02em]">Comprehensive assessment formats.</h2>
           </div>
-          <div className="grid sm:grid-cols-3 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-4 gap-3">
             {[
               "Multiple Choice (MCQ)", "Multiple Response", "True/False", "Scenario Questions",
               "Case Studies", "Practical Labs", "Flag Submission", "Configuration Tasks",
@@ -285,7 +285,7 @@ function ExamReadinessSection() {
         </div>
 
         {isLoading ? (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {[0, 1, 2].map((i) => (
               <Skeleton key={i} className="h-44 rounded-xl" />
             ))}
@@ -299,7 +299,7 @@ function ExamReadinessSection() {
             No published exams yet. Check back soon.
           </Card>
         ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {exams.map((exam, i) => (
               <motion.button
                 key={exam.id}

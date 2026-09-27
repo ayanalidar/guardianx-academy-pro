@@ -89,7 +89,7 @@ export function CredentialsView() {
           </div>
 
           {isLoading ? (
-            <div className="grid sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {[1, 2].map(i => (
                 <div key={i} className="h-48 rounded-xl border border-border/60 bg-card animate-pulse" />
               ))}
@@ -104,7 +104,7 @@ export function CredentialsView() {
               </Button>
             </div>
           ) : (
-            <div className="grid sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               {credentials.map((cred: any, i: number) => (
                 <motion.div
                   key={cred.id}

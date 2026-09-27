@@ -401,7 +401,7 @@ export function DashboardView() {
         {/* ====================================================
             3. MAIN GRID - LEFT (60%) + RIGHT (40%)
             ==================================================== */}
-        <div className="grid lg:grid-cols-5 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-6">
           {/* LEFT COLUMN */}
           <div className="lg:col-span-3 space-y-6">
             {/* CURRENT MISSION */}
@@ -507,7 +507,7 @@ export function DashboardView() {
         {/* ====================================================
             3b. WEEKLY XP + SKILL RADAR - 2-col charts row
             ==================================================== */}
-        <div className="grid lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <ScrollReveal>
             <WeeklyXpChart data={weeklyXp} loading={userLoading || meLoading} />
           </ScrollReveal>
@@ -794,7 +794,7 @@ function ContinueLearning({
         </div>
       ) : courses.length === 0 ? (
         recommendedLoading ? (
-          <div className="grid sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             {Array.from({ length: 3 }).map((_, i) => (
               <Skeleton key={i} className="h-[150px] rounded-xl" />
             ))}
@@ -807,7 +807,7 @@ function ContinueLearning({
                 You haven't enrolled yet - pick a course below to start your training.
               </p>
             </div>
-            <div className="grid sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {recommended.map((c) => (
                 <div
                   key={c.id}

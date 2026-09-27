@@ -289,7 +289,7 @@ export function CorporateTrainingView() {
           <p className="text-muted-foreground mb-6 max-w-2xl">
             From SOC analysts to CISOs - we train every layer of your security org.
           </p>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {WHO_ITS_FOR.map((item) => {
               const Icon = item.icon
               return (
@@ -325,7 +325,7 @@ export function CorporateTrainingView() {
           <h2 className="text-2xl lg:text-3xl font-bold tracking-tight mb-6">
             Six things every cohort <span className="text-gradient-premium">gets</span>.
           </h2>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {INCLUDED.map((item) => {
               const Icon = item.icon
               return (
@@ -367,7 +367,7 @@ export function CorporateTrainingView() {
             Every engagement starts with a scoping call. Final pricing depends on team size, curriculum complexity, and delivery mode. Reach out for a tailored quote.
           </p>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {PRICING.map((tier) => (
               <div
                 key={tier.tier}
@@ -633,7 +633,7 @@ function CorporateLeadForm({ initialTier }: { initialTier: string | null }) {
         className="rounded-xl border border-border/60 bg-card/60 backdrop-blur p-5 lg:p-6 space-y-4"
       >
         {/* company + contact */}
-        <div className="grid sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <Label htmlFor="ct-company" className="text-sm font-medium mb-1.5 block">
               Company name <span className="text-rose-400">*</span>
@@ -665,7 +665,7 @@ function CorporateLeadForm({ initialTier }: { initialTier: string | null }) {
         </div>
 
         {/* email + phone */}
-        <div className="grid sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <Label htmlFor="ct-email" className="text-sm font-medium mb-1.5 block">
               Work email <span className="text-rose-400">*</span>
@@ -698,7 +698,7 @@ function CorporateLeadForm({ initialTier }: { initialTier: string | null }) {
         </div>
 
         {/* team size + timeline */}
-        <div className="grid sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <Label className="text-sm font-medium mb-1.5 block">
               Team size <span className="text-rose-400">*</span>

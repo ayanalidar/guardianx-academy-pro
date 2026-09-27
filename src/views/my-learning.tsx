@@ -113,7 +113,7 @@ export function MyLearningView() {
         {isLoading ? (
           <div className="space-y-4">
             <Skeleton className="h-72 mb-8" />
-            <div className="grid lg:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-40" />)}
             </div>
           </div>
@@ -247,7 +247,7 @@ function ContinueLearning({ resume }: { resume: ResumeData }) {
           }
         }}
       >
-        <div className="grid lg:grid-cols-12 gap-0">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-0">
           {/* Visual side */}
           <div className="lg:col-span-5 relative aspect-[16/10] lg:aspect-auto overflow-hidden min-h-[280px]">
             <div className="absolute inset-0 bg-gradient-to-br from-violet-950/40 via-background to-cyan-950/20" />
@@ -555,7 +555,7 @@ function RecommendedCoursesSection({
       </ScrollReveal>
 
       {loading ? (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {Array.from({ length: 3 }).map((_, i) => (
             <Skeleton key={i} className="h-52 rounded-2xl" />
           ))}
@@ -580,7 +580,7 @@ function RecommendedCoursesSection({
         </FadeIn>
       ) : (
         <Stagger
-          className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4"
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
           staggerChildren={0.07}
         >
           {courses.map((c) => (

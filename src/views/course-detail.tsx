@@ -608,7 +608,7 @@ export function CourseDetailView() {
         <div className="relative z-10 mx-auto max-w-[1400px] px-4 sm:px-8 lg:px-10 py-6 lg:py-8 space-y-6">
           <Skeleton className="h-[500px] w-full rounded-3xl" />
           <Skeleton className="h-24 w-full rounded-2xl" />
-          <div className="grid lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <Skeleton className="lg:col-span-2 h-[800px] rounded-2xl" />
             <Skeleton className="h-[800px] rounded-2xl" />
           </div>
@@ -770,7 +770,7 @@ export function CourseDetailView() {
               <span className="uppercase">Back to Catalog</span>
             </motion.button>
 
-            <div className="grid lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
               {/* Hero text - col 8 */}
               <motion.div
                 className="lg:col-span-7 xl:col-span-8"
@@ -1910,7 +1910,7 @@ function CommunityPreview({
               <p className="text-sm text-muted-foreground">No discussions yet - be the first to start one after enrolling.</p>
             </div>
           ) : (
-            <div className="grid sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {preview.map((d, i) => (
                 <motion.button
                   key={d.id}
@@ -2340,7 +2340,7 @@ function AchievementCollection({
             </p>
           </div>
 
-          <div className="grid sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             {whatYouWillLearn.map((item, i) => (
               <motion.div
                 key={i}
@@ -2359,7 +2359,7 @@ function AchievementCollection({
           </div>
 
           {(toolsCovered.length > 0 || careerOutcomes.length > 0) && (
-            <div className="mt-6 grid sm:grid-cols-2 gap-4">
+            <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
               {toolsCovered.length > 0 && (
                 <div className="rounded-xl border border-border/60 bg-card/40 backdrop-blur p-5">
                   <div className="flex items-center gap-2 mb-3">
@@ -2453,7 +2453,7 @@ function AchievementCollection({
           </p>
         </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {cards.map((card, i) => (
             <motion.div
               key={i}
@@ -2528,8 +2528,8 @@ function SkillProgressionChart({ tags }: { tags?: string | null }) {
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-12 gap-5 items-start">
-          <div className="lg:col-span-7 grid sm:grid-cols-2 gap-5">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+          <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-2 gap-5">
           {skillBars.map((bar) => (
             <motion.div
               key={bar.skill}
@@ -2709,7 +2709,7 @@ function CareerPathSection({
             <p className="text-[10px] font-mono text-muted-foreground tracking-[0.2em] mb-4">
               OFFICIAL LEARNING PATHS THAT INCLUDE THIS COURSE
             </p>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {matchingPaths.map((p) => (
                 <button
                   key={p.id}
@@ -3027,7 +3027,7 @@ function StudentProjectsShowcase({ labs, category }: { labs: any[]; category: st
           </p>
         </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
           {projects.map((p, i) => (
             <motion.div
               key={p.id}
@@ -3101,7 +3101,7 @@ function LabIntegrationPreview({
           </p>
         </div>
 
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
           {labs.map((lab, i) => (
             <motion.div
               key={lab.id}
@@ -3211,7 +3211,7 @@ function BatchSchedulePreview({
         <NextLiveSessionCard courseId={courseId} />
 
         {isLoading ? (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {Array.from({ length: 3 }).map((_, i) => (
               <Skeleton key={i} className="h-48 rounded-2xl" />
             ))}
@@ -3222,7 +3222,7 @@ function BatchSchedulePreview({
             <p className="text-sm text-muted-foreground">No live batches scheduled right now. Check back soon.</p>
           </div>
         ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {batches.map((b, i) => {
               const ms = modeStyle(b.mode)
               const ModeIcon = ms.icon
@@ -3395,7 +3395,7 @@ function InstructorSpotlight({ instructor, navigate }: { instructor: any; naviga
           <span className="text-gradient-cyan"> practitioner.</span>
         </h2>
 
-        <div className="grid lg:grid-cols-12 gap-4 lg:gap-6 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6 items-start">
           {/* Left - Big avatar + actions */}
           <div className="lg:col-span-4">
             <div className="lg:sticky lg:top-8 rounded-2xl border border-border/60 bg-card/40 backdrop-blur p-6">
@@ -3561,7 +3561,7 @@ function CertExamBlueprint({ course }: { course: any }) {
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-12 gap-4 lg:gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 lg:gap-6">
           {/* Left - exam facts */}
           <div className="lg:col-span-5">
             <div className="rounded-2xl border border-border/60 bg-card/40 backdrop-blur p-6">

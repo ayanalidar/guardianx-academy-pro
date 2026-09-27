@@ -281,7 +281,7 @@ export function BookSessionView() {
 
         {/* Hero perks row */}
         <ScrollReveal delay={0.2}>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-16">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-16">
             {PERKS.map((p) => (
               <div
                 key={p.title}
@@ -407,7 +407,7 @@ function AvailableSlotsSection() {
           {Array.from({ length: 2 }).map((_, i) => (
             <div key={i} className="space-y-3">
               <Skeleton className="h-7 w-56" />
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {Array.from({ length: 3 }).map((_, j) => (
                   <Skeleton key={j} className="h-64 rounded-2xl" />
                 ))}
@@ -434,7 +434,7 @@ function AvailableSlotsSection() {
                 </div>
               </ScrollReveal>
               <Stagger
-                className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4"
+                className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"
                 staggerChildren={0.06}
               >
                 {group.slots.map((s) => (

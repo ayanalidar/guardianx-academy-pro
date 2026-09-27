@@ -211,7 +211,7 @@ export function AffiliateView() {
           >
             <Card className="relative overflow-hidden p-8 sm:p-10 border-violet-500/30 bg-gradient-to-br from-violet-500/10 via-violet-500/5 to-transparent">
               <div className="absolute -top-20 -right-20 h-64 w-64 rounded-full bg-violet-500/15 blur-3xl pointer-events-none" />
-              <div className="relative grid lg:grid-cols-[1fr_auto] gap-6 items-center">
+              <div className="relative grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-6 items-center">
                 <div>
                   <div className="inline-flex items-center gap-2 text-[10px] font-mono uppercase tracking-widest text-violet-300/80 mb-3">
                     <Sparkles className="h-3 w-3" /> Earn 10% commission
@@ -224,7 +224,7 @@ export function AffiliateView() {
                     a commission on every paid enrollment that comes through your link - track clicks,
                     signups, and conversions in real time.
                   </p>
-                  <ul className="grid sm:grid-cols-2 gap-3 mb-6">
+                  <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
                     {[
                       "10% default commission rate",
                       "Real-time click & signup tracking",
@@ -274,7 +274,7 @@ export function AffiliateView() {
                   <Link2 className="h-4 w-4 text-violet-300" />
                   <h3 className="text-sm font-semibold">Your Referral Link</h3>
                 </div>
-                <div className="grid lg:grid-cols-[1fr_auto] gap-6 items-start">
+                <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-6 items-start">
                   <div className="space-y-3">
                     <div className="flex items-stretch gap-2">
                       <Input
@@ -354,7 +354,7 @@ export function AffiliateView() {
 
             {/* Commission + conversion rate strip */}
             <Card className="p-5">
-              <div className="grid sm:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div>
                   <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1">Commission Rate</div>
                   <div className="text-xl font-bold text-violet-300">{affiliate.commissionRate}%</div>
@@ -419,7 +419,7 @@ export function AffiliateView() {
               <h3 className="text-sm font-semibold mb-4 flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-violet-300" /> How It Works
               </h3>
-              <div className="grid sm:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {[
                   { step: "1", title: "Share your link", desc: "Post it on social media, email signatures, your blog, or messaging apps." },
                   { step: "2", title: "Track clicks", desc: "We log every click on your referral link - see activity in real time." },

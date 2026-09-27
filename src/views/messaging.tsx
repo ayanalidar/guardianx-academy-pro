@@ -207,7 +207,7 @@ export function MessagingView() {
             TWO-PANE - premium glass
             ==================================================== */}
         <ScrollReveal delay={0.2}>
-          <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-card/20 backdrop-blur-xl grid md:grid-cols-[340px_1fr] h-[72vh] min-h-[520px]">
+          <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-card/20 backdrop-blur-xl grid grid-cols-1 md:grid-cols-[340px_1fr] h-[72vh] min-h-[520px]">
             {/* Top accent line */}
             <div className="absolute top-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-violet-500/30 to-transparent z-20 pointer-events-none" />
 

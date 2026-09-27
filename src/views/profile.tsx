@@ -467,7 +467,7 @@ export function ProfileView() {
           </ScrollReveal>
         )}
 
-        <div className="grid lg:grid-cols-12 gap-8 items-start mb-20">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start mb-20">
           {/* Avatar + identity */}
           <div className="lg:col-span-8">
             <ScrollReveal delay={0.1}>
@@ -874,7 +874,7 @@ export function ProfileView() {
                     </p>
                   </div>
                 </div>
-                <div className="grid sm:grid-cols-3 gap-4 mt-4">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mt-4">
                   <div className="rounded-xl border border-border/40 bg-card/30 p-4">
                     <div className="text-2xl font-bold text-cyan-200">{instructorProfile?.maxBatches ?? 0}</div>
                     <div className="text-[10px] text-muted-foreground uppercase tracking-widest">Max Batches</div>

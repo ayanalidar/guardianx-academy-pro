@@ -180,7 +180,7 @@ export function InstitutionsCollegesView() {
             <p className="text-[10px] font-mono text-cyan-400 tracking-[0.25em] mb-2">PLATFORM FEATURES</p>
             <h2 className="text-[clamp(1.5rem,3vw,2.25rem)] font-bold tracking-[-0.02em] text-balance">Everything your college needs.</h2>
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {COLLEGE_FEATURES.map((f, i) => (
               <motion.div key={f.title} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: i * 0.05 }} className={cn("rounded-xl border p-4 transition-all hover:-translate-y-1", f.highlight ? "border-emerald-500/30 bg-emerald-500/5" : "border-border/60 bg-card")}>
                 <div className={cn("inline-flex p-2.5 rounded-lg mb-3", f.bg)}>
@@ -202,7 +202,7 @@ export function InstitutionsCollegesView() {
             <p className="text-[10px] font-mono text-violet-400 tracking-[0.25em] mb-2">INDUSTRY-ALIGNED CERTIFICATIONS</p>
             <h2 className="text-[clamp(1.5rem,3vw,2.25rem)] font-bold tracking-[-0.02em] text-balance">Certification tracks for college students.</h2>
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             {COLLEGE_CERTS.map((c, i) => (
               <motion.div key={c.code} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: i * 0.05 }} className="rounded-xl border border-border/60 bg-card p-5 hover:border-violet-500/30 transition-all">
                 <div className={cn("inline-flex px-2.5 py-1 rounded-md text-[10px] font-mono font-bold mb-3", c.bg, c.color)}>{c.code}</div>
@@ -255,7 +255,7 @@ export function InstitutionsCollegesView() {
             <p className="text-[10px] font-mono text-violet-400 tracking-[0.25em] mb-2">INTEGRATION OPTIONS</p>
             <h2 className="text-[clamp(1.5rem,3vw,2.25rem)] font-bold tracking-[-0.02em] text-balance">Choose your integration level.</h2>
           </div>
-          <div className="grid sm:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {INTEGRATION_OPTIONS.map((o, i) => (
               <motion.div key={o.title} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.3, delay: i * 0.05 }} className="rounded-xl border border-border/60 bg-card p-5 hover:border-violet-500/30 transition-all">
                 <div className={cn("inline-flex p-2.5 rounded-lg mb-3", o.bg)}>

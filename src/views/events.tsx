@@ -181,7 +181,7 @@ export function EventsView() {
       <section className="relative py-8 lg:py-10">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           {isLoading ? (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {Array.from({ length: 6 }).map((_, i) => (
                 <div key={i} className="h-72 rounded-xl border border-border/60 bg-card animate-pulse" />
               ))}
@@ -205,7 +205,7 @@ export function EventsView() {
                   FEATURED · {featured.length}
                 </p>
               )}
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                 {[...featured, ...regular].map((e, i) => {
                   const accent = TYPE_ACCENTS[e.type] ?? TYPE_ACCENTS.workshop!
                   return (

@@ -618,7 +618,7 @@ function AssignmentDialog({
               </section>
             )}
 
-            <section className="grid sm:grid-cols-3 gap-3 text-xs">
+            <section className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
               <div className="bg-card/50 border border-border/60 rounded-lg p-3">
                 <div className="text-[10px] font-mono uppercase tracking-[0.2em] text-muted-foreground mb-1">Submission Type</div>
                 <div className="font-medium capitalize">{assignment.submissionType}</div>

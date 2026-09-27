@@ -623,7 +623,7 @@ function LiveRoom({ session, onLeave, userName, userId, isHost }: {
           </div>
         </FadeIn>
 
-        <div className="grid lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
           {/* Main stage */}
           <div className="lg:col-span-3 space-y-4">
             {/* Stage mode switcher */}

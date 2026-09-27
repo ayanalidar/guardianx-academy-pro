@@ -300,7 +300,7 @@ function OverviewTab({ onGoTab }: { onGoTab?: (tab: AdminTab) => void }) {
             <div key={i} className="h-32 rounded-2xl bg-card/30 border border-border/60 animate-pulse" />
           ))}
         </div>
-        <div className="grid lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
           <div className="lg:col-span-2 h-72 rounded-2xl bg-card/30 border border-border/60 animate-pulse" />
           <div className="h-72 rounded-2xl bg-card/30 border border-border/60 animate-pulse" />
         </div>
@@ -343,7 +343,7 @@ function OverviewTab({ onGoTab }: { onGoTab?: (tab: AdminTab) => void }) {
       </Stagger>
 
       {/* Growth + Role breakdown */}
-      <div className="grid lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
         <ScrollReveal className="lg:col-span-2">
           <div className="rounded-2xl border border-border/60 bg-card/30 p-6 h-full">
             <div className="flex items-center justify-between mb-5">
@@ -405,7 +405,7 @@ function OverviewTab({ onGoTab }: { onGoTab?: (tab: AdminTab) => void }) {
       </div>
 
       {/* Recent signups + Active labs */}
-      <div className="grid lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <ScrollReveal>
           <div className="rounded-2xl border border-border/60 bg-card/30 p-6 h-full">
             <div className="flex items-center justify-between mb-5">
@@ -533,7 +533,7 @@ function QuickActions() {
         <Zap className="h-4 w-4 text-amber-400" />
         <h3 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">Quick Actions</h3>
       </div>
-      <Stagger className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4" staggerChildren={0.05}>
+      <Stagger className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" staggerChildren={0.05}>
         {QUICK_ACTIONS.map((a) => (
           <StaggerItem key={a.label}>
             <button
@@ -872,7 +872,7 @@ function EditUserDialog({ user, open, onOpenChange }: { user: AdminUser; open: b
             <Label>Name</Label>
             <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
           </div>
-          <div className="grid sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
               <Label>Role</Label>
               <Select value={form.role} onValueChange={(v) => setForm({ ...form, role: v })}>
@@ -980,7 +980,7 @@ function CoursesTab() {
       </div>
 
       {isLoading ? (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="h-48 rounded-2xl bg-card/30 border border-border/60 animate-pulse" />
           ))}
@@ -995,7 +995,7 @@ function CoursesTab() {
           </Button>
         </div>
       ) : (
-        <Stagger className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4" staggerChildren={0.05}>
+        <Stagger className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" staggerChildren={0.05}>
           {courses.map((c) => (
             <StaggerItem key={c.id}>
               <AdminCourseCard course={c} onEdit={() => setEditingCourse(c)} />
@@ -1103,7 +1103,7 @@ function AdminCourseCard({ course, onEdit }: { course: AdminCourse; onEdit: () =
 function CourseFormFields({ form, setForm, instructors }: { form: any; setForm: (f: any) => void; instructors: AdminUser[] }) {
   return (
     <div className="space-y-3">
-      <div className="grid sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="space-y-1.5">
           <Label>Course Title</Label>
           <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="Certified Ethical Hacker" />
@@ -1113,7 +1113,7 @@ function CourseFormFields({ form, setForm, instructors }: { form: any; setForm: 
           <Input value={form.shortName} onChange={(e) => setForm({ ...form, shortName: e.target.value.toUpperCase() })} maxLength={6} placeholder="CEH" />
         </div>
       </div>
-      <div className="grid sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="space-y-1.5">
           <Label>Category</Label>
           <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
@@ -1133,7 +1133,7 @@ function CourseFormFields({ form, setForm, instructors }: { form: any; setForm: 
           </Select>
         </div>
       </div>
-      <div className="grid sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="space-y-1.5">
           <Label>Duration (h)</Label>
           <Input type="number" min={1} value={form.durationHours} onChange={(e) => setForm({ ...form, durationHours: Number(e.target.value) })} />
@@ -1160,7 +1160,7 @@ function CourseFormFields({ form, setForm, instructors }: { form: any; setForm: 
         <Label>Full Description</Label>
         <Textarea value={form.longDescription} onChange={(e) => setForm({ ...form, longDescription: e.target.value })} className="min-h-[70px]" />
       </div>
-      <div className="grid sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="space-y-1.5">
           <Label>Tags (comma-sep)</Label>
           <Input value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} placeholder="hacking, network" />
@@ -1383,7 +1383,7 @@ function LabsTab() {
       </div>
 
       {isLoading ? (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {Array.from({ length: 6 }).map((_, i) => (
             <div key={i} className="h-44 rounded-2xl bg-card/30 border border-border/60 animate-pulse" />
           ))}
@@ -1398,7 +1398,7 @@ function LabsTab() {
           </Button>
         </div>
       ) : (
-        <Stagger className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4" staggerChildren={0.05}>
+        <Stagger className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" staggerChildren={0.05}>
           {labs.map((l) => (
             <StaggerItem key={l.id}>
               <AdminLabCard lab={l} onEdit={() => setEditingLab(l)} />
@@ -1509,7 +1509,7 @@ function AdminLabCard({ lab, onEdit }: { lab: AdminLab; onEdit: () => void }) {
 function LabFormFields({ form, setForm }: { form: any; setForm: (f: any) => void }) {
   return (
     <div className="space-y-3">
-      <div className="grid sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="space-y-1.5">
           <Label>Lab Title</Label>
           <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} placeholder="SQL Injection Basics" />
@@ -1527,7 +1527,7 @@ function LabFormFields({ form, setForm }: { form: any; setForm: (f: any) => void
         <Label>Long Description</Label>
         <Textarea value={form.longDescription} onChange={(e) => setForm({ ...form, longDescription: e.target.value })} className="min-h-[60px]" />
       </div>
-      <div className="grid sm:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="space-y-1.5">
           <Label>Category</Label>
           <Select value={form.category} onValueChange={(v) => setForm({ ...form, category: v })}>
@@ -1556,7 +1556,7 @@ function LabFormFields({ form, setForm }: { form: any; setForm: (f: any) => void
           </Select>
         </div>
       </div>
-      <div className="grid sm:grid-cols-4 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
         <div className="space-y-1.5">
           <Label>Duration (min)</Label>
           <Input type="number" min={1} value={form.durationMin} onChange={(e) => setForm({ ...form, durationMin: Number(e.target.value) })} />
@@ -1574,7 +1574,7 @@ function LabFormFields({ form, setForm }: { form: any; setForm: (f: any) => void
           <Input type="number" min={0} max={100} value={form.passingScore} onChange={(e) => setForm({ ...form, passingScore: Number(e.target.value) })} />
         </div>
       </div>
-      <div className="grid sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="space-y-1.5">
           <Label>Tags (comma-sep)</Label>
           <Input value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} placeholder="sqli, web, owasp" />
@@ -1596,7 +1596,7 @@ function LabFormFields({ form, setForm }: { form: any; setForm: (f: any) => void
         <Label>Scenario (markdown)</Label>
         <Textarea value={form.scenario} onChange={(e) => setForm({ ...form, scenario: e.target.value })} className="min-h-[60px]" />
       </div>
-      <div className="grid sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="space-y-1.5">
           <Label>Objectives (pipe-sep)</Label>
           <Textarea value={form.objectives} onChange={(e) => setForm({ ...form, objectives: e.target.value })} className="min-h-[50px]" placeholder="obj1|obj2|obj3" />
@@ -1606,7 +1606,7 @@ function LabFormFields({ form, setForm }: { form: any; setForm: (f: any) => void
           <Textarea value={form.hints} onChange={(e) => setForm({ ...form, hints: e.target.value })} className="min-h-[50px]" placeholder="hint1|hint2" />
         </div>
       </div>
-      <div className="grid sm:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <div className="space-y-1.5">
           <Label>Flag</Label>
           <Input value={form.flag} onChange={(e) => setForm({ ...form, flag: e.target.value })} placeholder="FLAG{...}" className="font-mono" />
@@ -1910,7 +1910,7 @@ function ContentTab() {
         </Card>
       </FadeIn>
 
-      <Stagger className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4" staggerChildren={0.06}>
+      <Stagger className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" staggerChildren={0.06}>
         {pages.map((p) => (
           <StaggerItem key={p.id}>
             <button
@@ -2083,7 +2083,7 @@ function SettingsTab() {
         <p className="text-sm text-muted-foreground">Configure global platform behavior.</p>
       </div>
 
-      <div className="grid lg:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
         <CursorGlow className="rounded-2xl border border-border/60 bg-card/30 p-6 group" color="oklch(0.7 0.15 85 / 0.06)">
           <div className="relative z-10">
             <div className="flex items-center gap-3 mb-4">

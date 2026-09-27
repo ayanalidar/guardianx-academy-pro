@@ -405,7 +405,7 @@ export function CurriculumDialog({
           {stage === "params" && (
             <div className="space-y-4 py-2">
               {error && <ErrorState message={error} onRetry={() => setRunId((n) => n + 1)} />}
-              <div className="grid sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <Label className="text-xs">Modules to generate</Label>
                   <Select value={moduleCount} onValueChange={setModuleCount}>
@@ -1037,7 +1037,7 @@ export function AssessmentDialog({
                     />
                     <div className="min-w-0 flex-1 space-y-1.5">
                       <p className="text-xs font-medium text-foreground leading-relaxed">{q.text}</p>
-                      <div className="grid sm:grid-cols-2 gap-1.5">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
                         {q.options.map((opt, oi) => (
                           <p
                             key={oi}

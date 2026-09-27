@@ -210,7 +210,7 @@ export function WeeklyChallengesView() {
           {/* ---- ACTIVE ---- */}
           <TabsContent value="active">
             {activeLoading ? (
-              <div className="grid lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <Skeleton className="h-96 rounded-2xl lg:col-span-2" />
                 <Skeleton className="h-96 rounded-2xl" />
               </div>
@@ -220,7 +220,7 @@ export function WeeklyChallengesView() {
                 <p className="text-muted-foreground">No active challenge this week. Check back soon!</p>
               </div>
             ) : (
-              <div className="grid lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Challenge card */}
                 <div className="lg:col-span-2 space-y-6">
                   <ScrollReveal>
@@ -422,7 +422,7 @@ export function WeeklyChallengesView() {
           {/* ---- HISTORY ---- */}
           <TabsContent value="history">
             {pastLoading ? (
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-56 rounded-2xl" />)}
               </div>
             ) : pastChallenges.length === 0 ? (
@@ -431,7 +431,7 @@ export function WeeklyChallengesView() {
                 No past challenges yet.
               </div>
             ) : (
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {pastChallenges.map((c, i) => {
                   const col = CATEGORY_COLORS[c.category] ?? CATEGORY_COLORS.misc
                   return (

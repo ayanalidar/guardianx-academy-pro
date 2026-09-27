@@ -330,7 +330,7 @@ export function BlogPostView({ slug }: { slug: string }) {
               <Share2 className="h-4 w-4 text-violet-400" />
               <h2 className="text-lg font-bold tracking-tight">Related articles</h2>
             </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
               {related.map((r, i) => (
                 <motion.button
                   key={r.id}

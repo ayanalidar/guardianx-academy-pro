@@ -182,7 +182,7 @@ export function LabSnapshotsView() {
         </div>
 
         {snapLoading ? (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-56 rounded-2xl" />)}
           </div>
         ) : snapshots.length === 0 ? (
@@ -194,7 +194,7 @@ export function LabSnapshotsView() {
             </Button>
           </div>
         ) : (
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {snapshots.map((s, i) => (
               <ScrollReveal key={s.id} delay={0.05 + i * 0.05}>
                 <div className="card-premium rounded-2xl p-5 h-full flex flex-col">

@@ -836,7 +836,7 @@ function LeadDetailDialog({
 
         <div className="space-y-4">
           {/* Contact info */}
-          <div className="grid sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <InfoRow icon={Building2} label="Organization" value={lead.organization || "-"} />
             <InfoRow icon={Mail} label="Email" value={lead.email || "-"} />
             <InfoRow icon={Phone} label="Phone" value={lead.phone || "-"} />
@@ -844,7 +844,7 @@ function LeadDetailDialog({
           </div>
 
           {/* Status + Source */}
-          <div className="grid sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label className="text-xs">Status</Label>
               <Select value={lead.status} onValueChange={handleStatusChange}>
@@ -889,7 +889,7 @@ function LeadDetailDialog({
           </div>
 
           {/* Follow-up + assignment */}
-          <div className="grid sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label className="text-xs">Follow-up Date</Label>
               <Input type="date" value={followUpDate} onChange={(e) => setFollowUpDate(e.target.value)} />

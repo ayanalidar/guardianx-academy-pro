@@ -134,7 +134,7 @@ export function InstructorDetailView() {
               initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.4 }}
-              className="grid lg:grid-cols-3 gap-6"
+              className="grid grid-cols-1 lg:grid-cols-3 gap-6"
             >
               {/* Left: avatar + name + meta */}
               <div className="lg:col-span-1">
@@ -255,7 +255,7 @@ export function InstructorDetailView() {
                 {instructor.courses.length} course{instructor.courses.length === 1 ? "" : "s"}
               </Badge>
             </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {instructor.courses.map((c, i) => (
                 <motion.button
                   key={c.id}
@@ -307,7 +307,7 @@ export function InstructorDetailView() {
                 {instructor.batches.length} batch{instructor.batches.length === 1 ? "" : "es"}
               </Badge>
             </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {instructor.batches.map((b, i) => (
                 <motion.div
                   key={b.id}

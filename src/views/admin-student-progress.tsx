@@ -430,7 +430,7 @@ export function StudentProgressView() {
           </DialogHeader>
 
           {/* Form controls */}
-          <div className="grid sm:grid-cols-2 gap-4 py-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 py-2">
             <div className="space-y-2">
               <Label htmlFor="report-type" className="text-xs uppercase tracking-wider text-muted-foreground">Report Type</Label>
               <Select value={reportType} onValueChange={(v) => setReportType(v as ReportType)}>

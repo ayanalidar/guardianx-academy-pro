@@ -178,7 +178,7 @@ export function PrerequisitesVisualizerView() {
             No courses published yet.
           </div>
         ) : (
-          <div className="grid lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             {/* Graph */}
             <div className="lg:col-span-2">
               <div className="relative overflow-auto rounded-2xl border border-border/60 bg-card p-4 shadow-lg">

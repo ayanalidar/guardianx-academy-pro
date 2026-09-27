@@ -120,7 +120,7 @@ export function LearningAnalyticsView() {
         </ScrollReveal>
 
         {isLoading || !a ? (
-          <div className="grid lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <Skeleton className="h-64 rounded-2xl" />
             <Skeleton className="h-64 rounded-2xl" />
             <Skeleton className="h-64 rounded-2xl" />
@@ -150,7 +150,7 @@ export function LearningAnalyticsView() {
               ))}
             </div>
 
-            <div className="grid lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Skill Radar */}
               <ScrollReveal className="lg:col-span-2">
                 <div className="rounded-2xl border border-border/60 bg-card p-6 lg:p-8 shadow-lg h-full">
@@ -161,7 +161,7 @@ export function LearningAnalyticsView() {
                     </div>
                     <Gauge className="h-5 w-5 text-violet-300" />
                   </div>
-                  <div className="grid sm:grid-cols-2 gap-8 items-center">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 items-center">
                     <SkillRadarSVG radar={a.skillRadar} />
                     <div className="space-y-2">
                       {Object.entries(a.skillRadar).map(([k, v]) => (
@@ -251,7 +251,7 @@ export function LearningAnalyticsView() {
             </ScrollReveal>
 
             {/* Streak + Course completion */}
-            <div className="grid lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <ScrollReveal>
                 <div className="relative overflow-hidden rounded-2xl border border-border/60 bg-card p-6 h-full shadow-lg">
                   <div className="absolute inset-0 bg-grid opacity-10 pointer-events-none" />

@@ -705,7 +705,7 @@ export function ProposalMakerView() {
               <h2 className="text-sm font-semibold mb-3 flex items-center gap-2">
                 <Sparkles className="h-4 w-4 text-violet-400" /> Slide 1 · Cover Page
               </h2>
-              <div className="grid sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div><Label className="text-xs">Proposal Number</Label><Input value={proposalNumber} onChange={(e) => setProposalNumber(e.target.value)} className="font-mono text-sm" /></div>
                 <div><Label className="text-xs">Date</Label><Input type="date" value={proposalDate} onChange={(e) => setProposalDate(e.target.value)} /></div>
                 <div><Label className="text-xs">Valid Until</Label><Input type="date" value={validUntil} onChange={(e) => setValidUntil(e.target.value)} /></div>
@@ -718,7 +718,7 @@ export function ProposalMakerView() {
               <h2 className="text-sm font-semibold mb-3 flex items-center gap-2">
                 <Building2 className="h-4 w-4 text-cyan-400" /> Institution Information
               </h2>
-              <div className="grid sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="sm:col-span-2"><Label className="text-xs">Institution Name</Label><Input value={institutionName} onChange={(e) => setInstitutionName(e.target.value)} placeholder="e.g. Delhi Public School" /></div>
                 <div>
                   <Label className="text-xs">Institution Type</Label>
@@ -743,7 +743,7 @@ export function ProposalMakerView() {
               <h2 className="text-sm font-semibold mb-3 flex items-center gap-2">
                 <Layers className="h-4 w-4 text-emerald-400" /> Program Details
               </h2>
-              <div className="grid sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div><Label className="text-xs">Program Duration</Label><Input value={programDuration} onChange={(e) => setProgramDuration(e.target.value)} /></div>
                 <div>
                   <Label className="text-xs">Delivery Mode</Label>
@@ -837,7 +837,7 @@ export function ProposalMakerView() {
               <h2 className="text-sm font-semibold mb-3 flex items-center gap-2">
                 <DollarSign className="h-4 w-4 text-amber-400" /> Slide 9 · Pricing
               </h2>
-              <div className="grid sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <Label className="text-xs">Currency</Label>
                   <Select value={currency} onValueChange={setCurrency}>
@@ -923,7 +923,7 @@ export function ProposalMakerView() {
                   <p className="text-sm sm:text-[15px] leading-relaxed max-w-3xl" style={{ color: "var(--doc-ink)" }}>
                     {executiveSummary}
                   </p>
-                  <div className="grid sm:grid-cols-2 gap-3 mt-8">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-8">
                     {valueProps.filter((v) => v.trim()).map((vp, i) => (
                       <div key={i} className="gx-glass-card flex items-start gap-3 p-4">
                         <span className="inline-flex items-center justify-center size-9 rounded-xl shrink-0" style={{ backgroundColor: "var(--doc-panel-strong)" }}>
@@ -966,7 +966,7 @@ export function ProposalMakerView() {
               <Slide id={4} title="Why Choose Us" theme={docTheme}>
                 <div className="relative p-6 sm:p-10">
                   <SlideHeading num={4} kicker="Differentiators" title="Why Choose GuardianX?" />
-                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                     {WHY_CHOOSE_US.map((w, i) => (
                       <div key={i} className="gx-glass-card p-4">
                         <span className="inline-flex items-center justify-center size-9 rounded-xl mb-3" style={{ backgroundColor: "var(--doc-panel-strong)" }}>
@@ -998,7 +998,7 @@ export function ProposalMakerView() {
                             <data.icon className="h-5 w-5" style={{ color: "var(--doc-accent-2)" }} />
                             <h4 className="font-semibold text-sm" style={{ color: "var(--doc-ink)" }}>{data.label}</h4>
                           </div>
-                          <div className="grid sm:grid-cols-2 gap-3">
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                             <div className="gx-glass-card p-4">
                               <p className="text-[10px] font-mono font-bold uppercase tracking-[0.2em] mb-2" style={{ color: "var(--doc-accent-2)" }}>Offerings</p>
                               <ul className="space-y-1.5">
@@ -1018,7 +1018,7 @@ export function ProposalMakerView() {
                           </div>
                           <div className="gx-glass-card p-4">
                             <p className="text-[10px] font-mono font-bold uppercase tracking-[0.2em] mb-2" style={{ color: "var(--doc-gold)" }}>Benefits to Institution</p>
-                            <div className="grid sm:grid-cols-2 gap-2">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                               {data.benefits.map((b, i) => (
                                 <span key={i} className="text-xs flex items-start gap-1.5" style={{ color: "var(--doc-ink)" }}><Award className="h-3 w-3 mt-0.5 shrink-0" style={{ color: "var(--doc-gold)" }} />{b}</span>
                               ))}
@@ -1091,7 +1091,7 @@ export function ProposalMakerView() {
               <Slide id={8} title="Benefits" theme={docTheme}>
                 <div className="relative p-6 sm:p-10">
                   <SlideHeading num={8} kicker="Outcomes" title="Benefits to Institution" />
-                  <div className="grid sm:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     {[
                       { icon: Users, title: "For Students", items: studentBenefits },
                       { icon: Building2, title: "For Institution", items: institutionBenefits },
@@ -1119,7 +1119,7 @@ export function ProposalMakerView() {
               <Slide id={9} title="Pricing" theme={docTheme}>
                 <div className="relative p-6 sm:p-10">
                   <SlideHeading num={9} kicker="Investment" title="Revenue Model & Pricing" />
-                  <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="gx-glass-card p-5">
                       <table className="w-full text-sm">
                         <tbody>
@@ -1156,7 +1156,7 @@ export function ProposalMakerView() {
               <Slide id={10} title="Partnership Models" theme={docTheme}>
                 <div className="relative p-6 sm:p-10">
                   <SlideHeading num={10} kicker="Engagement Models" title="Partnership Models" />
-                  <div className="grid sm:grid-cols-3 gap-4 pt-3 items-stretch">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-3 items-stretch">
                     {PARTNERSHIP_MODELS.map((model, i) => (
                       <div
                         key={i}
@@ -1269,7 +1269,7 @@ export function ProposalMakerView() {
               <Slide id={13} title="Contact" theme={docTheme}>
                 <div className="relative p-6 sm:p-10">
                   <SlideHeading num={13} kicker="Next Steps" title="Ready to Partner?" />
-                  <div className="grid sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="gx-glass-card p-5">
                       <p className="text-[10px] font-mono font-bold uppercase tracking-[0.2em] mb-3" style={{ color: "var(--doc-accent-2)" }}>GuardianX Academy</p>
                       <div className="space-y-2 text-sm">
@@ -1309,7 +1309,7 @@ export function ProposalMakerView() {
                   </div>
                   {/* Signature block */}
                   <div className="gx-glass-card mt-6 p-5 sm:p-6">
-                    <div className="grid sm:grid-cols-2 gap-x-10 gap-y-8">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-10 gap-y-8">
                       {[
                         { label: "For GuardianX Academy", signature: "GuardianX Academy", printed: "Authorized Signatory" },
                         { label: `For ${institutionName || "the Client"}`, signature: contactName, printed: contactName || "Authorized Signatory" },

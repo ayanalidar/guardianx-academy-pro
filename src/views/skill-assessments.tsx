@@ -181,11 +181,11 @@ export function SkillAssessmentsView() {
 
         {phase === "list" && (
           listLoading ? (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-56 rounded-2xl" />)}
             </div>
           ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {assessments.map((a, i) => {
                 const cat = CATEGORY_COLORS[a.category] ?? CATEGORY_COLORS.web
                 return (
@@ -235,14 +235,14 @@ export function SkillAssessmentsView() {
 
         {phase === "test" && (
           detailLoading || !detailData ? (
-            <div className="grid lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <Skeleton className="h-96 rounded-2xl lg:col-span-2" />
               <Skeleton className="h-96 rounded-2xl" />
             </div>
           ) : questions.length === 0 ? (
             <div className="text-center py-20 text-muted-foreground">No questions in this assessment.</div>
           ) : (
-            <div className="grid lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {/* Question area */}
               <div className="lg:col-span-2">
                 <Button variant="ghost" size="sm" onClick={() => setPhase("list")} className="text-muted-foreground mb-4">
@@ -431,7 +431,7 @@ export function SkillAssessmentsView() {
                   <p className="text-[10px] font-mono text-violet-400 tracking-[0.3em] mb-1">SKILL BREAKDOWN</p>
                   <h3 className="text-xl font-bold tracking-tight">Per-Skill Performance</h3>
                 </div>
-                <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {result.skillScores.map((s) => (
                     <div key={s.skill} className="rounded-lg border border-border/60 bg-muted/20 p-4">
                       <div className="flex items-center justify-between mb-2">

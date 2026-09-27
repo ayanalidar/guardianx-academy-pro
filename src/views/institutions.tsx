@@ -213,7 +213,7 @@ export function InstitutionsView() {
               {typesTitle} <span className="text-gradient-premium">{typesTitleAccent}</span>
             </h2>
             <p className="text-sm text-muted-foreground max-w-2xl mb-10 leading-relaxed">{typesDescription}</p>
-            <div className="grid md:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
               {partnerTypes.map((pt, i) => {
                 const Icon = getCmsIcon(pt.icon)
                 const HighlightIcon = getCmsIcon(pt.highlightIcon)
@@ -262,7 +262,7 @@ export function InstitutionsView() {
             {benefitsDescription && (
               <p className="text-sm text-muted-foreground max-w-2xl mb-10 leading-relaxed">{benefitsDescription}</p>
             )}
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
               {benefits.map((b, i) => {
                 const Icon = getCmsIcon(b.icon)
                 return (
@@ -303,7 +303,7 @@ export function InstitutionsView() {
             {flowDescription && (
               <p className="text-sm text-muted-foreground max-w-2xl mb-10 leading-relaxed">{flowDescription}</p>
             )}
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {flowSteps.map((f, i) => {
                 const Icon = getCmsIcon(f.icon)
                 return (
@@ -335,7 +335,7 @@ export function InstitutionsView() {
             {modelsDescription && (
               <p className="text-sm text-muted-foreground max-w-2xl mb-10 leading-relaxed">{modelsDescription}</p>
             )}
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
               {models.map((m, i) => {
                 const Icon = getCmsIcon(m.icon)
                 return (

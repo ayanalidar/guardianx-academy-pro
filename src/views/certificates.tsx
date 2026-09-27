@@ -110,7 +110,7 @@ export function CertificatesView() {
         </ScrollReveal>
 
         {isLoading ? (
-          <div className="grid lg:grid-cols-2 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {Array.from({ length: 2 }).map((_, i) => <Skeleton key={i} className="h-[28rem]" />)}
           </div>
         ) : certs.length === 0 ? (
@@ -145,7 +145,7 @@ export function CertificatesView() {
             {/* ====================================================
                 CREDENTIAL CARDS
                 ==================================================== */}
-            <Stagger className="grid lg:grid-cols-2 gap-8" staggerChildren={0.12}>
+            <Stagger className="grid grid-cols-1 lg:grid-cols-2 gap-8" staggerChildren={0.12}>
               {certs.map((cert) => (
                 <StaggerItem key={cert.id} y={40}>
                   <CredentialCard
@@ -188,7 +188,7 @@ export function CertificatesView() {
                 Footer CTA - Skills verified grid
                 ==================================================== */}
             <ScrollReveal delay={0.2}>
-              <div className="mt-16 grid lg:grid-cols-2 gap-6">
+              <div className="mt-16 grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Skills verified */}
                 <div className="p-6 rounded-2xl border border-border/60 bg-card/30">
                   <div className="flex items-center gap-2 mb-4">

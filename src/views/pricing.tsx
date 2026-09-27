@@ -196,7 +196,7 @@ export function PricingView() {
       {/* Plan cards */}
       <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 pb-16">
         {isLoading ? (
-          <div className="grid lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
             {[0, 1, 2].map((i) => (
               <Skeleton key={i} className="h-96 w-full rounded-2xl" />
             ))}
@@ -209,7 +209,7 @@ export function PricingView() {
             </Button>
           </Card>
         ) : (
-          <div className="grid lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 max-w-5xl mx-auto">
             {displayPlans.map((plan, i) => {
               const v = visualFor(plan.name)
               const Icon = v.icon

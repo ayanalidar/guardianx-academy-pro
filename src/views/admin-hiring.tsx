@@ -441,7 +441,7 @@ function JobFormDialog({ job, onClose, onSaved }: { job: AdminJob | null; onClos
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="grid sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="Job title *">
               <Input value={form.title} onChange={(e) => set("title", e.target.value)} placeholder="Senior Security Engineer" />
             </Field>
@@ -450,7 +450,7 @@ function JobFormDialog({ job, onClose, onSaved }: { job: AdminJob | null; onClos
             </Field>
           </div>
 
-          <div className="grid sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="Location * (City, Country - or “Remote - Worldwide”)">
               <Input value={form.location} onChange={(e) => set("location", e.target.value)} placeholder="Dubai, UAE" />
             </Field>
@@ -459,7 +459,7 @@ function JobFormDialog({ job, onClose, onSaved }: { job: AdminJob | null; onClos
             </Field>
           </div>
 
-          <div className="grid sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <Field label="Role type">
               <Select value={form.type} onValueChange={(v) => set("type", v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>
@@ -511,7 +511,7 @@ function JobFormDialog({ job, onClose, onSaved }: { job: AdminJob | null; onClos
             />
           </Field>
 
-          <div className="grid sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="Skills (comma-separated)">
               <Input value={form.requiredSkills} onChange={(e) => set("requiredSkills", e.target.value)} placeholder="AWS, Terraform, IAM" />
             </Field>
@@ -1078,7 +1078,7 @@ function PlacementFormDialog({ record, onClose, onSaved }: { record: AdminPlacem
         </DialogHeader>
 
         <div className="space-y-4">
-          <div className="grid sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="Student name *">
               <Input value={form.studentName} onChange={(e) => set("studentName", e.target.value)} placeholder="e.g. Priya Sharma" />
             </Field>
@@ -1087,7 +1087,7 @@ function PlacementFormDialog({ record, onClose, onSaved }: { record: AdminPlacem
             </Field>
           </div>
 
-          <div className="grid sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="Company *">
               <Input value={form.company} onChange={(e) => set("company", e.target.value)} placeholder="Company name" />
             </Field>
@@ -1096,7 +1096,7 @@ function PlacementFormDialog({ record, onClose, onSaved }: { record: AdminPlacem
             </Field>
           </div>
 
-          <div className="grid sm:grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <Field label="Track / course taken">
               <Input value={form.track} onChange={(e) => set("track", e.target.value)} placeholder="SOC Analyst Track" />
             </Field>
@@ -1108,7 +1108,7 @@ function PlacementFormDialog({ record, onClose, onSaved }: { record: AdminPlacem
             </Field>
           </div>
 
-          <div className="grid sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="Student photo URL (optional)">
               <Input value={form.photoUrl} onChange={(e) => set("photoUrl", e.target.value)} placeholder="https://…" />
             </Field>
@@ -1129,7 +1129,7 @@ function PlacementFormDialog({ record, onClose, onSaved }: { record: AdminPlacem
             <Textarea rows={4} value={form.story} onChange={(e) => set("story", e.target.value)} placeholder="The journey: track enrolled, projects, interview rounds…" />
           </Field>
 
-          <div className="grid sm:grid-cols-4 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
             <Field label="Status">
               <Select value={form.status} onValueChange={(v) => set("status", v)}>
                 <SelectTrigger><SelectValue /></SelectTrigger>

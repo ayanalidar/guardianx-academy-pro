@@ -206,7 +206,7 @@ export function JobBoardView() {
 
         {/* Job grid */}
         {isLoading ? (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {Array.from({ length: 6 }).map((_, i) => (
               <Skeleton key={i} className="h-56 rounded-xl" />
             ))}
@@ -218,7 +218,7 @@ export function JobBoardView() {
             <p className="text-sm text-muted-foreground">Try adjusting your search criteria.</p>
           </div>
         ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {jobs.map((j, i) => (
               <ScrollReveal key={j.id} delay={0.25 + i * 0.03}>
                 <div

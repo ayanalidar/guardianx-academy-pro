@@ -162,11 +162,11 @@ export function TeamMissionsView() {
 
         {!activeSessionId ? (
           listLoading ? (
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-72 rounded-2xl" />)}
             </div>
           ) : (
-            <div className="grid md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {missions.map((m, i) => (
                 <ScrollReveal key={m.id} delay={0.05 + i * 0.08}>
                   <div className="card-premium rounded-2xl p-6 h-full flex flex-col">
@@ -220,7 +220,7 @@ export function TeamMissionsView() {
         ) : (
           /* ---- Session Detail / Team Lobby ---- */
           detailLoading || !detail ? (
-            <div className="grid lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <Skeleton className="h-64 rounded-2xl lg:col-span-2" />
               <Skeleton className="h-64 rounded-2xl" />
             </div>
@@ -256,7 +256,7 @@ export function TeamMissionsView() {
 
                     <div>
                       <div className="text-[10px] font-mono text-violet-300 tracking-[0.2em] mb-2">OBJECTIVES</div>
-                      <ul className="grid sm:grid-cols-2 gap-2">
+                      <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                         {detail.session.mission.objectives.map((o, idx) => (
                           <li key={idx} className="flex items-start gap-2 text-xs">
                             <Target className="h-3.5 w-3.5 mt-0.5 text-violet-400 flex-shrink-0" />
@@ -270,7 +270,7 @@ export function TeamMissionsView() {
               </ScrollReveal>
 
               {/* Team Lobby */}
-              <div className="grid lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2">
                   <div className="mb-4">
                     <p className="text-[10px] font-mono text-violet-400 tracking-[0.3em] mb-2">TEAM LOBBY</p>
@@ -278,7 +278,7 @@ export function TeamMissionsView() {
                       {detail.session.members.length} / {detail.session.mission.maxTeamSize} Members
                     </h3>
                   </div>
-                  <div className="grid sm:grid-cols-2 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {detail.session.members.map((m) => {
                       const role = ROLE_LABEL[m.role] ?? ROLE_LABEL.member
                       return (

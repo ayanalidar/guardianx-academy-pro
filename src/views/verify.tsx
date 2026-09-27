@@ -632,7 +632,7 @@ function RevokedCard({ cred }: { cred: VerifiedCredential }) {
 
         <p className="text-sm text-muted-foreground leading-relaxed mb-6">{explanation}</p>
 
-        <div className="grid sm:grid-cols-2 gap-2.5 text-sm mb-5">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-sm mb-5">
           <Fact icon={<User className="h-3.5 w-3.5" />} label="CANDIDATE" value={cred.candidateName} />
           <Fact icon={<BookOpen className="h-3.5 w-3.5" />} label="CERTIFICATION" value={cred.certificationName} />
           <Fact icon={<TrendingUp className="h-3.5 w-3.5" />} label="SCORE" value={`${cred.score}${cred.percentage != null ? "%" : cred.totalQuestions ? ` / ${cred.totalQuestions}` : "%"}`} />

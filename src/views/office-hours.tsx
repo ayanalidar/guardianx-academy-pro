@@ -237,7 +237,7 @@ function AvailableSlotsTab() {
   return (
     <div className="space-y-6">
       {isLoading ? (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {Array.from({ length: 6 }).map((_, i) => (
             <Skeleton key={i} className="h-72 rounded-2xl" />
           ))}
@@ -245,7 +245,7 @@ function AvailableSlotsTab() {
       ) : slots.length === 0 ? (
         <EmptySlotsState />
       ) : (
-        <Stagger className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4" staggerChildren={0.06}>
+        <Stagger className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" staggerChildren={0.06}>
           {slots.map((s) => (
             <StaggerItem key={s.id}>
               <SlotCard slot={s} onBook={() => setBookSlot(s)} />

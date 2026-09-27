@@ -469,7 +469,7 @@ export function SkillTreeView() {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.4, delay: 0.1, ease: [0.16, 1, 0.3, 1] }}
-          className="mb-8 grid sm:grid-cols-2 lg:grid-cols-4 gap-4"
+          className="mb-8 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4"
         >
           <SummaryStat
             icon={Target}
@@ -548,7 +548,7 @@ export function SkillTreeView() {
         {/* ====================================================
             TREE + DETAIL PANEL
             ==================================================== */}
-        <div className="grid lg:grid-cols-[1fr_360px] gap-6 items-start">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6 items-start">
           {/* Tree visualization */}
           <motion.div
             initial={{ opacity: 0, y: 12 }}

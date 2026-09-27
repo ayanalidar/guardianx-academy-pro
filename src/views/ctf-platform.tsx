@@ -187,13 +187,13 @@ export function CTFPlatformView() {
         {!activeCompId ? (
           /* ---- Competition List ---- */
           listLoading ? (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {[...Array(3)].map((_, i) => (
                 <Skeleton key={i} className="h-64 rounded-2xl" />
               ))}
             </div>
           ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {competitions.map((c, i) => {
                 const st = STATUS_CONFIG[c.status] ?? STATUS_CONFIG.upcoming
                 return (
@@ -243,7 +243,7 @@ export function CTFPlatformView() {
         ) : (
           /* ---- Competition Detail ---- */
           detailLoading || !detail ? (
-            <div className="grid lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               <Skeleton className="h-48 rounded-2xl lg:col-span-2" />
               <Skeleton className="h-48 rounded-2xl" />
               <Skeleton className="h-96 rounded-2xl lg:col-span-2" />
@@ -298,7 +298,7 @@ export function CTFPlatformView() {
                 </div>
               </ScrollReveal>
 
-              <div className="grid lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
                 {/* Challenges - jeopardy style */}
                 <div className="lg:col-span-2 space-y-6">
                   <div>

@@ -244,7 +244,7 @@ function DiscoverTab() {
 
       {/* Grid */}
       {isLoading ? (
-        <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {Array.from({ length: 6 }).map((_, i) => (
             <Skeleton key={i} className="h-64 rounded-2xl" />
           ))}
@@ -252,7 +252,7 @@ function DiscoverTab() {
       ) : filtered.length === 0 ? (
         <EmptyGroupsState hasSearch={!!search} onCreate={() => setCreateOpen(true)} />
       ) : (
-        <Stagger className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4" staggerChildren={0.06}>
+        <Stagger className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" staggerChildren={0.06}>
           {filtered.map((g) => (
             <StaggerItem key={g.id}>
               <GroupCard
@@ -583,7 +583,7 @@ function CreateGroupDialog({
             />
           </div>
 
-          <div className="grid sm:grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-2">
               <Label htmlFor="g-course">Linked course (optional)</Label>
               <select

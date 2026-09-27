@@ -347,7 +347,7 @@ function PassedResultsView({ attempt, attemptId }: { attempt: Attempt; attemptId
           </p>
 
           {/* What's included */}
-          <div className="grid sm:grid-cols-2 gap-2 mb-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-5">
             {[
               { icon: Award, label: "Verifiable certificate" },
               { icon: FileBadge, label: "Progress report card" },
@@ -369,7 +369,7 @@ function PassedResultsView({ attempt, attemptId }: { attempt: Attempt; attemptId
               onSubmit={(e) => { e.preventDefault(); checkoutMutation.mutate() }}
               className="space-y-4"
             >
-              <div className="grid sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="name" className="text-sm font-medium mb-1.5 block">Full name <span className="text-rose-400">*</span></Label>
                   <Input id="name" required minLength={2} value={form.name} onChange={(e) => update("name", e.target.value)} placeholder="As you want it on the certificate" className="bg-background/50" />

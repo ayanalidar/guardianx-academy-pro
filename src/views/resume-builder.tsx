@@ -245,7 +245,7 @@ export function ResumeBuilderView() {
         <div className="absolute inset-0 bg-mesh opacity-40 pointer-events-none" />
         <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
           <Skeleton className="h-12 w-72 mb-6" />
-          <div className="grid lg:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Skeleton className="h-[600px] rounded-2xl" />
             <Skeleton className="h-[600px] rounded-2xl" />
           </div>
@@ -335,13 +335,13 @@ export function ResumeBuilderView() {
           </div>
         </ScrollReveal>
 
-        <div className="grid lg:grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* FORM */}
           <ScrollReveal className="lg:col-span-7" delay={0.3}>
             <div className="rounded-2xl border border-border/60 bg-card/30 backdrop-blur-sm p-6 space-y-6">
               {/* Contact */}
               <Section icon={UserIcon} title="Contact Information">
-                <div className="grid sm:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <Field label="Full name">
                     <Input
                       value={form.contactInfo.name || ""}
@@ -457,7 +457,7 @@ export function ResumeBuilderView() {
                   ) : (
                     form.experience.map((e, i) => (
                       <div key={i} className="rounded-lg border border-border/60 bg-background/30 p-3 space-y-2">
-                        <div className="grid sm:grid-cols-2 gap-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           <Input
                             placeholder="Job title"
                             value={e.title}
@@ -556,7 +556,7 @@ export function ResumeBuilderView() {
                   ) : (
                     form.education.map((e, i) => (
                       <div key={i} className="rounded-lg border border-border/60 bg-background/30 p-3 space-y-2">
-                        <div className="grid sm:grid-cols-2 gap-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           <Input
                             placeholder="Degree"
                             value={e.degree}

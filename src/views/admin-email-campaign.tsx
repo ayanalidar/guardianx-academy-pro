@@ -102,7 +102,7 @@ export function EmailCampaignView() {
         {/* Templates */}
         <Card className="p-5">
           <h2 className="text-sm font-semibold mb-3">Quick Templates</h2>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
             {templates.map(t => (
               <button key={t.name} onClick={() => { setSubject(t.subject); setBody(t.body) }} className="text-left p-3 rounded-lg border border-border/60 hover:border-violet-500/30 transition-colors">
                 <div className="text-xs font-medium mb-1">{t.name}</div>

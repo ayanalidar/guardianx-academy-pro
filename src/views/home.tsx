@@ -503,12 +503,13 @@ export function HomeView() {
           </motion.div>
         </div>
 
-        {/* Mobile: smaller particle logo inline */}
-        <div className="lg:hidden absolute inset-x-0 top-0 h-[44vh] flex items-center justify-center pointer-events-none">
-          <ParticleLogo size={340} interactive={false} showGlow />
+        {/* Mobile: compact particle mark above the headline (fixed px, no vh
+            jumps when the mobile URL bar collapses; text-first hero) */}
+        <div className="lg:hidden absolute inset-x-0 top-3 h-[218px] flex items-center justify-center pointer-events-none opacity-90">
+          <ParticleLogo size={205} interactive={false} showGlow />
         </div>
 
-        <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 w-full py-12 lg:py-16 pt-[48vh] lg:pt-16">
+        <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 w-full py-12 lg:py-16 pt-[236px] sm:pt-[300px] lg:pt-16">
           <div className="max-w-3xl">
             <motion.div
               {...FADE_UP}
@@ -1172,7 +1173,7 @@ export function HomeView() {
             </p>
           </motion.div>
 
-          <div className="grid lg:grid-cols-2 gap-4 lg:gap-6 items-stretch">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 items-stretch">
             {/* Target info card */}
             <motion.div
               {...FADE_UP}
@@ -1496,7 +1497,7 @@ export function HomeView() {
             </p>
           </motion.div>
 
-          <div className="grid lg:grid-cols-3 gap-4 lg:gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 lg:gap-6">
             {/* Left column - stat tiles + XP + rank */}
             <motion.div
               {...FADE_UP}
@@ -1680,7 +1681,7 @@ export function HomeView() {
             </div>
           </motion.div>
 
-          <div className="grid sm:grid-cols-3 gap-3 lg:gap-4 mb-4">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 lg:gap-4 mb-4">
             <StatTile
               icon={Zap}
               label="XP EARNED"
@@ -1741,7 +1742,7 @@ export function HomeView() {
             </p>
           </motion.div>
 
-          <div className="grid lg:grid-cols-2 gap-4 lg:gap-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6">
             {/* Skill percentages */}
             <motion.div
               {...FADE_UP}
@@ -1860,7 +1861,7 @@ export function HomeView() {
             </p>
           </motion.div>
 
-          <div className="grid md:grid-cols-3 gap-3 lg:gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 lg:gap-4">
             {INSTITUTION_TYPES.map((inst, i) => (
               <motion.div
                 key={inst.type}
@@ -1930,7 +1931,7 @@ export function HomeView() {
             </p>
           </motion.div>
 
-          <div className="grid lg:grid-cols-2 gap-4 lg:gap-6 items-stretch">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 items-stretch">
             {/* Certificate preview card */}
             <motion.div
               {...FADE_UP}
@@ -2087,7 +2088,7 @@ export function HomeView() {
           </motion.div>
 
           {/* Story cards - placeholder data, clearly marked */}
-          <div className="grid md:grid-cols-3 gap-3 lg:gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3 lg:gap-4">
             {STORIES.map((s, i) => (
               <motion.div
                 key={s.name}

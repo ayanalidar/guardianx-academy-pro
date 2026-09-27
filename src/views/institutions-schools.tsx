@@ -321,7 +321,7 @@ export function InstitutionsSchoolsView() {
               </p>
             </motion.div>
 
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
               {SMS_FEATURES.map((f, i) => (
                 <motion.div
                   key={f.title}
@@ -363,7 +363,7 @@ export function InstitutionsSchoolsView() {
               </p>
             </motion.div>
 
-            <div className="grid lg:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {SCHOOL_CYBER_STAGES.map((stage, i) => (
                 <motion.div
                   key={stage.stage}
@@ -488,7 +488,7 @@ export function InstitutionsSchoolsView() {
                   <p className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider mb-3">
                     Recent Guardian Portal Activity
                   </p>
-                  <div className="grid sm:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     {[
                       { name: "Aarav P. (Grade 10-A)", note: "Attendance marked present", color: "bg-emerald-500/10 text-emerald-300" },
                       { name: "Diya S. (Grade 9-B)", note: "Fee receipt generated", color: "bg-cyan-500/10 text-cyan-300" },
@@ -532,7 +532,7 @@ export function InstitutionsSchoolsView() {
               </p>
             </motion.div>
 
-            <div className="grid lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
               {SCHOOL_PARTNERSHIP_MODELS.map((p, i) => (
                 <motion.div
                   key={p.title}

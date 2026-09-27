@@ -230,7 +230,7 @@ export function CourseCatalogView() {
             className="mb-6"
           >
             <p className="text-[10px] font-mono text-cyan-400 tracking-[0.25em] mb-3">CHOOSE YOUR PATH</p>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               {CAREER_PATHS.map((path, i) => {
                 const isActive = category !== "All" && path.categories.includes(category as never)
                 const Icon = path.icon
@@ -367,7 +367,7 @@ export function CourseCatalogView() {
         {isLoading ? (
           <div className="space-y-8">
             <Skeleton className="h-[28rem] rounded-3xl" />
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
               {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-[26rem] rounded-2xl" />)}
             </div>
           </div>
@@ -460,7 +460,7 @@ export function CourseCatalogView() {
                 </div>
 
                 {viewMode === "grid" ? (
-                  <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {courses.map((course, i) => (
                       <CourseCard
                         key={course.id}
@@ -668,7 +668,7 @@ function CourseSpotlightLoop({ courses }: { courses: CourseItem[] }) {
   // Too few courses to loop convincingly - static grid instead.
   if (loop.length <= 4) {
     return (
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         {loop.map((course, i) => (
           <SpotlightCard key={course.id} course={course} index={i + 1} />
         ))}

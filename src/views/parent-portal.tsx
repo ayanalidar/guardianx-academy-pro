@@ -805,7 +805,7 @@ function CertificatesTab({ certificates }: { certificates: any[] }) {
     )
   }
   return (
-    <div className="grid sm:grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       {certificates.map((cert: any) => (
         <Card
           key={cert.id}
@@ -858,7 +858,7 @@ function LabsTab({ labs }: { labs: any[] }) {
     Insane: "text-fuchsia-400 border-fuchsia-500/30",
   }
   return (
-    <div className="grid sm:grid-cols-2 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
       {labs.map((lp: any) => (
         <Card key={lp.id} className="bg-card shadow-lg p-4 card-hover">
           <div className="flex items-start justify-between gap-2 mb-2">

@@ -192,11 +192,11 @@ export function BugBountyView() {
           {/* ---- Programs ---- */}
           <TabsContent value="programs">
             {programsLoading ? (
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-72 rounded-2xl" />)}
               </div>
             ) : (
-              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {programs.map((p, i) => {
                   const platformColor = PLATFORM_COLORS[p.platform] ?? "text-muted-foreground"
                   return (

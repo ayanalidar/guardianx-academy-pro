@@ -266,7 +266,7 @@ export function RevenueAnalyticsView() {
         {/* ====================================================
             3. TOP COURSES BY REVENUE  +  COUPON USAGE STATS
             ==================================================== */}
-        <div className="grid lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <Card className="p-6">
             <h2 className="text-sm font-semibold mb-4 flex items-center gap-2">
               <BookOpen className="h-4 w-4 text-cyan-400" /> Top Courses by Revenue

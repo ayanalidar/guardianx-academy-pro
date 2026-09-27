@@ -155,7 +155,7 @@ export function LessonView() {
         <div className="absolute inset-0 bg-mesh opacity-40 pointer-events-none" />
         <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12 space-y-8">
           <Skeleton className="h-[280px] w-full rounded-2xl" />
-          <div className="grid lg:grid-cols-12 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             <Skeleton className="lg:col-span-8 h-[700px] rounded-2xl" />
             <Skeleton className="lg:col-span-4 h-[700px] rounded-2xl" />
           </div>
@@ -376,7 +376,7 @@ export function LessonView() {
         {/* ====================================================
             MAIN LAYOUT - content + sticky sidebar
             ==================================================== */}
-        <div className="grid lg:grid-cols-12 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
           {/* ============= MAIN CONTENT ============= */}
           <div className="lg:col-span-8 space-y-6">
             <Tabs defaultValue={lesson.type === "pdf" ? "document" : "reading"}>

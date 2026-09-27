@@ -550,7 +550,7 @@ export function CareerPlannerView() {
 
           <ScrollReveal delay={0.1}>
             <div className="rounded-2xl border border-border/60 bg-card/30 backdrop-blur-sm p-5 lg:p-7">
-              <div className="grid sm:grid-cols-2 gap-x-8 gap-y-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-5">
                 {SKILL_ASSESSMENTS.map((s, i) => {
                   const status = getSkillStatus(s.percentage)
                   return (
@@ -613,7 +613,7 @@ export function CareerPlannerView() {
           </ScrollReveal>
 
           <ScrollReveal delay={0.1}>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 mt-6">
               {JOB_READINESS.map((job, i) => {
                 const status = getSkillStatus(job.readiness)
                 const accent =
@@ -786,7 +786,7 @@ export function CareerPlannerView() {
           </ScrollReveal>
 
           <ScrollReveal delay={0.1}>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 mt-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5 mt-6">
               {RECOMMENDED_CERTS.map((cert, i) => (
                 <motion.div
                   key={cert.name}
@@ -997,13 +997,13 @@ export function CareerPlannerView() {
           </ScrollReveal>
 
           {rolesLoading ? (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 mb-4">
               {Array.from({ length: 6 }).map((_, i) => (
                 <Skeleton key={i} className="h-44 rounded-xl" />
               ))}
             </div>
           ) : (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {roles.map((r, i) => {
                 const isSel = selectedRoleId === r.id
                 return (
@@ -1045,7 +1045,7 @@ export function CareerPlannerView() {
         {/* Selected role detail + roadmap form (existing - kept) */}
         {selectedRole && (
           <ScrollReveal>
-            <div className="grid lg:grid-cols-12 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
               {/* Role details + form */}
               <div className="lg:col-span-7 space-y-4">
                 <div className="rounded-2xl border border-border/60 bg-card/30 backdrop-blur-sm p-6">
@@ -1073,7 +1073,7 @@ export function CareerPlannerView() {
                     </div>
                   </div>
 
-                  <div className="grid sm:grid-cols-3 gap-3 mb-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
                     <div className="rounded-lg border border-border/60 bg-background/40 p-3">
                       <p className="text-[10px] font-mono text-muted-foreground uppercase">Avg Salary</p>
                       <p className="text-sm font-semibold text-violet-300">{selectedRole.avgSalary}</p>
@@ -1100,7 +1100,7 @@ export function CareerPlannerView() {
                         className="bg-card border-border/60 text-sm h-9"
                       />
                     </div>
-                    <div className="grid sm:grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
                         <label className="text-[10px] font-mono text-muted-foreground uppercase mb-1.5 block">
                           Target salary

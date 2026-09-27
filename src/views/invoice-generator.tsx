@@ -736,7 +736,7 @@ export function InvoiceGeneratorView() {
               <h2 className="text-sm font-semibold mb-4 flex items-center gap-2">
                 <Hash className="h-4 w-4 text-violet-400" /> Invoice Details
               </h2>
-              <div className="grid sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <Label className="text-xs">Invoice Number</Label>
                   <Input value={invoiceNumber} onChange={(e) => setInvoiceNumber(e.target.value)} className="font-mono text-sm" />
@@ -805,7 +805,7 @@ export function InvoiceGeneratorView() {
               <h2 className="text-sm font-semibold mb-4 flex items-center gap-2">
                 <User className="h-4 w-4 text-cyan-400" /> Client Information
               </h2>
-              <div className="grid sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <Label className="text-xs">Contact Name</Label>
                   <Input value={clientName} onChange={(e) => setClientName(e.target.value)} placeholder="John Doe" />
@@ -897,7 +897,7 @@ export function InvoiceGeneratorView() {
               <h2 className="text-sm font-semibold mb-4 flex items-center gap-2">
                 <Landmark className="h-4 w-4 text-emerald-400" /> Bank Details
               </h2>
-              <div className="grid sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <Label className="text-xs">Bank Name</Label>
                   <Input value={bankName} onChange={(e) => setBankName(e.target.value)} />
@@ -1006,7 +1006,7 @@ export function InvoiceGeneratorView() {
               </div>
 
               {/* Bill To + Dates - frosted panels */}
-              <div className="grid sm:grid-cols-2 gap-4 p-6 sm:p-8 pt-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-6 sm:p-8 pt-2">
                 <div className="gx-glass p-5">
                   <p className="gx-label">Bill To</p>
                   <div className="gx-gradient-rule w-16 mb-3" aria-hidden />
@@ -1170,7 +1170,7 @@ export function InvoiceGeneratorView() {
                 </div>
 
               {/* Bank details + Signature - frosted panels */}
-              <div className="grid sm:grid-cols-2 gap-4 px-6 sm:px-8 pb-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 px-6 sm:px-8 pb-4">
                 <div className="gx-glass p-5">
                   <p className="gx-label mb-2 flex items-center gap-1.5">
                     <Landmark className="h-3.5 w-3.5 text-emerald-300" /> Bank Details
@@ -1200,7 +1200,7 @@ export function InvoiceGeneratorView() {
 
               {/* Notes & Terms */}
               {(notes || terms) && (
-              <div className="px-6 sm:px-8 pb-6 grid sm:grid-cols-2 gap-4">
+              <div className="px-6 sm:px-8 pb-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
                 {notes && (
                   <div className="gx-glass-soft p-4">
                     <p className="gx-label mb-1">Notes</p>

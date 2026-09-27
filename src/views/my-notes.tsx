@@ -211,7 +211,7 @@ export function MyNotesView() {
             NOTES GRID
             ==================================================== */}
         {isLoading ? (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {Array.from({ length: 6 }).map((_, i) => <Skeleton key={i} className="h-48 rounded-2xl" />)}
           </div>
         ) : notes.length === 0 ? (
@@ -229,7 +229,7 @@ export function MyNotesView() {
                     <div className="flex-1 h-px bg-gradient-to-r from-amber-500/30 to-transparent ml-3" />
                   </div>
                 </ScrollReveal>
-                <Stagger className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4" staggerChildren={0.06}>
+                <Stagger className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" staggerChildren={0.06}>
                   {pinnedNotes.map((n) => (
                     <StaggerItem key={n.id}>
                       <NoteCard
@@ -257,7 +257,7 @@ export function MyNotesView() {
                     <div className="flex-1 h-px bg-gradient-to-r from-border/40 to-transparent ml-3" />
                   </div>
                 </ScrollReveal>
-                <Stagger className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4" staggerChildren={0.06}>
+                <Stagger className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" staggerChildren={0.06}>
                   {otherNotes.map((n) => (
                     <StaggerItem key={n.id}>
                       <NoteCard

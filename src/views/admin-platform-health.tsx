@@ -142,7 +142,7 @@ export function PlatformHealthView() {
         {/* System info */}
         <Card className="p-5">
           <h2 className="text-sm font-semibold mb-3">System Information</h2>
-          <div className="grid sm:grid-cols-2 gap-3 text-sm">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
             <div className="flex justify-between p-2 rounded bg-muted/30"><span className="text-muted-foreground">Framework</span><span className="font-medium">Next.js 16</span></div>
             <div className="flex justify-between p-2 rounded bg-muted/30"><span className="text-muted-foreground">Database</span><span className="font-medium">PostgreSQL (Neon)</span></div>
             <div className="flex justify-between p-2 rounded bg-muted/30"><span className="text-muted-foreground">Auth</span><span className="font-medium">NextAuth v4 (JWT)</span></div>

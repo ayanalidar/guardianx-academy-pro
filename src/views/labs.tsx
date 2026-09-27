@@ -262,7 +262,7 @@ function FeaturedLab({ lab, col, onOpen }: { lab: LabItem; col: any; onOpen: () 
         onClick={onOpen}
         className="group relative overflow-hidden rounded-2xl border border-violet-500/20 bg-card/30 cursor-pointer transition-all duration-500 hover:border-violet-500/40 hover:shadow-[0_20px_60px_-20px_oklch(0.55_0.24_295/0.25)]"
       >
-        <div className="grid lg:grid-cols-12 gap-0">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-0">
           {/* Visual side - network viz + giant number */}
           <div className="lg:col-span-5 relative aspect-[16/10] lg:aspect-auto overflow-hidden min-h-[280px]">
             <div className="absolute inset-0 bg-gradient-to-br from-violet-950/40 via-background to-cyan-950/20" />
@@ -497,7 +497,7 @@ function LabProgressDashboard() {
         </div>
 
         {/* Two-column open breakdown */}
-        <div className="grid lg:grid-cols-2 gap-10">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
           {/* By category */}
           <div>
             <p className="text-[10px] font-mono text-muted-foreground tracking-[0.25em] uppercase mb-4">

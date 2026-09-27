@@ -371,7 +371,7 @@ export function PlacementsView() {
         </div>
 
         <div className="relative mx-auto max-w-7xl">
-          <div className="grid lg:grid-cols-[1.05fr_0.95fr] gap-10 lg:gap-6 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-[1.05fr_0.95fr] gap-10 lg:gap-6 items-center">
             {/* left: copy */}
             <div className="text-center lg:text-left">
               <motion.div
@@ -740,7 +740,7 @@ export function PlacementsView() {
         <div className="mx-auto max-w-7xl">
           <div className="relative overflow-hidden rounded-3xl border border-violet-500/25 bg-gradient-to-br from-violet-600/15 via-card/60 to-emerald-500/10 backdrop-blur p-8 sm:p-12">
             <div aria-hidden className="pointer-events-none absolute -top-24 right-0 h-64 w-64 rounded-full bg-violet-600/20 blur-[90px]" />
-            <div className="relative grid lg:grid-cols-[1.2fr_0.8fr] gap-8 items-center">
+            <div className="relative grid grid-cols-1 lg:grid-cols-[1.2fr_0.8fr] gap-8 items-center">
               <div>
                 <span className="inline-flex items-center gap-2 rounded-full border border-violet-500/30 bg-violet-500/10 px-3.5 py-1.5 text-[11px] font-mono uppercase tracking-wider text-violet-300">
                   <Landmark className="h-3.5 w-3.5" /> For employers

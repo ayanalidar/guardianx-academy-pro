@@ -417,7 +417,7 @@ export function CertLandingView({ certSlug }: CertLandingViewProps) {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
-            className="grid lg:grid-cols-3 gap-6"
+            className="grid grid-cols-1 lg:grid-cols-3 gap-6"
           >
             {/* Left: hero card */}
             <div className="lg:col-span-2">
@@ -451,7 +451,7 @@ export function CertLandingView({ certSlug }: CertLandingViewProps) {
                 </p>
 
                 {/* Exam facts grid */}
-                <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-5 border-t border-border/40">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-5 border-t border-border/40">
                   <HeroFact icon={Target} label="Exam Code" value={meta.examCode} tint={accent.text} />
                   <HeroFact icon={Building2} label="Issued By" value={meta.body} tint={accent.text} />
                   <HeroFact icon={CheckCircle2} label="Passing Score" value={meta.passingScore} tint={accent.text} />
@@ -536,7 +536,7 @@ export function CertLandingView({ certSlug }: CertLandingViewProps) {
           </div>
 
           {coursesLoading ? (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="h-44 rounded-xl bg-card/40 animate-pulse border border-border/40" />
               ))}
@@ -553,7 +553,7 @@ export function CertLandingView({ certSlug }: CertLandingViewProps) {
               </button>
             </Card>
           ) : (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {courses.map((c, i) => (
                 <motion.button
                   key={c.id}
@@ -629,7 +629,7 @@ export function CertLandingView({ certSlug }: CertLandingViewProps) {
               </button>
             </Card>
           ) : (
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {batches.map((b, i) => {
                 const seatsLeft = Math.max(0, b.seats - b.enrolled)
                 const isFull = seatsLeft === 0
@@ -722,7 +722,7 @@ export function CertLandingView({ certSlug }: CertLandingViewProps) {
                 Explore other tracks
               </h2>
             </div>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               {relatedCerts.slice(0, 4).map((c) => (
                 <button
                   key={c.id}

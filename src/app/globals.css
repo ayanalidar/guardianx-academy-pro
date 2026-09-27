@@ -689,6 +689,24 @@ html {
   scroll-behavior: smooth;
 }
 
+/* ------------------------------------------------------------
+   Horizontal overflow guard (mobile "bouncy pages" fix)
+   Absolutely-positioned decorative glow orbs are wider than the
+   viewport by design; without a root clip they widen the layout
+   and give every page a horizontal wiggle on phones.
+   `clip` clips visually WITHOUT creating a scroll container, so
+   position: sticky/fixed keep working; `hidden` is the fallback
+   for older browsers (declared first, overridden where supported).
+   ------------------------------------------------------------ */
+html {
+  overflow-x: hidden;
+  overflow-x: clip;
+}
+body {
+  overflow-x: hidden;
+  overflow-x: clip;
+}
+
 /* Reduced motion - respect user preference */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

@@ -271,7 +271,7 @@ export function OpenSchoolingView() {
             <p className="text-muted-foreground mb-6 max-w-2xl">
               Open schooling exists for students who can't fit into a traditional school schedule. Here's who benefits most.
             </p>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               {WHO_ITS_FOR.map((item, i) => {
                 const Icon = item.icon
                 return (
@@ -311,7 +311,7 @@ export function OpenSchoolingView() {
             <h2 className="text-2xl lg:text-3xl font-bold tracking-tight mb-6">
               Four simple steps to your <span className="text-gradient-premium">certificate</span>.
             </h2>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-4 relative">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 relative">
               {/* connecting line on desktop */}
               <div className="hidden lg:block absolute top-7 left-[12.5%] right-[12.5%] h-px bg-gradient-to-r from-transparent via-violet-500/30 to-transparent" />
               {STEPS.map((step, i) => {
@@ -420,7 +420,7 @@ export function OpenSchoolingView() {
             <h2 className="text-2xl lg:text-3xl font-bold tracking-tight mb-6">
               Keep these <span className="text-gradient-premium">ready</span>.
             </h2>
-            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {DOCUMENTS.map((doc, i) => {
                 const Icon = doc.icon
                 return (
@@ -633,7 +633,7 @@ function RegistrationForm({ initialCourse }: { initialCourse: "10th" | "12th" })
         </div>
 
         {/* name + email */}
-        <div className="grid sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <Label htmlFor="os-name" className="text-sm font-medium mb-1.5 block">
               Full name <span className="text-rose-400">*</span>
@@ -665,7 +665,7 @@ function RegistrationForm({ initialCourse }: { initialCourse: "10th" | "12th" })
         </div>
 
         {/* phone + dob */}
-        <div className="grid sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <Label htmlFor="os-phone" className="text-sm font-medium mb-1.5 block">
               Mobile number <span className="text-rose-400">*</span>
@@ -697,7 +697,7 @@ function RegistrationForm({ initialCourse }: { initialCourse: "10th" | "12th" })
         </div>
 
         {/* city + state */}
-        <div className="grid sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <Label htmlFor="os-city" className="text-sm font-medium mb-1.5 block">
               City

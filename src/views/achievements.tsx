@@ -174,10 +174,10 @@ export function AchievementsView() {
         <div className="absolute inset-0 bg-mesh opacity-40 pointer-events-none" />
         <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
           <Skeleton className="h-24 w-2/3 mb-8" />
-          <div className="grid sm:grid-cols-3 gap-8 mb-12">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-8 mb-12">
             {Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-28" />)}
           </div>
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {Array.from({ length: 9 }).map((_, i) => <Skeleton key={i} className="h-40" />)}
           </div>
         </div>
@@ -388,7 +388,7 @@ export function AchievementsView() {
                 </ScrollReveal>
 
                 {/* Staggered grid */}
-                <Stagger className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4" staggerChildren={0.06}>
+                <Stagger className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4" staggerChildren={0.06}>
                   {group.items.map((a) => (
                     <StaggerItem key={a.code}>
                       <AchievementTile a={a} tier={group.tier} />
@@ -403,7 +403,7 @@ export function AchievementsView() {
         {/* ====================================================
             ACTIVITY + LEADERBOARD + HEATMAP - sidebar grid
             ==================================================== */}
-        <div className="mt-24 grid lg:grid-cols-3 gap-6">
+        <div className="mt-24 grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Heatmap */}
           <ScrollReveal>
             <div className="rounded-2xl border border-border/60 bg-card/30 p-6 h-full">

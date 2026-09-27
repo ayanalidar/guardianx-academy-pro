@@ -326,7 +326,7 @@ export function HiringView() {
         </div>
 
         <div className="relative mx-auto max-w-7xl">
-          <div className="grid lg:grid-cols-[1.05fr_0.95fr] gap-10 lg:gap-6 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-[1.05fr_0.95fr] gap-10 lg:gap-6 items-center">
             {/* left: copy */}
             <div className="text-center lg:text-left">
               <motion.div

@@ -203,7 +203,7 @@ export function AIAssistantView() {
           </p>
         </ScrollReveal>
 
-        <div className="grid lg:grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Session history - left */}
           <ScrollReveal className="lg:col-span-3" delay={0.25}>
             <div className="rounded-2xl border border-border/60 bg-card/30 backdrop-blur-sm overflow-hidden h-[640px] flex flex-col">
@@ -333,7 +333,7 @@ export function AIAssistantView() {
                       Ask about any cybersecurity topic - from networking fundamentals to advanced
                       penetration testing techniques.
                     </p>
-                    <div className="grid sm:grid-cols-2 gap-2 max-w-lg w-full">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-w-lg w-full">
                       {SUGGESTED.map((s) => (
                         <button
                           key={s}

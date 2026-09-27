@@ -190,7 +190,7 @@ export function CodeReviewView() {
           </p>
         </ScrollReveal>
 
-        <div className="grid lg:grid-cols-12 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
           {/* Editor - left */}
           <ScrollReveal className="lg:col-span-7" delay={0.25}>
             <div className="rounded-2xl border border-border/60 bg-card/30 backdrop-blur-sm overflow-hidden">
@@ -381,7 +381,7 @@ export function CodeReviewView() {
               <h2 className="text-lg font-semibold">Review History</h2>
             </div>
             {historyLoading ? (
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {Array.from({ length: 3 }).map((_, i) => (
                   <Skeleton key={i} className="h-32 rounded-xl" />
                 ))}
@@ -391,7 +391,7 @@ export function CodeReviewView() {
                 No previous reviews yet.
               </div>
             ) : (
-              <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {(historyData?.reviews ?? []).map((r) => {
                   const sc = scoreColor(r.score)
                   return (
