@@ -3,6 +3,9 @@ import bcrypt from "bcryptjs"
 import { z } from "zod"
 import { randomInt } from "crypto" // audit fix C-10: crypto-secure code generation
 import { db } from "@/lib/db"
+import { getSettings } from "@/lib/settings"
+import { sendEmail, emailVerificationEmailTemplate } from "@/lib/email"
+import { isDisposableEmail, createEmailVerificationLink } from "@/lib/email-security"
 
 // Uses Prisma/Node APIs - pin the Node.js runtime explicitly.
 export const runtime = "nodejs";
@@ -46,7 +49,18 @@ const schema = z.object({
   age16: z.boolean().refine((v) => v === true, {
     message: "You must be at least 16 years old to create an account",
   }),
+  // --- Bot defenses (hardening arc) -------------------------------
+  // Honeypot: hidden field rendered off-screen. Humans never fill it;
+  // naive bots autofill everything. max(0) means "must be empty".
+  website: z.string().max(0).optional(),
+  // Minimum fill time (ms between form mount and submit, measured
+  // client-side). Real users need >1s to type/click through; bots
+  // submit near-instantly. Optional so older clients stay valid.
+  elapsedMs: z.number().int().nonnegative().optional(),
 })
+
+// Submissions faster than this are treated as bots (fake success below).
+const MIN_FORM_FILL_MS = 1000
 
 // DPDPA audit fix D-01: version of the notice/consent text shown at signup.
 // Bump this whenever the privacy notice materially changes.
@@ -158,6 +172,35 @@ export async function POST(req: NextRequest) {
     }
     const { name, email, password, ref } = parsed.data
 
+    // --- Bot defense 1: honeypot filled -> silently fake success ---
+    // (a 200 with no account created; the client's follow-up signIn will
+    // simply fail for the bot. Never reveal the honeypot exists.)
+    if (parsed.data.website && parsed.data.website.length > 0) {
+      return NextResponse.json({
+        user: { id: "skipped", email, name, role: "STUDENT" },
+      })
+    }
+
+    // --- Bot defense 2: inhuman submit speed -> silently fake success ---
+    if (
+      typeof parsed.data.elapsedMs === "number" &&
+      parsed.data.elapsedMs < MIN_FORM_FILL_MS
+    ) {
+      return NextResponse.json({
+        user: { id: "skipped", email, name, role: "STUDENT" },
+      })
+    }
+
+    // --- Hardening: block disposable / temp-mail domains ---
+    // Same message as the duplicate-email path (anti-enumeration: we must
+    // not reveal WHICH validation failed).
+    if (isDisposableEmail(email)) {
+      return NextResponse.json(
+        { error: "Registration failed. Please try with different details." },
+        { status: 400 }
+      )
+    }
+
     // SECURITY: Always register as STUDENT. Instructor/Admin roles must be
     // assigned by an admin - never self-assigned via the registration API.
     const role = "STUDENT"
@@ -212,6 +255,29 @@ export async function POST(req: NextRequest) {
     // ?ref= URL captured client-side and stored in localStorage).
     if (ref && ref.trim()) {
       await trackReferralOnSignup(ref.trim(), { id: user.id, email: user.email })
+    }
+
+    // --- Hardening: post-registration email confirmation ---
+    // Sends a branded "confirm your email" mail whose button is a real
+    // one-click sign-in link (next-auth EmailProvider flow). Proves mailbox
+    // ownership without blocking anyone (email delivery failures must never
+    // lock a user out - they can always use password login). Entirely
+    // non-fatal: only minted when SMTP is configured (the same condition
+    // under which the EmailProvider route exists), otherwise skipped.
+    try {
+      const s = await getSettings(["SMTP_HOST", "SMTP_USER", "SMTP_PASSWORD"])
+      if (s.SMTP_HOST && s.SMTP_USER && s.SMTP_PASSWORD) {
+        const link = await createEmailVerificationLink(email)
+        if (link) {
+          await sendEmail({
+            to: email,
+            subject: "Confirm your email - GuardianX Academy",
+            html: emailVerificationEmailTemplate(name, link),
+          })
+        }
+      }
+    } catch (e) {
+      console.error("[register] confirmation email failed (non-fatal):", e)
     }
 
     return NextResponse.json({ user })

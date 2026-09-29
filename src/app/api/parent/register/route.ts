@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs"
 import { randomBytes } from "crypto"
 import { z } from "zod"
 import { db } from "@/lib/db"
+import { isDisposableEmail } from "@/lib/email-security"
 
 export const runtime = "nodejs"
 
@@ -74,6 +75,15 @@ export async function POST(req: NextRequest) {
     }
     const { name, email, password, phone, relationship, studentEmail } =
       parsed.data
+
+    // Hardening: block disposable / temp-mail domains (parent + student
+    // addresses). Generic message, no hint about which check failed.
+    if (isDisposableEmail(email) || isDisposableEmail(studentEmail)) {
+      return NextResponse.json(
+        { error: "Registration failed. Please try with different details." },
+        { status: 400 }
+      )
+    }
 
     const existingParent = await db.parentAccount.findUnique({
       where: { email: email.toLowerCase() },

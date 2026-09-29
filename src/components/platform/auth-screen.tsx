@@ -179,6 +179,14 @@ export function AuthScreen() {
   const [regName, setRegName] = React.useState("")
   const [regEmail, setRegEmail] = React.useState("")
   const [regPass, setRegPass] = React.useState("")
+  // Honeypot field (hardening): rendered invisible in the register form.
+  // Humans never see or fill it; naive bots autofill everything.
+  const [regWebsite, setRegWebsite] = React.useState("")
+  // Fill-time measurement (hardening): bots submit near-instantly after
+  // page load; real users take seconds. Timer starts at component mount
+  // (landing on the login tab first only ever INCREASES the elapsed time,
+  // so real users can never trip the server's minimum).
+  const registerFormMountedAt = React.useRef(Date.now())
   // DPDPA audit fixes D-01 + D-02: affirmative consent + age declaration
   const [regAge16, setRegAge16] = React.useState(false)
   const [regConsent, setRegConsent] = React.useState(false)
@@ -295,7 +303,7 @@ export function AuthScreen() {
       }
       await api("/api/auth/register", {
         method: "POST",
-        body: JSON.stringify({ name: regName, email: regEmail, password: regPass, role: "STUDENT", ref, consent: regConsent, age16: regAge16 }),
+        body: JSON.stringify({ name: regName, email: regEmail, password: regPass, role: "STUDENT", ref, consent: regConsent, age16: regAge16, website: regWebsite || undefined, elapsedMs: Date.now() - registerFormMountedAt.current }),
       })
       // Clear the stored ref so it can't be reused on a future signup.
       try { window.localStorage.removeItem("gx_ref") } catch {}
@@ -671,6 +679,22 @@ export function AuthScreen() {
                   {/* ===== Register tab ===== */}
                   <TabsContent value="register">
                     <form onSubmit={handleRegister} className="space-y-4">
+                      {/* Honeypot (hardening): invisible to humans, off-screen,
+                          excluded from tab order and accessibility tree, and
+                          browsers won't autofill it. Bots that fill every input
+                          expose themselves here and are silently dropped. */}
+                      <div aria-hidden="true" style={{ position: "absolute", left: "-9999px", top: "-9999px", height: 0, overflow: "hidden" }}>
+                        <label htmlFor="reg-website">Website</label>
+                        <input
+                          id="reg-website"
+                          type="text"
+                          name="website"
+                          tabIndex={-1}
+                          autoComplete="off"
+                          value={regWebsite}
+                          onChange={(e) => setRegWebsite(e.target.value)}
+                        />
+                      </div>
                       <div className="space-y-2">
                         <Label htmlFor="name">Full Name</Label>
                         <div className="relative">

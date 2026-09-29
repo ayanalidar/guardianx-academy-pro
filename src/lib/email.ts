@@ -396,6 +396,33 @@ export function magicLinkEmailTemplate(name: string, link: string): string {
 }
 
 /**
+ * Post-registration "confirm your email" template. The button is a real
+ * one-click sign-in link (next-auth magic-link flow) - clicking it both
+ * proves mailbox ownership and signs the user in, with no password.
+ */
+export function emailVerificationEmailTemplate(name: string, link: string): string {
+  return `
+<div style="font-family: -apple-system, BlinkMacSystemFont, sans-serif; max-width: 600px; margin: 0 auto; background: #0a0a0f; padding: 40px; border-radius: 12px;">
+  <div style="text-align: center; margin-bottom: 32px;">
+    <h1 style="color: #ffffff; font-size: 24px; margin: 0;">Guardian<span style="color: #a78bfa;">X</span> Academy</h1>
+    <p style="color: #6b7280; font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; margin-top: 4px;">Secure · Learn · Defend</p>
+  </div>
+  <h2 style="color: #ffffff; font-size: 20px; margin-bottom: 16px;">Confirm your email address</h2>
+  <p style="color: #9ca3af; font-size: 14px; line-height: 1.6;">Hi ${name},</p>
+  <p style="color: #9ca3af; font-size: 14px; line-height: 1.6;">Welcome to GuardianX Academy! Tap the button below to confirm this email address and jump straight into your account - no password needed for this one-time link.</p>
+  <div style="text-align: center; margin: 32px 0;">
+    <a href="${link}" style="display: inline-block; background: linear-gradient(135deg, #7c3aed, #8b5cf6); color: #ffffff; font-size: 16px; font-weight: 600; padding: 14px 32px; border-radius: 8px; text-decoration: none;">Confirm my email &amp; sign in</a>
+  </div>
+  <p style="color: #6b7280; font-size: 12px; line-height: 1.6;">This link expires in 24 hours and can only be used once. After it expires you can still sign in normally with your email and password, or request a fresh one-time login link from the sign-in page.</p>
+  <p style="color: #6b7280; font-size: 12px; line-height: 1.6;">Didn't create this account? You can safely ignore this email - nothing else will happen.</p>
+  <hr style="border: none; border-top: 1px solid #1f2937; margin: 32px 0 20px;" />
+  <p style="color: #4b5563; font-size: 11px; text-align: center; margin: 0 0 4px;">GuardianX Academy · Cyber Security Training in India · <a href="https://academy.guardianx.cloud" style="color: #6b7280; text-decoration: none;">academy.guardianx.cloud</a></p>
+  ${emailSocialLinksHtml("dark")}
+</div>
+`
+}
+
+/**
  * Generate a lead notification email HTML template.
  */
 export function leadNotificationEmailTemplate(type: string, fields: { label: string; value: string }[]): string {
