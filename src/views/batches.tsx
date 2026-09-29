@@ -7,7 +7,6 @@ import { useAppStore } from "@/store/app-store"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
-import { UPCOMING_BATCHES } from "@/views/home-data"
 import {
   ArrowLeft,
   ArrowRight,
@@ -247,7 +246,9 @@ export function BatchesView() {
     if (api && api.length > 0) {
       return api.map((b) => normalizeBatch({ ...b, id: b.id ?? `batch-${b.name}` }))
     }
-    return (UPCOMING_BATCHES as readonly unknown[]).map((raw) => normalizeBatch(raw as ApiBatch))
+    // No static fake batches: while loading we show neutral skeletons, and
+    // if the API has no batches we show an honest empty state (see JSX).
+    return []
   }, [batchesData])
 
   /* --------------------------- filtered batches ---------------------------- */
@@ -499,7 +500,18 @@ export function BatchesView() {
               </div>
             </motion.div>
 
-            {filteredBatches.length === 0 ? (
+            {!batchesData ? (
+              // Loading: neutral skeletons - no fake batch data in the HTML.
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-5">
+                {[0, 1, 2, 3].map((i) => (
+                  <div
+                    key={i}
+                    className="h-72 rounded-2xl border border-border/40 bg-card/50 animate-pulse"
+                    aria-hidden
+                  />
+                ))}
+              </div>
+            ) : filteredBatches.length === 0 ? (
               <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
@@ -509,14 +521,19 @@ export function BatchesView() {
                 <div className="mx-auto mb-4 flex size-12 items-center justify-center rounded-full border border-border/60 bg-muted/40">
                   <Filter className="size-5 text-muted-foreground" aria-hidden />
                 </div>
-                <h3 className="text-base font-semibold mb-2">No batches match your filters</h3>
+                <h3 className="text-base font-semibold mb-2">
+                  {allBatches.length === 0 ? "No batches are open right now" : "No batches match your filters"}
+                </h3>
                 <p className="text-sm text-muted-foreground mb-5 max-w-md mx-auto">
-                  Try adjusting or clearing your filters to see all upcoming batches -
-                  or request a custom batch below.
+                  {allBatches.length === 0
+                    ? "New cohorts are announced regularly - request a custom batch below and we'll keep you posted."
+                    : "Try adjusting or clearing your filters to see all upcoming batches - or request a custom batch below."}
                 </p>
-                <Button variant="outline" onClick={clearFilters}>
-                  Clear all filters
-                </Button>
+                {allBatches.length > 0 && (
+                  <Button variant="outline" onClick={clearFilters}>
+                    Clear all filters
+                  </Button>
+                )}
               </motion.div>
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-5">

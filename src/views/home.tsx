@@ -64,10 +64,8 @@ import {
   INSTITUTION_TYPES,
   STORY_STAGES,
   STORIES,
-  TRUST_STATS,
   FALLBACK_PARTNERS,
   AUDIENCES,
-  UPCOMING_BATCHES,
   SCHEDULES,
   METHODOLOGY_STEPS,
   // INSTRUCTORS removed - now fetched from /api/instructors (real DB data)
@@ -246,7 +244,7 @@ export function HomeView() {
     cmsData,
     "finalCta",
     "subtitle",
-    "Join 12,000+ defenders advancing their careers."
+    "Join a growing community of defenders advancing their careers."
   )
   const finalCtaPrimary = getContent(cmsData, "finalCta", "ctaPrimary", "START FREE TODAY")
   const finalCtaSecondary = getContent(cmsData, "finalCta", "ctaSecondary", "TALK TO US")
@@ -423,8 +421,10 @@ export function HomeView() {
         almostFull: (b.seats - (b.enrolled ?? 0)) <= 2 || b.status === "Almost Full",
       }))
     }
-    // Static fallback - already has `almostFull`.
-    return UPCOMING_BATCHES as unknown as TrainingBatchRow[]
+    // No static fallback: fake placeholder batches ("12 seats left 0/12")
+    // must never render publicly. While loading we show neutral skeletons;
+    // if the API fails or returns nothing the whole section hides.
+    return []
   }, [batchesData])
 
   // Normalize platform stats into the same shape as the fallback TRUST_STATS
@@ -452,16 +452,10 @@ export function HomeView() {
         isLive: s.source === "calculated",
       }))
     }
-    return TRUST_STATS.map((s) => ({
-      key: s.label,
-      icon: s.icon,
-      value: s.value,
-      suffix: "",
-      label: s.label,
-      color: s.color,
-      tint: s.tint,
-      isLive: true,
-    }))
+    // No static fake numbers - the old "12,000+ Learners" fallback even
+    // carried a fake "LIVE" badge in the SSR HTML. The band simply hides
+    // until the real platform stats load.
+    return []
   }, [platformStats])
 
   // Hero CTAs are fixed to discovery flows - Explore Training (catalog),
@@ -583,7 +577,7 @@ export function HomeView() {
             >
               <StatusDot status="online" pulse size="sm" label="BATCHES OPEN" />
               <StatusDot status="online" pulse size="sm" label="LIVE SESSIONS" />
-              <StatusDot status="online" pulse size="sm" label="12 EXPERT INSTRUCTORS" />
+              <StatusDot status="online" pulse size="sm" label="EXPERT INSTRUCTORS" />
             </motion.div>
           </div>
         </div>
@@ -651,6 +645,7 @@ export function HomeView() {
           4 hardcoded live-instructor-led certification batch cards.
           Premium card design with difficulty color coding.
           ===================================================== */}
+      {(batchesData === undefined || displayBatches.length > 0) && (
       <section
         aria-labelledby="upcoming-batches-heading"
         className="relative py-8 lg:py-12 overflow-hidden"
@@ -679,7 +674,16 @@ export function HomeView() {
           </motion.div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:gap-5">
-            {displayBatches.slice(0, 4).map((b, i) => (
+            {!batchesData ? (
+              // Loading: neutral skeletons - no fake batch data in the HTML.
+              [0, 1, 2, 3].map((i) => (
+                <div
+                  key={i}
+                  className="h-72 rounded-2xl border border-border/40 bg-card/50 animate-pulse"
+                  aria-hidden
+                />
+              ))
+            ) : displayBatches.slice(0, 4).map((b, i) => (
               <motion.div
                 key={b.name}
                 initial={{ opacity: 0, y: 12 }}
@@ -819,6 +823,7 @@ export function HomeView() {
           </motion.div>
         </div>
       </section>
+      )}
 
       {/* =====================================================
           NEW SECTION - FLEXIBLE SCHEDULES
@@ -974,6 +979,7 @@ export function HomeView() {
           NEW SECTION - EXPERT INSTRUCTORS
           3 verified instructor profile cards.
           ===================================================== */}
+      {(instructorsData === undefined || instructorRows.length > 0) && (
       <section
         aria-labelledby="instructors-heading"
         className="relative py-8 lg:py-12"
@@ -998,7 +1004,17 @@ export function HomeView() {
           </motion.div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 lg:gap-5">
-            {instructorRows.length > 0 ? (
+            {!instructorsData ? (
+              // Loading: neutral skeletons - no admin-facing text leaks
+              // into the publicly-served HTML.
+              [0, 1, 2].map((i) => (
+                <div
+                  key={i}
+                  className="card-premium rounded-2xl p-5 lg:p-6 h-72 animate-pulse"
+                  aria-hidden
+                />
+              ))
+            ) : instructorRows.length > 0 ? (
               instructorRows.slice(0, 3).map((ins, i) => {
                 // Parse expertise from JSON string (e.g. ["offensive","web"])
                 let expertiseLabel = ins.title || "Security Instructor"
@@ -1091,14 +1107,11 @@ export function HomeView() {
                   </motion.div>
                 )
               })
-            ) : (
-              <div className="col-span-3 text-center py-12 text-muted-foreground text-sm">
-                No instructors yet. Add instructors from the admin panel.
-              </div>
-            )}
+            ) : null}
           </div>
         </div>
       </section>
+      )}
 
       {/* =====================================================
           SECTION 2 - PLATFORM INTRODUCTION (6 pillars)
@@ -1478,12 +1491,12 @@ export function HomeView() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <motion.div {...FADE_UP} className="max-w-2xl mb-6">
             <div className="flex items-center gap-2 mb-3">
-              <span className="inline-flex items-center gap-1.5 rounded-md border border-cyan-500/40 bg-cyan-500/10 px-2 py-1 font-mono text-[10px] font-semibold uppercase tracking-wider text-cyan-300">
+              <span className="inline-flex items-center gap-1.5 rounded-md border border-cyan-500/25 bg-cyan-500/[0.06] px-2 py-0.5 font-mono text-[9px] font-medium uppercase tracking-[0.18em] text-cyan-200/60">
                 <Eye className="size-3" aria-hidden />
-                PREVIEW
+                Sample view
               </span>
-              <span className="text-[10px] font-mono text-cyan-300/70 tracking-wider">
-                Illustrative preview - your stats appear here when you log in
+              <span className="text-[9px] font-mono text-muted-foreground/50 tracking-wide">
+                sample dashboard · your real stats appear when you log in
               </span>
             </div>
             <h2
@@ -2032,12 +2045,12 @@ export function HomeView() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <motion.div {...FADE_UP} className="max-w-2xl mb-6">
             <div className="flex items-center gap-2 mb-3">
-              <span className="inline-flex items-center gap-1.5 rounded-md border border-amber-500/40 bg-amber-500/10 px-2 py-1 font-mono text-[10px] font-semibold uppercase tracking-wider text-amber-300">
+              <span className="inline-flex items-center gap-1.5 rounded-md border border-amber-500/25 bg-amber-500/[0.06] px-2 py-0.5 font-mono text-[9px] font-medium uppercase tracking-[0.18em] text-amber-200/60">
                 <Sparkles className="size-3" aria-hidden />
-                ILLUSTRATIVE LEARNER JOURNEY
+                Sample journey
               </span>
-              <span className="text-[10px] font-mono text-amber-300/70 tracking-wider">
-                Composite profiles - not real learners
+              <span className="text-[9px] font-mono text-muted-foreground/50 tracking-wide">
+                composite profiles for illustration · not real learners
               </span>
             </div>
             <h2
@@ -2127,9 +2140,9 @@ export function HomeView() {
                   </div>
                 </dl>
 
-                <div className="rounded-md border border-amber-500/20 bg-amber-500/5 px-2 py-1.5">
-                  <p className="font-mono text-[10px] text-amber-300/80 uppercase tracking-wider">
-                    ILLUSTRATIVE LEARNER JOURNEY · composite
+                <div className="rounded-md border border-amber-500/10 bg-amber-500/[0.03] px-2 py-1">
+                  <p className="font-mono text-[9px] text-muted-foreground/50 uppercase tracking-[0.15em]">
+                    Sample journey · composite profile
                   </p>
                 </div>
               </motion.div>
@@ -2194,6 +2207,7 @@ export function HomeView() {
               lab_count, cert_count; manual/marketing values for the rest).
               Each tile shows the source so the user can tell live counts
               from marketing estimates. */}
+          {statTiles.length > 0 && (
           <motion.div
             {...FADE_UP}
             transition={{ duration: 0.4, delay: 0.1 }}
@@ -2242,6 +2256,7 @@ export function HomeView() {
               )
             })}
           </motion.div>
+          )}
         </div>
       </section>
 

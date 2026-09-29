@@ -381,12 +381,8 @@ export const STORIES = [
   },
 ] as const
 
-export const TRUST_STATS = [
-  { icon: Users, value: "12,000+", label: "Learners", color: "text-violet-300", tint: "bg-violet-500/10" },
-  { icon: FlaskConical, value: "31", label: "Labs", color: "text-cyan-300", tint: "bg-cyan-500/10" },
-  { icon: BookOpen, value: "28+", label: "Courses", color: "text-amber-300", tint: "bg-amber-500/10" },
-  { icon: Building2, value: "150+", label: "Partners", color: "text-emerald-300", tint: "bg-emerald-500/10" },
-] as const
+// TRUST_STATS removed - the homepage trust band now renders real values
+// from /api/platform-stats only (no static fake numbers).
 
 /**
  * Fallback list of real OSS technology partners - used only if the
@@ -448,91 +444,11 @@ export const AUDIENCES = [
 ] as const
 
 /**
- * Upcoming live instructor-led certification batches.
- *
- * Level → color coding:
- *   Beginner     → emerald (easy, green)
- *   Intermediate → amber   (medium)
- *   Advanced     → rose    (hard)
+ * Upcoming live instructor-led certification batches are now DB-backed
+ * (TrainingBatch model, editable in Admin → Batches) and served via
+ * /api/training-batches. The old static fake-data array was removed so
+ * placeholder batches ("12 seats left 0/12") can never render publicly.
  */
-export const UPCOMING_BATCHES = [
-  {
-    certification: "CompTIA Security+",
-    name: "Security+ Weekend Batch",
-    schedule: "Sat + Sun, 7:00 PM-9:00 PM IST",
-    startDate: "October 12",
-    mode: "Live Online",
-    instructor: "Senior Cybersecurity Instructor",
-    seats: 12,
-    almostFull: false,
-    level: "Beginner",
-    certColor: "text-emerald-300",
-    certTint: "bg-emerald-500/15",
-    certBorder: "border-emerald-500/30",
-    levelColor: "text-emerald-300",
-    levelTint: "bg-emerald-500/10",
-    levelBorder: "border-emerald-500/30",
-    borderColor: "border-border/60 hover:border-emerald-500/40 hover:shadow-[0_20px_60px_-20px_oklch(0.65_0.15_155_/_0.25)]",
-    btnClass: "bg-emerald-600 hover:bg-emerald-500",
-  },
-  {
-    certification: "CEH (Certified Ethical Hacker)",
-    name: "CEH Weekday Evening",
-    schedule: "Mon-Wed-Fri, 8:00 PM-10:00 PM IST",
-    startDate: "October 20",
-    mode: "Live Online",
-    instructor: "Dr. Sarah Chen",
-    seats: 8,
-    almostFull: false,
-    level: "Intermediate",
-    certColor: "text-amber-300",
-    certTint: "bg-amber-500/15",
-    certBorder: "border-amber-500/30",
-    levelColor: "text-amber-300",
-    levelTint: "bg-amber-500/10",
-    levelBorder: "border-amber-500/30",
-    borderColor: "border-border/60 hover:border-amber-500/40 hover:shadow-[0_20px_60px_-20px_oklch(0.7_0.15_70_/_0.25)]",
-    btnClass: "bg-amber-600 hover:bg-amber-500",
-  },
-  {
-    certification: "CCNA",
-    name: "CCNA Morning Batch",
-    schedule: "Tue-Thu, 7:00 AM-9:00 AM IST",
-    startDate: "November 03",
-    mode: "Live Online",
-    instructor: "Raj Patel",
-    seats: 15,
-    almostFull: false,
-    level: "Beginner",
-    certColor: "text-cyan-300",
-    certTint: "bg-cyan-500/15",
-    certBorder: "border-cyan-500/30",
-    levelColor: "text-emerald-300",
-    levelTint: "bg-emerald-500/10",
-    levelBorder: "border-emerald-500/30",
-    borderColor: "border-border/60 hover:border-cyan-500/40 hover:shadow-[0_20px_60px_-20px_oklch(0.7_0.15_220_/_0.25)]",
-    btnClass: "bg-cyan-600 hover:bg-cyan-500",
-  },
-  {
-    certification: "CISSP",
-    name: "CISSP Weekend Intensive",
-    schedule: "Sat-Sun, 10:00 AM-1:00 PM IST",
-    startDate: "November 09",
-    mode: "Live Online",
-    instructor: "Alex Mercer",
-    seats: 5,
-    almostFull: true,
-    level: "Advanced",
-    certColor: "text-rose-300",
-    certTint: "bg-rose-500/15",
-    certBorder: "border-rose-500/30",
-    levelColor: "text-rose-300",
-    levelTint: "bg-rose-500/10",
-    levelBorder: "border-rose-500/30",
-    borderColor: "border-border/60 hover:border-rose-500/40 hover:shadow-[0_20px_60px_-20px_oklch(0.65_0.2_15_/_0.25)]",
-    btnClass: "bg-rose-600 hover:bg-rose-500",
-  },
-] as const
 
 export const SCHEDULES = [
   {

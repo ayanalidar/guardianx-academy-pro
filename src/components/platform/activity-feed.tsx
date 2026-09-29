@@ -200,7 +200,9 @@ export function PlatformActivityFeed() {
   const labsTodayStat = (statsData?.stats ?? []).find(
     (s) => s.key === "labs_today" || /lab.*solved|solved.*today/i.test(s.label),
   )
-  const labsToday = labsTodayStat?.value ?? "318"
+  // No fake fallback number: if the stat hasn't been configured (or the
+  // stats API is down) the tile simply hides instead of showing a made-up
+  // count like the old hardcoded "318".
 
   return (
     <div className="grid gap-8 lg:gap-10 lg:grid-cols-12">
@@ -243,17 +245,19 @@ export function PlatformActivityFeed() {
             </div>
           </div>
 
-          <div className="card-premium rounded-xl p-4 flex items-center gap-3">
-            <div className="shrink-0 flex size-10 items-center justify-center rounded-xl bg-cyan-500/15 border border-cyan-500/30 text-cyan-300">
-              <FlaskConical className="size-5" />
-            </div>
-            <div>
-              <div className="text-2xl font-bold tabular-nums leading-none font-mono">{labsToday}</div>
-              <div className="text-[10px] font-mono text-muted-foreground tracking-[0.2em] mt-1">
-                LABS SOLVED TODAY
+          {labsTodayStat && (
+            <div className="card-premium rounded-xl p-4 flex items-center gap-3">
+              <div className="shrink-0 flex size-10 items-center justify-center rounded-xl bg-cyan-500/15 border border-cyan-500/30 text-cyan-300">
+                <FlaskConical className="size-5" />
+              </div>
+              <div>
+                <div className="text-2xl font-bold tabular-nums leading-none font-mono">{labsTodayStat.value}</div>
+                <div className="text-[10px] font-mono text-muted-foreground tracking-[0.2em] mt-1">
+                  LABS SOLVED TODAY
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           {daily30.length === 30 && (
             <div className="card-premium rounded-xl p-4">

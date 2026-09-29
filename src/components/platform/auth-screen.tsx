@@ -38,12 +38,12 @@ const FEATURES = [
   { icon: Shield, title: "Hands-on Labs", desc: "31 real offensive-security CTF challenges" },
   { icon: GraduationCap, title: "Verifiable Certs", desc: "Public verification for employers & recruiters" },
   { icon: Building2, title: "School Portal", desc: "Multi-tenant dashboards for institutions" },
-  { icon: BadgeCheck, title: "Industry Recognized", desc: "Trusted by 12,000+ cyber defenders" },
+  { icon: BadgeCheck, title: "Industry Recognized", desc: "Trusted by learners, teams & institutions" },
 ]
 
 const STATS = [
-  { value: "12K+", label: "Learners", icon: Users, color: "text-violet-300" },
-  { value: "27+", label: "Courses", icon: BookOpen, color: "text-cyan-300" },
+  { value: "55+", label: "Learners", icon: Users, color: "text-violet-300" },
+  { value: "19+", label: "Courses", icon: BookOpen, color: "text-cyan-300" },
   { value: "31", label: "Labs", icon: Shield, color: "text-amber-300" },
 ]
 
