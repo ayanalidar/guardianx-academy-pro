@@ -163,6 +163,34 @@ export async function POST(req: NextRequest) {
     }
 
     const body = await req.json()
+
+    // --- Bot defenses run on the RAW body, BEFORE zod validation ---
+    // (so bots get the same fake-success a human would trigger, with no
+    // schema-validation error leaking which fields we watch.)
+    if (body && typeof body === "object") {
+      const raw = body as Record<string, unknown>
+
+      // Bot defense 1: honeypot filled -> silently fake success (a 200 with
+      // no account created; the client's follow-up signIn will simply fail
+      // for the bot. Never reveal the honeypot exists.)
+      if (typeof raw.website === "string" && raw.website.length > 0) {
+        return NextResponse.json({
+          user: { id: "skipped", email: String(raw.email ?? ""), name: String(raw.name ?? ""), role: "STUDENT" },
+        })
+      }
+
+      // Bot defense 2: inhuman submit speed -> silently fake success
+      if (
+        typeof raw.elapsedMs === "number" &&
+        Number.isFinite(raw.elapsedMs) &&
+        (raw.elapsedMs as number) < MIN_FORM_FILL_MS
+      ) {
+        return NextResponse.json({
+          user: { id: "skipped", email: String(raw.email ?? ""), name: String(raw.name ?? ""), role: "STUDENT" },
+        })
+      }
+    }
+
     const parsed = schema.safeParse(body)
     if (!parsed.success) {
       return NextResponse.json(
@@ -171,25 +199,6 @@ export async function POST(req: NextRequest) {
       )
     }
     const { name, email, password, ref } = parsed.data
-
-    // --- Bot defense 1: honeypot filled -> silently fake success ---
-    // (a 200 with no account created; the client's follow-up signIn will
-    // simply fail for the bot. Never reveal the honeypot exists.)
-    if (parsed.data.website && parsed.data.website.length > 0) {
-      return NextResponse.json({
-        user: { id: "skipped", email, name, role: "STUDENT" },
-      })
-    }
-
-    // --- Bot defense 2: inhuman submit speed -> silently fake success ---
-    if (
-      typeof parsed.data.elapsedMs === "number" &&
-      parsed.data.elapsedMs < MIN_FORM_FILL_MS
-    ) {
-      return NextResponse.json({
-        user: { id: "skipped", email, name, role: "STUDENT" },
-      })
-    }
 
     // --- Hardening: block disposable / temp-mail domains ---
     // Same message as the duplicate-email path (anti-enumeration: we must
