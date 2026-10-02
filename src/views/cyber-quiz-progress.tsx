@@ -17,6 +17,7 @@ import {
   ShieldCheck, Brain,
 } from "lucide-react"
 import { toast } from "sonner"
+import { downloadScoreCardPDF } from "@/lib/certificate-pdf"
 
 interface CertResponse {
   certificate: {
@@ -129,25 +130,11 @@ export function CyberQuizProgressView() {
   const handleDownload = async () => {
     if (!reportRef.current) return
     try {
-      const [{ default: html2canvas }, { jsPDF }] = await Promise.all([
-        import("html2canvas"),
-        import("jspdf"),
-      ])
-      const canvas = await html2canvas(reportRef.current, {
-        scale: 2,
-        backgroundColor: "#0a0a0f",
-        useCORS: true,
-        logging: false,
-      })
-      const imgData = canvas.toDataURL("image/png")
-      const pdf = new jsPDF({
-        orientation: "portrait",
-        unit: "px",
-        format: [canvas.width, canvas.height],
-      })
-      pdf.addImage(imgData, "PNG", 0, 0, canvas.width, canvas.height)
-      pdf.save(`${cert.credentialId}-progress-report.pdf`)
-      toast.success("Progress report downloaded as PDF")
+      // Same vector pipeline as the certificates - opens the phantom-themed
+      // A4 score card in the print dialog (replaces the old rasterised
+      // html2canvas report PDF).
+      await downloadScoreCardPDF(cert.credentialId)
+      toast.success("Score card opened - choose \u201cSave as PDF\u201d to download")
     } catch (e) {
       console.error("Download failed:", e)
       toast.error("Download failed. Please try again.")
@@ -183,33 +170,33 @@ export function CyberQuizProgressView() {
           </Button>
         </div>
 
-        {/* ===== Report card (printable) ===== */}
+        {/* ===== Report card (mirrors the downloaded phantom score card) ===== */}
         <motion.div
           ref={reportRef}
           initial={{ opacity: 0, scale: 0.96 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.5, delay: 0.1 }}
-          className="rounded-2xl border-2 border-violet-500/30 bg-gradient-to-br from-[#0d0d18] via-[#13132a] to-[#0a0a14] shadow-2xl shadow-violet-500/20 overflow-hidden"
+          className="rounded-2xl border-2 border-[#E11D2E]/30 bg-gradient-to-br from-[#0A0507] via-[#12060A] to-[#0A0507] shadow-2xl shadow-red-500/20 overflow-hidden"
         >
           {/* Report header */}
-          <div className="border-b border-violet-500/20 px-6 py-5 flex items-center justify-between">
+          <div className="border-b border-white/10 px-6 py-5 flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <img src="/guardianx-logo-v2.png" alt="GuardianX" className="h-8 w-8 object-contain" style={{ filter: "drop-shadow(0 0 6px rgba(124,58,237,0.5))" }} />
+              <img src="/guardianx-logo-v2.png" alt="GuardianX" className="h-8 w-8 object-contain" style={{ filter: "brightness(0) invert(1) drop-shadow(0 0 6px rgba(225,29,46,0.6))" }} />
               <div>
-                <div className="text-sm font-bold leading-none">
-                  Guardian<span className="text-violet-400">X</span> Academy
+                <div className="text-sm font-bold leading-none text-foreground">
+                  Guardian<span className="text-[#E11D2E]">X</span> Academy
                 </div>
-                <div className="text-[8px] font-mono text-muted-foreground tracking-[0.25em] mt-0.5">CYBER SECURITY FOUNDATION</div>
+                <div className="text-[8px] font-mono text-muted-foreground tracking-[0.25em] mt-0.5">CYBER DEFENSE INSTITUTE</div>
               </div>
             </div>
             <div className="text-right">
               <div className="text-[8px] font-mono text-muted-foreground tracking-[0.2em] uppercase">Credential</div>
-              <div className="text-xs font-mono font-semibold text-violet-300">{cert.credentialId}</div>
+              <div className="text-xs font-mono font-semibold text-[#F59E0B]">{cert.credentialId}</div>
             </div>
           </div>
 
           {/* Candidate info */}
-          <div className="px-6 py-5 border-b border-violet-500/20">
+          <div className="px-6 py-5 border-b border-white/10">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
               <div>
                 <div className="text-[9px] font-mono text-muted-foreground tracking-[0.2em] uppercase mb-1">Candidate</div>
@@ -231,7 +218,7 @@ export function CyberQuizProgressView() {
           </div>
 
           {/* Overall verdict */}
-          <div className="px-6 py-5 border-b border-violet-500/20">
+          <div className="px-6 py-5 border-b border-white/10">
             <div className="flex items-start gap-3">
               <div className="inline-flex p-2 rounded-lg bg-violet-500/10 shrink-0">
                 <TrendingUp className="h-4 w-4 text-violet-300" />
@@ -256,22 +243,22 @@ export function CyberQuizProgressView() {
           </div>
 
           {/* Radar chart */}
-          <div className="px-6 py-6 border-b border-violet-500/20">
+          <div className="px-6 py-6 border-b border-white/10">
             <div className="text-[10px] font-mono text-muted-foreground tracking-[0.2em] uppercase mb-4">
               Domain strength overview
             </div>
             <div className="h-72 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <RadarChart data={radarData} outerRadius="75%">
-                  <PolarGrid stroke="rgba(124, 58, 237, 0.15)" />
+                  <PolarGrid stroke="rgba(225, 29, 46, 0.15)" />
                   <PolarAngleAxis dataKey="domain" tick={{ fill: "oklch(0.7 0.02 270)", fontSize: 11, fontFamily: "monospace" }} />
-                  <PolarRadiusAxis domain={[0, 100]} tick={{ fill: "rgba(124, 58, 237, 0.3)", fontSize: 9 }} stroke="rgba(124, 58, 237, 0.2)" />
+                  <PolarRadiusAxis domain={[0, 100]} tick={{ fill: "rgba(225, 29, 46, 0.35)", fontSize: 9 }} stroke="rgba(225, 29, 46, 0.2)" />
                   <Radar
                     name="Score"
                     dataKey="score"
-                    stroke="#a78bfa"
-                    fill="#7c3aed"
-                    fillOpacity={0.4}
+                    stroke="#E11D2E"
+                    fill="#E11D2E"
+                    fillOpacity={0.35}
                     strokeWidth={2}
                   />
                 </RadarChart>
@@ -280,7 +267,7 @@ export function CyberQuizProgressView() {
           </div>
 
           {/* Per-domain breakdown */}
-          <div className="px-6 py-6 border-b border-violet-500/20">
+          <div className="px-6 py-6 border-b border-white/10">
             <div className="text-[10px] font-mono text-muted-foreground tracking-[0.2em] uppercase mb-4">
               Detailed domain scores
             </div>
@@ -325,7 +312,7 @@ export function CyberQuizProgressView() {
           </div>
 
           {/* Highlights */}
-          <div className="px-6 py-5 grid grid-cols-1 sm:grid-cols-2 gap-4 border-b border-violet-500/20">
+          <div className="px-6 py-5 grid grid-cols-1 sm:grid-cols-2 gap-4 border-b border-white/10">
             <div className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3">
               <div className="text-[9px] font-mono text-emerald-300/80 tracking-[0.2em] uppercase mb-1">Strongest domain</div>
               <div className="text-sm font-semibold">{strongest?.fullName}</div>
@@ -346,21 +333,20 @@ export function CyberQuizProgressView() {
             <div className="h-56 w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={radarData} margin={{ top: 5, right: 5, left: -20, bottom: 5 }}>
-                  <XAxis dataKey="domain" tick={{ fill: "oklch(0.7 0.02 270)", fontSize: 9, fontFamily: "monospace" }} stroke="rgba(124, 58, 237, 0.2)" />
-                  <YAxis domain={[0, 100]} tick={{ fill: "rgba(124, 58, 237, 0.3)", fontSize: 9 }} stroke="rgba(124, 58, 237, 0.2)" />
+                  <XAxis dataKey="domain" tick={{ fill: "oklch(0.7 0.02 270)", fontSize: 9, fontFamily: "monospace" }} stroke="rgba(225, 29, 46, 0.2)" />
+                  <YAxis domain={[0, 100]} tick={{ fill: "rgba(225, 29, 46, 0.35)", fontSize: 9 }} stroke="rgba(225, 29, 46, 0.2)" />
                   <Tooltip
                     contentStyle={{
-                      backgroundColor: "#13132a",
-                      border: "1px solid rgba(124, 58, 237, 0.3)",
+                      backgroundColor: "#12060A",
+                      border: "1px solid rgba(225, 29, 46, 0.3)",
                       borderRadius: "8px",
                       fontSize: "12px",
                     }}
-                    labelStyle={{ color: "#a78bfa" }}
+                    labelStyle={{ color: "#FCA5A5" }}
                   />
                   <Bar dataKey="score" radius={[6, 6, 0, 0]}>
                     {radarData.map((d, i) => {
-                      const tier = strengthTier(d.score)
-                      const fill = d.score >= 90 ? "#34d399" : d.score >= 75 ? "#22d3ee" : d.score >= 50 ? "#a78bfa" : "#fb7185"
+                      const fill = d.score >= 90 ? "#34d399" : d.score >= 75 ? "#f59e0b" : d.score >= 50 ? "#f87171" : "#E11D2E"
                       return <Cell key={i} fill={fill} />
                     })}
                   </Bar>
@@ -370,7 +356,7 @@ export function CyberQuizProgressView() {
           </div>
 
           {/* Footer */}
-          <div className="px-6 py-4 border-t border-violet-500/20 flex items-center justify-between">
+          <div className="px-6 py-4 border-t border-white/10 flex items-center justify-between">
             <div className="text-[8px] font-mono text-muted-foreground tracking-wider">
               {cert.verificationUrl || `academy.guardianx.cloud/verify?id=${cert.credentialId}`}
             </div>

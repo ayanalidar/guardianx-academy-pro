@@ -121,9 +121,16 @@ const SCRIPT_STACK =
 const MONO_STACK =
   'ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace'
 
-// A4 landscape in mm
+/** Institute registration number - printed top-left on every document (same as invoices). */
+const INSTITUTE_REG_NO = "UDYAM-JK-03-0034470"
+
+// A4 landscape in mm (certificate)
 const PAGE_W = 297
 const PAGE_H = 210
+
+// A4 portrait in mm (score card)
+const CARD_W = 210
+const CARD_H = 297
 
 // ---------------------------------------------------------------------------
 // main export - signature is backward compatible: the options bag is optional
@@ -159,6 +166,11 @@ async function openCertificatePrintWindow(
     logoDotsSvg,
   })
 
+  openPrintWindow(html)
+}
+
+/** Shared print-pipeline sink: standalone document -> print dialog (Save as PDF). */
+function openPrintWindow(html: string) {
   const w = window.open("", "_blank", "width=1180,height=880")
   if (!w) {
     alert("Please allow pop-ups to download your certificate.")
@@ -241,6 +253,143 @@ export async function downloadInternshipCertificatePDF(
   } catch (e: any) {
     console.error("[internship-cert-pdf]", e)
     alert("Failed to generate certificate PDF: " + e.message)
+  }
+}
+
+const QUIZ_LEVELS: Record<string, string> = {
+  Easy: "Foundational",
+  Hard: "Intermediate",
+  Advanced: "Expert",
+}
+
+const QUIZ_DOMAINS = [
+  "Phishing", "Passwords", "Social Engineering", "Web Safety",
+  "Mobile Security", "Data Privacy", "Malware", "Wi-Fi Safety",
+]
+
+/**
+ * Quiz certificate variant - the SAME phantom document as courses and
+ * internships, fed from the public /api/cyber-quiz/certificate/[id]
+ * endpoint. Replaces the old rasterised (html2canvas) quiz certificate so
+ * every certificate on the platform shares one vector design that
+ * auto-adjusts its wording per document kind.
+ */
+export async function downloadQuizCertificatePDF(
+  credentialId: string,
+  options: CertificatePdfOptions = {},
+) {
+  try {
+    const data = await api<{ certificate: any; domainScores: Record<string, { correct: number; total: number }> }>(
+      `/api/cyber-quiz/certificate/${encodeURIComponent(credentialId)}`
+    )
+    const c = data?.certificate
+    if (!c) throw new Error("Certificate not found")
+
+    const verifyUrl =
+      options.verifyUrl ||
+      c.verificationUrl ||
+      (typeof window !== "undefined" && window.location?.origin
+        ? `${window.location.origin}/verify?id=${c.credentialId}`
+        : `/verify?id=${c.credentialId}`)
+
+    const synthetic = {
+      certificateId: c.credentialId,
+      issuedAt: c.issueDate,
+      score: typeof c.percentage === "number" ? c.percentage : null,
+      isQuiz: true,
+      user: { name: c.candidateName },
+      course: {
+        title: "Cyber Security Foundation",
+        certBody: "GuardianX Academy",
+        category: "Cyber Awareness Quiz",
+        level: QUIZ_LEVELS[c.difficulty] ?? c.difficulty ?? "",
+        instructor: { name: "GuardianX Academy" },
+      },
+    }
+
+    await openCertificatePrintWindow(synthetic, options, verifyUrl)
+  } catch (e: any) {
+    console.error("[quiz-cert-pdf]", e)
+    alert("Failed to generate certificate PDF: " + e.message)
+  }
+}
+
+export interface ScoreCardData {
+  recipient: string
+  title: string
+  level: string
+  score: number
+  total: number
+  percentage: number
+  issuedAt: string | Date
+  credentialId: string
+  domains: { name: string; correct: number; total: number; pct: number }[]
+  verifyUrl: string
+}
+
+/**
+ * Score card variant - A4 PORTRAIT companion document in the same phantom
+ * theme: overall result + per-domain breakdown bars + strongest/focus
+ * areas + verification strip. Vector output through the same print
+ * pipeline (replaces the old rasterised progress-report PDF).
+ */
+export async function downloadScoreCardPDF(
+  credentialId: string,
+  options: CertificatePdfOptions = {},
+) {
+  try {
+    const data = await api<{ certificate: any; domainScores: Record<string, { correct: number; total: number }> }>(
+      `/api/cyber-quiz/certificate/${encodeURIComponent(credentialId)}`
+    )
+    const c = data?.certificate
+    if (!c) throw new Error("Certificate not found")
+
+    const verifyUrl =
+      options.verifyUrl ||
+      c.verificationUrl ||
+      (typeof window !== "undefined" && window.location?.origin
+        ? `${window.location.origin}/verify?id=${c.credentialId}`
+        : `/verify?id=${c.credentialId}`)
+
+    const domains = QUIZ_DOMAINS.map((d) => {
+      const s = data.domainScores?.[d] || { correct: 0, total: 0 }
+      return {
+        name: d,
+        correct: s.correct,
+        total: s.total,
+        pct: s.total > 0 ? Math.round((s.correct / s.total) * 100) : 0,
+      }
+    }).filter((d) => d.total > 0)
+
+    const [logoPngDataUrl, qrPngDataUrl, logoDotsSvg] = await Promise.all([
+      options.logoPngDataUrl !== undefined ? Promise.resolve(options.logoPngDataUrl) : fetchLogoPngDataUrl(),
+      options.qrPngDataUrl !== undefined ? Promise.resolve(options.qrPngDataUrl) : buildQrPngDataUrl(verifyUrl),
+      buildLogoDotMatrixSvg({ step: 6, color: "#ff3b3b", opacity: 0.9 }),
+    ])
+
+    const card: ScoreCardData = {
+      recipient: c.candidateName,
+      title: "Cyber Security Foundation",
+      level: QUIZ_LEVELS[c.difficulty] ?? c.difficulty ?? "",
+      score: c.score ?? 0,
+      total: c.totalQuestions ?? 0,
+      percentage: typeof c.percentage === "number" ? c.percentage : 0,
+      issuedAt: c.issueDate,
+      credentialId: c.credentialId,
+      domains,
+      verifyUrl,
+    }
+
+    openPrintWindow(
+      buildScoreCardHTML(card, {
+        logoPngDataUrl: logoPngDataUrl ?? null,
+        qrPngDataUrl: qrPngDataUrl ?? null,
+        logoDotsSvg: logoDotsSvg ?? null,
+      }),
+    )
+  } catch (e: any) {
+    console.error("[score-card-pdf]", e)
+    alert("Failed to generate score card PDF: " + e.message)
   }
 }
 
@@ -479,6 +628,7 @@ export function buildCertificateHTML(
       ? escapeHtml(cert.grade.trim())
       : null
   const isInternship = cert.isInternship === true || gradeText !== null
+  const isQuiz = cert.isQuiz === true && !isInternship
   const verifyUrl = escapeHtml(opts.verifyUrl)
 
   const metaParts: string[] = []
@@ -508,13 +658,20 @@ export function buildCertificateHTML(
 
   // phantom: terminal command readout
   const terminalLine = isPhantom
-    ? `<div class="terminal"><b>root@gx:~$</b> guardianx issue --recipient &quot;${recipient}&quot;${score !== null ? ` --score ${score}%` : ""} <s>--verified ✓</s></div>`
+    ? `<div class="terminal"><b>root@gx:~$</b> guardianx issue --recipient &quot;${recipient}&quot;${score !== null ? ` --score ${score}%` : ""}${gradeText ? ` --grade ${gradeText}` : ""} <s>--verified ✓</s></div>`
     : ""
 
-  // phantom: classification chips (top-right)
+  // phantom: classification chips (top-right). Anchored at right:27mm so the
+  // row stays clear of the HUD corner bracket + corner-diamond ornament
+  // (both live inside the 14-22mm band at each corner) while keeping its
+  // right alignment.
   const chipRow = isPhantom
     ? `<div class="chiprow"><span class="chipx green">✓ verified credential</span><span class="chipx red">gx blackops clearance</span></div>`
     : ""
+
+  // registration number - top-left mirror of the phantom chips, present on
+  // EVERY theme (official documents carry the institute reg no).
+  const regNoRow = `<div class="regno">reg. no. ${INSTITUTE_REG_NO}</div>`
 
   // phantom: SHA-256 fingerprint band above the verification strip
   const hexBand = isPhantom
@@ -651,8 +808,14 @@ export function buildCertificateHTML(
   }
   .chiprow {
     display: flex; gap: 2.2mm; justify-content: flex-end;
-    position: absolute; top: 15mm; right: 16mm;
+    position: absolute; top: 16mm; right: 27mm;
   }
+  .regno {
+    position: absolute; top: 16.5mm; left: 27mm;
+    font-family: ${MONO_STACK}; font-size: 5.6pt; letter-spacing: 0.2em; text-transform: uppercase;
+    color: var(--muted); white-space: nowrap; pointer-events: none;
+  }
+  .theme-phantom .regno { color: color-mix(in srgb, var(--acc1) 52%, var(--muted)); }
   .chipx {
     font-family: ${MONO_STACK}; font-size: 5.4pt; letter-spacing: 0.2em; text-transform: uppercase;
     padding: 1.1mm 2.6mm; border-radius: 10mm; white-space: nowrap;
@@ -739,6 +902,7 @@ export function buildCertificateHTML(
   <div class="frame-outer"></div>
   <div class="frame-inner"></div>
   ${wmInner}
+  ${regNoRow}
   ${chipRow}
 
   <div class="content">
@@ -755,7 +919,13 @@ export function buildCertificateHTML(
     </div>
 
     <div class="body-block">
-      <div class="body-kicker">${isInternship ? "for successfully completing the internship program" : "for successfully completing the professional course"}</div>
+      <div class="body-kicker">${
+        isInternship
+          ? "for successfully completing the internship program"
+          : isQuiz
+            ? "for successfully completing the cyber security awareness assessment"
+            : "for successfully completing the professional course"
+      }</div>
       <h2 class="course">${courseTitle}</h2>
       <div class="issuer">${metaLine}</div>
       ${scoreLine}
@@ -768,7 +938,7 @@ export function buildCertificateHTML(
     <div class="sig">
       ${squiggleSvg(A.squiggle)}
       <div class="sig-name">${instructorName}</div>
-      <div class="sig-rule"><div class="sig-role">Course Instructor</div></div>
+      <div class="sig-rule"><div class="sig-role">${isInternship ? "Program Mentor" : isQuiz ? "Assessment Lead" : "Course Instructor"}</div></div>
     </div>
     <div class="sig">
       ${squiggleSvg(A.squiggle)}
@@ -786,6 +956,292 @@ export function buildCertificateHTML(
     <div class="vqr">${qrInner}</div>
     <div class="vcell">
       <div class="vlabel">Certificate ID</div>
+      <div class="vvalue">${certificateId}</div>
+    </div>
+    <div class="vsep"></div>
+    <div class="vcell" style="flex: 1 1 0;">
+      <div class="vlabel">Verify at</div>
+      <div class="vvalue small">${verifyUrl}</div>
+    </div>
+    <div class="vsep"></div>
+    <div class="vcell">
+      <div class="vlabel">Date of issue</div>
+      <div class="vvalue">${issuedDate}</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>`
+}
+
+// ---------------------------------------------------------------------------
+// score card builder (A4 PORTRAIT companion document, phantom theme) -
+// same design DNA as the certificate: guilloché frame, HUD corners,
+// terminal readout, reg no top-left, classification chips top-right,
+// SHA-256 band + verification strip.
+// ---------------------------------------------------------------------------
+export function buildScoreCardHTML(
+  data: ScoreCardData,
+  opts: {
+    logoPngDataUrl: string | null
+    qrPngDataUrl: string | null
+    logoDotsSvg?: string | null
+  },
+): string {
+  const A = THEME_ASSETS.phantom
+
+  const recipient = escapeHtml(String(data.recipient ?? "GuardianX Student"))
+  const title = escapeHtml(String(data.title ?? "Cyber Security Foundation"))
+  const level = escapeHtml(String(data.level ?? "")).trim()
+  const certificateId = escapeHtml(String(data.credentialId ?? ""))
+  const verifyUrl = escapeHtml(String(data.verifyUrl ?? ""))
+  const issuedDate = fmtLongDate(data.issuedAt)
+  const pct = Math.max(0, Math.min(100, Math.round(data.percentage || 0)))
+  const dist = distinction(pct)
+
+  const logoInner = opts.logoPngDataUrl
+    ? `<img src="${opts.logoPngDataUrl}" alt="GuardianX logo" onerror="this.style.display='none'" />`
+    : logoFallbackSvg(A.gold)
+  const qrInner = opts.qrPngDataUrl
+    ? `<img src="${opts.qrPngDataUrl}" alt="Verification QR code" onerror="this.style.display='none'" />`
+    : qrPlaceholderSvg()
+
+  const wmInner = opts.logoDotsSvg
+    ? `<div class="wm wm-dots">${opts.logoDotsSvg}</div>`
+    : `<div class="wm">${shieldWatermarkSvg(A.wm)}</div>`
+
+  const metaParts: string[] = [title]
+  if (level) metaParts.push(`${level} Level`)
+  metaParts.push(`Issued ${issuedDate}`)
+  const metaLine = metaParts.join(" &nbsp;·&nbsp; ")
+
+  const domains = Array.isArray(data.domains) ? data.domains.filter((d) => d && d.total > 0) : []
+  const sorted = [...domains].sort((a, b) => b.pct - a.pct)
+  const strongest = sorted[0]
+  const weakest = sorted.length > 1 ? sorted[sorted.length - 1] : null
+
+  const tier = (p: number): { label: string; color: string } => {
+    if (p >= 90) return { label: "Expert", color: "#22C55E" }
+    if (p >= 75) return { label: "Strong", color: "#F59E0B" }
+    if (p >= 50) return { label: "Developing", color: "rgba(250, 247, 245, 0.78)" }
+    return { label: "Needs work", color: "#E11D2E" }
+  }
+
+  const domainRows = domains
+    .map((d) => {
+      const t = tier(d.pct)
+      return `<div class="drow">
+  <div class="drow-top">
+    <span class="dname">${escapeHtml(d.name)}</span>
+    <span class="dresult"><i style="color:${t.color}">${t.label}</i> &nbsp;${d.correct} / ${d.total} &nbsp;·&nbsp; ${d.pct}%</span>
+  </div>
+  <div class="dbar"><div class="dfill" style="width:${d.pct}%"></div></div>
+</div>`
+    })
+    .join("\n")
+
+  const highlights =
+    strongest && weakest
+      ? `<div class="hl-row">
+  <div class="hl hl-strong"><div class="hl-label">strongest domain</div><div class="hl-name">${escapeHtml(strongest.name)}</div><div class="hl-sub">${strongest.pct}% &nbsp;·&nbsp; ${strongest.correct} / ${strongest.total}</div></div>
+  <div class="hl hl-focus"><div class="hl-label">focus area</div><div class="hl-name">${escapeHtml(weakest.name)}</div><div class="hl-sub">${weakest.pct}% &nbsp;·&nbsp; ${weakest.correct} / ${weakest.total}</div></div>
+</div>`
+      : ""
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>GuardianX Score Card - ${recipient}</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  @page { size: A4 portrait; margin: 0; }
+  html, body { width: 100%; }
+  body {
+    background: #05030c; display: flex; justify-content: center; padding: 18px 0;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  @media print { body { background: #fff; padding: 0; display: block; } }
+
+  .cert {
+    position: relative; width: ${CARD_W}mm; height: ${CARD_H}mm; overflow: hidden;
+    color: #FAF7F5;
+    font-family: Georgia, 'Times New Roman', serif;
+    background:
+      radial-gradient(110mm 90mm at 88% -6%, rgba(225, 29, 46, 0.17), transparent 62%),
+      radial-gradient(100mm 85mm at -8% 38%, rgba(245, 158, 11, 0.08), transparent 58%),
+      radial-gradient(110mm 95mm at 55% 112%, rgba(255, 90, 78, 0.11), transparent 58%),
+      linear-gradient(180deg, #0A0507 0%, #170709 100%);
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  @media screen { .cert { border-radius: 6px; box-shadow: 0 30px 90px rgba(0, 0, 0, 0.55); } }
+  .grain {
+    position: absolute; inset: 0; opacity: 0.16; pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='0.06'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 120px 120px;
+  }
+  .frame-outer { position: absolute; inset: 8mm; border: 1.2pt solid ${A.gold}; border-radius: 2.5mm; pointer-events: none; }
+  .frame-inner { position: absolute; inset: 11mm; border: 0.6pt solid rgba(225, 29, 46, 0.55); border-radius: 1.5mm; pointer-events: none; }
+  svg.rosette { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  .wm { position: absolute; left: 50%; top: 52%; width: 110mm; height: 110mm; transform: translate(-50%, -50%); opacity: 0.15; pointer-events: none; }
+  .scanlines {
+    position: absolute; inset: 0; pointer-events: none; z-index: 2;
+    background: repeating-linear-gradient(to bottom, transparent 0 2px, rgba(0,0,0,0.20) 2px 3px);
+    opacity: 0.4;
+  }
+  .hud { position: absolute; inset: 14mm; pointer-events: none; z-index: 3; }
+  .hud i { position: absolute; width: 8mm; height: 8mm; border: 0 solid ${A.gold}; opacity: 0.9; }
+  .hud i:nth-child(1) { top: 0; left: 0; border-top-width: 2.5pt; border-left-width: 2.5pt; }
+  .hud i:nth-child(2) { top: 0; right: 0; border-top-width: 2.5pt; border-right-width: 2.5pt; }
+  .hud i:nth-child(3) { bottom: 0; left: 0; border-bottom-width: 2.5pt; border-left-width: 2.5pt; }
+  .hud i:nth-child(4) { bottom: 0; right: 0; border-bottom-width: 2.5pt; border-right-width: 2.5pt; }
+  .regno {
+    position: absolute; top: 16.5mm; left: 27mm;
+    font-family: ${MONO_STACK}; font-size: 5.6pt; letter-spacing: 0.2em; text-transform: uppercase;
+    color: color-mix(in srgb, ${A.gold} 52%, rgba(250, 247, 245, 0.62)); white-space: nowrap; pointer-events: none;
+  }
+  .chiprow {
+    /* portrait page: stack the chips so they never reach the centered
+       logo ring (the landscape certificate keeps its horizontal row) */
+    display: flex; flex-direction: column; align-items: flex-end; gap: 1.6mm;
+    position: absolute; top: 16mm; right: 27mm;
+  }
+  .chipx {
+    font-family: ${MONO_STACK}; font-size: 5.4pt; letter-spacing: 0.2em; text-transform: uppercase;
+    padding: 1.1mm 2.6mm; border-radius: 10mm; white-space: nowrap;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .chipx.green { color: #86EFAC; border: 0.5pt solid rgba(34, 197, 94, 0.55); background: rgba(34, 197, 94, 0.10); }
+  .chipx.red { color: #FCA5A5; border: 0.5pt solid rgba(225, 29, 46, 0.55); background: rgba(225, 29, 46, 0.12); }
+
+  .content { position: absolute; inset: 14mm 18mm 0; display: flex; flex-direction: column; align-items: center; text-align: center; }
+  .logo-ring {
+    width: 16mm; height: 16mm; border-radius: 50%;
+    border: 0.8pt solid ${A.gold}; background: rgba(255, 255, 255, 0.05);
+    box-shadow: 0 0 0 1.4mm rgba(225, 29, 46, 0.14);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .logo-ring img { width: 12mm; height: 12mm; object-fit: contain; border-radius: 50%; filter: brightness(0) invert(1); }
+  .logo-ring svg { width: 9.5mm; height: 9.5mm; }
+  .brand { font-family: ${MONO_STACK}; font-size: 7.5pt; letter-spacing: 0.34em; color: rgba(250, 247, 245, 0.62); margin-top: 2.4mm; }
+  .terminal {
+    font-family: ${MONO_STACK}; font-size: 6.4pt; letter-spacing: 0.14em;
+    color: rgba(250, 247, 245, 0.62); margin-top: 1.8mm; white-space: nowrap; overflow: hidden;
+    max-width: 150mm;
+  }
+  .terminal b { color: ${A.gold}; font-weight: 700; }
+  .terminal s { color: #22C55E; text-decoration: none; }
+  .kicker { font-family: ${MONO_STACK}; font-size: 9.5pt; letter-spacing: 0.5em; padding-left: 0.5em; color: #F59E0B; text-transform: uppercase; margin-top: 3.4mm; }
+  .wordmark { font-size: 26pt; font-weight: 700; letter-spacing: 0.4em; padding-left: 0.4em; color: ${A.gold}; line-height: 1.05; margin-top: 1.4mm; }
+
+  .presented { margin-top: 4.6mm; }
+  .presented-label { font-family: ${MONO_STACK}; font-size: 7pt; letter-spacing: 0.32em; color: rgba(250, 247, 245, 0.62); }
+  .recipient {
+    font-family: ${SCRIPT_STACK}; font-style: italic; font-weight: 600;
+    font-size: 10.5mm; line-height: 1.2; color: #FAF7F5;
+    margin-top: 2mm; max-width: 160mm;
+  }
+  .grad-rule {
+    width: 52%; height: 0.8mm; border-radius: 1mm; margin: 2.8mm auto 0;
+    background: linear-gradient(90deg, #E11D2E, #F59E0B, #FF5A4E); opacity: 0.9;
+  }
+  .meta-line { font-family: ${MONO_STACK}; font-size: 7pt; letter-spacing: 0.18em; color: rgba(250, 247, 245, 0.62); text-transform: uppercase; margin-top: 3mm; white-space: nowrap; overflow: hidden; max-width: 160mm; }
+
+  .score-band { margin-top: 5mm; }
+  .score-big { font-family: ${MONO_STACK}; font-size: 27pt; font-weight: 700; letter-spacing: 0.08em; color: #F59E0B; line-height: 1; }
+  .score-sub { font-family: ${MONO_STACK}; font-size: 7.5pt; letter-spacing: 0.22em; color: #F59E0B; text-transform: uppercase; margin-top: 2.2mm; }
+
+  .domains { width: 100%; margin-top: 6.5mm; text-align: left; }
+  .domains-kicker { font-family: ${MONO_STACK}; font-size: 7pt; letter-spacing: 0.3em; color: rgba(250, 247, 245, 0.62); text-transform: uppercase; text-align: center; margin-bottom: 3.4mm; }
+  .drow { margin-bottom: 3.4mm; }
+  .drow-top { display: flex; align-items: baseline; justify-content: space-between; gap: 4mm; margin-bottom: 1.2mm; }
+  .dname { font-family: ${MONO_STACK}; font-size: 7pt; letter-spacing: 0.16em; text-transform: uppercase; color: #FAF7F5; }
+  .dresult { font-family: ${MONO_STACK}; font-size: 6.4pt; letter-spacing: 0.1em; color: rgba(250, 247, 245, 0.62); white-space: nowrap; }
+  .dresult i { font-style: normal; }
+  .dbar { height: 2.2mm; border-radius: 2mm; background: rgba(255, 255, 255, 0.08); overflow: hidden; }
+  .dfill { height: 100%; border-radius: 2mm; background: linear-gradient(90deg, #E11D2E, #F59E0B); }
+
+  .hl-row { width: 100%; display: flex; gap: 5mm; margin-top: 2mm; }
+  .hl { flex: 1; border-radius: 2.5mm; padding: 3mm 4mm; text-align: left; }
+  .hl-strong { border: 0.5pt solid rgba(34, 197, 94, 0.4); background: rgba(34, 197, 94, 0.07); }
+  .hl-focus { border: 0.5pt solid rgba(225, 29, 46, 0.45); background: rgba(225, 29, 46, 0.08); }
+  .hl-label { font-family: ${MONO_STACK}; font-size: 5.8pt; letter-spacing: 0.24em; text-transform: uppercase; color: rgba(250, 247, 245, 0.62); margin-bottom: 1.2mm; }
+  .hl-name { font-size: 11pt; font-weight: 700; color: #FAF7F5; }
+  .hl-sub { font-family: ${MONO_STACK}; font-size: 6.4pt; letter-spacing: 0.1em; color: rgba(250, 247, 245, 0.62); margin-top: 1mm; }
+
+  .hexband {
+    position: absolute; left: 20mm; right: 20mm; bottom: 33.5mm;
+    display: flex; align-items: center; justify-content: center; gap: 3mm;
+    pointer-events: none;
+  }
+  .hexband::before, .hexband::after { content: ""; flex: 1; height: 0.4pt; background: rgba(255, 255, 255, 0.14); }
+  .hexline {
+    font-family: ${MONO_STACK}; font-size: 5.6pt; letter-spacing: 0.16em;
+    color: color-mix(in srgb, ${A.gold} 46%, transparent);
+    white-space: nowrap; overflow: hidden;
+  }
+
+  .vstrip {
+    position: absolute; left: 14mm; right: 14mm; bottom: 14mm; height: 16mm;
+    border-radius: 3mm; background: rgba(8, 4, 5, 0.78); border: 0.5pt solid rgba(255, 255, 255, 0.14);
+    display: flex; align-items: center; gap: 5mm; padding: 0 6mm;
+  }
+  .vqr { width: 12mm; height: 12mm; border-radius: 1.6mm; background: #fff; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; }
+  .vqr img { width: 10.8mm; height: 10.8mm; display: block; }
+  .vcell { display: flex; flex-direction: column; gap: 1.1mm; min-width: 0; }
+  .vlabel { font-family: ${MONO_STACK}; font-size: 5.8pt; letter-spacing: 0.24em; color: rgba(250, 247, 245, 0.62); text-transform: uppercase; white-space: nowrap; }
+  .vvalue { font-family: ${MONO_STACK}; font-size: 7.6pt; color: #FAF7F5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .vvalue.small { font-size: 6.6pt; }
+  .vsep { width: 0.4pt; align-self: stretch; background: rgba(255, 255, 255, 0.14); margin: 1.5mm 0; flex-shrink: 0; }
+</style>
+</head>
+<body>
+<div class="cert">
+  <div class="grain"></div>
+  ${rosetteSvg(CARD_W, CARD_H, A.gold, A.accent)}
+  <div class="frame-outer"></div>
+  <div class="frame-inner"></div>
+  ${wmInner}
+  <div class="regno">reg. no. ${INSTITUTE_REG_NO}</div>
+  <div class="chiprow"><span class="chipx green">✓ verified credential</span><span class="chipx red">gx blackops clearance</span></div>
+
+  <div class="content">
+    <div class="logo-ring">${logoInner}</div>
+    <div class="brand">GUARDIANX ACADEMY &nbsp;·&nbsp; CYBER DEFENSE INSTITUTE</div>
+    <div class="terminal"><b>root@gx:~$</b> guardianx scorecard --recipient &quot;${recipient}&quot; --score ${pct}% <s>--verified ✓</s></div>
+    <div class="kicker">&middot; performance report &middot;</div>
+    <h1 class="wordmark">SCORE CARD</h1>
+
+    <div class="presented">
+      <div class="presented-label">CANDIDATE</div>
+      <div class="recipient">${recipient}</div>
+      <div class="grad-rule"></div>
+    </div>
+
+    <div class="meta-line">${metaLine}</div>
+
+    <div class="score-band">
+      <div class="score-big">${pct}%</div>
+      <div class="score-sub">final score &nbsp;·&nbsp; ${Math.max(0, Math.round(data.score || 0))} / ${Math.max(0, Math.round(data.total || 0))} correct${dist ? ` &nbsp;·&nbsp; ${dist}` : ""}</div>
+    </div>
+
+    ${domains.length > 0 ? `<div class="domains">
+      <div class="domains-kicker">domain breakdown</div>
+      ${domainRows}
+    </div>` : ""}
+
+    ${highlights}
+  </div>
+
+  <div class="hexband"><span class="hexline">SHA-256 ${hexFingerprint(String(data.credentialId ?? ""), 22)}</span></div>
+
+  <div class="scanlines"></div>
+  <div class="hud"><i></i><i></i><i></i><i></i></div>
+
+  <div class="vstrip">
+    <div class="vqr">${qrInner}</div>
+    <div class="vcell">
+      <div class="vlabel">Credential ID</div>
       <div class="vvalue">${certificateId}</div>
     </div>
     <div class="vsep"></div>
