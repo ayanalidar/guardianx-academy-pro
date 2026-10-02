@@ -57,7 +57,7 @@ import {
   ListChecks, Building2, Sparkles, Target, Wifi, Rocket, Mail, Phone,
   Link2, Radar, Crosshair, ShieldCheck, Scale, Code2, CloudCog,
   BrainCircuit, Users2, Star, MousePointerClick, MessagesSquare, Trophy,
-  Quote,
+  Quote, FlaskConical,
 } from "lucide-react"
 
 // ============================================================
@@ -451,6 +451,26 @@ export function HiringView() {
             <MarqueeRow items={MARQUEE_A} duration={52} />
             <MarqueeRow items={MARQUEE_B} duration={64} reverse />
           </motion.div>
+        </div>
+      </section>
+
+      {/* cross-link: internships program (Hiring → Internships) */}
+      <section className="px-4 sm:px-6 lg:px-8 pb-2">
+        <div className="mx-auto max-w-7xl">
+          <button
+            type="button"
+            onClick={() => navigate({ name: "internships" })}
+            className="group flex w-full items-center justify-center gap-2.5 rounded-2xl border border-violet-500/25 bg-violet-500/[0.06] backdrop-blur px-5 py-3 text-sm transition-colors hover:border-violet-500/45"
+          >
+            <FlaskConical className="h-4 w-4 text-violet-300" />
+            <span className="text-foreground/85">
+              New: college internship tracks with verifiable certificates
+            </span>
+            <span className="inline-flex items-center gap-1 text-[12px] font-medium text-violet-300">
+              Explore Internships
+              <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" />
+            </span>
+          </button>
         </div>
       </section>
 

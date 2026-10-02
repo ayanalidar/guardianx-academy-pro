@@ -236,7 +236,7 @@ const MEGA_MENU_GROUPS: MegaMenuGroup[] = [
     ],
   },
   {
-    // Hiring dropdown: open roles (job board) + the placements wall.
+    // Hiring dropdown: open roles (job board) + internships + placements wall.
     id: "hiring",
     label: "Hiring",
     items: [
@@ -245,6 +245,12 @@ const MEGA_MENU_GROUPS: MegaMenuGroup[] = [
         title: "Jobs",
         description: "Openings at GuardianX & partner companies",
         view: { name: "hiring" },
+      },
+      {
+        icon: FlaskConical,
+        title: "Internships",
+        description: "College internships with verifiable certificates",
+        view: { name: "internships" },
       },
       {
         icon: Trophy,
