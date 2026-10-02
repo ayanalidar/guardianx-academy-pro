@@ -11,6 +11,7 @@ export type View =
   | { name: "home" }
   | { name: "contact" }
   | { name: "login" }
+  | { name: "internships" }
   | { name: "institutions" }
   | { name: "institutions-schools" }
   | { name: "institutions-colleges" }
@@ -112,6 +113,7 @@ export type View =
   | { name: "hiring" }
   | { name: "placements" }
   | { name: "admin-hiring" }
+  | { name: "admin-internships" }
 
 interface AppState {
   view: View

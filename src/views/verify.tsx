@@ -14,7 +14,7 @@ import {
   Check, X, Calendar, Hash, Award, TrendingUp, Lock,
   User, BookOpen, Sparkles, Fingerprint, AlertTriangle,
   Search, Copy, BadgeCheck, FileCheck2, GraduationCap,
-  ScanLine, Clock, ExternalLink,
+  ScanLine, Clock, ExternalLink, Briefcase,
 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -25,14 +25,26 @@ type VerifiedCredential = {
   certificationName: string
   certificationSlug?: string
   certificationLevel?: string
-  score: number
+  score: number | null
   totalQuestions?: number
   percentage?: number
+  grade?: string | null
   issueDate: string
   expiryDate?: string | null
   status: string
   skillsAssessed?: string[]
   examType?: string
+  internshipDetails?: {
+    role: string
+    mentorName?: string | null
+    company?: string | null
+    collegeName?: string | null
+    collegeCity?: string | null
+    durationWeeks?: number | null
+    startDate?: string | null
+    endDate?: string | null
+    completed?: boolean
+  } | null
   verificationHash?: string
   verificationUrl?: string | null
 }
@@ -342,19 +354,22 @@ function VerifiedCard({
   onShare: () => void
 }) {
   // For quiz certs, prefer percentage. For guardian certs, score is already a percentage.
-  const displayPct = cred.percentage != null ? cred.percentage : cred.score
+  // Internship certificates carry a letter grade instead of a numeric score.
+  const isInternship = cred.examType === "internship"
+  const displayPct = cred.percentage != null ? cred.percentage : cred.score ?? 0
   const pct = Math.max(0, Math.min(100, displayPct))
   const isQuiz = cred.examType === "online-quiz" || cred.credentialId.startsWith("GX-QUIZ-")
 
-  // Score band color
-  const band =
-    pct >= 90
-      ? { label: "DISTINCTION", color: "text-emerald-300", ring: "#10b981" }
-      : pct >= 75
-      ? { label: "MERIT", color: "text-cyan-300", ring: "#22d3ee" }
-      : pct >= 60
-      ? { label: "PASS", color: "text-violet-300", ring: "#a78bfa" }
-      : { label: "PASS", color: "text-amber-300", ring: "#fbbf24" }
+  // Score band color (internships show their grade instead)
+  const band = isInternship
+    ? { label: (cred.grade ?? "COMPLETED").toUpperCase(), color: "text-emerald-300", ring: "#10b981" }
+    : pct >= 90
+    ? { label: "DISTINCTION", color: "text-emerald-300", ring: "#10b981" }
+    : pct >= 75
+    ? { label: "MERIT", color: "text-cyan-300", ring: "#22d3ee" }
+    : pct >= 60
+    ? { label: "PASS", color: "text-violet-300", ring: "#a78bfa" }
+    : { label: "PASS", color: "text-amber-300", ring: "#fbbf24" }
 
   return (
     <motion.div
@@ -445,7 +460,9 @@ function VerifiedCard({
               value={
                 isQuiz && cred.totalQuestions
                   ? `${cred.score} / ${cred.totalQuestions}`
-                  : `${cred.score}%`
+                  : isInternship
+                  ? (cred.grade ?? "Internship")
+                  : `${cred.score ?? 0}%`
               }
               accent="text-emerald-300"
             />
@@ -467,6 +484,46 @@ function VerifiedCard({
             />
           </div>
         </div>
+
+        {/* Internship details (internship certificates) */}
+        {cred.internshipDetails && (
+          <div className="mb-5 rounded-xl border border-violet-500/20 bg-violet-500/5 px-4 py-3.5">
+            <p className="text-[10px] font-mono text-muted-foreground tracking-[0.25em] mb-2.5 flex items-center gap-1.5">
+              <Briefcase className="h-3 w-3" /> INTERNSHIP DETAILS
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5 text-sm">
+              <p className="text-muted-foreground">
+                Role: <span className="text-foreground">{cred.internshipDetails.role}</span>
+              </p>
+              {cred.internshipDetails.collegeName && (
+                <p className="text-muted-foreground">
+                  College: <span className="text-foreground">{cred.internshipDetails.collegeName}</span>
+                  {cred.internshipDetails.collegeCity ? `, ${cred.internshipDetails.collegeCity}` : ""}
+                </p>
+              )}
+              {cred.internshipDetails.company && (
+                <p className="text-muted-foreground">
+                  Hosted by: <span className="text-foreground">{cred.internshipDetails.company}</span>
+                </p>
+              )}
+              {cred.internshipDetails.mentorName && (
+                <p className="text-muted-foreground">
+                  Mentor: <span className="text-foreground">{cred.internshipDetails.mentorName}</span>
+                </p>
+              )}
+              {cred.internshipDetails.durationWeeks != null && (
+                <p className="text-muted-foreground">
+                  Duration: <span className="text-foreground">{cred.internshipDetails.durationWeeks} weeks</span>
+                </p>
+              )}
+              {cred.internshipDetails.endDate && (
+                <p className="text-muted-foreground">
+                  Completed: <span className="text-foreground">{formatDate(cred.internshipDetails.endDate)}</span>
+                </p>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Credential ID - full width, monospace */}
         <div className="rounded-xl border border-violet-500/20 bg-violet-500/5 px-4 py-3 mb-5">

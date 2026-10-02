@@ -129,7 +129,7 @@ const KNOWN_FLAT_VIEWS = new Set<View["name"]>([
   "parent-portal", "course-studio", "cms", "exams", "credentials",
   "invoice-generator", "proposal-maker", "support", "instructors", "events",
   "blog", "affiliate", "pricing", "batches", "contact", "learning-paths",
-  "hiring", "placements", "admin-hiring",
+  "hiring", "placements", "internships", "admin-hiring",
   "admin-lead-crm", "admin-batch-hub", "admin-batch-calendar", "admin-student-progress",
   "admin-revenue", "admin-cert-bulk", "admin-email-campaign",
   "admin-instructor-assignment", "admin-audit-log", "admin-platform-health",
@@ -334,6 +334,7 @@ export const PUBLIC_VIEWS = new Set<View["name"]>([
   "legal",
   "hiring",
   "placements",
+  "internships",
 ])
 
 /** Human-readable titles for bridge-route metadata (SEO). */
@@ -361,6 +362,7 @@ const VIEW_TITLES: Partial<Record<View["name"], string>> = {
   pricing: "Pricing & Subscription Plans",
   hiring: "Hiring · Cybersecurity Jobs Worldwide",
   placements: "Placements · Student Outcomes Wall",
+  internships: "Internships · Cyber Security Internship Program",
   "admin-hiring": "Hiring & Job Openings",
   contact: "Contact Us",
   certificates: "My Certificates",

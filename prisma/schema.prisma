@@ -1043,6 +1043,74 @@ model Placement {
   @@index([status, featured, order])
 }
 
+// --- 5b. Internship Program (public /internships page) ---
+// Follows the Placement house pattern: plain string ids (no FK
+// relations) so the tables can self-heal on production via
+// src/lib/internships-bootstrap.ts (Vercel never runs db push).
+// collegeId may reference a School row but is intentionally a
+// plain string - college identity is denormalized (collegeName,
+// collegeCity, collegeLogo) so orphaned rows still render.
+model Internship {
+  id            String   @id @default(cuid())
+  collegeId     String?  // optional School.id reference (plain, no FK)
+  collegeName   String   // display name, e.g. "Ronald Institute of Technology"
+  collegeCity   String?  // e.g. "Bengaluru"
+  collegeLogo   String?  // logo URL (gradient-initials fallback)
+  title         String   // e.g. "Cyber Security Internship - Summer Cohort"
+  company       String   @default("GuardianX Academy") // hosting/partner company
+  domain        String   @default("Cyber Security") // VAPT | SOC | GRC | Cloud | Forensics | ...
+  mode          String   @default("remote") // remote | onsite | hybrid
+  durationWeeks Int      @default(8)
+  stipend       String?  // display text, e.g. "Performance-based stipend"
+  seats         Int      @default(10)
+  status        String   @default("upcoming") // upcoming | ongoing | completed
+  startsAt      DateTime?
+  endsAt        DateTime?
+  description   String?  // rich description for the expanded card
+  skills        String   @default("[]") // JSON array of skill strings
+  featured      Boolean  @default(false) // pinned first
+  published     Boolean  @default(true) // false = admin draft
+  isSample      Boolean  @default(false) // clearly-marked sample row
+  order         Int      @default(0) // manual sort (lower first)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([published, featured, order])
+  @@index([collegeName])
+}
+
+model InternshipRecord {
+  id            String   @id @default(cuid())
+  internshipId  String   // plain reference to Internship.id (no FK)
+  studentId     String?  // optional User.id reference (plain, no FK)
+  studentName   String
+  photoUrl      String?  // optional; gradient-initials fallback
+  studentEmail  String?  // internal contact (never rendered publicly)
+  role          String   // e.g. "VAPT Intern"
+  mentorName    String?
+  startDate     DateTime?
+  endDate       DateTime?
+  projects      String   @default("[]") // JSON array of {title, description}
+  skills        String   @default("[]") // JSON array of skill strings
+  tools         String   @default("[]") // JSON array of tool names
+  testimonial   String?  // one-liner quote for the card
+  grade         String?  // e.g. "Outstanding" | "A+"
+  status        String   @default("completed") // ongoing | completed
+  // --- certificate (issued via admin; single source of truth) ---
+  certificateId      String  @unique // e.g. GXI-2026-A1B2C3
+  verificationHash   String  // HMAC-SHA256 via lib/credentials.ts
+  certificateIssuedAt DateTime @default(now())
+  // --- showcase control ---
+  showPublicly  Boolean  @default(false) // consent gate: only showcased records render publicly
+  isSample      Boolean  @default(false)
+  sortOrder     Int      @default(0)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([internshipId])
+  @@index([showPublicly, isSample, sortOrder])
+}
+
 // --- 6. Mock Interview ---
 model MockInterview {
   id          String   @id @default(cuid())

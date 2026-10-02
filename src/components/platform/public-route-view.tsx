@@ -85,6 +85,7 @@ const CertLandingView = dynamic(() => import("@/views/cert-landing").then(m => (
 const PricingView = dynamic(() => import("@/views/pricing").then(m => ({ default: m.PricingView })), { ssr: true, loading: ViewLoading })
 const HiringView = dynamic(() => import("@/views/hiring").then(m => ({ default: m.HiringView })), { ssr: true, loading: ViewLoading })
 const PlacementsView = dynamic(() => import("@/views/placements").then(m => ({ default: m.PlacementsView })), { ssr: true, loading: ViewLoading })
+const InternshipsView = dynamic(() => import("@/views/internships").then(m => ({ default: m.InternshipsView })), { ssr: true, loading: ViewLoading })
 const CourseDetailView = dynamic(() => import("@/views/course-detail").then(m => ({ default: m.CourseDetailView })), { ssr: true, loading: ViewLoading })
 
 function renderView(view: View): React.ReactNode {
@@ -116,6 +117,7 @@ function renderView(view: View): React.ReactNode {
     case "pricing": return <PricingView />
     case "hiring": return <HiringView />
     case "placements": return <PlacementsView />
+    case "internships": return <InternshipsView />
     case "course": return <CourseDetailView />
     case "learning-paths": return <LearningPathsView />
     case "cyber-range": return <CyberRangeView />

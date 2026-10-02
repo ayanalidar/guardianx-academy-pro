@@ -131,6 +131,7 @@ export const PUBLIC_NAV: NavItem[] = [
   { label: "Instructors", icon: Users, view: { name: "instructors" } },
   { label: "Hiring", icon: Briefcase, view: { name: "hiring" } },
   { label: "Placements", icon: Trophy, view: { name: "placements" } },
+  { label: "Internships", icon: FlaskConical, view: { name: "internships" } },
   { label: "Contact", icon: MessageSquare, view: { name: "contact" } },
   { label: "Verify Certificate", icon: ShieldCheck, view: { name: "verify" } },
 ]

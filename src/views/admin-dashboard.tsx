@@ -518,6 +518,7 @@ const QUICK_ACTIONS: { label: string; description: string; icon: any; view: stri
   { label: "Lead CRM", description: "Pipeline of inbound learner leads", icon: UserCog, view: "admin-lead-crm", tone: "text-violet-300 bg-violet-500/10" },
   { label: "Batch Leads Hub", description: "Per-batch screens with captured leads", icon: UsersRound, view: "admin-batch-hub", tone: "text-sky-300 bg-sky-500/10" },
   { label: "Hiring & Jobs", description: "Post openings to the public Hiring tab", icon: Briefcase, view: "admin-hiring", tone: "text-emerald-300 bg-emerald-500/10" },
+  { label: "Internships", description: "College programs, students & certificates", icon: FlaskConical, view: "admin-internships", tone: "text-violet-300 bg-violet-500/10" },
   { label: "Bulk Certificates", description: "Issue certificates in bulk", icon: Award, view: "admin-cert-bulk", tone: "text-emerald-300 bg-emerald-500/10" },
   { label: "Student Progress", description: "Cohort-level progress reports", icon: GraduationCap, view: "admin-student-progress", tone: "text-cyan-300 bg-cyan-500/10" },
   { label: "Audit Logs", description: "Every admin action, tracked", icon: ShieldAlert, view: "admin-audit-log", tone: "text-rose-300 bg-rose-500/10" },

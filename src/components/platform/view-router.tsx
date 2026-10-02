@@ -72,6 +72,7 @@ const BatchHubView = dynamic(() => import("@/views/admin-batch-hub").then(m => (
 const HiringView = dynamic(() => import("@/views/hiring").then(m => ({ default: m.HiringView })), { ssr: false, loading: ViewLoading })
 const PlacementsView = dynamic(() => import("@/views/placements").then(m => ({ default: m.PlacementsView })), { ssr: false, loading: ViewLoading })
 const AdminHiringView = dynamic(() => import("@/views/admin-hiring").then(m => ({ default: m.AdminHiringView })), { ssr: false, loading: ViewLoading })
+const AdminInternshipsView = dynamic(() => import("@/views/admin-internships").then(m => ({ default: m.AdminInternshipsView })), { ssr: false, loading: ViewLoading })
 const BatchCalendarView = dynamic(() => import("@/views/admin-batch-calendar").then(m => ({ default: m.BatchCalendarView })), { ssr: false, loading: ViewLoading })
 const StudentProgressView = dynamic(() => import("@/views/admin-student-progress").then(m => ({ default: m.StudentProgressView })), { ssr: false, loading: ViewLoading })
 const RevenueAnalyticsView = dynamic(() => import("@/views/admin-revenue").then(m => ({ default: m.RevenueAnalyticsView })), { ssr: false, loading: ViewLoading })
@@ -180,6 +181,7 @@ export function ViewRouter() {
       {view.name === "hiring" && <HiringView />}
       {view.name === "placements" && <PlacementsView />}
       {view.name === "admin-hiring" && <RoleGate allow={ROLES_ADMIN} area="Hiring & Jobs"><AdminHiringView /></RoleGate>}
+      {view.name === "admin-internships" && <RoleGate allow={ROLES_ADMIN} area="Internships"><AdminInternshipsView /></RoleGate>}
       {view.name === "admin-batch-calendar" && <RoleGate allow={ROLES_INSTRUCTOR} area="Batch Calendar"><BatchCalendarView /></RoleGate>}
       {view.name === "admin-student-progress" && <RoleGate allow={ROLES_ADMIN} area="Student Progress"><StudentProgressView /></RoleGate>}
       {view.name === "admin-revenue" && <RoleGate allow={ROLES_ADMIN} area="Revenue Analytics"><RevenueAnalyticsView /></RoleGate>}

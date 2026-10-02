@@ -124,6 +124,65 @@ export async function GET(req: Request, { params }: { params: Promise<{ credenti
       })
     }
 
+    // ── Check Internship certificate (GXI-… format, /internships page) ──
+    // Internship certificates verify with the same public flow. Only
+    // showcased records (showPublicly consent gate) are verifiable -
+    // everything else answers "not found" (anti-enumeration).
+    if (credentialId.startsWith("GXI-")) {
+      const iRecord = await db.internshipRecord.findUnique({
+        where: { certificateId: credentialId },
+      }).catch(() => null)
+
+      if (iRecord && iRecord.showPublicly) {
+        const internship = await db.internship.findUnique({
+          where: { id: iRecord.internshipId },
+          select: {
+            title: true, company: true, domain: true,
+            collegeName: true, collegeCity: true, durationWeeks: true,
+          },
+        })
+
+        let iSkills: string[] = []
+        try {
+          const parsed = JSON.parse(iRecord.skills)
+          if (Array.isArray(parsed)) iSkills = parsed.slice(0, 25)
+        } catch { /* keep empty */ }
+
+        return NextResponse.json({
+          valid: true,
+          credential: {
+            credentialId: iRecord.certificateId,
+            candidateName: iRecord.studentName,
+            certificationName: internship?.title ?? iRecord.role,
+            certificationSlug: "internship-program",
+            certificationLevel: internship?.domain ?? "Internship",
+            score: null, // internship certificates carry a letter grade
+            grade: iRecord.grade,
+            issueDate: iRecord.certificateIssuedAt,
+            expiryDate: null,
+            status: "valid",
+            skillsAssessed: iSkills,
+            examType: "internship",
+            // internship-specific extras for the verify view
+            internshipDetails: {
+              role: iRecord.role,
+              mentorName: iRecord.mentorName,
+              company: internship?.company ?? null,
+              collegeName: internship?.collegeName ?? null,
+              collegeCity: internship?.collegeCity ?? null,
+              durationWeeks: internship?.durationWeeks ?? null,
+              startDate: iRecord.startDate?.toISOString() ?? null,
+              endDate: iRecord.endDate?.toISOString() ?? null,
+              completed: iRecord.status === "completed",
+            },
+            verificationUrl: `/verify/${iRecord.certificateId}`,
+          },
+        })
+      }
+      // GXI- ids that miss (or are not showcased) fall through to not-found
+      return NextResponse.json({ valid: false, credential: null })
+    }
+
     // ── Not found in any table ──
     return NextResponse.json({ valid: false, credential: null })
   } catch (err) {

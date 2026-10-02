@@ -46,10 +46,71 @@ export async function GET(req: Request) {
   })
 
   if (!cert) {
-    return NextResponse.json(
-      { valid: false, error: `No certificate found with ID "${certificateId}".` },
-      { status: 404 }
+    // ---- Internship certificate fallback (GXI-* ids) ----
+    // Internship certificates live on InternshipRecord (public
+    // /internships page). They verify with the same keyed HMAC and
+    // return the SAME response shape the /verify view already
+    // renders, plus kind: "internship" + internship-specific fields.
+    const record = await db.internshipRecord.findUnique({
+      where: { certificateId },
+    }).catch(() => null)
+
+    if (!record || !record.showPublicly) {
+      return NextResponse.json(
+        { valid: false, error: `No certificate found with ID "${certificateId}".` },
+        { status: 404 }
+      )
+    }
+
+    const internship = await db.internship.findUnique({
+      where: { id: record.internshipId },
+      select: { title: true, company: true, domain: true, collegeName: true, collegeCity: true, durationWeeks: true },
+    })
+
+    const iHashValid = await verifyVerificationHash(
+      record.verificationHash,
+      record.certificateId,
+      record.id,
+      record.internshipId,
+      record.certificateIssuedAt
     )
+
+    let iSkills: string[] = []
+    try {
+      const parsed = JSON.parse(record.skills)
+      if (Array.isArray(parsed)) iSkills = parsed.slice(0, 25)
+    } catch { /* keep empty */ }
+
+    return NextResponse.json({
+      valid: true,
+      hashValid: iHashValid,
+      kind: "internship",
+      certificate: {
+        certificateId: record.certificateId,
+        issuedAt: record.certificateIssuedAt,
+        score: null, // internship certs carry a grade, not a percentage
+        studentName: record.studentName,
+        studentTitle: "Internship Program Graduate",
+        courseTitle: internship?.title ?? record.role,
+        courseShortName: internship?.domain ?? "Internship",
+        certBody: internship?.company ?? "GuardianX Academy",
+        instructorName: record.mentorName ?? "GuardianX Academy",
+        instructorTitle: record.mentorName ? "Internship Mentor" : "Program Director",
+        template: null,
+        // internship-specific extras (rendered when present)
+        grade: record.grade,
+        skillsAssessed: iSkills,
+        internshipDetails: {
+          role: record.role,
+          collegeName: internship?.collegeName ?? null,
+          collegeCity: internship?.collegeCity ?? null,
+          durationWeeks: internship?.durationWeeks ?? null,
+          startDate: record.startDate?.toISOString() ?? null,
+          endDate: record.endDate?.toISOString() ?? null,
+          status: record.status,
+        },
+      },
+    })
   }
 
   // Verify the tamper-evident hash (keyed HMAC; legacy unkeyed hashes still accepted)

@@ -128,6 +128,53 @@ const PAGE_H = 210
 // ---------------------------------------------------------------------------
 // main export - signature is backward compatible: the options bag is optional
 // ---------------------------------------------------------------------------
+async function openCertificatePrintWindow(
+  cert: any,
+  options: CertificatePdfOptions,
+  verifyUrl: string,
+) {
+  // undefined → auto-embed the real logo PNG; null → vector mark
+  const logoPngDataUrl =
+    options.logoPngDataUrl !== undefined
+      ? options.logoPngDataUrl
+      : await fetchLogoPngDataUrl()
+
+  // undefined → auto-generate in-browser; null → explicitly no QR
+  const qrPngDataUrl =
+    options.qrPngDataUrl !== undefined ? options.qrPngDataUrl : await buildQrPngDataUrl(verifyUrl)
+
+  const theme = options.theme ?? "phantom"
+
+  // phantom: static particle-logo watermark built from the real brand PNG
+  const logoDotsSvg =
+    theme === "phantom"
+      ? await buildLogoDotMatrixSvg({ step: 6, color: "#ff3b3b", opacity: 0.9 })
+      : null
+
+  const html = buildCertificateHTML(cert, {
+    theme,
+    logoPngDataUrl: logoPngDataUrl ?? null,
+    qrPngDataUrl: qrPngDataUrl ?? null,
+    verifyUrl,
+    logoDotsSvg,
+  })
+
+  const w = window.open("", "_blank", "width=1180,height=880")
+  if (!w) {
+    alert("Please allow pop-ups to download your certificate.")
+    return
+  }
+  w.document.write(html)
+  w.document.close()
+  // wait for data-URL images to decode, then trigger print
+  w.onload = () => {
+    setTimeout(() => {
+      w.focus()
+      w.print()
+    }, 500)
+  }
+}
+
 export async function downloadCertificatePDF(
   certificateId: string,
   options: CertificatePdfOptions = {},
@@ -143,48 +190,56 @@ export async function downloadCertificatePDF(
         ? `${window.location.origin}/verify/${cert.certificateId}`
         : `/verify/${cert.certificateId}`)
 
-    // undefined → auto-embed the real logo PNG; null → vector mark
-    const logoPngDataUrl =
-      options.logoPngDataUrl !== undefined
-        ? options.logoPngDataUrl
-        : await fetchLogoPngDataUrl()
-
-    // undefined → auto-generate in-browser; null → explicitly no QR
-    const qrPngDataUrl =
-      options.qrPngDataUrl !== undefined ? options.qrPngDataUrl : await buildQrPngDataUrl(verifyUrl)
-
-    const theme = options.theme ?? "phantom"
-
-    // phantom: static particle-logo watermark built from the real brand PNG
-    const logoDotsSvg =
-      theme === "phantom"
-        ? await buildLogoDotMatrixSvg({ step: 6, color: "#ff3b3b", opacity: 0.9 })
-        : null
-
-    const html = buildCertificateHTML(cert, {
-      theme,
-      logoPngDataUrl: logoPngDataUrl ?? null,
-      qrPngDataUrl: qrPngDataUrl ?? null,
-      verifyUrl,
-      logoDotsSvg,
-    })
-
-    const w = window.open("", "_blank", "width=1180,height=880")
-    if (!w) {
-      alert("Please allow pop-ups to download your certificate.")
-      return
-    }
-    w.document.write(html)
-    w.document.close()
-    // wait for data-URL images to decode, then trigger print
-    w.onload = () => {
-      setTimeout(() => {
-        w.focus()
-        w.print()
-      }, 500)
-    }
+    await openCertificatePrintWindow(cert, options, verifyUrl)
   } catch (e: any) {
     console.error("[cert-pdf]", e)
+    alert("Failed to generate certificate PDF: " + e.message)
+  }
+}
+
+/**
+ * Internship certificate variant - same Aurora Luxe document, fed from the
+ * PUBLIC /api/internships/certificate/[certificateId] endpoint (capability
+ * URL - shareable by design). score is always null; the letter grade (when
+ * present) renders on the score line instead.
+ */
+export async function downloadInternshipCertificatePDF(
+  certificateId: string,
+  options: CertificatePdfOptions = {},
+) {
+  try {
+    const data = await api<{ certificate: any }>(
+      `/api/internships/certificate/${encodeURIComponent(certificateId)}`
+    )
+    const c = data.certificate
+    if (!c) throw new Error("Certificate not found")
+
+    const verifyUrl =
+      options.verifyUrl ||
+      (typeof window !== "undefined" && window.location?.origin
+        ? `${window.location.origin}/verify/${c.certificateId}`
+        : `/verify/${c.certificateId}`)
+
+    // Map the internship certificate onto the shape buildCertificateHTML
+    // expects (user.name / course.title / course.certBody / instructor...).
+    const synthetic = {
+      certificateId: c.certificateId,
+      issuedAt: c.issuedAt,
+      score: null,
+      grade: c.grade ?? null,
+      user: { name: c.studentName },
+      course: {
+        title: c.internship?.title ?? c.role ?? "Internship Program",
+        certBody: c.internship?.company ?? "GuardianX Academy",
+        category: c.internship?.domain ?? "Internship",
+        level: c.internship?.durationWeeks ? `${c.internship.durationWeeks}-Week` : "",
+        instructor: { name: c.mentorName || "GuardianX Academy" },
+      },
+    }
+
+    await openCertificatePrintWindow(synthetic, options, verifyUrl)
+  } catch (e: any) {
+    console.error("[internship-cert-pdf]", e)
     alert("Failed to generate certificate PDF: " + e.message)
   }
 }
@@ -418,6 +473,12 @@ export function buildCertificateHTML(
   const issuedDate = fmtLongDate(cert.issuedAt)
   const score = typeof cert.score === "number" ? Math.round(cert.score) : null
   const dist = score !== null ? distinction(score) : ""
+  // Internship certificates carry a letter grade instead of a numeric score.
+  const gradeText =
+    score === null && typeof cert.grade === "string" && cert.grade.trim()
+      ? escapeHtml(cert.grade.trim())
+      : null
+  const isInternship = cert.isInternship === true || gradeText !== null
   const verifyUrl = escapeHtml(opts.verifyUrl)
 
   const metaParts: string[] = []
@@ -436,6 +497,8 @@ export function buildCertificateHTML(
   const scoreLine =
     score !== null
       ? `<div class="score-line">final score ${score}%${dist ? ` &nbsp;·&nbsp; ${dist}` : ""}</div>`
+      : gradeText
+      ? `<div class="score-line">awarded ${gradeText} &nbsp;·&nbsp; Internship Program</div>`
       : ""
 
   // phantom: particle-dot watermark from the real logo (fallback: shield stroke)
@@ -682,7 +745,7 @@ export function buildCertificateHTML(
     <div class="logo-ring">${logoInner}</div>
     ${brandWordmark}
     ${terminalLine}
-    <div class="kicker">&middot; of completion &middot;</div>
+    <div class="kicker">&middot; ${isInternship ? "of internship completion" : "of completion"} &middot;</div>
     <h1 class="wordmark">CERTIFICATE</h1>
 
     <div class="presented">
@@ -692,7 +755,7 @@ export function buildCertificateHTML(
     </div>
 
     <div class="body-block">
-      <div class="body-kicker">for successfully completing the professional course</div>
+      <div class="body-kicker">${isInternship ? "for successfully completing the internship program" : "for successfully completing the professional course"}</div>
       <h2 class="course">${courseTitle}</h2>
       <div class="issuer">${metaLine}</div>
       ${scoreLine}
