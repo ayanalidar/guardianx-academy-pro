@@ -171,3 +171,47 @@ export const CATEGORY_META: Record<SettingCategory, { label: string; icon: strin
   auth: { label: "Google OAuth", icon: "🔵", color: "text-blue-300", note: "No redeploy needed. The callback URL shown in Admin → Settings → Google OAuth must be registered as an Authorized redirect URI in Google Cloud Console" },
   events: { label: "Upcoming Events (receipt emails)", icon: "📅", color: "text-amber-300", note: "Optional - shown in the 'Upcoming at GuardianX' block of every payment confirmation email. Fill events 1/2/3; leave a title empty to skip that event. Changes apply to the next email immediately" },
 }
+
+/* ============================================================
+ * Auto-seed gate for sample-data bootstraps
+ *
+ * The bootstraps (internships / placements / live feed) used to
+ * auto-seed clearly-marked sample rows "whenever the table was
+ * empty" - which meant deleting every sample row resurrected the
+ * whole sample dataset on the next request. These flags make the
+ * auto-seed a ONE-TIME opportunity per environment: once the flag
+ * row exists, the bootstrap never seeds again, so admin deletions
+ * stick permanently. (Explicit admin seed actions are separate.)
+ *
+ * Read directly (NOT through getSetting's 5-min cache) so the
+ * deleted-then-stays-deleted behavior is honoured immediately.
+ * These keys are deliberately NOT in SETTING_DEFINITIONS, so the
+ * Platform Settings admin UI never shows them.
+ * ============================================================ */
+
+/** Auto-seed flags use this key prefix. */
+export const AUTO_SEED_FLAG_PREFIX = "seed.auto."
+
+/** Returns true when the one-time auto-seed opportunity is already consumed. */
+export async function isAutoSeedConsumed(module: string): Promise<boolean> {
+  try {
+    const row = await db.platformSetting.findUnique({
+      where: { key: `${AUTO_SEED_FLAG_PREFIX}${module}` },
+      select: { key: true },
+    })
+    return !!row
+  } catch {
+    // If the settings table itself is unavailable, err on the side of
+    // not re-seeding (avoids resurrection loops during DB hiccups).
+    return true
+  }
+}
+
+/** Marks the one-time auto-seed opportunity as consumed (idempotent). */
+export async function markAutoSeedConsumed(module: string): Promise<void> {
+  await db.platformSetting.upsert({
+    where: { key: `${AUTO_SEED_FLAG_PREFIX}${module}` },
+    create: { key: `${AUTO_SEED_FLAG_PREFIX}${module}`, value: new Date().toISOString(), category: "seed" },
+    update: { value: new Date().toISOString() },
+  })
+}

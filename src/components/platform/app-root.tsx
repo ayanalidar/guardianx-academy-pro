@@ -243,6 +243,33 @@ export function AppRoot({ initialView }: { initialView?: View }) {
     return <AuthScreen />
   }
 
+  // Logged in + auth view: the footer CTA ("Create Free Account"), mobile
+  // tab bar and global search all navigate to "login" regardless of session,
+  // and ViewRouter has no "login"/"auth" branch - so this previously fell
+  // through to an EMPTY app shell ("tap on login doesnt show anything unless
+  // refreshed"). A signed-in user has no business on the auth screen: send
+  // them to their role dashboard instead (microtask = no setState-in-render,
+  // same pattern as the home redirect below).
+  if (session && (view.name === "login" || view.name === "auth")) {
+    const role = (session as any)?.user?.role
+    Promise.resolve().then(() => {
+      useAppStore.getState().navigate({ name: roleHomeFor(role) as any })
+    })
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background bg-grid">
+        <div className="flex flex-col items-center gap-4">
+          <div className="relative">
+            <div className="h-12 w-12 rounded-full border-2 border-emerald-500/20 border-t-emerald-400 animate-spin" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-emerald-400 font-mono text-xs">GX</span>
+            </div>
+          </div>
+          <p className="text-xs text-muted-foreground font-mono">ALREADY SIGNED IN - OPENING YOUR DASHBOARD...</p>
+        </div>
+      </div>
+    )
+  }
+
   // Logged in: if user explicitly navigates to a public view, show it with public shell
   // BUT: role separation - if the view is still the default "home", or a staff
   // member somehow landed on the student "dashboard", redirect to their

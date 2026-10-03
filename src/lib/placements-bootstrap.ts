@@ -194,11 +194,16 @@ export const SAMPLE_PLACEMENTS = [
   },
 ]
 
-/** Insert the sample rows only when the table has NO rows at all
- *  (first launch). Idempotent - later admin edits/deletes never
- *  resurrect deleted samples. Returns the number inserted. */
+/** Insert the sample rows only during the ONE-TIME auto-seed window.
+ *  Once the PlatformSetting flag (seed.auto.placements) exists - i.e. after
+ *  the first call on any environment - this is a permanent no-op, so
+ *  admin deletions stick (previously deleting every row resurrected the
+ *  samples on the next request). Returns the number inserted (0 = skipped). */
 export async function seedSamplePlacementsIfEmpty(): Promise<number> {
+  const { isAutoSeedConsumed, markAutoSeedConsumed } = await import("@/lib/settings")
+  if (await isAutoSeedConsumed("placements")) return 0
   const existing = await db.placement.count()
+  await markAutoSeedConsumed("placements")
   if (existing > 0) return 0
   const res = await db.placement.createMany({ data: SAMPLE_PLACEMENTS as any })
   return res.count

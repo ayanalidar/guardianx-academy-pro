@@ -22,8 +22,8 @@ export const runtime = "nodejs"
  *   - schema drift / cold table -> ensureInternshipTables()
  *     self-heals; if it still fails -> { degraded: true } + empty
  *     lists, never a 500.
- *   - first launch -> seeds clearly-marked sample rows so the
- *     page is never blank.
+ *   - sample seeding is a ONE-TIME, flag-gated event (seed.auto.internships):
+ *     after it, admin deletions stick permanently (no resurrection).
  *
  * Edge caching: 60s s-maxage + 5min stale-while-revalidate.
  * ============================================================ */
