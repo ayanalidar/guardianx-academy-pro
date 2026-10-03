@@ -680,21 +680,26 @@ export function InstructorsView() {
               },
               {
                 icon: BookOpen,
-                value: "29+",
-                label: "Total Courses",
+                // Real data: total course assignments across the instructor network
+                value: String(instructors.reduce((s, i) => s + (i.coursesCount ?? 0), 0)),
+                label: "Courses Taught",
                 tint: "text-cyan-300",
                 tintBg: "bg-cyan-500/10",
               },
               {
                 icon: GraduationCap,
-                value: "12,000+",
-                label: "Total Learners",
+                // Real data: average years of industry experience across instructors
+                value: instructors.length
+                  ? (instructors.reduce((s, i) => s + (i.yearsExperience ?? 0), 0) / instructors.length).toFixed(1)
+                  : "0",
+                label: "Avg. Years Experience",
                 tint: "text-amber-300",
                 tintBg: "bg-amber-500/10",
               },
               {
                 icon: Award,
-                value: "20+",
+                // Real data: distinct industry certifications covered by the network
+                value: String(new Set(instructors.flatMap((i) => i.certifications ?? [])).size),
                 label: "Certifications Covered",
                 tint: "text-emerald-300",
                 tintBg: "bg-emerald-500/10",

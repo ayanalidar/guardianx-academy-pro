@@ -294,7 +294,7 @@ export function PricingView() {
         <div className="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-[11px] text-muted-foreground">
           <span className="inline-flex items-center gap-1.5"><Shield className="h-3.5 w-3.5 text-emerald-400" /> 14-day refund policy</span>
           <span className="inline-flex items-center gap-1.5"><Lock className="h-3.5 w-3.5 text-emerald-400" /> Secure payments</span>
-          <span className="inline-flex items-center gap-1.5"><Users className="h-3.5 w-3.5 text-emerald-400" /> 12,000+ active learners</span>
+          <span className="inline-flex items-center gap-1.5"><Users className="h-3.5 w-3.5 text-emerald-400" /> Free-to-start courses</span>
         </div>
       </section>
 

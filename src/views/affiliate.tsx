@@ -389,7 +389,7 @@ export function AffiliateView() {
                   No clicks yet. Share your referral link to start earning!
                 </div>
               ) : (
-                <div className="max-h-96 overflow-y-auto scrollbar-thin">
+                <div className="max-h-96 overflow-auto scrollbar-thin">
                   <table className="w-full text-sm">
                     <thead className="bg-muted/40 sticky top-0">
                       <tr className="text-left">

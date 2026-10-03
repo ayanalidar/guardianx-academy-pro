@@ -151,7 +151,7 @@ const HOME: ContentItem[] = [
   { page: "home", section: "finalCta", key: "title", value: "Become unstoppable." },
   {
     page: "home", section: "finalCta", key: "subtitle",
-    value: "Join 12,000+ defenders advancing their careers. Free to start. No credit card."
+    value: "Advance your cybersecurity career with verifiable certificates. Free to start. No credit card."
   },
   { page: "home", section: "finalCta", key: "ctaPrimary", value: "Start Free Today" },
   { page: "home", section: "finalCta", key: "ctaSecondary", value: "Talk to Us" },
@@ -458,7 +458,7 @@ const AUTH: ContentItem[] = [
       { icon: "Shield", title: "Hands-on Labs", desc: "31 real offensive-security CTF challenges" },
       { icon: "GraduationCap", title: "Verifiable Certs", desc: "Public verification for employers & recruiters" },
       { icon: "Building2", title: "School Portal", desc: "Multi-tenant dashboards for institutions" },
-      { icon: "BadgeCheck", title: "Industry Recognized", desc: "Trusted by 12,000+ cyber defenders" },
+      { icon: "BadgeCheck", title: "Industry Recognized", desc: "Certificates with public employer verification" },
     ]
   },
   {
@@ -587,7 +587,7 @@ const GLOBAL_FOOTER: ContentItem[] = [
   { page: "global", section: "footer", key: "ctaTitleAccent", value: "journey today." },
   {
     page: "global", section: "footer", key: "ctaSubtitle",
-    value: "Free to start. No credit card. Join 12,000+ defenders."
+    value: "Free to start. No credit card. Verifiable certificates included."
   },
   { page: "global", section: "footer", key: "ctaButton", value: "Create Free Account" },
   { page: "global", section: "footer", key: "brandName", value: "GuardianX" },
