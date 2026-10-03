@@ -119,9 +119,41 @@ export const VIEW_IMPORTERS: Record<string, ViewImporter> = {
   "bug-bounty": () => import("@/views/bug-bounty"),
   "course-studio": () => import("@/views/course-studio"),
   "exam-detail": () => import("@/views/exam-detail"),
+  "hiring": () => import("@/views/hiring"),
+  "placements": () => import("@/views/placements"),
+  "internships": () => import("@/views/internships"),
+  "admin-hiring": () => import("@/views/admin-hiring"),
+  "admin-internships": () => import("@/views/admin-internships"),
   "skill-tree": () => import("@/views/skill-tree"),
   "cyber-range": () => import("@/views/cyber-range"),
   "learning-paths": () => import("@/views/learning-paths"),
+}
+
+/**
+ * Wrap a dynamic-import thunk with bounded retries (350ms, then 700ms).
+ *
+ * WHY: next/dynamic + React.lazy permanently cache a REJECTED import - one
+ * failed chunk fetch (network blip, service-worker 504, deploy racing a
+ * long-lived tab) used to leave the view skeleton on screen FOREVER, which
+ * users described as "the page doesn't load unless I refresh". Retrying
+ * inside the loader thunk keeps the rejection from ever reaching React in
+ * the common transient-failure case.
+ */
+export function withChunkRetry<T>(thunk: () => Promise<T>, retries = 2): () => Promise<T> {
+  return async () => {
+    let lastErr: unknown
+    for (let attempt = 0; attempt <= retries; attempt++) {
+      try {
+        return await thunk()
+      } catch (err) {
+        lastErr = err
+        if (attempt < retries) {
+          await new Promise((r) => setTimeout(r, 350 * (attempt + 1)))
+        }
+      }
+    }
+    throw lastErr
+  }
 }
 
 /** store view name → chunk file (only where the two differ) */
@@ -162,6 +194,8 @@ const PRIORITY_VIEWS = [
   "leaderboard", "profile", "instructors", "events", "blog", "pricing",
   "verify", "support", "skill-assessments", "learning-paths", "community",
   "assignments", "notes", "cert-landing", "cyber-quiz", "instructor", "admin",
+  // Hiring dropdown trio + internship program (top public destinations).
+  "hiring", "placements", "internships",
 ]
 
 function scheduleIdle(fn: () => void): void {

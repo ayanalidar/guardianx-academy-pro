@@ -38,7 +38,7 @@ import {
   Loader2, Search, Eye, EyeOff, Shield, AlertCircle, CheckCircle2,
   Globe, Home as HomeIcon, Building2, BookOpen, Mail, TrendingUp,
   Layout, LayoutPanelLeft, Sparkles, RefreshCw, Database, Hash,
-  Sprout,
+  Sprout, FlaskConical,
 } from "lucide-react"
 import {
   ScrollReveal, FadeIn,
@@ -54,6 +54,7 @@ type PageId =
   | "institutions"
   | "catalog"
   | "auth"
+  | "internships"
   | "global"
 
 interface PageMeta {
@@ -70,6 +71,7 @@ const PAGES: PageMeta[] = [
   { id: "institutions",  label: "Institutions",      icon: Building2,       description: "Hub page: hero, partner types, benefits, flow, models, final CTA", accent: "text-emerald-300" },
   { id: "catalog",       label: "Catalog",           icon: BookOpen,        description: "Course catalog hero and filter labels",                accent: "text-violet-300" },
   { id: "auth",          label: "Auth",              icon: Shield,          description: "Login/register form labels and feature highlights",    accent: "text-amber-300" },
+  { id: "internships",   label: "Internships",       icon: FlaskConical,    description: "Internship program page: hero, partner colleges, featured interns, apply band, final CTA", accent: "text-fuchsia-300" },
   { id: "global",        label: "Global Header/Footer", icon: Globe,        description: "Brand name (header), footer CTA/brand/contact/social/copyright", accent: "text-cyan-300" },
 ]
 
@@ -98,6 +100,10 @@ const SECTION_LABELS: Record<string, string> = {
   filters: "Catalog Filters",
   header: "Global Header",
   footer: "Global Footer",
+  colleges: "Partner Colleges Section",
+  interns: "Featured Interns Section",
+  apply: "Apply Section",
+  cta: "Final CTA (Internships)",
 }
 
 /* ============================================================

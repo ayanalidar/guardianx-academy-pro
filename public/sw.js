@@ -14,7 +14,13 @@
 // (/api/courses, /api/platform-stats) - a network blip now serves the last
 // good JSON instead of blanking the catalog. Bump VERSION on every
 // shell-affecting change so clients self-refresh.
-const VERSION = "guardianx-sw-v4";
+// v5: static assets switched from cache-first to STALE-WHILE-REVALIDATE -
+// the cache copy still serves instantly, but a background fetch refreshes
+// it (fixes non-hashed assets like course images never updating), and a
+// failed network fetch now falls back to the cached copy instead of
+// returning an EMPTY 504 (which made lazy view chunks reject -> skeleton
+// forever -> "doesn't load unless I refresh").
+const VERSION = "guardianx-sw-v5";
 const SHELL_CACHE = `${VERSION}-shell`;
 const RUNTIME_CACHE = `${VERSION}-runtime`;
 const API_CACHE = `${VERSION}-api`;
@@ -148,24 +154,32 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // 2) Static assets (same origin) - cache-first, then network (and cache).
-  //    _next/static assets are content-hashed so caching them is safe.
+  // 2) Static assets (same origin) - stale-while-revalidate: serve the
+  //    cached copy instantly when we have one (hashed _next/static chunks
+  //    are content-addressed so a cached hit is always correct; non-hashed
+  //    assets like images refresh in the background), otherwise go to the
+  //    network. A failed network fetch falls back to cache instead of an
+  //    empty 504 so lazy view chunks survive transient offline windows.
   if (isSameOrigin(url)) {
     event.respondWith(
       (async () => {
-        const cached = await caches.match(request);
-        if (cached) return cached;
-        try {
-          const fresh = await fetch(request);
-          if (fresh && fresh.ok && fresh.type === "basic") {
-            const cache = await caches.open(RUNTIME_CACHE);
-            cache.put(request, fresh.clone()).catch(() => undefined);
-          }
-          return fresh;
-        } catch (err) {
-          // No fallback for missing assets
-          return new Response("", { status: 504 });
+        const cache = await caches.open(RUNTIME_CACHE);
+        const cached = await cache.match(request);
+        const refresh = fetch(request)
+          .then((fresh) => {
+            if (fresh && fresh.ok && fresh.type === "basic") {
+              cache.put(request, fresh.clone()).catch(() => undefined);
+            }
+            return fresh;
+          })
+          .catch(() => undefined);
+        if (cached) {
+          event.waitUntil(refresh.then(() => undefined));
+          return cached;
         }
+        const fresh = await refresh;
+        if (fresh) return fresh;
+        return new Response("", { status: 504 });
       })()
     );
     return;

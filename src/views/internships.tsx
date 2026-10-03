@@ -48,6 +48,7 @@ import {
 } from "@/components/ui/select"
 import { api } from "@/lib/api"
 import { downloadInternshipCertificatePDF } from "@/lib/certificate-pdf"
+import { usePageContent, getContent } from "@/lib/use-content"
 import { cn } from "@/lib/utils"
 import { toast } from "sonner"
 import {
@@ -786,7 +787,36 @@ export function InternshipsView() {
   const { data, isLoading } = useQuery<InternshipsResponse>({
     queryKey: ["internships-public"],
     queryFn: () => api("/api/internships"),
+    staleTime: 60_000,
+    gcTime: 10 * 60_000,
   })
+
+  // Fully editable page copy (Content Studio → Internships). Every field
+  // falls back to the shipped copy, so an empty CMS renders the same page.
+  const cms = usePageContent("internships")
+  const cmsData = cms.data
+  const heroBadge = getContent(cmsData, "hero", "badge", "Internship Program")
+  const heroTitle = getContent(cmsData, "hero", "title", "Internships that turn")
+  const heroTitleAccent = getContent(cmsData, "hero", "titleAccent", "students into defenders")
+  const heroDescription = getContent(
+    cmsData, "hero", "description",
+    "Real security work, mentored by practitioners, run in partnership with colleges across India. Every completed internship ends with a verifiable certificate employers can check in seconds."
+  )
+  const collegesHeading = getContent(cmsData, "colleges", "heading", "Partner colleges")
+  const collegesSubtext = getContent(cmsData, "colleges", "subtext", "Tap a college to see every internship it runs with GuardianX Academy.")
+  const collegesEmptyText = getContent(cmsData, "colleges", "emptyText", "No internships match your filters yet. New cohorts open regularly.")
+  const internsHeading = getContent(cmsData, "interns", "heading", "Featured interns")
+  const internsSubtext = getContent(cmsData, "interns", "subtext", "Tap any student to see their full internship record, projects and downloadable certificate.")
+  const internsNoMatchText = getContent(cmsData, "interns", "noMatchText", "No interns match your filters.")
+  const applyHeading = getContent(cmsData, "apply", "heading", "Apply for an internship")
+  const applySubtext = getContent(cmsData, "apply", "subtext", "Tell us who you are and what you want to specialize in. Applications land directly with our internship team.")
+  const ctaHeading = getContent(cmsData, "cta", "heading", "Want your college on this wall?")
+  const ctaSubtext = getContent(
+    cmsData, "cta", "subtext",
+    "We run internship cohorts with colleges, universities and individual learners across India. Bring your institution on board or join the next open cohort yourself."
+  )
+  const ctaPrimary = getContent(cmsData, "cta", "ctaPrimary", "Partner with us")
+  const ctaSecondary = getContent(cmsData, "cta", "ctaSecondary", "Browse training batches")
 
   const heroRef = React.useRef<HTMLDivElement>(null)
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] })
@@ -849,18 +879,16 @@ export function InternshipsView() {
         <div className="relative mx-auto max-w-6xl">
           <div className="mx-auto max-w-3xl text-center">
             <span className="inline-flex items-center gap-1.5 rounded-full border border-violet-500/30 bg-violet-500/10 px-3 py-1 text-[11px] font-medium text-violet-300">
-              <Briefcase className="h-3 w-3" /> Internship Program
+              <Briefcase className="h-3 w-3" /> {heroBadge}
             </span>
             <h1 className="mt-4 text-4xl font-bold tracking-tight sm:text-5xl">
-              Internships that turn{" "}
+              {heroTitle}{" "}
               <span className="bg-gradient-to-r from-violet-400 via-fuchsia-400 to-emerald-400 bg-clip-text text-transparent">
-                students into defenders
+                {heroTitleAccent}
               </span>
             </h1>
             <p className="mx-auto mt-4 max-w-2xl text-sm leading-relaxed text-muted-foreground sm:text-base">
-              Real security work, mentored by practitioners, run in partnership with
-              colleges across India. Every completed internship ends with a
-              verifiable certificate employers can check in seconds.
+              {heroDescription}
             </p>
           </div>
 
@@ -879,9 +907,9 @@ export function InternshipsView() {
         <div className="mx-auto max-w-6xl">
           <div className="flex items-end justify-between gap-4 flex-wrap">
             <div>
-              <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Partner colleges</h2>
+              <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">{collegesHeading}</h2>
               <p className="mt-1.5 text-sm text-muted-foreground">
-                Tap a college to see every internship it runs with GuardianX Academy.
+                {collegesSubtext}
               </p>
             </div>
           </div>
@@ -939,7 +967,7 @@ export function InternshipsView() {
               <div className="rounded-2xl border border-border/60 bg-card/40 p-10 text-center">
                 <Building2 className="mx-auto h-8 w-8 text-muted-foreground/50" />
                 <p className="mt-3 text-sm text-muted-foreground">
-                  No internships match your filters yet. New cohorts open regularly.
+                  {collegesEmptyText}
                 </p>
               </div>
             )}
@@ -950,9 +978,9 @@ export function InternshipsView() {
       {/* ─── 3. Featured Interns ─── */}
       <section className="relative px-6 py-12">
         <div className="mx-auto max-w-6xl">
-          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Featured interns</h2>
+          <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">{internsHeading}</h2>
           <p className="mt-1.5 text-sm text-muted-foreground">
-            Tap any student to see their full internship record, projects and downloadable certificate.
+            {internsSubtext}
           </p>
 
           <div className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
@@ -966,7 +994,7 @@ export function InternshipsView() {
             ))}
           </div>
           {!isLoading && filteredInterns.length === 0 && interns.length > 0 && (
-            <p className="mt-4 text-sm text-muted-foreground">No interns match your filters.</p>
+            <p className="mt-4 text-sm text-muted-foreground">{internsNoMatchText}</p>
           )}
         </div>
       </section>
@@ -975,10 +1003,9 @@ export function InternshipsView() {
       <section className="relative px-6 py-12">
         <div className="mx-auto max-w-3xl">
           <div className="text-center">
-            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">Apply for an internship</h2>
+            <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">{applyHeading}</h2>
             <p className="mx-auto mt-1.5 max-w-xl text-sm text-muted-foreground">
-              Tell us who you are and what you want to specialize in. Applications land
-              directly with our internship team.
+              {applySubtext}
             </p>
           </div>
           <div className="mt-7">
@@ -992,12 +1019,10 @@ export function InternshipsView() {
         <div className="mx-auto max-w-4xl overflow-hidden rounded-3xl border border-violet-500/25 bg-gradient-to-br from-violet-600/15 via-card/60 to-emerald-500/10 p-10 text-center backdrop-blur">
           <Sparkles className="mx-auto h-8 w-8 text-violet-300" />
           <h2 className="mt-4 text-2xl font-bold tracking-tight sm:text-3xl">
-            Want your college on this wall?
+            {ctaHeading}
           </h2>
           <p className="mx-auto mt-2.5 max-w-xl text-sm text-muted-foreground">
-            We run internship cohorts with colleges, universities and individual
-            learners across India. Bring your institution on board or join the next
-            open cohort yourself.
+            {ctaSubtext}
           </p>
           <div className="mt-6 flex items-center justify-center gap-3 flex-wrap">
             <Button
@@ -1005,10 +1030,10 @@ export function InternshipsView() {
               className="gap-2 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white hover:from-violet-500 hover:to-fuchsia-500"
               onClick={() => (window.location.href = "/contact")}
             >
-              Partner with us <ArrowRight className="h-4 w-4" />
+              {ctaPrimary} <ArrowRight className="h-4 w-4" />
             </Button>
             <Button size="lg" variant="outline" className="gap-2" onClick={() => (window.location.href = "/batches")}>
-              Browse training batches
+              {ctaSecondary}
             </Button>
           </div>
         </div>

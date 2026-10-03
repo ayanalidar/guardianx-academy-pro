@@ -5,6 +5,7 @@ import dynamic from "next/dynamic"
 import { useAppStore, type View } from "@/store/app-store"
 import { PublicPageShell } from "@/components/platform/public-page-shell"
 import { ViewRouter } from "@/components/platform/view-router"
+import { withChunkRetry } from "@/lib/view-preloader"
 import { HomeView } from "@/views/home"
 
 /* ============================================================
@@ -58,35 +59,35 @@ function ViewLoading() {
 }
 
 // ── Lazy public views (ssr:true keeps deep-link SEO; chunk loads on demand) ──
-const ContactView = dynamic(() => import("@/views/contact").then(m => ({ default: m.ContactView })), { ssr: true, loading: ViewLoading })
-const InstitutionsView = dynamic(() => import("@/views/institutions").then(m => ({ default: m.InstitutionsView })), { ssr: true, loading: ViewLoading })
-const InstitutionsSchoolsView = dynamic(() => import("@/views/institutions-schools").then(m => ({ default: m.InstitutionsSchoolsView })), { ssr: true, loading: ViewLoading })
-const InstitutionsCollegesView = dynamic(() => import("@/views/institutions-colleges").then(m => ({ default: m.InstitutionsCollegesView })), { ssr: true, loading: ViewLoading })
-const InstitutionsUniversitiesView = dynamic(() => import("@/views/institutions-universities").then(m => ({ default: m.InstitutionsUniversitiesView })), { ssr: true, loading: ViewLoading })
-const OpenSchoolingView = dynamic(() => import("@/views/open-schooling").then(m => ({ default: m.OpenSchoolingView })), { ssr: true, loading: ViewLoading })
-const CorporateTrainingView = dynamic(() => import("@/views/corporate-training").then(m => ({ default: m.CorporateTrainingView })), { ssr: true, loading: ViewLoading })
-const CyberQuizLandingView = dynamic(() => import("@/views/cyber-quiz-landing").then(m => ({ default: m.CyberQuizLandingView })), { ssr: true, loading: ViewLoading })
-const LearningPathsView = dynamic(() => import("@/views/learning-paths").then(m => ({ default: m.LearningPathsView })), { ssr: true, loading: ViewLoading })
-const CyberRangeView = dynamic(() => import("@/views/cyber-range").then(m => ({ default: m.CyberRangeView })), { ssr: true, loading: ViewLoading })
-const CourseCatalogView = dynamic(() => import("@/views/course-catalog").then(m => ({ default: m.CourseCatalogView })), { ssr: true, loading: ViewLoading })
-const BatchesView = dynamic(() => import("@/views/batches").then(m => ({ default: m.BatchesView })), { ssr: true, loading: ViewLoading })
-const BatchDetailView = dynamic(() => import("@/views/batch-detail").then(m => ({ default: m.BatchDetailView })), { ssr: true, loading: ViewLoading })
-const ExamsView = dynamic(() => import("@/views/exams").then(m => ({ default: m.ExamsView })), { ssr: true, loading: ViewLoading })
-const CredentialsView = dynamic(() => import("@/views/credentials").then(m => ({ default: m.CredentialsView })), { ssr: true, loading: ViewLoading })
-const VerifyView = dynamic(() => import("@/views/verify").then(m => ({ default: m.VerifyView })), { ssr: true, loading: ViewLoading })
-const SupportView = dynamic(() => import("@/views/support").then(m => ({ default: m.SupportView })), { ssr: true, loading: ViewLoading })
-const InstructorsView = dynamic(() => import("@/views/instructors").then(m => ({ default: m.InstructorsView })), { ssr: true, loading: ViewLoading })
-const InstructorDetailView = dynamic(() => import("@/views/instructor-detail").then(m => ({ default: m.InstructorDetailView })), { ssr: true, loading: ViewLoading })
-const EventsView = dynamic(() => import("@/views/events").then(m => ({ default: m.EventsView })), { ssr: true, loading: ViewLoading })
-const EventDetailView = dynamic(() => import("@/views/event-detail").then(m => ({ default: m.EventDetailView })), { ssr: true, loading: ViewLoading })
-const BlogView = dynamic(() => import("@/views/blog").then(m => ({ default: m.BlogView })), { ssr: true, loading: ViewLoading })
-const BlogPostView = dynamic(() => import("@/views/blog-post").then(m => ({ default: m.BlogPostView })), { ssr: true, loading: ViewLoading })
-const CertLandingView = dynamic(() => import("@/views/cert-landing").then(m => ({ default: m.CertLandingView })), { ssr: true, loading: ViewLoading })
-const PricingView = dynamic(() => import("@/views/pricing").then(m => ({ default: m.PricingView })), { ssr: true, loading: ViewLoading })
-const HiringView = dynamic(() => import("@/views/hiring").then(m => ({ default: m.HiringView })), { ssr: true, loading: ViewLoading })
-const PlacementsView = dynamic(() => import("@/views/placements").then(m => ({ default: m.PlacementsView })), { ssr: true, loading: ViewLoading })
-const InternshipsView = dynamic(() => import("@/views/internships").then(m => ({ default: m.InternshipsView })), { ssr: true, loading: ViewLoading })
-const CourseDetailView = dynamic(() => import("@/views/course-detail").then(m => ({ default: m.CourseDetailView })), { ssr: true, loading: ViewLoading })
+const ContactView = dynamic(withChunkRetry(() => import("@/views/contact").then(m => ({ default: m.ContactView }))), { ssr: true, loading: ViewLoading })
+const InstitutionsView = dynamic(withChunkRetry(() => import("@/views/institutions").then(m => ({ default: m.InstitutionsView }))), { ssr: true, loading: ViewLoading })
+const InstitutionsSchoolsView = dynamic(withChunkRetry(() => import("@/views/institutions-schools").then(m => ({ default: m.InstitutionsSchoolsView }))), { ssr: true, loading: ViewLoading })
+const InstitutionsCollegesView = dynamic(withChunkRetry(() => import("@/views/institutions-colleges").then(m => ({ default: m.InstitutionsCollegesView }))), { ssr: true, loading: ViewLoading })
+const InstitutionsUniversitiesView = dynamic(withChunkRetry(() => import("@/views/institutions-universities").then(m => ({ default: m.InstitutionsUniversitiesView }))), { ssr: true, loading: ViewLoading })
+const OpenSchoolingView = dynamic(withChunkRetry(() => import("@/views/open-schooling").then(m => ({ default: m.OpenSchoolingView }))), { ssr: true, loading: ViewLoading })
+const CorporateTrainingView = dynamic(withChunkRetry(() => import("@/views/corporate-training").then(m => ({ default: m.CorporateTrainingView }))), { ssr: true, loading: ViewLoading })
+const CyberQuizLandingView = dynamic(withChunkRetry(() => import("@/views/cyber-quiz-landing").then(m => ({ default: m.CyberQuizLandingView }))), { ssr: true, loading: ViewLoading })
+const LearningPathsView = dynamic(withChunkRetry(() => import("@/views/learning-paths").then(m => ({ default: m.LearningPathsView }))), { ssr: true, loading: ViewLoading })
+const CyberRangeView = dynamic(withChunkRetry(() => import("@/views/cyber-range").then(m => ({ default: m.CyberRangeView }))), { ssr: true, loading: ViewLoading })
+const CourseCatalogView = dynamic(withChunkRetry(() => import("@/views/course-catalog").then(m => ({ default: m.CourseCatalogView }))), { ssr: true, loading: ViewLoading })
+const BatchesView = dynamic(withChunkRetry(() => import("@/views/batches").then(m => ({ default: m.BatchesView }))), { ssr: true, loading: ViewLoading })
+const BatchDetailView = dynamic(withChunkRetry(() => import("@/views/batch-detail").then(m => ({ default: m.BatchDetailView }))), { ssr: true, loading: ViewLoading })
+const ExamsView = dynamic(withChunkRetry(() => import("@/views/exams").then(m => ({ default: m.ExamsView }))), { ssr: true, loading: ViewLoading })
+const CredentialsView = dynamic(withChunkRetry(() => import("@/views/credentials").then(m => ({ default: m.CredentialsView }))), { ssr: true, loading: ViewLoading })
+const VerifyView = dynamic(withChunkRetry(() => import("@/views/verify").then(m => ({ default: m.VerifyView }))), { ssr: true, loading: ViewLoading })
+const SupportView = dynamic(withChunkRetry(() => import("@/views/support").then(m => ({ default: m.SupportView }))), { ssr: true, loading: ViewLoading })
+const InstructorsView = dynamic(withChunkRetry(() => import("@/views/instructors").then(m => ({ default: m.InstructorsView }))), { ssr: true, loading: ViewLoading })
+const InstructorDetailView = dynamic(withChunkRetry(() => import("@/views/instructor-detail").then(m => ({ default: m.InstructorDetailView }))), { ssr: true, loading: ViewLoading })
+const EventsView = dynamic(withChunkRetry(() => import("@/views/events").then(m => ({ default: m.EventsView }))), { ssr: true, loading: ViewLoading })
+const EventDetailView = dynamic(withChunkRetry(() => import("@/views/event-detail").then(m => ({ default: m.EventDetailView }))), { ssr: true, loading: ViewLoading })
+const BlogView = dynamic(withChunkRetry(() => import("@/views/blog").then(m => ({ default: m.BlogView }))), { ssr: true, loading: ViewLoading })
+const BlogPostView = dynamic(withChunkRetry(() => import("@/views/blog-post").then(m => ({ default: m.BlogPostView }))), { ssr: true, loading: ViewLoading })
+const CertLandingView = dynamic(withChunkRetry(() => import("@/views/cert-landing").then(m => ({ default: m.CertLandingView }))), { ssr: true, loading: ViewLoading })
+const PricingView = dynamic(withChunkRetry(() => import("@/views/pricing").then(m => ({ default: m.PricingView }))), { ssr: true, loading: ViewLoading })
+const HiringView = dynamic(withChunkRetry(() => import("@/views/hiring").then(m => ({ default: m.HiringView }))), { ssr: true, loading: ViewLoading })
+const PlacementsView = dynamic(withChunkRetry(() => import("@/views/placements").then(m => ({ default: m.PlacementsView }))), { ssr: true, loading: ViewLoading })
+const InternshipsView = dynamic(withChunkRetry(() => import("@/views/internships").then(m => ({ default: m.InternshipsView }))), { ssr: true, loading: ViewLoading })
+const CourseDetailView = dynamic(withChunkRetry(() => import("@/views/course-detail").then(m => ({ default: m.CourseDetailView }))), { ssr: true, loading: ViewLoading })
 
 function renderView(view: View): React.ReactNode {
   switch (view.name) {

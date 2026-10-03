@@ -514,6 +514,55 @@ const AUTH: ContentItem[] = [
 ]
 
 // ============================================================
+// INTERNSHIPS PAGE (public /internships copy - Content Studio editable)
+// ============================================================
+const INTERNSHIPS_PAGE: ContentItem[] = [
+  // Hero
+  { page: "internships", section: "hero", key: "badge", value: "Internship Program" },
+  { page: "internships", section: "hero", key: "title", value: "Internships that turn" },
+  { page: "internships", section: "hero", key: "titleAccent", value: "students into defenders" },
+  {
+    page: "internships", section: "hero", key: "description",
+    value: "Real security work, mentored by practitioners, run in partnership with colleges across India. Every completed internship ends with a verifiable certificate employers can check in seconds."
+  },
+
+  // Partner colleges section
+  { page: "internships", section: "colleges", key: "heading", value: "Partner colleges" },
+  {
+    page: "internships", section: "colleges", key: "subtext",
+    value: "Tap a college to see every internship it runs with GuardianX Academy."
+  },
+  {
+    page: "internships", section: "colleges", key: "emptyText",
+    value: "No internships match your filters yet. New cohorts open regularly."
+  },
+
+  // Featured interns section
+  { page: "internships", section: "interns", key: "heading", value: "Featured interns" },
+  {
+    page: "internships", section: "interns", key: "subtext",
+    value: "Tap any student to see their full internship record, projects and downloadable certificate."
+  },
+  { page: "internships", section: "interns", key: "noMatchText", value: "No interns match your filters." },
+
+  // Apply section
+  { page: "internships", section: "apply", key: "heading", value: "Apply for an internship" },
+  {
+    page: "internships", section: "apply", key: "subtext",
+    value: "Tell us who you are and what you want to specialize in. Applications land directly with our internship team."
+  },
+
+  // Final CTA
+  { page: "internships", section: "cta", key: "heading", value: "Want your college on this wall?" },
+  {
+    page: "internships", section: "cta", key: "subtext",
+    value: "We run internship cohorts with colleges, universities and individual learners across India. Bring your institution on board or join the next open cohort yourself."
+  },
+  { page: "internships", section: "cta", key: "ctaPrimary", value: "Partner with us" },
+  { page: "internships", section: "cta", key: "ctaSecondary", value: "Browse training batches" },
+]
+
+// ============================================================
 // GLOBAL HEADER & FOOTER
 // ============================================================
 const GLOBAL_HEADER: ContentItem[] = [
@@ -590,6 +639,7 @@ export const SEED_CMS: CmsSeedItem[] = [
   ...INSTITUTIONS,
   ...CATALOG,
   ...AUTH,
+  ...INTERNSHIPS_PAGE,
   ...GLOBAL_HEADER,
   ...GLOBAL_FOOTER,
 ]
