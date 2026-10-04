@@ -17,6 +17,12 @@ export const runtime = "nodejs"
  *      hash) is issued IMMEDIATELY on creation - the record can
  *      only become public (showPublicly) once it has one.
  *
+ *      "Add students directly": pass EITHER internshipId OR a
+ *      newInternship { collegeName, title, ... } object - when the
+ *      platform has no internship yet (fresh start) the admin can
+ *      create it inline in the same request instead of hitting a
+ *      dead-ended form.
+ *
  * showPublicly is the DPDPA-style consent gate: only showcased
  * records ever appear on the public page or as downloadable
  * certificates. Every mutation is audit-logged.
@@ -80,12 +86,65 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
   }
   const b = body as Record<string, unknown>
 
-  const internshipId = typeof b.internshipId === "string" ? b.internshipId.trim() : ""
+  let internshipId = typeof b.internshipId === "string" ? b.internshipId.trim() : ""
   const studentName = typeof b.studentName === "string" ? b.studentName.trim().slice(0, 120) : ""
   const role = typeof b.role === "string" ? b.role.trim().slice(0, 160) : ""
 
-  if (!internshipId || studentName.length < 2 || !role) {
-    return NextResponse.json({ error: "internshipId, studentName and role are required." }, { status: 400 })
+  if (studentName.length < 2 || !role) {
+    return NextResponse.json({ error: "studentName and role are required." }, { status: 400 })
+  }
+
+  // Inline internship creation - the "add students directly" path. When the
+  // admin has no internship yet (fresh platform), they should not need a
+  // second round trip: create the internship from newInternship{} right here.
+  let createdInternshipTitle: string | null = null
+  if (!internshipId && b.newInternship && typeof b.newInternship === "object") {
+    const n = b.newInternship as Record<string, unknown>
+    const strField = (v: unknown, max: number): string | null => {
+      const s = typeof v === "string" ? v.trim().slice(0, max) : ""
+      return s.length > 0 ? s : null
+    }
+    const collegeName = strField(n.collegeName, 160)
+    const title = strField(n.title, 200)
+    if (!collegeName || !title) {
+      return NextResponse.json(
+        { error: "New internship needs collegeName and title." },
+        { status: 400 }
+      )
+    }
+    const created = await db.internship.create({
+      data: {
+        collegeName,
+        collegeCity: strField(n.collegeCity, 80),
+        title,
+        company: strField(n.company, 160) ?? "GuardianX Academy",
+        domain: strField(n.domain, 80) ?? "Cyber Security",
+        mode: ["remote", "onsite", "hybrid"].includes(String(n.mode)) ? String(n.mode) : "remote",
+        durationWeeks: Math.max(1, Math.min(52, Number(n.durationWeeks) || 8)),
+        seats: Math.max(1, Math.min(500, Number(n.seats) || 10)),
+        status: ["upcoming", "ongoing", "completed"].includes(String(n.status)) ? String(n.status) : "completed",
+        description: strField(n.description, 2000),
+        featured: false,
+        published: true,
+        isSample: false,
+        order: 0,
+      },
+      select: { id: true, title: true },
+    })
+    internshipId = created.id
+    createdInternshipTitle = created.title
+    await logAction(user.id ?? null, user.email ?? user.name ?? "admin", "internship.create", "internship", created.id, {
+      collegeName,
+      title,
+      createdInlineWithStudent: true,
+    })
+  }
+
+  if (!internshipId) {
+    return NextResponse.json(
+      { error: "internshipId or newInternship is required." },
+      { status: 400 }
+    )
   }
 
   const internship = await db.internship.findUnique({
@@ -143,7 +202,8 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
   await logAction(user.id ?? null, user.email ?? user.name ?? "admin", "internship.record.create", "internshipRecord", record.id, {
     studentName,
     role,
-    internshipTitle: internship.title,
+    internshipTitle: createdInternshipTitle ?? internship.title,
+    internshipCreatedInline: !!createdInternshipTitle,
     certificateId,
     showPublicly: b.showPublicly === true,
   })

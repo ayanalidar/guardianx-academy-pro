@@ -135,6 +135,10 @@ const EMPTY_INTERNSHIP_FORM = {
   order: "0",
 }
 
+// Sentinel internshipId for the "create a new internship inline" mode of
+// the Add-student dialog (Radix Select can't use "" as a value).
+const NEW_INTERNSHIP_SENTINEL = "__new__"
+
 const EMPTY_RECORD_FORM = {
   internshipId: "",
   studentName: "",
@@ -150,6 +154,15 @@ const EMPTY_RECORD_FORM = {
   testimonial: "",
   status: "completed",
   showPublicly: false,
+  // inline "new internship" fields (used when internshipId === NEW_INTERNSHIP_SENTINEL)
+  newCollegeName: "",
+  newCollegeCity: "",
+  newTitle: "",
+  newCompany: "",
+  newDomain: "",
+  newMode: "remote",
+  newDurationWeeks: "8",
+  newStatus: "completed",
 }
 
 function csvOrJson(v: string): string[] {
@@ -584,7 +597,12 @@ function StudentsTab({
 
   function openCreate() {
     setEditing(null)
-    setForm({ ...EMPTY_RECORD_FORM, internshipId: data?.internships?.[0]?.id ?? "" })
+    // With no internships yet, pre-select the inline "create new internship"
+    // mode so adding the first student never dead-ends.
+    setForm({
+      ...EMPTY_RECORD_FORM,
+      internshipId: data?.internships?.[0]?.id ?? NEW_INTERNSHIP_SENTINEL,
+    })
     setDialogOpen(true)
   }
 
@@ -599,6 +617,7 @@ function StudentsTab({
     }
     const local = (iso: string | null) => (iso ? iso.slice(0, 10) : "")
     setForm({
+      ...EMPTY_RECORD_FORM,
       internshipId: r.internshipId,
       studentName: r.studentName,
       studentEmail: r.studentEmail || "",
@@ -629,8 +648,8 @@ function StudentsTab({
   }
 
   function submit() {
-    const payload = {
-      internshipId: form.internshipId,
+    const isNewInt = form.internshipId === NEW_INTERNSHIP_SENTINEL
+    const payload: Record<string, unknown> = {
       studentName: form.studentName,
       studentEmail: form.studentEmail || undefined,
       role: form.role,
@@ -650,6 +669,22 @@ function StudentsTab({
       testimonial: form.testimonial || undefined,
       status: form.status,
       showPublicly: form.showPublicly,
+    }
+    if (isNewInt) {
+      // "Add students directly": create the internship inline in the same
+      // request - no dead end when the platform starts with zero internships.
+      payload.newInternship = {
+        collegeName: form.newCollegeName,
+        collegeCity: form.newCollegeCity || undefined,
+        title: form.newTitle,
+        company: form.newCompany || undefined,
+        domain: form.newDomain || undefined,
+        mode: form.newMode,
+        durationWeeks: Number(form.newDurationWeeks) || 8,
+        status: form.newStatus,
+      }
+    } else {
+      payload.internshipId = form.internshipId
     }
     saveMutation.mutate({ id: editing?.id, payload })
   }
@@ -688,7 +723,7 @@ function StudentsTab({
             className="w-72 pl-9"
           />
         </div>
-        <Button onClick={openCreate} className="gap-1.5 ml-auto" disabled={!data?.internships?.length}>
+        <Button onClick={openCreate} className="gap-1.5 ml-auto">
           <Plus className="h-4 w-4" /> Add student
         </Button>
       </div>
@@ -789,22 +824,116 @@ function StudentsTab({
               A verifiable certificate (ID + tamper-proof hash) is issued the moment you
               save. Use the Public toggle to showcase the student on /internships with a
               downloadable certificate.
+              {(data?.internships?.length ?? 0) === 0 &&
+                " No internships exist yet - pick \u201cNew internship\u201d below and fill the highlighted fields to create one as you add the student."}
             </p>
           )}
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-1.5 sm:col-span-2">
               <label className="text-xs font-medium text-muted-foreground">Internship *</label>
               <Select value={form.internshipId} onValueChange={(v) => setForm({ ...form, internshipId: v })}>
-                <SelectTrigger><SelectValue placeholder="Pick an internship" /></SelectTrigger>
+                <SelectTrigger>
+                  <SelectValue placeholder={
+                    (data?.internships?.length ?? 0) === 0
+                      ? "No internships yet - create one below"
+                      : "Pick an internship"
+                  } />
+                </SelectTrigger>
                 <SelectContent>
                   {(data?.internships ?? []).map((i) => (
                     <SelectItem key={i.id} value={i.id}>
                       {i.title} · {i.collegeName}
                     </SelectItem>
                   ))}
+                  <SelectItem value={NEW_INTERNSHIP_SENTINEL} className="text-violet-300">
+                    + New internship - create it now
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
+            {form.internshipId === NEW_INTERNSHIP_SENTINEL && !editing && (
+              <>
+                <div className="sm:col-span-2 rounded-lg border border-violet-500/30 bg-violet-500/[0.06] p-3">
+                  <p className="text-xs font-medium text-violet-300 mb-3">
+                    New internship details - created automatically when you save this student
+                  </p>
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-medium text-muted-foreground">College / Institution name *</label>
+                      <Input
+                        value={form.newCollegeName}
+                        onChange={(e) => setForm({ ...form, newCollegeName: e.target.value })}
+                        placeholder="e.g. Rungta College of Engineering"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-medium text-muted-foreground">City</label>
+                      <Input
+                        value={form.newCollegeCity}
+                        onChange={(e) => setForm({ ...form, newCollegeCity: e.target.value })}
+                        placeholder="e.g. Bhilai"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-medium text-muted-foreground">Internship title *</label>
+                      <Input
+                        value={form.newTitle}
+                        onChange={(e) => setForm({ ...form, newTitle: e.target.value })}
+                        placeholder="e.g. Cyber Security Internship - Summer Batch"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-medium text-muted-foreground">Company</label>
+                      <Input
+                        value={form.newCompany}
+                        onChange={(e) => setForm({ ...form, newCompany: e.target.value })}
+                        placeholder="GuardianX Academy"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-medium text-muted-foreground">Domain</label>
+                      <Input
+                        value={form.newDomain}
+                        onChange={(e) => setForm({ ...form, newDomain: e.target.value })}
+                        placeholder="Cyber Security"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-medium text-muted-foreground">Mode</label>
+                      <Select value={form.newMode} onValueChange={(v) => setForm({ ...form, newMode: v })}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="remote">Remote</SelectItem>
+                          <SelectItem value="onsite">On-site</SelectItem>
+                          <SelectItem value="hybrid">Hybrid</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-medium text-muted-foreground">Duration (weeks)</label>
+                      <Input
+                        type="number"
+                        min={1}
+                        max={52}
+                        value={form.newDurationWeeks}
+                        onChange={(e) => setForm({ ...form, newDurationWeeks: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <label className="text-xs font-medium text-muted-foreground">Internship status</label>
+                      <Select value={form.newStatus} onValueChange={(v) => setForm({ ...form, newStatus: v })}>
+                        <SelectTrigger><SelectValue /></SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="upcoming">Upcoming</SelectItem>
+                          <SelectItem value="ongoing">Ongoing</SelectItem>
+                          <SelectItem value="completed">Completed</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+              </>
+            )}
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground">Student name *</label>
               <Input value={form.studentName} onChange={(e) => setForm({ ...form, studentName: e.target.value })} />
@@ -877,7 +1006,14 @@ function StudentsTab({
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
             <Button
               onClick={submit}
-              disabled={saveMutation.isPending || !form.studentName.trim() || !form.role.trim() || !form.internshipId}
+              disabled={
+                saveMutation.isPending ||
+                !form.studentName.trim() ||
+                !form.role.trim() ||
+                (form.internshipId === NEW_INTERNSHIP_SENTINEL
+                  ? !form.newCollegeName.trim() || !form.newTitle.trim()
+                  : !form.internshipId)
+              }
               className="gap-1.5"
             >
               {saveMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
