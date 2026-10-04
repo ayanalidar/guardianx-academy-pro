@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { verifyVerificationHash, isPlausibleCredentialId } from "@/lib/credentials"
+import { normalizeProjectEntries } from "@/lib/internship-projects"
 
 export const runtime = "nodejs"
 
@@ -75,7 +76,8 @@ export async function GET(
         mentorName: record.mentorName,
         startDate: record.startDate?.toISOString() ?? null,
         endDate: record.endDate?.toISOString() ?? null,
-        projects: safeParseArray(record.projects),
+        // Heals legacy corrupted rows (old bug stored "[object Object]" strings).
+        projects: normalizeProjectEntries(record.projects),
         skills: safeParseArray(record.skills),
         internship: internship
           ? {

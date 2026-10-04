@@ -4,6 +4,7 @@ import { requireAdmin, withErrorHandler } from "@/lib/session"
 import { logAction } from "@/lib/audit"
 import { ensureInternshipTables } from "@/lib/internships-bootstrap"
 import { generateCredentialId, generateVerificationHash } from "@/lib/credentials"
+import { projectsJson } from "@/lib/internship-projects"
 
 export const runtime = "nodejs"
 
@@ -68,6 +69,8 @@ function strOrNull(v: unknown): string | null {
   return s.length > 0 ? s : null
 }
 
+// String-array fields only (skills, tools) - projects must use projectsJson()
+// from @/lib/internship-projects, which preserves { title, description } objects.
 function jsonArr(v: unknown): string | undefined {
   if (Array.isArray(v)) return JSON.stringify(v.map((x) => String(x).slice(0, 300)).slice(0, 25))
   if (typeof v === "string") return JSON.stringify(v.split(",").map((s) => s.trim()).filter(Boolean).slice(0, 25))
@@ -173,7 +176,9 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
       mentorName: strOrNull(b.mentorName),
       startDate: startDate && !isNaN(startDate.getTime()) ? startDate : null,
       endDate: endDate && !isNaN(endDate.getTime()) ? endDate : null,
-      projects: jsonArr(b.projects) ?? "[]",
+      // Structured { title, description } entries - NEVER String()-flattened
+      // (the old generic jsonArr() turned objects into "[object Object]").
+      projects: projectsJson(b.projects),
       skills: jsonArr(b.skills) ?? "[]",
       tools: jsonArr(b.tools) ?? "[]",
       testimonial: strOrNull(b.testimonial),

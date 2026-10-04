@@ -4,6 +4,7 @@ import {
   ensureInternshipTables,
   seedSampleInternshipsIfEmpty,
 } from "@/lib/internships-bootstrap"
+import { normalizeProjectEntries } from "@/lib/internship-projects"
 
 export const runtime = "nodejs"
 
@@ -110,7 +111,9 @@ export async function GET(_req: NextRequest) {
           mentorName: r.mentorName,
           startDate: r.startDate?.toISOString() ?? null,
           endDate: r.endDate?.toISOString() ?? null,
-          projects: safeParseArray(r.projects),
+          // normalizeProjectEntries heals legacy corrupted rows (old bug stored
+          // "[object Object]" strings) instead of passing garbage through.
+          projects: normalizeProjectEntries(r.projects),
           skills: safeParseArray(r.skills),
           tools: safeParseArray(r.tools),
           testimonial: r.testimonial,

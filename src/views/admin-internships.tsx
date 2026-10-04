@@ -20,6 +20,7 @@ import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query"
 import { toast } from "sonner"
 import { api } from "@/lib/api"
 import { cn } from "@/lib/utils"
+import { normalizeProjectEntries, type ProjectEntry } from "@/lib/internship-projects"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
@@ -148,7 +149,8 @@ const EMPTY_RECORD_FORM = {
   grade: "",
   startDate: "",
   endDate: "",
-  projects: "",
+  // One box per project - each entry is a { title, description } pair.
+  projects: [] as ProjectEntry[],
   skills: "",
   tools: "",
   testimonial: "",
@@ -602,6 +604,8 @@ function StudentsTab({
     setForm({
       ...EMPTY_RECORD_FORM,
       internshipId: data?.internships?.[0]?.id ?? NEW_INTERNSHIP_SENTINEL,
+      // Start with one visible box so the per-project editor is obvious.
+      projects: [{ title: "", description: "" }],
     })
     setDialogOpen(true)
   }
@@ -626,18 +630,9 @@ function StudentsTab({
       grade: r.grade || "",
       startDate: local(r.startDate),
       endDate: local(r.endDate),
-      projects: r.projects
-        ? (() => {
-            try {
-              return JSON.parse(r.projects)
-                .map((p: any) => (typeof p === "string" ? p : p?.title || ""))
-                .filter(Boolean)
-                .join(" | ")
-            } catch {
-              return ""
-            }
-          })()
-        : "",
+      // Structured entries ({title, description}) - drops legacy "[object Object]"
+      // garbage from the old pipe-separated bug instead of showing it back.
+      projects: normalizeProjectEntries(r.projects),
       skills: parse(r.skills),
       tools: parse(r.tools),
       testimonial: r.testimonial || "",
@@ -657,13 +652,12 @@ function StudentsTab({
       grade: form.grade || undefined,
       startDate: form.startDate || undefined,
       endDate: form.endDate || undefined,
+      // One entry per project box; empty boxes are dropped silently. A
+      // description-only box uses the head of its description as the title.
       projects: form.projects
-        ? form.projects
-            .split("|")
-            .map((t) => t.trim())
-            .filter(Boolean)
-            .map((title) => ({ title }))
-        : [],
+        .map((p) => ({ title: p.title.trim(), description: p.description.trim() }))
+        .filter((p) => p.title || p.description)
+        .map((p) => ({ title: p.title || p.description.slice(0, 80), description: p.description })),
       skills: csvOrJson(form.skills),
       tools: csvOrJson(form.tools),
       testimonial: form.testimonial || undefined,
@@ -980,15 +974,79 @@ function StudentsTab({
               <label className="text-xs font-medium text-muted-foreground">Tools (comma separated)</label>
               <Input value={form.tools} onChange={(e) => setForm({ ...form, tools: e.target.value })} />
             </div>
-            <div className="space-y-1.5 sm:col-span-2">
-              <label className="text-xs font-medium text-muted-foreground">
-                Projects (separate multiple with | )
-              </label>
-              <Input
-                value={form.projects}
-                onChange={(e) => setForm({ ...form, projects: e.target.value })}
-                placeholder="Web App VAPT Capstone | Network Pentest Drill"
-              />
+            <div className="space-y-2 sm:col-span-2">
+              <div className="flex items-center justify-between gap-2">
+                <label className="text-xs font-medium text-muted-foreground">
+                  Projects delivered - one box per project
+                </label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="h-7 gap-1 px-2 text-xs"
+                  onClick={() =>
+                    setForm({ ...form, projects: [...form.projects, { title: "", description: "" }] })
+                  }
+                >
+                  <Plus className="h-3 w-3" /> Add project
+                </Button>
+              </div>
+              {form.projects.length === 0 && (
+                <p className="rounded-lg border border-dashed border-border/60 p-3 text-xs text-muted-foreground">
+                  No projects yet - click "Add project" for each project the student completed.
+                </p>
+              )}
+              <div className="space-y-2.5">
+                {form.projects.map((p, i) => (
+                  <div
+                    key={i}
+                    className="space-y-2 rounded-xl border border-border/60 bg-background/40 p-3"
+                  >
+                    <div className="flex items-center justify-between">
+                      <span className="inline-flex items-center gap-1.5 text-xs font-semibold">
+                        <FlaskConical className="h-3.5 w-3.5 text-violet-300" /> Project {i + 1}
+                      </span>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 w-7 p-0 text-muted-foreground hover:text-destructive"
+                        aria-label={`Remove project ${i + 1}`}
+                        onClick={() =>
+                          setForm({ ...form, projects: form.projects.filter((_, idx) => idx !== i) })
+                        }
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    </div>
+                    <Input
+                      value={p.title}
+                      placeholder="Project title - e.g. Web App VAPT Capstone"
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          projects: form.projects.map((x, idx) =>
+                            idx === i ? { ...x, title: e.target.value } : x
+                          ),
+                        })
+                      }
+                    />
+                    <Textarea
+                      rows={2}
+                      value={p.description}
+                      placeholder="What the student built / delivered (optional)"
+                      onChange={(e) =>
+                        setForm({
+                          ...form,
+                          projects: form.projects.map((x, idx) =>
+                            idx === i ? { ...x, description: e.target.value } : x
+                          ),
+                        })
+                      }
+                    />
+                  </div>
+                ))}
+              </div>
             </div>
             <div className="space-y-1.5 sm:col-span-2">
               <label className="text-xs font-medium text-muted-foreground">Testimonial (shown on the card)</label>

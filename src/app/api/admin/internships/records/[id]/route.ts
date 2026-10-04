@@ -3,6 +3,7 @@ import { db } from "@/lib/db"
 import { requireAdmin, withErrorHandler } from "@/lib/session"
 import { logAction } from "@/lib/audit"
 import { ensureInternshipTables } from "@/lib/internships-bootstrap"
+import { projectsJson } from "@/lib/internship-projects"
 
 export const runtime = "nodejs"
 
@@ -19,6 +20,8 @@ function strOrNull(v: unknown): string | null {
   return s.length > 0 ? s : null
 }
 
+// String-array fields only (skills, tools) - projects must use projectsJson()
+// from @/lib/internship-projects, which preserves { title, description } objects.
 function jsonArr(v: unknown): string | undefined {
   if (Array.isArray(v)) return JSON.stringify(v.map((x) => String(x).slice(0, 300)).slice(0, 25))
   if (typeof v === "string") return JSON.stringify(v.split(",").map((s) => s.trim()).filter(Boolean).slice(0, 25))
@@ -46,7 +49,8 @@ export const PATCH = withErrorHandler(async (req: NextRequest, { params }: { par
   if (body.studentEmail !== undefined) data.studentEmail = strOrNull(body.studentEmail)
   if (body.role !== undefined) data.role = String(body.role).trim()
   if (body.mentorName !== undefined) data.mentorName = strOrNull(body.mentorName)
-  if (body.projects !== undefined) data.projects = jsonArr(body.projects) ?? "[]"
+  // Structured { title, description } entries - never String()-flattened.
+  if (body.projects !== undefined) data.projects = projectsJson(body.projects)
   if (body.skills !== undefined) data.skills = jsonArr(body.skills) ?? "[]"
   if (body.tools !== undefined) data.tools = jsonArr(body.tools) ?? "[]"
   if (body.testimonial !== undefined) data.testimonial = strOrNull(body.testimonial)
