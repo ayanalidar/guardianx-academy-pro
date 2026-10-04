@@ -4,6 +4,7 @@ import { requireAdmin, withErrorHandler } from "@/lib/session"
 import { logAction } from "@/lib/audit"
 import { ensureInternshipTables } from "@/lib/internships-bootstrap"
 import { projectsJson } from "@/lib/internship-projects"
+import { generateVerificationHash } from "@/lib/credentials"
 
 export const runtime = "nodejs"
 
@@ -36,7 +37,9 @@ export const PATCH = withErrorHandler(async (req: NextRequest, { params }: { par
   const { id } = await params
   const existing = await db.internshipRecord.findUnique({
     where: { id },
-    select: { id: true, studentName: true, showPublicly: true },
+    // certificateId + internshipId needed to re-bind the hash if the issue
+    // date changes (the HMAC covers certificateId|recordId|internshipId|issuedAt).
+    select: { id: true, studentName: true, showPublicly: true, certificateId: true, internshipId: true },
   })
   if (!existing) return NextResponse.json({ error: "Internship record not found" }, { status: 404 })
 
@@ -58,6 +61,22 @@ export const PATCH = withErrorHandler(async (req: NextRequest, { params }: { par
   if (body.status !== undefined) data.status = ["ongoing", "completed"].includes(String(body.status)) ? String(body.status) : "completed"
   if (body.showPublicly !== undefined) data.showPublicly = !!body.showPublicly
   if (body.isSample !== undefined) data.isSample = !!body.isSample
+  // Certificate presentation fields (admin-editable).
+  if (body.programDirector !== undefined) {
+    data.programDirector = strOrNull(body.programDirector)
+    if (typeof data.programDirector === "string") data.programDirector = data.programDirector.slice(0, 120)
+  }
+  if (body.nameSize !== undefined) {
+    data.nameSize = ["compact", "regular", "large"].includes(String(body.nameSize)) ? String(body.nameSize) : null
+  }
+  let issuedAtChanged = false
+  if (body.certificateIssuedAt !== undefined) {
+    const d = body.certificateIssuedAt ? new Date(String(body.certificateIssuedAt)) : null
+    if (d && !isNaN(d.getTime())) {
+      data.certificateIssuedAt = d
+      issuedAtChanged = true
+    }
+  }
   if (body.sortOrder !== undefined) data.sortOrder = Number.isFinite(parseInt(String(body.sortOrder), 10)) ? parseInt(String(body.sortOrder), 10) : 0
   if (body.internshipId !== undefined) {
     const newInternshipId = String(body.internshipId).trim()
@@ -76,10 +95,23 @@ export const PATCH = withErrorHandler(async (req: NextRequest, { params }: { par
 
   const updated = await db.internshipRecord.update({ where: { id }, data })
 
+  // The verification hash binds certificateId|recordId|internshipId|issuedAt.
+  // Changing the issue date invalidates it -> re-bind with the FINAL values.
+  if (issuedAtChanged) {
+    const newHash = await generateVerificationHash(
+      existing.certificateId,
+      updated.id,
+      updated.internshipId,
+      updated.certificateIssuedAt
+    )
+    await db.internshipRecord.update({ where: { id }, data: { verificationHash: newHash } })
+  }
+
   await logAction(user.id ?? null, user.email ?? user.name ?? "admin", "internship.record.update", "internshipRecord", id, {
     studentName: updated.studentName,
     fields: Object.keys(data),
     showPubliclyChanged: body.showPublicly !== undefined ? updated.showPublicly : undefined,
+    issueDateChanged: issuedAtChanged,
   })
 
   return NextResponse.json({ ok: true, id: updated.id })

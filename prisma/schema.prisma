@@ -1100,6 +1100,8 @@ model InternshipRecord {
   certificateId      String  @unique // e.g. GXI-2026-A1B2C3
   verificationHash   String  // HMAC-SHA256 via lib/credentials.ts
   certificateIssuedAt DateTime @default(now())
+  programDirector    String? // name on the certificate "Program Director" signature (default: GuardianX Academy)
+  nameSize           String? // certificate recipient name size: compact | regular | large (null = regular)
   // --- showcase control ---
   showPublicly  Boolean  @default(false) // consent gate: only showcased records render publicly
   isSample      Boolean  @default(false)

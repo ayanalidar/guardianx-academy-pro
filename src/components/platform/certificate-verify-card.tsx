@@ -24,6 +24,7 @@ interface VerifyResult {
     certBody: string | null
     instructorName: string
     instructorTitle: string | null
+    programDirector?: string | null
   }
 }
 
@@ -185,8 +186,13 @@ export function CertificateVerifyCard() {
                       <Lock className="h-3 w-3" />
                       {result.certificate.certificateId}
                     </div>
-                    <div className="text-[10px] font-mono text-muted-foreground">
+                    <div className="text-[10px] font-mono text-muted-foreground text-right">
                       {result.certificate.instructorName}
+                      {result.certificate.programDirector && (
+                        <span className="block text-muted-foreground/70">
+                          {result.certificate.programDirector} · Program Director
+                        </span>
+                      )}
                     </div>
                   </div>
                 </div>

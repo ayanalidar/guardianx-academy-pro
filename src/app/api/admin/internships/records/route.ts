@@ -160,10 +160,22 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
 
   const startDate = typeof b.startDate === "string" && b.startDate ? new Date(b.startDate) : null
   const endDate = typeof b.endDate === "string" && b.endDate ? new Date(b.endDate) : null
+  // Issue date is admin-editable (certificate shows it + the hash binds it).
+  // Unset / invalid -> "now" as before.
+  const parsedIssuedAt =
+    typeof b.certificateIssuedAt === "string" && b.certificateIssuedAt
+      ? new Date(b.certificateIssuedAt)
+      : null
+  const certificateIssuedAt =
+    parsedIssuedAt && !isNaN(parsedIssuedAt.getTime()) ? parsedIssuedAt : new Date()
+  // Certificate signature + recipient name size (per-record overrides).
+  const programDirector = strOrNull(b.programDirector)?.slice(0, 120) ?? null
+  const nameSize = ["compact", "regular", "large"].includes(String(b.nameSize))
+    ? String(b.nameSize)
+    : null
 
   // Certificate is issued at creation time (never null afterwards).
   const certificateId = generateCredentialId("GXI")
-  const certificateIssuedAt = new Date()
 
   const record = await db.internshipRecord.create({
     data: {
@@ -188,6 +200,8 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
       // placeholder replaced by the real hash right after create
       verificationHash: "pending",
       certificateIssuedAt,
+      programDirector,
+      nameSize,
       // consent gate stays false unless explicitly granted in this request
       showPublicly: b.showPublicly === true,
       isSample: false,

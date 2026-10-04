@@ -76,6 +76,9 @@ export async function GET(
         mentorName: record.mentorName,
         startDate: record.startDate?.toISOString() ?? null,
         endDate: record.endDate?.toISOString() ?? null,
+        // Certificate presentation overrides (admin-editable per record)
+        programDirector: record.programDirector,
+        nameSize: record.nameSize,
         // Heals legacy corrupted rows (old bug stored "[object Object]" strings).
         projects: normalizeProjectEntries(record.projects),
         skills: safeParseArray(record.skills),

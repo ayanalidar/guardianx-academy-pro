@@ -103,6 +103,8 @@ const DDL: string[] = [
   `ALTER TABLE "InternshipRecord" ADD COLUMN IF NOT EXISTS "status" TEXT NOT NULL DEFAULT 'completed'`,
   `ALTER TABLE "InternshipRecord" ADD COLUMN IF NOT EXISTS "showPublicly" BOOLEAN NOT NULL DEFAULT false`,
   `ALTER TABLE "InternshipRecord" ADD COLUMN IF NOT EXISTS "isSample" BOOLEAN NOT NULL DEFAULT false`,
+  `ALTER TABLE "InternshipRecord" ADD COLUMN IF NOT EXISTS "programDirector" TEXT`,
+  `ALTER TABLE "InternshipRecord" ADD COLUMN IF NOT EXISTS "nameSize" TEXT`,
   `ALTER TABLE "InternshipRecord" ADD COLUMN IF NOT EXISTS "sortOrder" INTEGER NOT NULL DEFAULT 0`,
   `CREATE UNIQUE INDEX IF NOT EXISTS "InternshipRecord_certificateId_key" ON "InternshipRecord"("certificateId")`,
   `CREATE INDEX IF NOT EXISTS "InternshipRecord_internshipId_idx" ON "InternshipRecord"("internshipId")`,

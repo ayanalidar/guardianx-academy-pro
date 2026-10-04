@@ -239,6 +239,10 @@ export async function downloadInternshipCertificatePDF(
       issuedAt: c.issuedAt,
       score: null,
       grade: c.grade ?? null,
+      // Certificate presentation overrides (Program Director signature +
+      // recipient name size) - admin-editable per internship record.
+      programDirector: c.programDirector ?? undefined,
+      nameSize: c.nameSize ?? undefined,
       user: { name: c.studentName },
       course: {
         title: c.internship?.title ?? c.role ?? "Internship Program",
@@ -613,6 +617,18 @@ export function buildCertificateHTML(
   const isPhantom = opts.theme === "phantom"
 
   const recipient = escapeHtml(String(cert.user?.name ?? "GuardianX Student"))
+  // Recipient name size: per-record override (internship records), else an
+  // auto-shrink for very long names. Regular is the design default - 11.5mm,
+  // down from the original 15.5mm which read far too big for most names.
+  const rawNameSize = typeof cert.nameSize === "string" ? cert.nameSize.trim().toLowerCase() : ""
+  const nameSize = (["compact", "regular", "large"].includes(rawNameSize)
+    ? rawNameSize
+    : String(cert.user?.name ?? "").length > 30
+    ? "compact"
+    : "regular") as "compact" | "regular" | "large"
+  // Second signature block - "Program Director". Per-record override with
+  // the GuardianX Academy house default.
+  const programDirector = escapeHtml(String(cert.programDirector ?? "").trim() || "GuardianX Academy")
   const courseTitle = escapeHtml(String(cert.course?.title ?? "Course Completion"))
   const certBody = escapeHtml(String(cert.course?.certBody || "GuardianX"))
   const category = escapeHtml(String(cert.course?.category ?? "")).trim()
@@ -847,9 +863,11 @@ export function buildCertificateHTML(
   .presented-label { font-family: ${MONO_STACK}; font-size: 7pt; letter-spacing: 0.32em; color: var(--muted); }
   .recipient {
     font-family: ${SCRIPT_STACK}; font-style: italic; font-weight: 600;
-    font-size: 15.5mm; line-height: 1.22; color: var(--ink);
+    font-size: 11.5mm; line-height: 1.22; color: var(--ink);
     margin-top: 2.4mm; max-width: 212mm;
   }
+  .recipient.sz-compact { font-size: 9mm; }
+  .recipient.sz-large { font-size: 15.5mm; }
   .grad-rule {
     width: 60%; height: 0.8mm; border-radius: 1mm; margin: 3.2mm auto 0;
     background: linear-gradient(90deg, var(--acc1), var(--acc2), var(--acc3)); opacity: 0.9;
@@ -914,7 +932,7 @@ export function buildCertificateHTML(
 
     <div class="presented">
       <div class="presented-label">THIS CERTIFICATE IS PROUDLY PRESENTED TO</div>
-      <div class="recipient">${recipient}</div>
+      <div class="recipient sz-${nameSize}">${recipient}</div>
       <div class="grad-rule"></div>
     </div>
 
@@ -942,7 +960,7 @@ export function buildCertificateHTML(
     </div>
     <div class="sig">
       ${squiggleSvg(A.squiggle)}
-      <div class="sig-name">GuardianX Academy</div>
+      <div class="sig-name">${programDirector}</div>
       <div class="sig-rule"><div class="sig-role">Program Director</div></div>
     </div>
   </div>

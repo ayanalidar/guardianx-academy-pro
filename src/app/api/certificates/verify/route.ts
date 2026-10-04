@@ -96,6 +96,8 @@ export async function GET(req: Request) {
         certBody: internship?.company ?? "GuardianX Academy",
         instructorName: record.mentorName ?? "GuardianX Academy",
         instructorTitle: record.mentorName ? "Internship Mentor" : "Program Director",
+        // Second signatory (admin-editable; null = GuardianX Academy default)
+        programDirector: record.programDirector,
         template: null,
         // internship-specific extras (rendered when present)
         grade: record.grade,

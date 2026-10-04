@@ -90,6 +90,9 @@ type AdminInternshipRecord = {
   grade: string | null
   status: string
   certificateId: string
+  certificateIssuedAt: string
+  programDirector: string | null
+  nameSize: string | null
   showPublicly: boolean
   isSample: boolean
   sortOrder: number
@@ -156,6 +159,11 @@ const EMPTY_RECORD_FORM = {
   testimonial: "",
   status: "completed",
   showPublicly: false,
+  // certificate presentation (Program Director signature, recipient name
+  // size, issue date) - editable per record
+  programDirector: "",
+  nameSize: "regular",
+  issueDate: "",
   // inline "new internship" fields (used when internshipId === NEW_INTERNSHIP_SENTINEL)
   newCollegeName: "",
   newCollegeCity: "",
@@ -606,6 +614,8 @@ function StudentsTab({
       internshipId: data?.internships?.[0]?.id ?? NEW_INTERNSHIP_SENTINEL,
       // Start with one visible box so the per-project editor is obvious.
       projects: [{ title: "", description: "" }],
+      // Certificate defaults: today's issue date (local timezone).
+      issueDate: new Date().toLocaleDateString("en-CA"),
     })
     setDialogOpen(true)
   }
@@ -638,6 +648,9 @@ function StudentsTab({
       testimonial: r.testimonial || "",
       status: r.status,
       showPublicly: r.showPublicly,
+      programDirector: r.programDirector || "",
+      nameSize: r.nameSize || "regular",
+      issueDate: r.certificateIssuedAt ? r.certificateIssuedAt.slice(0, 10) : "",
     })
     setDialogOpen(true)
   }
@@ -663,6 +676,11 @@ function StudentsTab({
       testimonial: form.testimonial || undefined,
       status: form.status,
       showPublicly: form.showPublicly,
+      // certificate presentation (issue date re-binds the verification hash
+      // server-side, so verification keeps passing)
+      programDirector: form.programDirector.trim() || undefined,
+      nameSize: form.nameSize,
+      certificateIssuedAt: form.issueDate || undefined,
     }
     if (isNewInt) {
       // "Add students directly": create the internship inline in the same
@@ -945,6 +963,14 @@ function StudentsTab({
               <Input value={form.mentorName} onChange={(e) => setForm({ ...form, mentorName: e.target.value })} />
             </div>
             <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground">Program Director (certificate signature)</label>
+              <Input
+                value={form.programDirector}
+                onChange={(e) => setForm({ ...form, programDirector: e.target.value })}
+                placeholder="GuardianX Academy"
+              />
+            </div>
+            <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground">Start date</label>
               <Input type="date" value={form.startDate} onChange={(e) => setForm({ ...form, startDate: e.target.value })} />
             </div>
@@ -963,6 +989,25 @@ function StudentsTab({
                 <SelectContent>
                   <SelectItem value="ongoing">Ongoing</SelectItem>
                   <SelectItem value="completed">Completed</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground">Issue date (certificate)</label>
+              <Input
+                type="date"
+                value={form.issueDate}
+                onChange={(e) => setForm({ ...form, issueDate: e.target.value })}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground">Name size on certificate</label>
+              <Select value={form.nameSize} onValueChange={(v) => setForm({ ...form, nameSize: v })}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="compact">Compact - long names</SelectItem>
+                  <SelectItem value="regular">Regular (recommended)</SelectItem>
+                  <SelectItem value="large">Large - original size</SelectItem>
                 </SelectContent>
               </Select>
             </div>
