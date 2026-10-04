@@ -73,35 +73,72 @@ export function AppRoot({ initialView }: { initialView?: View }) {
   const sessionRef = React.useRef<any>(null)
   const lastSessionFetchAt = React.useRef(0)
 
-  /** Fetch the session once, unless one is already known or we fetched
-   *  within the last 5s. `force` bypasses both guards. */
+  /** Fetch the session, throttled: at most every 5s while anonymous
+   *  (post-login flow), at most every 60s while authenticated (re-validation).
+   *  `force` bypasses the throttle.
+   *
+   *  GHOST-LOGOUT GUARD: this endpoint sits behind serverless cold starts,
+   *  and a single transient failure (network blip, 502 during a deploy,
+   *  slow instance returning an empty body) used to instantly flip the
+   *  whole shell to "logged out" - every view then lost its personalized
+   *  data and only a manual refresh brought it back. Two hardening rules:
+   *
+   *    1. If we HAD a session and a non-forced re-check returns null, we
+   *       verify once more (forced) before accepting the logout.
+   *    2. If the fetch itself THROWS while we hold a session, we keep the
+   *       existing session and let a later navigation retry - a network
+   *       error is not proof of logout.
+   *  Both paths recover automatically; a genuine sign-out still works
+   *  because the forced re-check also returns null. */
+  const recheckPending = React.useRef(false)
   const fetchSession = React.useCallback((force = false) => {
     const now = Date.now()
-    if (!force && (sessionRef.current || now - lastSessionFetchAt.current < 5000)) return
+    const hasSession = !!sessionRef.current
+    // Throttle model: when NO session is known we re-check at most every 5s
+    // (post-login flow); when one EXISTS we re-validate at most every 60s.
+    // The old model SKIPPED all re-checks while a session was held, so a
+    // session that expired server-side was never noticed: the shell kept
+    // rendering, every API call started returning 401, and every tab showed
+    // its empty state ("no data unless I refresh"). Periodic re-validation
+    // keeps the shell honest without adding a roundtrip per tap.
+    const minGapMs = hasSession ? 60_000 : 5_000
+    if (!force && now - lastSessionFetchAt.current < minGapMs) return
     lastSessionFetchAt.current = now
+    const hadSession = hasSession
     fetch("/api/auth/session", { credentials: "include" })
       .then(r => r.json())
       .then(data => {
         const next = data?.user ? data : null
+        if (!next && hadSession && !force && !recheckPending.current) {
+          // Rule 1: transient null - confirm once before tearing down the UI.
+          recheckPending.current = true
+          lastSessionFetchAt.current = 0
+          setTimeout(() => {
+            recheckPending.current = false
+            fetchSession(true)
+          }, 500)
+          return
+        }
         sessionRef.current = next
         setSession(next)
         setSessionChecked(true)
       })
       .catch(() => {
+        if (hadSession) {
+          // Rule 2: keep the known session; retry on a future navigation.
+          return
+        }
         sessionRef.current = null
         setSession(null)
         setSessionChecked(true)
       })
   }, [])
 
-  // Listen for navigation events. Re-check the session ONLY when we don't
-  // already have one - that is exactly the post-login flow (signIn() sets
-  // the cookie, then auth-screen calls navigate()). Logged-in taps no
-  // longer pay a serverless roundtrip per navigation.
-  // NOTE: the refetch is FORCED when we have no session yet - the 5s
-  // throttle previously swallowed the post-login refetch (login → navigate
-  // happened within 5s of the mount fetch), leaving `session` null and
-  // bouncing the fresh-logged-in user back to the auth/home screens.
+  // Listen for navigation events. Re-check the session when we don't have
+  // one (post-login flow: signIn() sets the cookie, then auth-screen calls
+  // navigate()) and RE-VALIDATE an existing one at most every 60s (see the
+  // throttle model in fetchSession). Per-tap roundtrips are throttled away,
+  // so rapid navigation stays free of session chatter.
   React.useEffect(() => {
     const handler = () => {
       forceRender((v: number) => v + 1)
@@ -119,6 +156,18 @@ export function AppRoot({ initialView }: { initialView?: View }) {
     const handler = () => fetchSession(true)
     window.addEventListener("guardianx-session-changed", handler)
     return () => window.removeEventListener("guardianx-session-changed", handler)
+  }, [fetchSession])
+
+  // Auth-hiccup signal: the query layer dispatches this when ANY endpoint
+  // answers 401 (see providers.tsx QueryCache.onError). A forced re-check
+  // decides between two recoveries without a manual refresh: session truly
+  // gone → the shell flips to the auth screen (pendingView remembers where
+  // the user was); session alive → nothing changes and the stale/errored
+  // queries are refetched by the navigation sweeps + remount logic.
+  React.useEffect(() => {
+    const handler = () => fetchSession(true)
+    window.addEventListener("guardianx-auth-hiccup", handler)
+    return () => window.removeEventListener("guardianx-auth-hiccup", handler)
   }, [fetchSession])
 
   // Hydrate the view from the URL after mount. Handles three cases:
