@@ -1311,7 +1311,7 @@ export interface VerifyReportData {
 }
 
 /** Max projects printed on the single-page report; longer lists get an honest note. */
-const REPORT_MAX_PROJECTS = 6
+const REPORT_MAX_PROJECTS = 4
 const REPORT_MAX_SKILLS = 10
 
 /** Short "Jun 2025" style date for the timeline row. */
@@ -1529,16 +1529,16 @@ export function buildVerifyReportHTML(
   .grade-sub { font-family: ${MONO_STACK}; font-size: 7pt; letter-spacing: 0.22em; color: #F59E0B; text-transform: uppercase; margin-top: 1.8mm; }
 
   .rgrid {
-    width: 100%; margin-top: 4.6mm; text-align: left;
-    display: grid; grid-template-columns: 1fr 1fr; gap: 2mm 4mm;
+    width: 100%; margin-top: 4mm; text-align: left;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 1.6mm 4mm;
   }
-  .rcell { border: 0.5pt solid rgba(255, 255, 255, 0.14); border-radius: 2mm; padding: 1.8mm 2.6mm; background: rgba(255, 255, 255, 0.03); }
-  .rlabel { font-family: ${MONO_STACK}; font-size: 5.4pt; letter-spacing: 0.22em; text-transform: uppercase; color: rgba(250, 247, 245, 0.62); margin-bottom: 0.8mm; }
-  .rvalue { font-family: ${MONO_STACK}; font-size: 7.2pt; color: #FAF7F5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .rcell { border: 0.5pt solid rgba(255, 255, 255, 0.14); border-radius: 2mm; padding: 1.4mm 2.6mm; background: rgba(255, 255, 255, 0.03); }
+  .rlabel { font-family: ${MONO_STACK}; font-size: 5.2pt; letter-spacing: 0.22em; text-transform: uppercase; color: rgba(250, 247, 245, 0.62); margin-bottom: 0.6mm; }
+  .rvalue { font-family: ${MONO_STACK}; font-size: 6.8pt; color: #FAF7F5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-  .projects { width: 100%; margin-top: 4.6mm; text-align: left; }
-  .projects-kicker { font-family: ${MONO_STACK}; font-size: 7pt; letter-spacing: 0.3em; color: rgba(250, 247, 245, 0.62); text-transform: uppercase; text-align: center; margin-bottom: 2.8mm; }
-  .prow { border: 0.5pt solid rgba(255, 255, 255, 0.12); border-radius: 2mm; padding: 2mm 2.8mm; margin-bottom: 2mm; background: rgba(255, 255, 255, 0.02); }
+  .projects { width: 100%; margin-top: 4mm; text-align: left; }
+  .projects-kicker { font-family: ${MONO_STACK}; font-size: 7pt; letter-spacing: 0.3em; color: rgba(250, 247, 245, 0.62); text-transform: uppercase; text-align: center; margin-bottom: 2.4mm; }
+  .prow { border: 0.5pt solid rgba(255, 255, 255, 0.12); border-radius: 2mm; padding: 1.8mm 2.8mm; margin-bottom: 1.8mm; background: rgba(255, 255, 255, 0.02); }
   .prow-top { display: flex; align-items: baseline; gap: 2.2mm; }
   .pnum { font-family: ${MONO_STACK}; font-size: 6.6pt; font-weight: 700; color: ${A.gold}; flex-shrink: 0; }
   .ptitle { font-family: ${MONO_STACK}; font-size: 7.4pt; letter-spacing: 0.06em; color: #FAF7F5; font-weight: 700; }
@@ -1549,7 +1549,7 @@ export function buildVerifyReportHTML(
   }
   .pmore { font-family: ${MONO_STACK}; font-size: 5.8pt; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(250, 247, 245, 0.62); text-align: center; margin-top: 1mm; }
 
-  .skills { width: 100%; margin-top: 3.4mm; }
+  .skills { width: 100%; margin-top: 3mm; }
   .skills-kicker { font-family: ${MONO_STACK}; font-size: 7pt; letter-spacing: 0.3em; color: rgba(250, 247, 245, 0.62); text-transform: uppercase; text-align: center; margin-bottom: 2.2mm; }
   .skill-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 1.4mm; }
   .skill {
