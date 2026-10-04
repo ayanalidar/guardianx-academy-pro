@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server"
 import { db } from "@/lib/db"
+import { normalizeProjectEntries } from "@/lib/internship-projects"
 
 export const runtime = "nodejs"
 
@@ -163,10 +164,15 @@ export async function GET(req: Request, { params }: { params: Promise<{ credenti
             status: "valid",
             skillsAssessed: iSkills,
             examType: "internship",
+            // Progress report: the projects the intern delivered during the
+            // program (healed/normalized - legacy "[object Object]" rows render
+            // clean). Shown by the verify view as a progress-report section.
+            projects: normalizeProjectEntries(iRecord.projects),
             // internship-specific extras for the verify view
             internshipDetails: {
               role: iRecord.role,
               mentorName: iRecord.mentorName,
+              programDirector: iRecord.programDirector ?? null,
               company: internship?.company ?? null,
               collegeName: internship?.collegeName ?? null,
               collegeCity: internship?.collegeCity ?? null,
@@ -175,7 +181,11 @@ export async function GET(req: Request, { params }: { params: Promise<{ credenti
               endDate: iRecord.endDate?.toISOString() ?? null,
               completed: iRecord.status === "completed",
             },
-            verificationUrl: `/verify/${iRecord.certificateId}`,
+            // NOTE: unlike other credential types, "Open certificate" must NOT
+            // point back at /verify/<id> (circular - this page IS the verifier).
+            // The full certificate + downloadable PDF live on the public
+            // internships page under this student's record.
+            verificationUrl: `/internships`,
           },
         })
       }

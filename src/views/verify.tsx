@@ -34,9 +34,12 @@ type VerifiedCredential = {
   status: string
   skillsAssessed?: string[]
   examType?: string
+  // Internship progress report - projects delivered during the program.
+  projects?: { title: string; description: string }[]
   internshipDetails?: {
     role: string
     mentorName?: string | null
+    programDirector?: string | null
     company?: string | null
     collegeName?: string | null
     collegeCity?: string | null
@@ -354,9 +357,18 @@ function VerifiedCard({
   onShare: () => void
 }) {
   // For quiz certs, prefer percentage. For guardian certs, score is already a percentage.
-  // Internship certificates carry a letter grade instead of a numeric score.
+  // Internship certificates carry a letter grade instead of a numeric score -
+  // the ring shows completion (100% when completed) with the grade in the
+  // center, never a fabricated 0%.
   const isInternship = cred.examType === "internship"
-  const displayPct = cred.percentage != null ? cred.percentage : cred.score ?? 0
+  const projects = cred.projects ?? []
+  const gradeShort = shortGrade(cred.grade)
+  const internshipPct = cred.internshipDetails?.completed === false ? 0 : 100
+  const displayPct = isInternship
+    ? internshipPct
+    : cred.percentage != null
+    ? cred.percentage
+    : cred.score ?? 0
   const pct = Math.max(0, Math.min(100, displayPct))
   const isQuiz = cred.examType === "online-quiz" || cred.credentialId.startsWith("GX-QUIZ-")
 
@@ -439,6 +451,8 @@ function VerifiedCard({
                   ? "Proctored Exam"
                   : cred.examType === "course-completion"
                   ? "Course Completion"
+                  : cred.examType === "internship"
+                  ? "Internship Program"
                   : cred.examType}
               </Badge>
             )}
@@ -447,9 +461,14 @@ function VerifiedCard({
 
         {/* ─── Score + key facts grid ─── */}
         <div className="grid grid-cols-1 sm:grid-cols-[auto_1fr] gap-5 sm:gap-6 items-center mb-6">
-          {/* Score ring */}
+          {/* Score ring - internships show grade + completion, not 0% */}
           <div className="flex justify-center sm:justify-start">
-            <ScoreRing pct={pct} color={band.ring} />
+            <ScoreRing
+              pct={pct}
+              color={band.ring}
+              centerText={isInternship ? gradeShort ?? `${pct}%` : undefined}
+              caption={isInternship ? (gradeShort ? "GRADE" : "COMPLETED") : undefined}
+            />
           </div>
 
           {/* Key facts */}
@@ -461,17 +480,26 @@ function VerifiedCard({
                 isQuiz && cred.totalQuestions
                   ? `${cred.score} / ${cred.totalQuestions}`
                   : isInternship
-                  ? (cred.grade ?? "Internship")
+                  ? (cred.grade ?? "Completed")
                   : `${cred.score ?? 0}%`
               }
               accent="text-emerald-300"
             />
-            <Fact
-              icon={<Sparkles className="h-3.5 w-3.5" />}
-              label="GRADE"
-              value={band.label}
-              accent={band.color}
-            />
+            {isInternship && projects.length > 0 ? (
+              <Fact
+                icon={<FileCheck2 className="h-3.5 w-3.5" />}
+                label="PROJECTS"
+                value={`${projects.length} delivered`}
+                accent="text-emerald-300"
+              />
+            ) : (
+              <Fact
+                icon={<Sparkles className="h-3.5 w-3.5" />}
+                label="GRADE"
+                value={band.label}
+                accent={band.color}
+              />
+            )}
             <Fact
               icon={<Calendar className="h-3.5 w-3.5" />}
               label="ISSUED"
@@ -511,6 +539,11 @@ function VerifiedCard({
                   Mentor: <span className="text-foreground">{cred.internshipDetails.mentorName}</span>
                 </p>
               )}
+              {cred.internshipDetails.programDirector && (
+                <p className="text-muted-foreground">
+                  Program Director: <span className="text-foreground">{cred.internshipDetails.programDirector}</span>
+                </p>
+              )}
               {cred.internshipDetails.durationWeeks != null && (
                 <p className="text-muted-foreground">
                   Duration: <span className="text-foreground">{cred.internshipDetails.durationWeeks} weeks</span>
@@ -521,6 +554,35 @@ function VerifiedCard({
                   Completed: <span className="text-foreground">{formatDate(cred.internshipDetails.endDate)}</span>
                 </p>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Progress report - projects delivered (internship certificates) */}
+        {projects.length > 0 && (
+          <div className="mb-5">
+            <p className="text-[10px] font-mono text-muted-foreground tracking-[0.25em] mb-2 flex items-center gap-1.5">
+              <FileCheck2 className="h-3 w-3" /> PROGRESS REPORT · PROJECTS DELIVERED
+            </p>
+            <div className="space-y-2">
+              {projects.map((p, idx) => (
+                <div
+                  key={`${p.title}-${idx}`}
+                  className="rounded-xl border border-border/50 bg-background/40 px-4 py-3"
+                >
+                  <p className="text-xs font-semibold flex items-start gap-2">
+                    <span className="font-mono text-emerald-300 shrink-0">
+                      {String(idx + 1).padStart(2, "0")}
+                    </span>
+                    <span>{p.title}</span>
+                  </p>
+                  {p.description && (
+                    <p className="mt-1 pl-6 text-xs leading-relaxed text-foreground/70">
+                      {p.description}
+                    </p>
+                  )}
+                </div>
+              ))}
             </div>
           </div>
         )}
@@ -692,7 +754,7 @@ function RevokedCard({ cred }: { cred: VerifiedCredential }) {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-sm mb-5">
           <Fact icon={<User className="h-3.5 w-3.5" />} label="CANDIDATE" value={cred.candidateName} />
           <Fact icon={<BookOpen className="h-3.5 w-3.5" />} label="CERTIFICATION" value={cred.certificationName} />
-          <Fact icon={<TrendingUp className="h-3.5 w-3.5" />} label="SCORE" value={`${cred.score}${cred.percentage != null ? "%" : cred.totalQuestions ? ` / ${cred.totalQuestions}` : "%"}`} />
+          <Fact icon={<TrendingUp className="h-3.5 w-3.5" />} label="SCORE" value={cred.examType === "internship" ? (cred.grade ?? "Completed") : `${cred.score}${cred.percentage != null ? "%" : cred.totalQuestions ? ` / ${cred.totalQuestions}` : "%"}`} />
           <Fact icon={<Calendar className="h-3.5 w-3.5" />} label="ISSUED" value={formatDate(cred.issueDate)} />
           {cred.expiryDate && (
             <Fact icon={<Calendar className="h-3.5 w-3.5" />} label="EXPIRES" value={formatDate(cred.expiryDate)} />
@@ -820,7 +882,19 @@ function ErrorCard() {
 
 /* ─────────────────────────── score ring (SVG) ──────────────────────── */
 
-function ScoreRing({ pct, color }: { pct: number; color: string }) {
+function ScoreRing({
+  pct,
+  color,
+  centerText,
+  caption,
+}: {
+  pct: number
+  color: string
+  /** Overrides the default "N%" center (e.g. a letter grade like "A+"). */
+  centerText?: string
+  /** Overrides the default "SCORE" caption (e.g. "GRADE"). */
+  caption?: string
+}) {
   const size = 120
   const stroke = 9
   const r = (size - stroke) / 2
@@ -873,14 +947,21 @@ function ScoreRing({ pct, color }: { pct: number; color: string }) {
           initial={{ opacity: 0, scale: 0.6 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ duration: 0.4, delay: 0.5 }}
-          className="text-2xl font-bold tracking-tight"
+          className={cn(
+            "font-bold tracking-tight",
+            centerText && centerText.length > 3 ? "text-lg" : "text-2xl"
+          )}
           style={{ color }}
         >
-          {pct}
-          <span className="text-base font-semibold">%</span>
+          {centerText ?? (
+            <>
+              {pct}
+              <span className="text-base font-semibold">%</span>
+            </>
+          )}
         </motion.span>
         <span className="text-[9px] font-mono text-muted-foreground tracking-[0.2em] mt-0.5">
-          SCORE
+          {caption ?? "SCORE"}
         </span>
       </div>
     </div>
@@ -911,6 +992,26 @@ function Fact({
 }
 
 /* ─────────────────────────── helpers ──────────────────────────────── */
+
+/**
+ * Extract a short letter grade (e.g. "A+") from a free-text grade like
+ * "Outstanding A+" for the score-ring center. Returns null when no
+ * recognizable letter grade exists (caller falls back to completion %).
+ */
+function shortGrade(grade?: string | null): string | null {
+  if (!grade) return null
+  const trimmed = grade.trim()
+  if (!trimmed) return null
+  // Prefer a trailing letter grade with sign: "Outstanding A+" → "A+"
+  const trailing = trimmed.match(/([A-Fa-f][+-])\s*$/)
+  if (trailing) return trailing[1].toUpperCase()
+  // Otherwise a standalone letter grade word: "Excellent A" → "A"
+  const standalone = trimmed.match(/(?:^|\s)([A-Fa-f][+-]?)(?=\s|$)/)
+  if (standalone) return standalone[1].toUpperCase()
+  // Short plain grades ("Pass", "Merit") render as-is if they fit
+  if (trimmed.length <= 9) return trimmed.toUpperCase()
+  return null
+}
 
 function formatDate(d: string | Date): string {
   try {
