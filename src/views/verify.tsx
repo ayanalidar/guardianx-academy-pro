@@ -14,9 +14,10 @@ import {
   Check, X, Calendar, Hash, Award, TrendingUp, Lock,
   User, BookOpen, Sparkles, Fingerprint, AlertTriangle,
   Search, Copy, BadgeCheck, FileCheck2, GraduationCap,
-  ScanLine, Clock, ExternalLink, Briefcase,
+  ScanLine, Clock, ExternalLink, Briefcase, Download,
 } from "lucide-react"
 import { toast } from "sonner"
+import { downloadVerifyReportPDF } from "@/lib/certificate-pdf"
 
 /** Public-facing credential shape returned by /api/credentials/verify. */
 type VerifiedCredential = {
@@ -372,6 +373,44 @@ function VerifiedCard({
   const pct = Math.max(0, Math.min(100, displayPct))
   const isQuiz = cred.examType === "online-quiz" || cred.credentialId.startsWith("GX-QUIZ-")
 
+  // Internship progress-report PDF - mirrors the verified result exactly.
+  const [downloadingReport, setDownloadingReport] = React.useState(false)
+  async function downloadReport() {
+    if (!isInternship) return
+    setDownloadingReport(true)
+    toast.info("Preparing report PDF...")
+    try {
+      await downloadVerifyReportPDF({
+        credentialId: cred.credentialId,
+        candidateName: cred.candidateName,
+        grade: cred.grade ?? null,
+        issueDate: cred.issueDate ?? null,
+        verifyUrl: cred.verificationUrl || `/verify/${cred.credentialId}`,
+        skills: cred.skillsAssessed ?? [],
+        projects,
+        program: {
+          title: cred.certificationName,
+          role: cred.internshipDetails?.role ?? null,
+          domain: cred.certificationLevel ?? null,
+          company: cred.internshipDetails?.company ?? null,
+          collegeName: cred.internshipDetails?.collegeName ?? null,
+          collegeCity: cred.internshipDetails?.collegeCity ?? null,
+          durationWeeks: cred.internshipDetails?.durationWeeks ?? null,
+          startDate: cred.internshipDetails?.startDate ?? null,
+          endDate: cred.internshipDetails?.endDate ?? null,
+          mentorName: cred.internshipDetails?.mentorName ?? null,
+          programDirector: cred.internshipDetails?.programDirector ?? null,
+          completed: cred.internshipDetails?.completed ?? true,
+        },
+      })
+      toast.success("Report opened - use Save as PDF in the print dialog.")
+    } catch {
+      toast.error("Could not prepare the report. Please try again.")
+    } finally {
+      setDownloadingReport(false)
+    }
+  }
+
   // Score band color (internships show their grade instead)
   const band = isInternship
     ? { label: (cred.grade ?? "COMPLETED").toUpperCase(), color: "text-emerald-300", ring: "#10b981" }
@@ -657,6 +696,18 @@ function VerifiedCard({
           <Button size="sm" variant="outline" onClick={onShare} className="flex-1 min-w-[140px]">
             <Copy className="h-3.5 w-3.5 mr-1.5" /> Copy share URL
           </Button>
+          {isInternship && (
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={downloadReport}
+              disabled={downloadingReport}
+              className="flex-1 min-w-[140px]"
+            >
+              <Download className="h-3.5 w-3.5 mr-1.5" />
+              {downloadingReport ? "Preparing..." : "Download report"}
+            </Button>
+          )}
           {cred.verificationUrl && (
             <Button
               size="sm"

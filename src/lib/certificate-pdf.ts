@@ -1279,6 +1279,414 @@ export function buildScoreCardHTML(
 }
 
 // ---------------------------------------------------------------------------
+// Verification progress report - A4 portrait document for the /verify page
+// ("Download report" button on verified internship certificates). Same phantom
+// design DNA as the score card, but reports the internship RECORD: grade,
+// program details, mentor/director, the projects delivered (progress report)
+// and the skills gained - with QR + verification strip.
+// ---------------------------------------------------------------------------
+
+export interface VerifyReportData {
+  credentialId: string
+  candidateName: string
+  grade: string | null
+  issueDate: string | null
+  verifyUrl: string
+  skills: string[]
+  projects: { title: string; description: string }[]
+  program: {
+    title?: string | null
+    role?: string | null
+    domain?: string | null
+    company?: string | null
+    collegeName?: string | null
+    collegeCity?: string | null
+    durationWeeks?: number | null
+    startDate?: string | null
+    endDate?: string | null
+    mentorName?: string | null
+    programDirector?: string | null
+    completed?: boolean
+  }
+}
+
+/** Max projects printed on the single-page report; longer lists get an honest note. */
+const REPORT_MAX_PROJECTS = 6
+const REPORT_MAX_SKILLS = 10
+
+/** Short "Jun 2025" style date for the timeline row. */
+function fmtMonthYear(iso: unknown): string {
+  const d = iso ? new Date(iso as string) : null
+  if (!d || isNaN(d.getTime())) return "-"
+  return d.toLocaleDateString("en-US", { month: "short", year: "numeric" })
+}
+
+export function buildVerifyReportHTML(
+  data: VerifyReportData,
+  opts: {
+    logoPngDataUrl: string | null
+    qrPngDataUrl: string | null
+    logoDotsSvg?: string | null
+  },
+): string {
+  const A = THEME_ASSETS.phantom
+
+  const recipient = escapeHtml(String(data.candidateName ?? "GuardianX Intern"))
+  const credentialId = escapeHtml(String(data.credentialId ?? ""))
+  const verifyUrl = escapeHtml(String(data.verifyUrl ?? ""))
+  const issuedDate = fmtLongDate(data.issueDate)
+  const grade = escapeHtml(String(data.grade ?? "Completed").trim())
+
+  const p = data.program ?? {}
+  const completed = p.completed !== false
+  const weeks = typeof p.durationWeeks === "number" && p.durationWeeks > 0 ? p.durationWeeks : null
+  const timeline =
+    p.startDate || p.endDate
+      ? `${fmtMonthYear(p.startDate)} - ${fmtMonthYear(p.endDate)}`
+      : null
+
+  const recordCells: { label: string; value: string }[] = []
+  const push = (label: string, value: unknown) => {
+    const v = String(value ?? "").trim()
+    if (v) recordCells.push({ label, value: escapeHtml(v) })
+  }
+  push("Program", p.title)
+  push("Role", p.role)
+  push("Domain", p.domain)
+  push("College", p.collegeName && p.collegeCity ? `${p.collegeName}, ${p.collegeCity}` : p.collegeName)
+  push("Hosted by", p.company)
+  push("Mentor", p.mentorName)
+  push("Program Director", p.programDirector)
+  push("Timeline", timeline)
+  push("Duration", weeks ? `${weeks} weeks` : null)
+  const recordGrid = recordCells
+    .map(
+      (c) => `<div class="rcell"><div class="rlabel">${c.label}</div><div class="rvalue">${c.value}</div></div>`
+    )
+    .join("\n")
+
+  const allProjects = Array.isArray(data.projects) ? data.projects : []
+  const shownProjects = allProjects.slice(0, REPORT_MAX_PROJECTS)
+  const hiddenProjects = allProjects.length - shownProjects.length
+  const projectRows = shownProjects
+    .map(
+      (proj, idx) => `<div class="prow">
+  <div class="prow-top"><span class="pnum">${String(idx + 1).padStart(2, "0")}</span><span class="ptitle">${escapeHtml(String(proj?.title ?? "Project"))}</span></div>
+  ${proj?.description ? `<div class="pdesc">${escapeHtml(String(proj.description))}</div>` : ""}
+</div>`
+    )
+    .join("\n")
+  const moreNote =
+    hiddenProjects > 0
+      ? `<div class="pmore">+ ${hiddenProjects} more project${hiddenProjects === 1 ? "" : "s"} · scan the QR to view the full record online</div>`
+      : ""
+
+  const skills = (Array.isArray(data.skills) ? data.skills : []).slice(0, REPORT_MAX_SKILLS)
+  const hiddenSkills = (Array.isArray(data.skills) ? data.skills.length : 0) - skills.length
+  const skillChips = skills
+    .map((s) => `<span class="skill">${escapeHtml(String(s))}</span>`)
+    .join("\n")
+  const skillsBlock =
+    skills.length > 0
+      ? `<div class="skills">
+  <div class="skills-kicker">skills gained</div>
+  <div class="skill-row">${skillChips}${hiddenSkills > 0 ? `<span class="skill skill-more">+${hiddenSkills} more</span>` : ""}
+  </div>
+</div>`
+      : ""
+
+  const logoInner = opts.logoPngDataUrl
+    ? `<img src="${opts.logoPngDataUrl}" alt="GuardianX logo" onerror="this.style.display='none'" />`
+    : logoFallbackSvg(A.gold)
+  const qrInner = opts.qrPngDataUrl
+    ? `<img src="${opts.qrPngDataUrl}" alt="Verification QR code" onerror="this.style.display='none'" />`
+    : qrPlaceholderSvg()
+
+  const wmInner = opts.logoDotsSvg
+    ? `<div class="wm wm-dots">${opts.logoDotsSvg}</div>`
+    : `<div class="wm">${shieldWatermarkSvg(A.wm)}</div>`
+
+  const gradeSizeClass = grade.length <= 6 ? "grade-xl" : grade.length <= 16 ? "grade-lg" : "grade-md"
+  const gradeSub = [
+    "final grade",
+    weeks ? `${weeks}-week program` : null,
+    completed ? "completed \u2713" : "in progress",
+  ]
+    .filter(Boolean)
+    .join(" &nbsp;\u00b7&nbsp; ")
+
+  const metaParts: string[] = []
+  if (p.title) metaParts.push(String(p.title))
+  if (weeks) metaParts.push(`${weeks}-Week Program`)
+  if (p.domain) metaParts.push(String(p.domain))
+  metaParts.push(`Issued ${issuedDate}`)
+  const metaLine = metaParts
+    .map((s) => escapeHtml(s))
+    .join(" &nbsp;\u00b7&nbsp; ")
+
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>GuardianX Progress Report - ${recipient}</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  @page { size: A4 portrait; margin: 0; }
+  html, body { width: 100%; }
+  body {
+    background: #05030c; display: flex; justify-content: center; padding: 18px 0;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  @media print { body { background: #fff; padding: 0; display: block; } }
+
+  .cert {
+    position: relative; width: ${CARD_W}mm; height: ${CARD_H}mm; overflow: hidden;
+    color: #FAF7F5;
+    font-family: Georgia, 'Times New Roman', serif;
+    background:
+      radial-gradient(110mm 90mm at 88% -6%, rgba(225, 29, 46, 0.17), transparent 62%),
+      radial-gradient(100mm 85mm at -8% 38%, rgba(245, 158, 11, 0.08), transparent 58%),
+      radial-gradient(110mm 95mm at 55% 112%, rgba(255, 90, 78, 0.11), transparent 58%),
+      linear-gradient(180deg, #0A0507 0%, #170709 100%);
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  @media screen { .cert { border-radius: 6px; box-shadow: 0 30px 90px rgba(0, 0, 0, 0.55); } }
+  .grain {
+    position: absolute; inset: 0; opacity: 0.16; pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComponentTransfer%3E%3CfeFuncA type='linear' slope='0.06'/%3E%3C/feComponentTransfer%3E%3C/filter%3E%3Crect width='120' height='120' filter='url(%23n)'/%3E%3C/svg%3E");
+    background-size: 120px 120px;
+  }
+  .frame-outer { position: absolute; inset: 8mm; border: 1.2pt solid ${A.gold}; border-radius: 2.5mm; pointer-events: none; }
+  .frame-inner { position: absolute; inset: 11mm; border: 0.6pt solid rgba(225, 29, 46, 0.55); border-radius: 1.5mm; pointer-events: none; }
+  svg.rosette { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+  .wm { position: absolute; left: 50%; top: 52%; width: 110mm; height: 110mm; transform: translate(-50%, -50%); opacity: 0.12; pointer-events: none; }
+  .scanlines {
+    position: absolute; inset: 0; pointer-events: none; z-index: 2;
+    background: repeating-linear-gradient(to bottom, transparent 0 2px, rgba(0,0,0,0.20) 2px 3px);
+    opacity: 0.4;
+  }
+  .hud { position: absolute; inset: 14mm; pointer-events: none; z-index: 3; }
+  .hud i { position: absolute; width: 8mm; height: 8mm; border: 0 solid ${A.gold}; opacity: 0.9; }
+  .hud i:nth-child(1) { top: 0; left: 0; border-top-width: 2.5pt; border-left-width: 2.5pt; }
+  .hud i:nth-child(2) { top: 0; right: 0; border-top-width: 2.5pt; border-right-width: 2.5pt; }
+  .hud i:nth-child(3) { bottom: 0; left: 0; border-bottom-width: 2.5pt; border-left-width: 2.5pt; }
+  .hud i:nth-child(4) { bottom: 0; right: 0; border-bottom-width: 2.5pt; border-right-width: 2.5pt; }
+  .regno {
+    position: absolute; top: 16.5mm; left: 27mm;
+    font-family: ${MONO_STACK}; font-size: 5.6pt; letter-spacing: 0.2em; text-transform: uppercase;
+    color: color-mix(in srgb, ${A.gold} 52%, rgba(250, 247, 245, 0.62)); white-space: nowrap; pointer-events: none;
+  }
+  .chiprow {
+    display: flex; flex-direction: column; align-items: flex-end; gap: 1.6mm;
+    position: absolute; top: 16mm; right: 27mm;
+  }
+  .chipx {
+    font-family: ${MONO_STACK}; font-size: 5.4pt; letter-spacing: 0.2em; text-transform: uppercase;
+    padding: 1.1mm 2.6mm; border-radius: 10mm; white-space: nowrap;
+    -webkit-print-color-adjust: exact; print-color-adjust: exact;
+  }
+  .chipx.green { color: #86EFAC; border: 0.5pt solid rgba(34, 197, 94, 0.55); background: rgba(34, 197, 94, 0.10); }
+  .chipx.red { color: #FCA5A5; border: 0.5pt solid rgba(225, 29, 46, 0.55); background: rgba(225, 29, 46, 0.12); }
+
+  .content { position: absolute; inset: 13mm 18mm 0; display: flex; flex-direction: column; align-items: center; text-align: center; }
+  .logo-ring {
+    width: 14mm; height: 14mm; border-radius: 50%;
+    border: 0.8pt solid ${A.gold}; background: rgba(255, 255, 255, 0.05);
+    box-shadow: 0 0 0 1.4mm rgba(225, 29, 46, 0.14);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .logo-ring img { width: 10.5mm; height: 10.5mm; object-fit: contain; border-radius: 50%; filter: brightness(0) invert(1); }
+  .logo-ring svg { width: 8.5mm; height: 8.5mm; }
+  .brand { font-family: ${MONO_STACK}; font-size: 7pt; letter-spacing: 0.34em; color: rgba(250, 247, 245, 0.62); margin-top: 2mm; }
+  .terminal {
+    font-family: ${MONO_STACK}; font-size: 6.2pt; letter-spacing: 0.14em;
+    color: rgba(250, 247, 245, 0.62); margin-top: 1.5mm; white-space: nowrap; overflow: hidden;
+    max-width: 150mm;
+  }
+  .terminal b { color: ${A.gold}; font-weight: 700; }
+  .terminal s { color: #22C55E; text-decoration: none; }
+  .kicker { font-family: ${MONO_STACK}; font-size: 8.5pt; letter-spacing: 0.5em; padding-left: 0.5em; color: #F59E0B; text-transform: uppercase; margin-top: 2.8mm; }
+  .wordmark { font-size: 21pt; font-weight: 700; letter-spacing: 0.3em; padding-left: 0.3em; color: ${A.gold}; line-height: 1.05; margin-top: 1.2mm; }
+
+  .presented { margin-top: 3.6mm; }
+  .presented-label { font-family: ${MONO_STACK}; font-size: 6.5pt; letter-spacing: 0.32em; color: rgba(250, 247, 245, 0.62); }
+  .recipient {
+    font-family: ${SCRIPT_STACK}; font-style: italic; font-weight: 600;
+    font-size: 8.5mm; line-height: 1.2; color: #FAF7F5;
+    margin-top: 1.6mm; max-width: 160mm;
+  }
+  .grad-rule {
+    width: 52%; height: 0.8mm; border-radius: 1mm; margin: 2.2mm auto 0;
+    background: linear-gradient(90deg, #E11D2E, #F59E0B, #FF5A4E); opacity: 0.9;
+  }
+  .meta-line { font-family: ${MONO_STACK}; font-size: 6.6pt; letter-spacing: 0.18em; color: rgba(250, 247, 245, 0.62); text-transform: uppercase; margin-top: 2.4mm; white-space: nowrap; overflow: hidden; max-width: 164mm; }
+
+  .grade-band { margin-top: 3.6mm; }
+  .grade-big { font-family: ${MONO_STACK}; font-weight: 700; letter-spacing: 0.1em; color: #F59E0B; line-height: 1; }
+  .grade-xl { font-size: 24pt; }
+  .grade-lg { font-size: 17pt; }
+  .grade-md { font-size: 12.5pt; }
+  .grade-sub { font-family: ${MONO_STACK}; font-size: 7pt; letter-spacing: 0.22em; color: #F59E0B; text-transform: uppercase; margin-top: 1.8mm; }
+
+  .rgrid {
+    width: 100%; margin-top: 4.6mm; text-align: left;
+    display: grid; grid-template-columns: 1fr 1fr; gap: 2mm 4mm;
+  }
+  .rcell { border: 0.5pt solid rgba(255, 255, 255, 0.14); border-radius: 2mm; padding: 1.8mm 2.6mm; background: rgba(255, 255, 255, 0.03); }
+  .rlabel { font-family: ${MONO_STACK}; font-size: 5.4pt; letter-spacing: 0.22em; text-transform: uppercase; color: rgba(250, 247, 245, 0.62); margin-bottom: 0.8mm; }
+  .rvalue { font-family: ${MONO_STACK}; font-size: 7.2pt; color: #FAF7F5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+  .projects { width: 100%; margin-top: 4.6mm; text-align: left; }
+  .projects-kicker { font-family: ${MONO_STACK}; font-size: 7pt; letter-spacing: 0.3em; color: rgba(250, 247, 245, 0.62); text-transform: uppercase; text-align: center; margin-bottom: 2.8mm; }
+  .prow { border: 0.5pt solid rgba(255, 255, 255, 0.12); border-radius: 2mm; padding: 2mm 2.8mm; margin-bottom: 2mm; background: rgba(255, 255, 255, 0.02); }
+  .prow-top { display: flex; align-items: baseline; gap: 2.2mm; }
+  .pnum { font-family: ${MONO_STACK}; font-size: 6.6pt; font-weight: 700; color: ${A.gold}; flex-shrink: 0; }
+  .ptitle { font-family: ${MONO_STACK}; font-size: 7.4pt; letter-spacing: 0.06em; color: #FAF7F5; font-weight: 700; }
+  .pdesc {
+    margin-top: 1mm; padding-left: 7mm;
+    font-size: 8pt; line-height: 1.45; color: rgba(250, 247, 245, 0.78); text-align: left;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+  }
+  .pmore { font-family: ${MONO_STACK}; font-size: 5.8pt; letter-spacing: 0.16em; text-transform: uppercase; color: rgba(250, 247, 245, 0.62); text-align: center; margin-top: 1mm; }
+
+  .skills { width: 100%; margin-top: 3.4mm; }
+  .skills-kicker { font-family: ${MONO_STACK}; font-size: 7pt; letter-spacing: 0.3em; color: rgba(250, 247, 245, 0.62); text-transform: uppercase; text-align: center; margin-bottom: 2.2mm; }
+  .skill-row { display: flex; flex-wrap: wrap; justify-content: center; gap: 1.4mm; }
+  .skill {
+    font-family: ${MONO_STACK}; font-size: 5.8pt; letter-spacing: 0.12em;
+    padding: 1mm 2.2mm; border-radius: 6mm; white-space: nowrap;
+    color: #FDE68A; border: 0.5pt solid rgba(245, 158, 11, 0.45); background: rgba(245, 158, 11, 0.08);
+  }
+  .skill-more { color: rgba(250, 247, 245, 0.62); border-color: rgba(255, 255, 255, 0.2); background: rgba(255, 255, 255, 0.04); }
+
+  .hexband {
+    position: absolute; left: 20mm; right: 20mm; bottom: 33.5mm;
+    display: flex; align-items: center; justify-content: center; gap: 3mm;
+    pointer-events: none;
+  }
+  .hexband::before, .hexband::after { content: ""; flex: 1; height: 0.4pt; background: rgba(255, 255, 255, 0.14); }
+  .hexline {
+    font-family: ${MONO_STACK}; font-size: 5.6pt; letter-spacing: 0.16em;
+    color: color-mix(in srgb, ${A.gold} 46%, transparent);
+    white-space: nowrap; overflow: hidden;
+  }
+
+  .vstrip {
+    position: absolute; left: 14mm; right: 14mm; bottom: 14mm; height: 16mm;
+    border-radius: 3mm; background: rgba(8, 4, 5, 0.78); border: 0.5pt solid rgba(255, 255, 255, 0.14);
+    display: flex; align-items: center; gap: 5mm; padding: 0 6mm;
+  }
+  .vqr { width: 12mm; height: 12mm; border-radius: 1.6mm; background: #fff; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0; }
+  .vqr img { width: 10.8mm; height: 10.8mm; display: block; }
+  .vcell { display: flex; flex-direction: column; gap: 1.1mm; min-width: 0; }
+  .vlabel { font-family: ${MONO_STACK}; font-size: 5.8pt; letter-spacing: 0.24em; color: rgba(250, 247, 245, 0.62); text-transform: uppercase; white-space: nowrap; }
+  .vvalue { font-family: ${MONO_STACK}; font-size: 7.6pt; color: #FAF7F5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .vvalue.small { font-size: 6.6pt; }
+  .vsep { width: 0.4pt; align-self: stretch; background: rgba(255, 255, 255, 0.14); margin: 1.5mm 0; flex-shrink: 0; }
+</style>
+</head>
+<body>
+<div class="cert">
+  <div class="grain"></div>
+  ${rosetteSvg(CARD_W, CARD_H, A.gold, A.accent)}
+  <div class="frame-outer"></div>
+  <div class="frame-inner"></div>
+  ${wmInner}
+  <div class="regno">reg. no. ${INSTITUTE_REG_NO}</div>
+  <div class="chiprow"><span class="chipx green">&#10003; verified credential</span><span class="chipx red">gx blackops clearance</span></div>
+
+  <div class="content">
+    <div class="logo-ring">${logoInner}</div>
+    <div class="brand">GUARDIANX ACADEMY &nbsp;\u00b7&nbsp; CYBER DEFENSE INSTITUTE</div>
+    <div class="terminal"><b>root@gx:~$</b> guardianx verify --id &quot;${credentialId}&quot; <s>--valid \u2713</s></div>
+    <div class="kicker">&middot; internship record &middot;</div>
+    <h1 class="wordmark">PROGRESS REPORT</h1>
+
+    <div class="presented">
+      <div class="presented-label">CANDIDATE</div>
+      <div class="recipient">${recipient}</div>
+      <div class="grad-rule"></div>
+    </div>
+
+    <div class="meta-line">${metaLine}</div>
+
+    <div class="grade-band">
+      <div class="grade-big ${gradeSizeClass}">${grade}</div>
+      <div class="grade-sub">${gradeSub}</div>
+    </div>
+
+    ${recordCells.length > 0 ? `<div class="rgrid">${recordGrid}</div>` : ""}
+
+    ${shownProjects.length > 0 ? `<div class="projects">
+      <div class="projects-kicker">progress report \u00b7 projects delivered</div>
+      ${projectRows}
+      ${moreNote}
+    </div>` : ""}
+
+    ${skillsBlock}
+  </div>
+
+  <div class="hexband"><span class="hexline">SHA-256 ${hexFingerprint(String(data.credentialId ?? ""), 22)}</span></div>
+
+  <div class="scanlines"></div>
+  <div class="hud"><i></i><i></i><i></i><i></i></div>
+
+  <div class="vstrip">
+    <div class="vqr">${qrInner}</div>
+    <div class="vcell">
+      <div class="vlabel">Credential ID</div>
+      <div class="vvalue">${credentialId}</div>
+    </div>
+    <div class="vsep"></div>
+    <div class="vcell" style="flex: 1 1 0;">
+      <div class="vlabel">Verify at</div>
+      <div class="vvalue small">${verifyUrl}</div>
+    </div>
+    <div class="vsep"></div>
+    <div class="vcell">
+      <div class="vlabel">Date of issue</div>
+      <div class="vvalue">${issuedDate}</div>
+    </div>
+  </div>
+</div>
+</body>
+</html>`
+}
+
+/**
+ * Download the internship progress report PDF from the /verify page. Takes
+ * the already-verified credential payload (no refetch) so the printed report
+ * mirrors exactly what the verifier saw online.
+ */
+export async function downloadVerifyReportPDF(
+  cred: VerifyReportData,
+  options: CertificatePdfOptions = {},
+) {
+  try {
+    const verifyUrl =
+      options.verifyUrl ||
+      (typeof window !== "undefined" && window.location?.origin
+        ? `${window.location.origin}/verify/${cred.credentialId}`
+        : cred.verifyUrl || `/verify/${cred.credentialId}`)
+
+    const logoPngDataUrl =
+      options.logoPngDataUrl !== undefined ? options.logoPngDataUrl : await fetchLogoPngDataUrl()
+    const qrPngDataUrl =
+      options.qrPngDataUrl !== undefined ? options.qrPngDataUrl : await buildQrPngDataUrl(verifyUrl)
+    const logoDotsSvg = await buildLogoDotMatrixSvg({ step: 6, color: "#ff3b3b", opacity: 0.9 })
+
+    const html = buildVerifyReportHTML(
+      { ...cred, verifyUrl },
+      { logoPngDataUrl: logoPngDataUrl ?? null, qrPngDataUrl: qrPngDataUrl ?? null, logoDotsSvg }
+    )
+    openPrintWindow(html)
+  } catch (e: any) {
+    console.error("[verify-report-pdf]", e)
+    alert("Failed to generate the report PDF: " + e.message)
+  }
+}
+
+// ---------------------------------------------------------------------------
 // small shared helpers
 // ---------------------------------------------------------------------------
 function distinction(score: number): string {

@@ -9,7 +9,7 @@
  * Output: HTML documents in /home/z/my-project/tmp/cert-verify/
  */
 import { mkdirSync, writeFileSync } from "node:fs"
-import { buildCertificateHTML, buildScoreCardHTML } from "../src/lib/certificate-pdf"
+import { buildCertificateHTML, buildScoreCardHTML, buildVerifyReportHTML } from "../src/lib/certificate-pdf"
 
 const OUT = "/home/z/my-project/tmp/cert-verify"
 mkdirSync(OUT, { recursive: true })
@@ -169,6 +169,76 @@ check("score card: strongest domain", scoreCard, "strongest domain")
 check("score card: focus area", scoreCard, "focus area")
 check("score card: verification strip", scoreCard, "Credential ID")
 check("score card: performance report kicker", scoreCard, "performance report")
+
+// ---------------------------------------------------------------------------
+// 6. VERIFY PROGRESS REPORT (portrait phantom) - the /verify page download
+// ---------------------------------------------------------------------------
+const reportDoc = buildVerifyReportHTML(
+  {
+    credentialId: "GXI-TEST-REPORT-01",
+    candidateName: "Sample Intern 01",
+    grade: "Outstanding A+",
+    issueDate: "2026-10-03T00:00:00.000Z",
+    verifyUrl: "https://academy.guardianx.cloud/verify/GXI-TEST-REPORT-01",
+    skills: ["Network Penetration Testing", "Vulnerability Assessment", "Reporting"],
+    projects: Array.from({ length: 8 }, (_, i) => ({
+      title: `Sample Project ${i + 1}`,
+      description: "Detailed project description repeated to exercise the line clamp. ".repeat(6),
+    })),
+    program: {
+      title: "Offensive Security",
+      role: "Offensive Security Intern",
+      domain: "Cyber Security",
+      company: "GuardianX Academy",
+      collegeName: "Test College",
+      collegeCity: "France",
+      durationWeeks: 8,
+      startDate: "2025-06-05T00:00:00.000Z",
+      endDate: "2025-08-04T00:00:00.000Z",
+      mentorName: "Test Mentor",
+      programDirector: "Test Director",
+      completed: true,
+    },
+  },
+  { logoPngDataUrl: logo, qrPngDataUrl: qr, logoDotsSvg: dots },
+)
+writeFileSync(`${OUT}/verify-report.html`, reportDoc)
+
+check("report: portrait @page", reportDoc, "@page { size: A4 portrait; margin: 0; }")
+check("report: wordmark", reportDoc, "PROGRESS REPORT")
+check("report: grade rendered", reportDoc, "Outstanding A+")
+check("report: grade sub-line", reportDoc, "final grade")
+check("report: program director cell", reportDoc, "Test Director")
+check("report: mentor cell", reportDoc, "Test Mentor")
+check("report: timeline cell", reportDoc, "Jun 2025 - Aug 2025")
+check("report: projects kicker", reportDoc, "progress report \u00b7 projects delivered")
+check("report: project rows capped at 6", reportDoc, `Sample Project 6`)
+check("report: seventh project not rendered", reportDoc, "Sample Project 7", false)
+check("report: truncation note", reportDoc, "+ 2 more projects")
+check("report: line clamp on descriptions", reportDoc, "-webkit-line-clamp: 2")
+check("report: skills chips", reportDoc, "Network Penetration Testing")
+check("report: reg no", reportDoc, "reg. no. UDYAM-JK-03-0034470")
+check("report: verification strip", reportDoc, "Credential ID")
+check("report: no fabricated numeric score", reportDoc, /final score/, false)
+
+// short report (<= 6 projects) must NOT show the truncation note
+const shortReport = buildVerifyReportHTML(
+  {
+    credentialId: "GXI-TEST-REPORT-02",
+    candidateName: "Sample Intern 02",
+    grade: "A",
+    issueDate: "2026-10-03T00:00:00.000Z",
+    verifyUrl: "https://academy.guardianx.cloud/verify/GXI-TEST-REPORT-02",
+    skills: ["Recon"],
+    projects: [{ title: "Only Project", description: "Short description." }],
+    program: { title: "SOC Analyst", durationWeeks: 4, completed: true },
+  },
+  { logoPngDataUrl: logo, qrPngDataUrl: qr, logoDotsSvg: dots },
+)
+writeFileSync(`${OUT}/verify-report-short.html`, shortReport)
+check("short report: single project row", shortReport, "Only Project")
+check("short report: no truncation note", shortReport, "more project", false)
+check("short report: minimal program grid", shortReport, "4 weeks")
 
 console.log(failures === 0 ? "\nALL PASS" : `\n${failures} CHECK(S) FAILED`)
 process.exit(failures === 0 ? 0 : 1)
