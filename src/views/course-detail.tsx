@@ -27,7 +27,7 @@ import {
   PenLine, Bookmark, BookmarkCheck, AlertTriangle, Link2,
   ArrowRight, ArrowDown, Sparkles, Zap, Target, Layers, Shield, Briefcase, Radio, Calendar,
   TrendingUp, Rocket, Trophy, Network, Wrench, Brain, Crosshair,
-  Code, Activity, Eye, KeyRound, Bug, X, Hexagon,
+  Code, Activity, Eye, KeyRound, Bug, X,
   Ticket, IndianRupee, Percent, Loader2, Globe, CalendarClock,
   Copy, MessageCircle, Linkedin, RefreshCw, HelpCircle, Play,
 } from "lucide-react"
@@ -36,6 +36,7 @@ import { cn } from "@/lib/utils"
 import { useBookmarks } from "@/hooks/use-bookmarks"
 import { getCourseImage, getCourseTrailer } from "@/lib/course-images"
 import { getToolLogo } from "@/lib/tool-logos"
+import { PhantomCertSample } from "@/components/platform/phantom-cert-sample"
 
 // V3: recharts radar is code-split so it never loads until the Skill
 // Progression section actually needs it (keeps the course-page chunk lean).
@@ -2022,13 +2023,8 @@ function FaqSection({
   )
 }
 
-/** V2: certificate preview - foil-edged, watermarked credential mockup. */
+/** Phantom sample preview - mirrors the real BLACKOPS credential learners receive. */
 function CertificateMockup({ course }: { course: any }) {
-  const year = new Date().getFullYear()
-  const shortCode = (String(course.shortName || "GX").replace(/[^A-Z0-9]/gi, "").toUpperCase().slice(0, 10)) || "GX"
-  const certId = `GX-CERT-${shortCode}-${year}`
-  const issued = new Date().toLocaleDateString("en-IN", { month: "long", year: "numeric" })
-
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }}
@@ -2037,127 +2033,19 @@ function CertificateMockup({ course }: { course: any }) {
       transition={{ duration: 0.5, ease: [0.16, 1, 0.3, 1] }}
       className="mt-8"
     >
-      {/* "Sample" tab overlapping the top edge of the frame */}
+      {/* "Sample" tab overlapping the top edge of the document */}
       <div className="relative z-10 mx-auto -mb-3 w-fit">
-        <span className="inline-flex items-center gap-1.5 rounded-full border border-amber-300/40 bg-background px-3.5 py-1 text-[9px] font-mono tracking-[0.3em] text-amber-200/90 uppercase shadow-lg">
-          <Sparkles className="h-3 w-3 text-amber-300" />
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-red-500/40 bg-background px-3.5 py-1 text-[9px] font-mono tracking-[0.3em] text-red-300 uppercase shadow-lg">
+          <Sparkles className="h-3 w-3 text-red-400" />
           Sample Preview
         </span>
       </div>
-
-      {/* Gold foil frame */}
-      <div className="rounded-[20px] bg-gradient-to-br from-amber-300/70 via-amber-100/20 to-amber-400/60 p-px shadow-[0_24px_70px_-24px_rgba(251,191,36,0.25)]">
-        <div className="relative overflow-hidden rounded-[19px] bg-[#0c0a1c] px-5 py-10 sm:px-10 sm:py-12">
-          {/* --- Decorations (all z-0, clipped, clear of text zones) --- */}
-          <img
-            aria-hidden
-            src="/guardianx-logo-v2.png"
-            alt=""
-            className="pointer-events-none absolute left-1/2 top-1/2 h-[320px] w-[320px] -translate-x-1/2 -translate-y-1/2 object-contain opacity-[0.06] mix-blend-screen select-none"
-            draggable={false}
-          />
-          <svg aria-hidden viewBox="0 0 200 200" className="pointer-events-none absolute -right-12 -top-12 h-48 w-48 text-amber-200/[0.07]">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <circle key={i} cx="100" cy="100" r={26 + i * 9} fill="none" stroke="currentColor" strokeWidth="0.8" strokeDasharray={i % 2 ? "3 5" : "none"} />
-            ))}
-          </svg>
-          <svg aria-hidden viewBox="0 0 200 200" className="pointer-events-none absolute -bottom-14 -left-14 h-52 w-52 text-violet-300/[0.05]">
-            {Array.from({ length: 8 }).map((_, i) => (
-              <circle key={i} cx="100" cy="100" r={26 + i * 9} fill="none" stroke="currentColor" strokeWidth="0.8" strokeDasharray={i % 2 ? "3 5" : "none"} />
-            ))}
-          </svg>
-          <div aria-hidden className="pointer-events-none absolute inset-0 bg-grid opacity-[0.04]" />
-          {/* Corner flourishes */}
-          <div aria-hidden className="pointer-events-none absolute left-3 top-3 h-8 w-8 border-l border-t border-amber-300/40" />
-          <div aria-hidden className="pointer-events-none absolute right-3 top-3 h-8 w-8 border-r border-t border-amber-300/40" />
-          <div aria-hidden className="pointer-events-none absolute bottom-3 left-3 h-8 w-8 border-b border-l border-amber-300/40" />
-          <div aria-hidden className="pointer-events-none absolute bottom-3 right-3 h-8 w-8 border-b border-r border-amber-300/40" />
-
-          {/* --- Content --- */}
-          <div className="relative z-10 text-center">
-            {/* Header: monogram + wordmark | hologram */}
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex min-w-0 items-center gap-2.5">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-amber-400/40 bg-amber-400/10 p-1">
-                  <img src="/guardianx-logo-v2.png" alt="GuardianX Academy logo" className="h-full w-full object-contain mix-blend-screen" draggable={false} />
-                </div>
-                <div className="min-w-0 text-left">
-                  <p className="truncate text-[11px] font-bold uppercase tracking-[0.3em]">GuardianX Academy</p>
-                  <p className="truncate text-[8px] font-mono uppercase tracking-[0.35em] text-muted-foreground">Cybersecurity Training Division</p>
-                </div>
-              </div>
-              <div className="shrink-0 rounded-lg bg-[conic-gradient(from_180deg,#f0abfc,#67e8f9,#fde68a,#a5b4fc,#f0abfc)] p-[1.2px]">
-                <div className="flex h-8 w-8 items-center justify-center rounded-[7px] bg-background/80">
-                  <ShieldCheck className="h-4 w-4 text-cyan-200" />
-                </div>
-              </div>
-            </div>
-
-            <p className="mt-8 bg-gradient-to-r from-amber-200 via-amber-100 to-amber-300 bg-clip-text text-sm font-bold uppercase tracking-[0.45em] text-transparent sm:text-base">
-              Certificate of Completion
-            </p>
-
-            {/* Ornament divider */}
-            <div aria-hidden className="mx-auto mt-4 flex items-center justify-center gap-3 text-amber-300/60">
-              <span className="h-px w-16 bg-gradient-to-r from-transparent to-amber-300/50" />
-              <Hexagon className="h-3 w-3" />
-              <span className="h-px w-16 bg-gradient-to-l from-transparent to-amber-300/50" />
-            </div>
-
-            <p className="mt-7 text-[10px] font-mono uppercase tracking-[0.3em] text-muted-foreground">This certificate is proudly presented to</p>
-            <p className="mt-3 font-serif text-3xl italic leading-tight bg-gradient-to-r from-amber-200 via-violet-200 to-cyan-200 bg-clip-text text-transparent sm:text-5xl">
-              Your Name Here
-            </p>
-            <svg aria-hidden viewBox="0 0 220 12" className="mx-auto mt-2 h-3 w-44 text-amber-300/70">
-              <path d="M2 8 C 60 2, 160 2, 218 7" stroke="currentColor" strokeWidth="1.5" fill="none" strokeLinecap="round" />
-            </svg>
-
-            <p className="mt-6 text-[10px] font-mono uppercase tracking-[0.3em] text-muted-foreground">for successfully completing all requirements of</p>
-            <div className="mx-auto mt-3 max-w-xl rounded-xl border border-amber-200/15 bg-amber-100/[0.04] px-5 py-3">
-              <p className="text-base font-bold tracking-tight sm:text-lg">{course.title}</p>
-            </div>
-
-            <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
-              <span className="rounded-full border border-border/50 px-2.5 py-0.5 text-[10px] font-mono text-muted-foreground">{course.durationHours ?? 40}H</span>
-              <span className="rounded-full border border-border/50 px-2.5 py-0.5 text-[10px] font-mono text-muted-foreground uppercase">{course.level}</span>
-              {course.certBody && (
-                <span className="rounded-full border border-violet-500/30 bg-violet-500/10 px-2.5 py-0.5 text-[10px] font-mono text-violet-300">{course.certBody}</span>
-              )}
-            </div>
-
-            {/* Footer: stacks on mobile -> no column squeeze */}
-            <div className="mt-9 grid grid-cols-1 items-center gap-8 sm:grid-cols-3 sm:gap-4">
-              <div>
-                <p className="font-serif text-xl italic text-amber-100/90">GuardianX Academy</p>
-                <div className="mt-1 h-px w-full bg-border/60" />
-                <p className="mt-2 text-[9px] font-mono uppercase tracking-[0.25em] text-muted-foreground">Program Director</p>
-              </div>
-              <div className="flex justify-center">
-                <div className="relative h-16 w-16">
-                  <div className="absolute inset-0 rounded-full border border-amber-300/40 bg-gradient-to-br from-amber-300/25 to-amber-600/5" />
-                  <div className="absolute inset-[5px] rounded-full border border-dashed border-amber-300/35" />
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <img src="/guardianx-logo-v2.png" alt="" className="h-8 w-8 object-contain mix-blend-screen" draggable={false} />
-                  </div>
-                </div>
-              </div>
-              <div className="min-w-0">
-                <p className="text-[9px] font-mono uppercase tracking-[0.25em] text-muted-foreground">Issued · {issued}</p>
-                <p className="mt-1.5 break-all text-xs font-mono font-semibold text-amber-200">{certId}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Verification strip */}
-          <div className="relative z-10 mt-9 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 border-t border-amber-200/10 px-1 pt-3.5 sm:justify-between">
-            <p className="flex items-center gap-1.5 text-[9px] font-mono uppercase tracking-[0.2em] text-muted-foreground">
-              <ShieldCheck className="h-3 w-3 text-emerald-300/80" />
-              Verify at academy.guardianx.cloud/verify
-            </p>
-            <p className="text-[9px] font-mono uppercase tracking-[0.25em] text-muted-foreground/60">Verifiable credential · {year}</p>
-          </div>
-        </div>
-      </div>
+      <PhantomCertSample
+        title={course.title}
+        certBody={course.certBody}
+        meta={[`${course.durationHours ?? 40}H`, course.level].filter(Boolean)}
+        score={94}
+      />
     </motion.div>
   )
 }

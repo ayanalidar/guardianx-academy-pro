@@ -35,6 +35,7 @@ import {
 import { cn } from "@/lib/utils"
 import { getCmsIcon } from "@/lib/cms-icons"
 import { ParticleLogo } from "@/components/platform/particle-logo"
+import { PhantomCertSample } from "@/components/platform/phantom-cert-sample"
 import { CertificateVerifyCard } from "@/components/platform/certificate-verify-card"
 import { usePageContent, getContent } from "@/lib/use-content"
 import {
@@ -1945,82 +1946,24 @@ export function HomeView() {
           </motion.div>
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 lg:gap-6 items-stretch">
-            {/* Certificate preview card */}
+            {/* Certificate preview card - phantom sample, mirrors the real credential */}
             <motion.div
               {...FADE_UP}
               transition={{ duration: 0.4, delay: 0.05 }}
               className="relative"
             >
-              <div className="card-premium relative rounded-2xl p-6 lg:p-8 scanlines overflow-hidden h-full">
-                {/* Decorative corner */}
-                <div
-                  aria-hidden
-                  className="pointer-events-none absolute -right-12 -top-12 size-40 rounded-full opacity-40 blur-3xl"
-                  style={{
-                    background:
-                      "radial-gradient(circle, oklch(0.7 0.15 155 / 0.4), transparent 70%)",
-                  }}
-                />
-
-                <div className="relative flex items-start justify-between mb-5">
-                  <div>
-                    <p className="font-mono text-[10px] text-emerald-300 uppercase tracking-[0.25em] mb-1">
-                      GUARDIANX ACADEMY
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Verified Credential
-                    </p>
-                  </div>
-                  <span className="inline-flex items-center gap-1.5 rounded-md border border-emerald-500/40 bg-emerald-500/10 px-2 py-1 font-mono text-[10px] font-semibold uppercase tracking-wider text-emerald-300 shadow-[0_0_18px_-6px_oklch(0.7_0.15_155_/_0.6)]">
-                    <BadgeCheck className="size-3.5" aria-hidden />
-                    VERIFIED
-                  </span>
-                </div>
-
-                <div className="relative mb-5">
-                  <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
-                    This certifies that
-                  </p>
-                  <p className="text-xl lg:text-2xl font-semibold text-foreground">
-                    Jane Doe
-                  </p>
-                </div>
-
-                <div className="relative mb-5">
-                  <p className="font-mono text-[10px] text-muted-foreground uppercase tracking-wider mb-1">
-                    Has successfully completed
-                  </p>
-                  <p className="text-base font-semibold text-gradient-premium">
-                    Certified Ethical Hacker (CEH) - Practical
-                  </p>
-                </div>
-
-                <div className="relative grid grid-cols-2 gap-3 mb-5">
-                  <div className="rounded-lg border border-border/40 bg-[oklch(0.1_0.008_270)] px-3 py-2">
-                    <p className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
-                      Credential ID
-                    </p>
-                    <p className="font-mono text-xs text-cyan-200 truncate">
-                      GX-CEH2024P-08842
-                    </p>
-                  </div>
-                  <div className="rounded-lg border border-border/40 bg-[oklch(0.1_0.008_270)] px-3 py-2">
-                    <p className="font-mono text-[9px] uppercase tracking-wider text-muted-foreground">
-                      Issued
-                    </p>
-                    <p className="font-mono text-xs text-foreground">2024-09-14</p>
-                  </div>
-                </div>
-
-                <div className="relative flex items-center justify-between border-t border-border/40 pt-4">
-                  <span className="font-mono text-[10px] text-muted-foreground">
-                    GuardianX Academy
-                  </span>
-                  <span className="font-mono text-[10px] text-muted-foreground">
-                    Score: 94%
-                  </span>
-                </div>
+              <div className="relative z-10 mx-auto mb-3 w-fit">
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-red-500/40 bg-background px-3 py-1 font-mono text-[9px] font-medium uppercase tracking-[0.2em] text-red-300 shadow-lg">
+                  <Sparkles className="size-3 text-red-400" aria-hidden />
+                  Sample preview - what you will earn
+                </span>
               </div>
+              <PhantomCertSample
+                title="Certified Ethical Hacker (CEH) - Practical"
+                certBody="GuardianX Academy"
+                meta={["Advanced Level"]}
+                score={94}
+              />
             </motion.div>
 
             {/* Verification widget (full card) */}
