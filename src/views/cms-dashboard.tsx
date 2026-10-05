@@ -56,6 +56,7 @@ type PageId =
   | "auth"
   | "internships"
   | "global"
+  | "offer-popup"
 
 interface PageMeta {
   id: PageId
@@ -73,6 +74,7 @@ const PAGES: PageMeta[] = [
   { id: "auth",          label: "Auth",              icon: Shield,          description: "Login/register form labels and feature highlights",    accent: "text-amber-300" },
   { id: "internships",   label: "Internships",       icon: FlaskConical,    description: "Internship program page: hero, partner colleges, featured interns, apply band, final CTA", accent: "text-fuchsia-300" },
   { id: "global",        label: "Global Header/Footer", icon: Globe,        description: "Brand name (header), footer CTA/brand/contact/social/copyright", accent: "text-cyan-300" },
+  { id: "offer-popup",   label: "Offer Popup",       icon: Sparkles,        description: "Visitor offer card: enable, headline, coupon code, CTA, countdown, frequency", accent: "text-rose-300" },
 ]
 
 // Sections with friendly names per page (used in the section list)
@@ -104,6 +106,7 @@ const SECTION_LABELS: Record<string, string> = {
   interns: "Featured Interns Section",
   apply: "Apply Section",
   cta: "Final CTA (Internships)",
+  popup: "Popup Card",
 }
 
 /* ============================================================

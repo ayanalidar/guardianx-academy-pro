@@ -6,6 +6,7 @@ import { PublicFooter } from "@/components/platform/public-footer"
 import { RouteProgress } from "@/components/platform/route-progress"
 import { MobileTabBar } from "@/components/platform/mobile-tab-bar"
 import { ViewEnter } from "@/components/platform/view-enter"
+import { OfferPopup } from "@/components/platform/offer-popup"
 
 /**
  * PublicPageShell - wraps public-facing pages with the sticky header + footer.
@@ -24,6 +25,8 @@ export function PublicPageShell({ children }: { children: React.ReactNode }) {
       </main>
       <PublicFooter />
       <MobileTabBar />
+      {/* CMS-managed visitor offer popup (Content Studio → Offer Popup) */}
+      <OfferPopup />
     </div>
   )
 }

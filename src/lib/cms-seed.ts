@@ -633,6 +633,33 @@ const GLOBAL_FOOTER: ContentItem[] = [
   },
 ]
 
+// Offer popup - visitor-facing promotional card rendered by
+// src/components/platform/offer-popup.tsx on every public page. Edits made
+// in Content Studio → "Offer Popup" are picked up client-side without code
+// changes. Keep values in sync with DEFAULTS in offer-popup.tsx (the
+// component falls back to those when these rows are absent).
+const OFFER_POPUP: ContentItem[] = [
+  { page: "offer-popup", section: "popup", key: "enabled", value: "true" },
+  { page: "offer-popup", section: "popup", key: "delaySeconds", value: "5" },
+  { page: "offer-popup", section: "popup", key: "frequencyDays", value: "7" },
+  { page: "offer-popup", section: "popup", key: "badge", value: "LIMITED-TIME OFFER" },
+  { page: "offer-popup", section: "popup", key: "headline", value: "Flat 20% OFF" },
+  { page: "offer-popup", section: "popup", key: "headlineAccent", value: "all certification courses." },
+  {
+    page: "offer-popup", section: "popup", key: "subtext",
+    value: "Enroll this week and train with live mentors, hands-on labs and placement support. Limited seats - offer ends soon.",
+  },
+  { page: "offer-popup", section: "popup", key: "ctaLabel", value: "Explore Courses" },
+  { page: "offer-popup", section: "popup", key: "ctaView", value: "catalog" },
+  // Leave couponCode empty until a matching coupon exists in Admin → Coupons
+  // (the chip auto-hides when empty - never advertise a dead code).
+  { page: "offer-popup", section: "popup", key: "couponCode", value: "" },
+  // Optional countdown: ISO date or YYYY-MM-DD (treated as end of that day).
+  // Empty = no countdown. An expired date disables the popup entirely.
+  { page: "offer-popup", section: "popup", key: "endsAt", value: "" },
+  { page: "offer-popup", section: "popup", key: "skipLabel", value: "No thanks, maybe later" },
+]
+
 export const SEED_CMS: CmsSeedItem[] = [
   ...HOME,
   ...CONTACT,
@@ -642,4 +669,5 @@ export const SEED_CMS: CmsSeedItem[] = [
   ...INTERNSHIPS_PAGE,
   ...GLOBAL_HEADER,
   ...GLOBAL_FOOTER,
+  ...OFFER_POPUP,
 ]

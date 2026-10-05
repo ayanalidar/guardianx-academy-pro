@@ -7,7 +7,7 @@ export const runtime = "nodejs";
 
 
 /** Shared guard for SCHOOL_ADMIN access - returns user + school, or an error response. */
-export async function getSchoolAdminContext() {
+async function getSchoolAdminContext() {
   const user = await getCurrentUser()
   if (!user) return { error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) }
   if (user.role !== "SCHOOL_ADMIN") {
