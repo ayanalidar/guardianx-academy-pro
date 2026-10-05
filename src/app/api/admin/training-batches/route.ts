@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { requireAdmin, requireRole, withErrorHandler } from "@/lib/session"
+import { requireRole, withErrorHandler } from "@/lib/session"
 
 export const runtime = "nodejs"
 
@@ -158,8 +158,10 @@ export const GET = withErrorHandler(async () => {
 
 // POST /api/admin/training-batches - create a new training batch.
 // Auto-computes cert / level color classes from the certification name + level.
+// Instructors may create batches (Batch Calendar is shared tooling - see
+// view-router.tsx); deletion remains admin-only.
 export const POST = withErrorHandler(async (req: NextRequest) => {
-  const currentUser = await requireAdmin()
+  const currentUser = await requireRole(["INSTRUCTOR", "ADMIN", "SUPER_ADMIN"])
   if (currentUser instanceof NextResponse) return currentUser
 
   const body = await req.json().catch(() => null)

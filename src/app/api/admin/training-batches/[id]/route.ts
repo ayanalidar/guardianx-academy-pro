@@ -19,7 +19,8 @@ export const GET = withErrorHandler(
 )
 
 // PATCH /api/admin/training-batches/[id] - update any fields on a training batch.
-// Requires ADMIN.
+// Instructors may edit batches (Batch Calendar is shared tooling - see
+// view-router.tsx); deletion remains admin-only.
 const UPDATABLE_STRING_FIELDS = [
   "certification",
   "name",
@@ -48,7 +49,7 @@ const UPDATABLE_BOOL_FIELDS = ["featured", "published"] as const
 
 export const PATCH = withErrorHandler(
   async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
-    const currentUser = await requireAdmin()
+    const currentUser = await requireRole(["INSTRUCTOR", "ADMIN", "SUPER_ADMIN"])
     if (currentUser instanceof NextResponse) return currentUser
 
     const { id } = await params
@@ -86,7 +87,7 @@ export const PATCH = withErrorHandler(
 )
 
 // DELETE /api/admin/training-batches/[id] - delete a training batch.
-// Requires ADMIN.
+// Requires ADMIN or SUPER_ADMIN (destructive - instructors cannot delete).
 export const DELETE = withErrorHandler(
   async (_req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
     const currentUser = await requireAdmin()

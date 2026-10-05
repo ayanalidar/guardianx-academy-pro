@@ -15,6 +15,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
+import { useUser } from "@/hooks/use-user"
 import {
   ArrowLeft, Calendar, ChevronLeft, ChevronRight, Clock,
   Users, Video, MapPin, User, Plus, Pencil, Trash2, X, Loader2, AlertTriangle,
@@ -172,6 +173,11 @@ function validateForm(form: BatchForm): string | null {
 export function BatchCalendarView() {
   const { navigate } = useAppStore()
   const queryClient = useQueryClient()
+  const { user } = useUser()
+  // Deletion is destructive and admin-only server-side (DELETE /api/admin/
+  // training-batches/[id] enforces it) - hide the affordance from instructors
+  // so they never hit a 403 on an action the UI offered them.
+  const canDelete = user?.role === "ADMIN" || user?.role === "SUPER_ADMIN"
   const [currentDate, setCurrentDate] = React.useState(new Date())
   const [view, setView] = React.useState<"month" | "week">("month")
   const [selectedBatch, setSelectedBatch] = React.useState<TrainingBatch | null>(null)
@@ -573,14 +579,16 @@ export function BatchCalendarView() {
                       >
                         <Pencil className="h-3 w-3 mr-1" /> Edit
                       </Button>
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-8 text-xs border-rose-500/30 text-rose-300 hover:bg-rose-500/10 hover:text-rose-200"
-                        onClick={() => openDelete(b)}
-                      >
-                        <Trash2 className="h-3 w-3" />
-                      </Button>
+                      {canDelete && (
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="h-8 text-xs border-rose-500/30 text-rose-300 hover:bg-rose-500/10 hover:text-rose-200"
+                          onClick={() => openDelete(b)}
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
+                      )}
                     </div>
                   </Card>
                 )
@@ -642,18 +650,20 @@ export function BatchCalendarView() {
               >
                 <Pencil className="h-3 w-3 mr-1.5" /> Edit
               </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                className="border-rose-500/30 text-rose-300 hover:bg-rose-500/10 hover:text-rose-200"
-                onClick={() => {
-                  setDeletingBatch(selectedBatch)
-                  setDeleteOpen(true)
-                  setSelectedBatch(null)
-                }}
-              >
-                <Trash2 className="h-3 w-3 mr-1.5" /> Delete
-              </Button>
+              {canDelete && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="border-rose-500/30 text-rose-300 hover:bg-rose-500/10 hover:text-rose-200"
+                  onClick={() => {
+                    setDeletingBatch(selectedBatch)
+                    setDeleteOpen(true)
+                    setSelectedBatch(null)
+                  }}
+                >
+                  <Trash2 className="h-3 w-3 mr-1.5" /> Delete
+                </Button>
+              )}
             </div>
           </Card>
         </div>
