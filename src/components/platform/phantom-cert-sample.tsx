@@ -140,7 +140,7 @@ export function PhantomCertSample({
       <div className={cn("gx-doc gx-theme-phantom gx-paper relative flex flex-col w-full min-h-[70.7cqw]", className)}>
       <div className="gx-guilloche flex-1 flex flex-col min-h-full w-full">
         <div className="gx-guilloche-inner flex-1 flex flex-col min-h-full w-full">
-          <div className="gx-aurora-mesh gx-grain relative flex-1 min-h-full w-full overflow-hidden">
+          <div className="gx-aurora-mesh gx-grain relative flex-1 flex flex-col min-h-full w-full overflow-hidden">
             <div className="gx-corner-glows" />
 
             {/* Particle-logo watermark - same red particle mark as the real

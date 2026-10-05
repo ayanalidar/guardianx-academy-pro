@@ -628,7 +628,7 @@ function CertificatePreviewModal({
                 grows instead of clipping when it cannot. */}
             <div className="gx-guilloche flex-1 flex flex-col min-h-full w-full">
               <div className="gx-guilloche-inner flex-1 flex flex-col min-h-full w-full">
-                <div className="gx-aurora-mesh gx-grain relative flex-1 min-h-full w-full overflow-hidden">
+                <div className="gx-aurora-mesh gx-grain relative flex-1 flex flex-col min-h-full w-full overflow-hidden">
                   <div className="gx-corner-glows" />
 
                   {/* Particle-logo watermark - the header particle mark, re-skinned red.
