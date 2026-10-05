@@ -31,6 +31,7 @@
  */
 import { api } from "@/lib/api"
 import { buildLogoDotMatrixSvg } from "@/lib/logo-dots"
+import { INSTITUTE_REG_NO } from "@/lib/institute"
 
 export type CertificatePdfTheme = "phantom" | "aurora" | "ivory" | "emerald"
 
@@ -121,8 +122,8 @@ const SCRIPT_STACK =
 const MONO_STACK =
   'ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace'
 
-/** Institute registration number - printed top-left on every document (same as invoices). */
-const INSTITUTE_REG_NO = "UDYAM-JK-03-0034470"
+// Institute registration number is imported from lib/institute.ts so the
+// printed documents and the on-screen previews share one source of truth.
 
 // A4 landscape in mm (certificate)
 const PAGE_W = 297

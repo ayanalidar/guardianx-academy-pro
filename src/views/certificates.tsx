@@ -21,6 +21,7 @@ import {
 import { toast } from "sonner"
 import { QRCodeSVG } from "qrcode.react"
 import { downloadCertificatePDF } from "@/lib/certificate-pdf"
+import { INSTITUTE_REG_NO } from "@/lib/institute"
 import { useUser } from "@/hooks/use-user"
 import { ParticleLogo } from "@/components/platform/particle-logo"
 import { cn } from "@/lib/utils"
@@ -513,7 +514,7 @@ function CertChip({ tone, children }: { tone: "red" | "green"; children: React.R
   return (
     <div
       className={cn(
-        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border backdrop-blur-sm",
+        "inline-flex items-center gap-1.5 px-2 py-0.5 @5xl:px-2.5 @5xl:py-1 rounded-full border backdrop-blur-sm",
         tone === "green"
           ? "border-emerald-500/40 bg-emerald-500/10"
           : "border-red-500/50 bg-red-500/10",
@@ -528,7 +529,7 @@ function CertChip({ tone, children }: { tone: "red" | "green"; children: React.R
       />
       <span
         className={cn(
-          "text-[7px] sm:text-[8px] font-mono tracking-[0.22em] uppercase whitespace-nowrap",
+          "text-[6px] @xl:text-[7px] @5xl:text-[8px] font-mono tracking-[0.22em] uppercase whitespace-nowrap",
           tone === "green" ? "text-emerald-300" : "text-red-300",
         )}
       >
@@ -615,21 +616,25 @@ function CertificatePreviewModal({
         </div>
 
         {/* ===== The BLACKOPS certificate document ===== */}
-        <div className="p-4 sm:p-6 lg:p-8 max-h-[70vh] overflow-y-auto min-w-0">
+        <div className="p-4 sm:p-6 lg:p-8 max-h-[70vh] overflow-y-auto min-w-0 @container">
           <motion.div
             initial={{ opacity: 0, scale: 0.96 }}
             animate={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
-            className="gx-doc gx-theme-phantom gx-paper relative aspect-[1.414/1] w-full"
+            className="gx-doc gx-theme-phantom gx-paper relative flex flex-col w-full min-h-[70.7cqw]"
           >
-            <div className="gx-guilloche h-full w-full">
-              <div className="gx-guilloche-inner h-full w-full">
-                <div className="gx-aurora-mesh gx-grain relative h-full w-full overflow-hidden">
+            {/* Flex + min-h-[70.7cqw] (A4 ratio floor, mirrors
+                phantom-cert-sample): exact document ratio when content fits,
+                grows instead of clipping when it cannot. */}
+            <div className="gx-guilloche flex-1 flex flex-col min-h-full w-full">
+              <div className="gx-guilloche-inner flex-1 flex flex-col min-h-full w-full">
+                <div className="gx-aurora-mesh gx-grain relative flex-1 min-h-full w-full overflow-hidden">
                   <div className="gx-corner-glows" />
 
-                  {/* Particle-logo watermark - the header particle mark, re-skinned red */}
-                  <div className="absolute inset-0 z-0 flex items-center justify-center pointer-events-none">
-                    <div className="opacity-[0.26] w-[58%] max-w-[460px] aspect-square flex items-center justify-center">
+                  {/* Particle-logo watermark - the header particle mark, re-skinned red.
+                      Pinned at 50% / 53% exactly like the issued PDF (.wm.wm-dots). */}
+                  <div className="absolute inset-0 z-0 pointer-events-none">
+                    <div className="absolute left-1/2 top-[53%] -translate-x-1/2 -translate-y-1/2 opacity-[0.26] w-[46%] max-w-[520px] aspect-square">
                       <ParticleLogo
                         size={340}
                         particleCount={850}
@@ -640,7 +645,7 @@ function CertificatePreviewModal({
                       />
                     </div>
                     <div
-                      className="absolute w-[60%] max-w-[440px] aspect-square rounded-full blur-[70px]"
+                      className="absolute left-1/2 top-[53%] -translate-x-1/2 -translate-y-1/2 w-[48%] max-w-[540px] aspect-square rounded-full blur-[70px]"
                       style={{ background: "radial-gradient(circle, rgba(225,29,46,0.14), transparent 65%)" }}
                     />
                   </div>
@@ -649,52 +654,75 @@ function CertificatePreviewModal({
                   <div className="gx-scanlines" />
                   <div className="gx-hud-corners"><span /></div>
 
-                  {/* Content */}
-                  <div className="relative z-10 h-full flex flex-col items-center text-center px-4 sm:px-9 py-2.5 sm:py-4">
-                    {/* ── Header: big white logo + institute wordmark + chips ── */}
-                    <div className="w-full flex items-start justify-between gap-2">
-                      <div className="flex items-center gap-2 sm:gap-3">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
-                          src="/guardianx-logo-v2.png"
-                          alt="GuardianX Academy"
-                          className="gx-logo-ink h-8 sm:h-11 lg:h-12 w-auto"
-                          style={{ filter: "brightness(0) invert(1) drop-shadow(0 0 10px rgba(225,29,46,0.55))" }}
-                        />
-                        <div className="text-left leading-tight">
-                          <p className="text-[11px] sm:text-sm font-bold tracking-[0.18em]" style={{ color: "var(--doc-ink)" }}>
-                            GUARDIAN<span style={{ color: "var(--doc-accent-1)" }}>X</span> ACADEMY
-                          </p>
-                          <p className="text-[6px] sm:text-[8px] font-mono tracking-[0.3em]" style={{ color: "var(--doc-muted)" }}>
-                            CYBER DEFENSE INSTITUTE
-                          </p>
-                        </div>
-                      </div>
-                      <div className="flex flex-col items-end gap-1">
-                        <CertChip tone="green">
-                          <ShieldCheck className="h-2.5 w-2.5 sm:h-3 sm:w-3" /> Verified credential
-                        </CertChip>
-                        <CertChip tone="red">
-                          <Fingerprint className="h-2.5 w-2.5 sm:h-3 sm:w-3" /> Clearance · operation complete
-                        </CertChip>
-                      </div>
+                  {/* Content - container-query sized (mirrors phantom-cert-sample) */}
+                  <div className="relative z-10 flex-1 flex flex-col items-center text-center px-4 @sm:px-8 @xl:px-10 @5xl:px-14 py-3 @sm:py-5 @xl:py-6 @5xl:py-8">
+                    {/* ── Top band: classification chips top-right (mirrors the issued
+                        PDF's .chiprow). In-flow so it can never collide with the
+                        centred crest; reg no lives in the bottom verification strip ── */}
+                    <div className="self-end z-20 flex items-center gap-1.5 @5xl:gap-2">
+                      <CertChip tone="green">
+                        <ShieldCheck className="h-2.5 w-2.5 @5xl:h-3 @5xl:w-3" /> Verified credential
+                      </CertChip>
+                      <CertChip tone="red">
+                        <Fingerprint className="h-2.5 w-2.5 @5xl:h-3 @5xl:w-3" /> GX blackops clearance
+                      </CertChip>
                     </div>
 
-                    {/* ── Terminal readout ── */}
-                    <div className="mt-1.5 sm:mt-2 flex items-center gap-1.5 max-w-full overflow-hidden">
-                      <Terminal className="h-2.5 w-2.5 sm:h-3 sm:w-3 shrink-0" style={{ color: "var(--doc-accent-1)" }} />
-                      <span className="gx-hexline truncate text-[7px]! sm:text-[9px]!" style={{ color: "var(--doc-muted)" }}>
+                    {/* ── Header: centered ring logo + institute brand line (issued-PDF mirror) ── */}
+                    <div
+                      className="mt-1 size-9 @sm:size-11 @xl:size-14 @4xl:size-16 @5xl:size-20 shrink-0 rounded-full border flex items-center justify-center"
+                      style={{
+                        borderColor: "color-mix(in oklab, var(--doc-gold) 60%, transparent)",
+                        background: "var(--doc-panel)",
+                        boxShadow:
+                          "0 0 0 4px color-mix(in oklab, var(--doc-gold) 12%, transparent), 0 0 20px rgba(225,29,46,0.3)",
+                      }}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src="/guardianx-logo-v2.png"
+                        alt="GuardianX Academy"
+                        className="h-6 @sm:h-7 @xl:h-10 @4xl:h-12 @5xl:h-14 w-auto"
+                        style={{ filter: "brightness(0) invert(1) drop-shadow(0 0 6px rgba(225,29,46,0.45))" }}
+                      />
+                    </div>
+                    <p
+                      className="mt-1 @sm:mt-1.5 @xl:mt-2 text-[6px] @sm:text-[7px] @xl:text-[8px] @5xl:text-[10px] font-mono tracking-[0.34em]"
+                      style={{ color: "var(--doc-muted)" }}
+                    >
+                      GUARDIANX ACADEMY&nbsp;&nbsp;·&nbsp;&nbsp;CYBER DEFENSE INSTITUTE
+                    </p>
+
+                    {/* ── Terminal readout (full-width document tier) ── */}
+                    <div className="mt-1 @5xl:mt-1.5 hidden @5xl:flex items-center gap-1.5 max-w-full overflow-hidden">
+                      <Terminal className="h-2.5 w-2.5 @5xl:h-3 @5xl:w-3 shrink-0" style={{ color: "var(--doc-accent-1)" }} />
+                      <span className="gx-hexline truncate text-[7px]! @5xl:text-[10px]!" style={{ color: "var(--doc-muted)" }}>
                         <span style={{ color: "var(--doc-accent-1)" }}>root@gx:~$</span>{" "}
-                        guardianx issue --recipient &quot;{recipient}&quot; --score {score}% --verified
+                        guardianx issue --recipient &quot;{recipient}&quot; --score {score}%{" "}
+                        <span style={{ color: "var(--doc-green, #22c55e)" }}>--verified ✓</span>
                       </span>
                     </div>
 
+                    {/* ── Kicker + CERTIFICATE wordmark (issued-PDF mirror) ── */}
+                    <p
+                      className="mt-1.5 @xl:mt-2 hidden @sm:block text-[6px] @xl:text-[7px] @5xl:text-[11px] font-mono tracking-[0.5em] pl-[0.5em] uppercase"
+                      style={{ color: "var(--doc-accent-3)" }}
+                    >
+                      · of completion ·
+                    </p>
+                    <h2
+                      className="mt-0.5 @sm:mt-1 hidden @sm:block text-sm @xl:text-xl @4xl:text-2xl @5xl:text-4xl font-bold tracking-[0.42em] pl-[0.42em] leading-none"
+                      style={{ color: "var(--doc-gold)" }}
+                    >
+                      CERTIFICATE
+                    </h2>
+
                     {/* ── Recipient hero ── */}
-                    <p className="mt-1.5 sm:mt-2.5 text-[6px] sm:text-[8px] font-mono tracking-[0.4em]" style={{ color: "var(--doc-muted)" }}>
+                    <p className="mt-1 @xl:mt-2 text-[6px] @xl:text-[8px] font-mono tracking-[0.4em]" style={{ color: "var(--doc-muted)" }}>
                       THIS CERTIFICATE IS PROUDLY PRESENTED TO
                     </p>
                     <p
-                      className="gx-script text-base sm:text-3xl lg:text-4xl mt-1 leading-tight"
+                      className="gx-script text-lg @sm:text-xl @xl:text-3xl @4xl:text-4xl @5xl:text-5xl mt-0.5 @sm:mt-1 leading-tight"
                       style={{
                         color: "var(--doc-ink)",
                         textShadow: "0 0 24px rgba(225,29,46,0.35)",
@@ -702,16 +730,16 @@ function CertificatePreviewModal({
                     >
                       {recipient}
                     </p>
-                    <hr className="gx-gradient-rule w-44 sm:w-72 mt-1 sm:mt-1.5" />
+                    <hr className="gx-gradient-rule w-40 @xl:w-64 @5xl:w-96 mt-0.5 @sm:mt-1.5" />
 
                     {/* ── Course block ── */}
-                    <p className="mt-1 sm:mt-2 text-[6px] sm:text-[8px] font-mono tracking-[0.3em] uppercase" style={{ color: "var(--doc-muted)" }}>
+                    <p className="mt-1 @sm:mt-1.5 @xl:mt-2 text-[6px] @xl:text-[8px] font-mono tracking-[0.3em] uppercase" style={{ color: "var(--doc-muted)" }}>
                       for successfully completing the training operation
                     </p>
-                    <h1 className="text-xs sm:text-lg lg:text-2xl font-bold tracking-tight leading-tight text-balance" style={{ color: "var(--doc-ink)" }}>
+                    <h1 className="text-xs @xl:text-lg @4xl:text-xl @5xl:text-2xl font-bold tracking-tight leading-tight text-balance" style={{ color: "var(--doc-ink)" }}>
                       {courseTitle}
                     </h1>
-                    <p className="text-[7px] sm:text-[10px] mt-0.5" style={{ color: "var(--doc-muted)" }}>
+                    <p className="text-[7px] @xl:text-[10px] mt-0.5" style={{ color: "var(--doc-muted)" }}>
                       issued by <span className="font-semibold" style={{ color: "var(--doc-accent-1)" }}>{certBody}</span>
                       {metaParts.length > 1 && (
                         <span className="hidden sm:inline">{"  ·  "}{metaParts.slice(1).join("  ·  ")}</span>
@@ -719,7 +747,7 @@ function CertificatePreviewModal({
                     </p>
 
                     {/* ── Data HUD row: score · issue date · credential ID ── */}
-                    <div className="mt-2 sm:mt-3.5 w-full max-w-lg flex items-center justify-center gap-2 sm:gap-4">
+                    <div className="mt-2 @xl:mt-3 @5xl:mt-4 w-full max-w-lg flex items-center justify-center gap-2 sm:gap-4">
                       <div className="flex items-center gap-2">
                         <ScoreDial value={score} />
                       </div>
@@ -728,14 +756,14 @@ function CertificatePreviewModal({
                         <p className="text-[5px] sm:text-[6px] font-mono tracking-[0.24em] uppercase flex items-center gap-1" style={{ color: "var(--doc-muted)" }}>
                           <Calendar className="h-2 w-2 sm:h-2.5 sm:w-2.5" /> Issue date
                         </p>
-                        <p className="text-[8px] sm:text-[11px] font-semibold" style={{ color: "var(--doc-ink)" }}>{issuedLong}</p>
+                        <p className="text-[8px] @xl:text-[11px] font-semibold" style={{ color: "var(--doc-ink)" }}>{issuedLong}</p>
                       </div>
                       <div className="h-8 w-px shrink-0" style={{ background: "var(--doc-line)" }} />
                       <div className="text-left min-w-0">
                         <p className="text-[5px] sm:text-[6px] font-mono tracking-[0.24em] uppercase flex items-center gap-1" style={{ color: "var(--doc-muted)" }}>
                           <Hash className="h-2 w-2 sm:h-2.5 sm:w-2.5" /> Credential ID
                         </p>
-                        <p className="text-[8px] sm:text-[11px] font-mono font-bold truncate" style={{ color: "var(--doc-accent-2)" }}>
+                        <p className="text-[8px] @xl:text-[11px] font-mono font-bold truncate" style={{ color: "var(--doc-accent-2)" }}>
                           {cert.certificateId}
                         </p>
                       </div>
@@ -769,7 +797,7 @@ function CertificatePreviewModal({
                       {/* Real scannable QR */}
                       <div className="flex flex-col items-center shrink-0 gap-0.5">
                         <div
-                          className="size-11 sm:size-14 rounded-md bg-white p-1"
+                          className="size-11 @xl:size-14 rounded-md bg-white p-1"
                           style={{ boxShadow: "0 0 0 1px var(--doc-line), 0 0 14px rgba(225,29,46,0.25)" }}
                         >
                           <QRCodeSVG value={verifyUrl} size={128} bgColor="#FFFFFF" fgColor="#0A0507" level="M" className="size-full" />
@@ -801,6 +829,9 @@ function CertificatePreviewModal({
 
                     {/* ── Verification strip ── */}
                     <div className="w-full mt-0.5 flex items-center justify-center gap-x-3 gap-y-0.5 flex-wrap" style={{ color: "var(--doc-muted)" }}>
+                      <span className="text-[6px] sm:text-[8px] font-mono">
+                        REG <span style={{ color: "var(--doc-ink)" }}>{INSTITUTE_REG_NO}</span>
+                      </span>
                       <span className="text-[6px] sm:text-[8px] font-mono">
                         ID <span style={{ color: "var(--doc-ink)" }}>{cert.certificateId}</span>
                       </span>
