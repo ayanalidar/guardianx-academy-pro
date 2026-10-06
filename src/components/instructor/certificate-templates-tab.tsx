@@ -4,6 +4,7 @@ import * as React from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { api } from "@/lib/api"
 import { cn } from "@/lib/utils"
+import { PhantomCertSample } from "@/components/platform/phantom-cert-sample"
 import { toast } from "sonner"
 
 import { Card } from "@/components/ui/card"
@@ -50,10 +51,7 @@ import {
   Image as ImageIcon,
   ShieldCheck,
   Sparkles,
-  Fingerprint,
-  Terminal,
 } from "lucide-react"
-import { QRCodeSVG } from "qrcode.react"
 
 // ============================================================================
 // Types
@@ -125,10 +123,6 @@ const EMPTY_FORM = {
 // ============================================================================
 function fontClass(font: string) {
   return FONT_OPTIONS.find((f) => f.value === font)?.cls ?? "font-serif"
-}
-
-function sealColorValue(seal: string): string {
-  return SEAL_OPTIONS.find((s) => s.value === seal)?.color ?? "#10b981"
 }
 
 // ============================================================================
@@ -265,7 +259,7 @@ function TemplateCard({
   return (
     <Card className="overflow-hidden card-hover group">
       {/* Live preview banner */}
-      <CertificatePreview template={template} compact />
+      <CertificatePreview template={template} />
 
       {/* Body */}
       <div className="p-4 space-y-3">
@@ -350,225 +344,28 @@ function TemplateCard({
 }
 
 // ============================================================================
-// Certificate Live Preview - a faithful miniature of the REAL "BLACKOPS
-// PHANTOM" certificate document (the same .gx-doc / .gx-theme-phantom
-// framework the issued certificates render with - see views/certificates.tsx
-// and the printable PDF in lib/certificate-pdf.ts). The template's own
-// palette, font, frame, seal, logo and signature choices are layered on top
-// via the --doc-* variables so this preview can never drift from the shipped
-// design again. The logo is locked to the top-left header slot at a fixed
-// height (object-contain, no distortion) exactly like the real document.
+// Certificate Live Preview - renders the SHARED PhantomCertSample (the exact
+// sample renderer the course pages, home page and certificates modal use),
+// so the templates editor can never drift from the issued document design.
+// The sample keeps the real BLACKOPS PHANTOM anatomy: centred crest logo,
+// GUARDIANX ACADEMY brand line, terminal readout, script recipient, score
+// dial, wax seal, signatures and a scannable QR - and self-scales to the
+// card/form width via container queries (compact needs no special casing).
 // ============================================================================
 function CertificatePreview({
   template,
-  compact = false,
 }: {
   template: Partial<CertificateTemplate>
   compact?: boolean
 }) {
-  const primary = template.primaryColor || "#e11d2e"
-  const accent = template.accentColor || "#ff5a4e"
-  const logoSrc = template.logoUrl || "/guardianx-logo-v2.png"
-  const signature = template.signatureText || "Program Director, GuardianX Academy"
-  const sealColor = sealColorValue(template.sealStyle ?? "emerald")
-  const fontCls = fontClass(template.fontFamily ?? "serif")
-  const holographic = template.borderStyle === "holographic"
-  const verifyUrl =
-    typeof window !== "undefined"
-      ? `${window.location.origin}/verify/GXI-SAMPLE`
-      : "/verify/GXI-SAMPLE"
-
+  const signature = template.signatureText?.trim()
   return (
-    <div
-      className={cn(
-        "gx-doc gx-theme-phantom gx-paper relative aspect-[1.414/1] w-full overflow-hidden select-none",
-        template.borderStyle === "minimal" && "[&_.gx-guilloche]:opacity-40"
-      )}
-      style={
-        {
-          "--doc-accent-1": primary,
-          "--doc-accent-2": accent,
-          "--doc-gold": primary,
-          ...(holographic
-            ? { boxShadow: `0 0 22px ${primary}66, 0 0 0 1px ${primary}55` }
-            : {}),
-        } as React.CSSProperties
-      }
-      aria-hidden={compact || undefined}
-    >
-      <div className="gx-guilloche h-full w-full">
-        <div className="gx-guilloche-inner h-full w-full">
-          <div className="gx-aurora-mesh gx-grain relative h-full w-full overflow-hidden">
-            <div className="gx-corner-glows" />
-
-            {/* Static brand watermark (canvas-free twin of the particle mark) */}
-            <div className="gx-watermark" />
-
-            {/* Template background pattern accents */}
-            {template.backgroundPattern === "grid" && (
-              <div className="absolute inset-0 z-[1] bg-grid opacity-[0.07] pointer-events-none" />
-            )}
-            {template.backgroundPattern === "particles" && (
-              <div
-                className="absolute inset-0 z-[1] pointer-events-none"
-                style={{
-                  background: `radial-gradient(circle at 22% 28%, ${primary}30 0, transparent 34%), radial-gradient(circle at 78% 72%, ${accent}26 0, transparent 38%)`,
-                }}
-              />
-            )}
-
-            <div className="gx-scanlines" />
-            <div className="gx-hud-corners"><span /></div>
-
-            {/* ===== Content - mirrors the issued certificate layout ===== */}
-            <div className="relative z-10 h-full flex flex-col items-center text-center px-3 sm:px-6 py-2 sm:py-2.5 min-h-0">
-              {/* Header: logo (top-left, fixed height, no distortion) + wordmark; chips top-right */}
-              <div className="w-full flex items-start justify-between gap-2">
-                <div className="flex items-center gap-1.5 sm:gap-2 min-w-0">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={logoSrc}
-                    alt=""
-                    className="gx-logo-ink h-6 sm:h-8 w-auto shrink-0"
-                    onError={(e) => {
-                      const img = e.currentTarget
-                      if (!img.src.endsWith("/guardianx-logo-v2.png")) {
-                        img.src = "/guardianx-logo-v2.png"
-                      }
-                    }}
-                  />
-                  <div className="text-left leading-tight min-w-0">
-                    <p className="text-[9px] sm:text-[11px] font-bold tracking-[0.18em] whitespace-nowrap" style={{ color: "var(--doc-ink)" }}>
-                      GUARDIAN<span style={{ color: "var(--doc-accent-1)" }}>X</span> ACADEMY
-                    </p>
-                    <p className="text-[5px] sm:text-[6px] font-mono tracking-[0.3em] whitespace-nowrap" style={{ color: "var(--doc-muted)" }}>
-                      CYBER DEFENSE INSTITUTE
-                    </p>
-                  </div>
-                </div>
-                <div className="flex flex-col items-end gap-1 shrink-0">
-                  <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full border border-emerald-500/40 bg-emerald-500/10 text-[5px] sm:text-[6px] font-mono tracking-[0.18em] uppercase text-emerald-300 whitespace-nowrap">
-                    <ShieldCheck className="h-1.5 w-1.5 sm:h-2 sm:w-2" /> Verified
-                  </span>
-                  {!compact && (
-                    <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full border border-red-500/50 bg-red-500/10 text-[6px] font-mono tracking-[0.18em] uppercase text-red-300 whitespace-nowrap">
-                      <Fingerprint className="h-2 w-2" /> Clearance
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* Terminal readout */}
-              {!compact && (
-                <div className="mt-1 flex items-center gap-1 max-w-full overflow-hidden">
-                  <Terminal className="h-2.5 w-2.5 shrink-0" style={{ color: "var(--doc-accent-1)" }} />
-                  <span className="gx-hexline truncate text-[8px]!" style={{ color: "var(--doc-muted)" }}>
-                    <span style={{ color: "var(--doc-accent-1)" }}>root@gx:~$</span>{" "}
-                    guardianx issue --recipient &quot;Student Name&quot; --score 92% --verified
-                  </span>
-                </div>
-              )}
-
-              {/* Recipient hero */}
-              <p className="mt-1 sm:mt-1.5 text-[5px] sm:text-[6px] font-mono tracking-[0.4em]" style={{ color: "var(--doc-muted)" }}>
-                THIS CERTIFICATE IS PROUDLY PRESENTED TO
-              </p>
-              <p
-                className="gx-script text-sm sm:text-xl mt-0.5 leading-tight"
-                style={{
-                  color: "var(--doc-ink)",
-                  textShadow: "0 0 18px color-mix(in oklab, var(--doc-accent-1) 35%, transparent)",
-                }}
-              >
-                Student Name
-              </p>
-              <hr className="gx-gradient-rule w-32 sm:w-48 mt-0.5 sm:mt-1" />
-
-              {/* Course block */}
-              {!compact ? (
-                <>
-                  <p className="mt-1 text-[6px] font-mono tracking-[0.3em] uppercase" style={{ color: "var(--doc-muted)" }}>
-                    for successfully completing the training operation
-                  </p>
-                  <h3 className={cn("text-[11px] sm:text-sm font-bold tracking-tight leading-tight", fontCls)} style={{ color: "var(--doc-ink)" }}>
-                    Professional Cybersecurity Certification
-                  </h3>
-                  <p className="text-[6px] sm:text-[7px] mt-0.5" style={{ color: "var(--doc-muted)" }}>
-                    issued by <span className="font-semibold" style={{ color: "var(--doc-accent-1)" }}>GuardianX Academy</span>
-                  </p>
-                </>
-              ) : (
-                <p className={cn("text-[8px] font-semibold mt-0.5 truncate max-w-full", fontCls)} style={{ color: "var(--doc-ink)" }}>
-                  Professional Cybersecurity Certification
-                </p>
-              )}
-
-              {/* Bottom row: seal + signature + QR (same trio as the real document) */}
-              <div className="mt-auto w-full flex items-end gap-2 sm:gap-3 min-h-0">
-                {/* Seal - tinted by the template's seal choice */}
-                <div className="relative shrink-0 flex flex-col items-center gap-0.5">
-                  <div
-                    className={cn("relative rounded-full flex items-center justify-center", compact ? "size-7" : "size-10")}
-                    style={{
-                      background: sealColor,
-                      boxShadow: `0 0 0 1px ${primary}55, 0 4px 12px -4px ${primary}88`,
-                    }}
-                  >
-                    <div className="absolute inset-[3px] rounded-full border border-dashed border-white/50" />
-                    <ShieldCheck className={cn("text-white/95", compact ? "h-3 w-3" : "h-4 w-4")} />
-                  </div>
-                  {!compact && (
-                    <p className="text-[5px] font-mono tracking-[0.24em] uppercase" style={{ color: "var(--doc-muted)" }}>
-                      GX certified
-                    </p>
-                  )}
-                </div>
-
-                {/* Signature block */}
-                <div className="flex-1 min-w-0">
-                  <div className={cn("gx-script italic leading-none mb-1 truncate", compact ? "text-[9px]" : "text-xs")} style={{ color: "var(--doc-ink)" }}>
-                    {signature}
-                  </div>
-                  <div className="border-t pt-0.5" style={{ borderColor: "color-mix(in oklab, var(--doc-accent-1) 45%, transparent)" }}>
-                    <p className="text-[5px] sm:text-[6px] font-mono uppercase tracking-[0.22em] truncate" style={{ color: "var(--doc-muted)" }}>
-                      Program Director
-                    </p>
-                  </div>
-                </div>
-
-                {/* QR (sample payload - real certificates encode their own verify URL) */}
-                <div className="flex flex-col items-center shrink-0 gap-0.5">
-                  <div
-                    className={cn("rounded-[4px] bg-white p-0.5", compact ? "size-7" : "size-9 sm:size-11")}
-                    style={{ boxShadow: "0 0 0 1px var(--doc-line)" }}
-                  >
-                    <QRCodeSVG value={verifyUrl} size={128} bgColor="#FFFFFF" fgColor="#0A0507" level="M" className="size-full" />
-                  </div>
-                  {!compact && (
-                    <p className="text-[5px] font-mono uppercase tracking-[0.2em]" style={{ color: "var(--doc-muted)" }}>
-                      Scan to verify
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              {/* Hex fingerprint + verification strip */}
-              {!compact && (
-                <>
-                  <div className="w-full mt-1 pt-0.5 border-t flex items-center justify-center" style={{ borderColor: "var(--doc-line)" }}>
-                    <span className="gx-hexline text-[6px]!">SHA-256 9F2A 4C1E 77B3 0D5E 8812 3FA6 45C9 BB20 11E8 D34F</span>
-                  </div>
-                  <div className="w-full mt-0.5 flex items-center justify-center gap-2 min-w-0" style={{ color: "var(--doc-muted)" }}>
-                    <span className="text-[5px] sm:text-[6px] font-mono whitespace-nowrap">ID <span style={{ color: "var(--doc-ink)" }}>GXI-SAMPLE</span></span>
-                    <span className="text-[5px] sm:text-[6px] font-mono truncate min-w-0">verify at {verifyUrl.replace(/^https?:\/\//, "")}</span>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
+    <PhantomCertSample
+      title="Professional Cybersecurity Certification"
+      recipient="Student Name"
+      instructorName={signature || "GuardianX Academy"}
+      instructorTitle={signature ? "Program Director" : "Course Instructor"}
+    />
   )
 }
 
