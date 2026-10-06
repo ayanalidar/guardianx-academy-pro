@@ -8,12 +8,17 @@
  * Output: PDFs + page-count report in /home/z/my-project/tmp/invoice-verify/
  */
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs"
+import { fileURLToPath } from "node:url"
+import { dirname, join } from "node:path"
 import { buildInvoicePdf, type InvoicePdfData } from "../src/lib/invoice-pdf"
 
 const OUT = "/home/z/my-project/tmp/invoice-verify"
 mkdirSync(OUT, { recursive: true })
 
-const REPO = "/home/z/my-project/repo-guardianx"
+// Resolve the repo root relative to THIS script so the harness works from
+// any checkout / git worktree (the old hard-coded clone path broke when the
+// sandbox was reset to an older commit without the newer public assets).
+const REPO = join(dirname(fileURLToPath(import.meta.url)), "..")
 const logoDataUrl = `data:image/png;base64,${readFileSync(`${REPO}/public/guardianx-logo-v2.png`).toString("base64")}`
 const sigDark = `data:image/png;base64,${readFileSync(`${REPO}/public/signature-dark.png`).toString("base64")}`
 const sigLight = `data:image/png;base64,${readFileSync(`${REPO}/public/signature-light.png`).toString("base64")}`

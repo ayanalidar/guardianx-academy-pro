@@ -1288,9 +1288,14 @@ export function buildScoreCardHTML(
 // ---------------------------------------------------------------------------
 
 export interface VerifyReportData {
+  /** Report flavor: "internship" (default, legacy callers) or "course". */
+  kind?: "internship" | "course"
   credentialId: string
   candidateName: string
   grade: string | null
+  /** Course-completion numeric score (0-100). Renders the score band instead
+   *  of a letter grade - never invent a grade a course was not given. */
+  score?: number | null
   issueDate: string | null
   verifyUrl: string
   skills: string[]
@@ -1299,10 +1304,12 @@ export interface VerifyReportData {
     title?: string | null
     role?: string | null
     domain?: string | null
+    level?: string | null
     company?: string | null
     collegeName?: string | null
     collegeCity?: string | null
     durationWeeks?: number | null
+    durationHours?: number | null
     startDate?: string | null
     endDate?: string | null
     mentorName?: string | null
@@ -1336,30 +1343,51 @@ export function buildVerifyReportHTML(
   const credentialId = escapeHtml(String(data.credentialId ?? ""))
   const verifyUrl = escapeHtml(String(data.verifyUrl ?? ""))
   const issuedDate = fmtLongDate(data.issueDate)
-  const grade = escapeHtml(String(data.grade ?? "Completed").trim())
 
   const p = data.program ?? {}
+  const isCourse = data.kind === "course"
   const completed = p.completed !== false
   const weeks = typeof p.durationWeeks === "number" && p.durationWeeks > 0 ? p.durationWeeks : null
+  const hours = typeof p.durationHours === "number" && p.durationHours > 0 ? p.durationHours : null
   const timeline =
     p.startDate || p.endDate
       ? `${fmtMonthYear(p.startDate)} - ${fmtMonthYear(p.endDate)}`
       : null
+
+  // Course certificates carry a numeric score - the report shows the SAME
+  // band the verify page computes (>=90 DISTINCTION / >=75 MERIT / else PASS),
+  // never a fabricated letter grade. Internships keep their letter grade.
+  const scoreNum =
+    typeof data.score === "number" && isFinite(data.score) ? Math.round(data.score) : null
+  const bandLabel =
+    scoreNum == null ? "Completed" : scoreNum >= 90 ? "Distinction" : scoreNum >= 75 ? "Merit" : "Pass"
+  const grade = isCourse
+    ? escapeHtml(bandLabel)
+    : escapeHtml(String(data.grade ?? "Completed").trim())
 
   const recordCells: { label: string; value: string }[] = []
   const push = (label: string, value: unknown) => {
     const v = String(value ?? "").trim()
     if (v) recordCells.push({ label, value: escapeHtml(v) })
   }
-  push("Program", p.title)
-  push("Role", p.role)
-  push("Domain", p.domain)
-  push("College", p.collegeName && p.collegeCity ? `${p.collegeName}, ${p.collegeCity}` : p.collegeName)
-  push("Hosted by", p.company)
-  push("Mentor", p.mentorName)
-  push("Program Director", p.programDirector)
-  push("Timeline", timeline)
-  push("Duration", weeks ? `${weeks} weeks` : null)
+  if (isCourse) {
+    push("Program", p.title)
+    push("Category", p.domain)
+    push("Level", p.level)
+    push("Instructor", p.mentorName)
+    push("Issued by", p.company)
+    push("Duration", hours ? `${hours} hours` : null)
+  } else {
+    push("Program", p.title)
+    push("Role", p.role)
+    push("Domain", p.domain)
+    push("College", p.collegeName && p.collegeCity ? `${p.collegeName}, ${p.collegeCity}` : p.collegeName)
+    push("Hosted by", p.company)
+    push("Mentor", p.mentorName)
+    push("Program Director", p.programDirector)
+    push("Timeline", timeline)
+    push("Duration", weeks ? `${weeks} weeks` : null)
+  }
   const recordGrid = recordCells
     .map(
       (c) => `<div class="rcell"><div class="rlabel">${c.label}</div><div class="rvalue">${c.value}</div></div>`
@@ -1369,6 +1397,9 @@ export function buildVerifyReportHTML(
   const allProjects = Array.isArray(data.projects) ? data.projects : []
   const shownProjects = allProjects.slice(0, REPORT_MAX_PROJECTS)
   const hiddenProjects = allProjects.length - shownProjects.length
+  // Courses list curriculum modules in the same rows internships list
+  // delivered projects - the noun must match the flavor.
+  const itemNoun = isCourse ? "module" : "project"
   const projectRows = shownProjects
     .map(
       (proj, idx) => `<div class="prow">
@@ -1379,7 +1410,7 @@ export function buildVerifyReportHTML(
     .join("\n")
   const moreNote =
     hiddenProjects > 0
-      ? `<div class="pmore">+ ${hiddenProjects} more project${hiddenProjects === 1 ? "" : "s"} · scan the QR to view the full record online</div>`
+      ? `<div class="pmore">+ ${hiddenProjects} more ${itemNoun}${hiddenProjects === 1 ? "" : "s"} · scan the QR to view the full record online</div>`
       : ""
 
   const skills = (Array.isArray(data.skills) ? data.skills : []).slice(0, REPORT_MAX_SKILLS)
@@ -1409,8 +1440,8 @@ export function buildVerifyReportHTML(
 
   const gradeSizeClass = grade.length <= 6 ? "grade-xl" : grade.length <= 16 ? "grade-lg" : "grade-md"
   const gradeSub = [
-    "final grade",
-    weeks ? `${weeks}-week program` : null,
+    isCourse ? (scoreNum != null ? `final score ${scoreNum}/100` : "final score") : "final grade",
+    isCourse ? (hours ? `${hours}-hour program` : null) : weeks ? `${weeks}-week program` : null,
     completed ? "completed \u2713" : "in progress",
   ]
     .filter(Boolean)
@@ -1418,8 +1449,13 @@ export function buildVerifyReportHTML(
 
   const metaParts: string[] = []
   if (p.title) metaParts.push(String(p.title))
-  if (weeks) metaParts.push(`${weeks}-Week Program`)
+  if (isCourse) {
+    if (hours) metaParts.push(`${hours}-Hour Program`)
+  } else if (weeks) {
+    metaParts.push(`${weeks}-Week Program`)
+  }
   if (p.domain) metaParts.push(String(p.domain))
+  if (isCourse && p.level) metaParts.push(String(p.level))
   metaParts.push(`Issued ${issuedDate}`)
   const metaLine = metaParts
     .map((s) => escapeHtml(s))
@@ -1429,7 +1465,7 @@ export function buildVerifyReportHTML(
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>GuardianX Progress Report - ${recipient}</title>
+<title>GuardianX ${isCourse ? "Course Report" : "Progress Report"} - ${recipient}</title>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
   @page { size: A4 portrait; margin: 0; }
@@ -1600,8 +1636,8 @@ export function buildVerifyReportHTML(
     <div class="logo-ring">${logoInner}</div>
     <div class="brand">GUARDIANX ACADEMY &nbsp;\u00b7&nbsp; CYBER DEFENSE INSTITUTE</div>
     <div class="terminal"><b>root@gx:~$</b> guardianx verify --id &quot;${credentialId}&quot; <s>--valid \u2713</s></div>
-    <div class="kicker">&middot; internship record &middot;</div>
-    <h1 class="wordmark">PROGRESS REPORT</h1>
+    <div class="kicker">&middot; ${isCourse ? "course record" : "internship record"} &middot;</div>
+    <h1 class="wordmark">${isCourse ? "COURSE REPORT" : "PROGRESS REPORT"}</h1>
 
     <div class="presented">
       <div class="presented-label">CANDIDATE</div>
@@ -1619,7 +1655,7 @@ export function buildVerifyReportHTML(
     ${recordCells.length > 0 ? `<div class="rgrid">${recordGrid}</div>` : ""}
 
     ${shownProjects.length > 0 ? `<div class="projects">
-      <div class="projects-kicker">progress report \u00b7 projects delivered</div>
+      <div class="projects-kicker">${isCourse ? "course report \u00b7 curriculum covered" : "progress report \u00b7 projects delivered"}</div>
       ${projectRows}
       ${moreNote}
     </div>` : ""}

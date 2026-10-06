@@ -102,11 +102,49 @@ export async function GET(req: Request, { params }: { params: Promise<{ credenti
       where: { certificateId: credentialId },
       include: {
         user: { select: { name: true } },
-        course: { select: { title: true, shortName: true, level: true } },
+        course: {
+          select: {
+            title: true,
+            shortName: true,
+            level: true,
+            category: true,
+            durationHours: true,
+            tags: true,
+            certBody: true,
+            toolsCovered: true,
+            instructor: { select: { name: true } },
+            modules: { select: { title: true }, orderBy: { order: "asc" } },
+          },
+        },
       },
     })
 
     if (courseCert) {
+      // Course-authoritative skills: course tags (comma separated) + tools
+      // covered (JSON array), merged + de-duplicated, capped at 25 like the
+      // internship skills. Empty course fields honestly yield an empty list -
+      // nothing is fabricated for the report.
+      const tagList = courseCert.course.tags
+        .split(",")
+        .map((t) => t.trim())
+        .filter(Boolean)
+      let toolList: string[] = []
+      try {
+        const parsed = JSON.parse(courseCert.course.toolsCovered || "[]")
+        if (Array.isArray(parsed)) toolList = parsed.map((t) => String(t).trim()).filter(Boolean)
+      } catch {
+        /* malformed JSON - keep empty */
+      }
+      const seenSkills = new Set<string>()
+      const skills = [...tagList, ...toolList]
+        .filter((s) => {
+          const k = s.toLowerCase()
+          if (seenSkills.has(k)) return false
+          seenSkills.add(k)
+          return true
+        })
+        .slice(0, 25)
+
       return NextResponse.json({
         valid: true,
         credential: {
@@ -120,6 +158,19 @@ export async function GET(req: Request, { params }: { params: Promise<{ credenti
           expiryDate: null,
           status: "valid",
           examType: "course-completion",
+          skillsAssessed: skills,
+          // Course report data (mirrors internshipDetails) - feeds the verify
+          // page's course-details + curriculum sections and the downloadable
+          // course report PDF. Derived live from the course, so every
+          // previously-issued certificate gains the report automatically.
+          courseDetails: {
+            category: courseCert.course.category,
+            level: courseCert.course.level,
+            durationHours: courseCert.course.durationHours,
+            instructorName: courseCert.course.instructor?.name ?? null,
+            certBody: courseCert.course.certBody ?? null,
+            curriculum: courseCert.course.modules.map((m) => ({ title: m.title })),
+          },
           verificationUrl: `/verify/${courseCert.certificateId}`,
         },
       })

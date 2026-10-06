@@ -49,6 +49,15 @@ type VerifiedCredential = {
     endDate?: string | null
     completed?: boolean
   } | null
+  // Course report data - course facts + curriculum (course-completion certs).
+  courseDetails?: {
+    category?: string | null
+    level?: string | null
+    durationHours?: number | null
+    instructorName?: string | null
+    certBody?: string | null
+    curriculum?: { title: string }[]
+  } | null
   verificationHash?: string
   verificationUrl?: string | null
 }
@@ -363,6 +372,10 @@ function VerifiedCard({
   // center, never a fabricated 0%.
   const isInternship = cred.examType === "internship"
   const projects = cred.projects ?? []
+  // Course-completion certificates get the same report experience: course
+  // facts + curriculum covered + downloadable course report PDF.
+  const isCourse = cred.examType === "course-completion"
+  const curriculum = cred.courseDetails?.curriculum ?? []
   const gradeShort = shortGrade(cred.grade)
   const internshipPct = cred.internshipDetails?.completed === false ? 0 : 100
   const displayPct = isInternship
@@ -373,35 +386,52 @@ function VerifiedCard({
   const pct = Math.max(0, Math.min(100, displayPct))
   const isQuiz = cred.examType === "online-quiz" || cred.credentialId.startsWith("GX-QUIZ-")
 
-  // Internship progress-report PDF - mirrors the verified result exactly.
+  // Progress-report PDF - mirrors the verified result exactly. Internships
+  // print the internship progress report; course-completion certificates
+  // print the course report (course facts + curriculum + score band). One
+  // builder, two flavors.
   const [downloadingReport, setDownloadingReport] = React.useState(false)
   async function downloadReport() {
-    if (!isInternship) return
+    if (!isInternship && !isCourse) return
     setDownloadingReport(true)
     toast.info("Preparing report PDF...")
     try {
       await downloadVerifyReportPDF({
+        kind: isCourse ? "course" : "internship",
         credentialId: cred.credentialId,
         candidateName: cred.candidateName,
-        grade: cred.grade ?? null,
+        grade: isCourse ? null : cred.grade ?? null,
+        score: isCourse ? cred.score ?? null : null,
         issueDate: cred.issueDate ?? null,
         verifyUrl: cred.verificationUrl || `/verify/${cred.credentialId}`,
         skills: cred.skillsAssessed ?? [],
-        projects,
-        program: {
-          title: cred.certificationName,
-          role: cred.internshipDetails?.role ?? null,
-          domain: cred.certificationLevel ?? null,
-          company: cred.internshipDetails?.company ?? null,
-          collegeName: cred.internshipDetails?.collegeName ?? null,
-          collegeCity: cred.internshipDetails?.collegeCity ?? null,
-          durationWeeks: cred.internshipDetails?.durationWeeks ?? null,
-          startDate: cred.internshipDetails?.startDate ?? null,
-          endDate: cred.internshipDetails?.endDate ?? null,
-          mentorName: cred.internshipDetails?.mentorName ?? null,
-          programDirector: cred.internshipDetails?.programDirector ?? null,
-          completed: cred.internshipDetails?.completed ?? true,
-        },
+        projects: isCourse
+          ? curriculum.map((m) => ({ title: m.title, description: "" }))
+          : projects,
+        program: isCourse
+          ? {
+              title: cred.certificationName,
+              domain: cred.courseDetails?.category ?? null,
+              level: cred.courseDetails?.level ?? null,
+              company: cred.courseDetails?.certBody ?? null,
+              mentorName: cred.courseDetails?.instructorName ?? null,
+              durationHours: cred.courseDetails?.durationHours ?? null,
+              completed: true,
+            }
+          : {
+              title: cred.certificationName,
+              role: cred.internshipDetails?.role ?? null,
+              domain: cred.certificationLevel ?? null,
+              company: cred.internshipDetails?.company ?? null,
+              collegeName: cred.internshipDetails?.collegeName ?? null,
+              collegeCity: cred.internshipDetails?.collegeCity ?? null,
+              durationWeeks: cred.internshipDetails?.durationWeeks ?? null,
+              startDate: cred.internshipDetails?.startDate ?? null,
+              endDate: cred.internshipDetails?.endDate ?? null,
+              mentorName: cred.internshipDetails?.mentorName ?? null,
+              programDirector: cred.internshipDetails?.programDirector ?? null,
+              completed: cred.internshipDetails?.completed ?? true,
+            },
       })
       toast.success("Report opened - use Save as PDF in the print dialog.")
     } catch {
@@ -531,6 +561,13 @@ function VerifiedCard({
                 value={`${projects.length} delivered`}
                 accent="text-emerald-300"
               />
+            ) : isCourse && curriculum.length > 0 ? (
+              <Fact
+                icon={<GraduationCap className="h-3.5 w-3.5" />}
+                label="MODULES"
+                value={`${curriculum.length} covered`}
+                accent="text-emerald-300"
+              />
             ) : (
               <Fact
                 icon={<Sparkles className="h-3.5 w-3.5" />}
@@ -597,6 +634,42 @@ function VerifiedCard({
           </div>
         )}
 
+        {/* Course details (course-completion certificates) */}
+        {isCourse && cred.courseDetails && (
+          <div className="mb-5 rounded-xl border border-violet-500/20 bg-violet-500/5 px-4 py-3.5">
+            <p className="text-[10px] font-mono text-muted-foreground tracking-[0.25em] mb-2.5 flex items-center gap-1.5">
+              <GraduationCap className="h-3 w-3" /> COURSE DETAILS
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5 text-sm">
+              {cred.courseDetails.category && (
+                <p className="text-muted-foreground">
+                  Category: <span className="text-foreground">{cred.courseDetails.category}</span>
+                </p>
+              )}
+              {cred.courseDetails.level && (
+                <p className="text-muted-foreground">
+                  Level: <span className="text-foreground">{cred.courseDetails.level}</span>
+                </p>
+              )}
+              {cred.courseDetails.certBody && (
+                <p className="text-muted-foreground">
+                  Issued by: <span className="text-foreground">{cred.courseDetails.certBody}</span>
+                </p>
+              )}
+              {cred.courseDetails.instructorName && (
+                <p className="text-muted-foreground">
+                  Instructor: <span className="text-foreground">{cred.courseDetails.instructorName}</span>
+                </p>
+              )}
+              {cred.courseDetails.durationHours != null && (
+                <p className="text-muted-foreground">
+                  Duration: <span className="text-foreground">{cred.courseDetails.durationHours} hours</span>
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* Progress report - projects delivered (internship certificates) */}
         {projects.length > 0 && (
           <div className="mb-5">
@@ -620,6 +693,30 @@ function VerifiedCard({
                       {p.description}
                     </p>
                   )}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Course report - curriculum covered (course-completion certificates) */}
+        {isCourse && curriculum.length > 0 && (
+          <div className="mb-5">
+            <p className="text-[10px] font-mono text-muted-foreground tracking-[0.25em] mb-2 flex items-center gap-1.5">
+              <BookOpen className="h-3 w-3" /> COURSE REPORT · CURRICULUM COVERED
+            </p>
+            <div className="space-y-2">
+              {curriculum.map((m, idx) => (
+                <div
+                  key={`${m.title}-${idx}`}
+                  className="rounded-xl border border-border/50 bg-background/40 px-4 py-3"
+                >
+                  <p className="text-xs font-semibold flex items-start gap-2">
+                    <span className="font-mono text-emerald-300 shrink-0">
+                      {String(idx + 1).padStart(2, "0")}
+                    </span>
+                    <span>{m.title}</span>
+                  </p>
                 </div>
               ))}
             </div>
@@ -696,7 +793,7 @@ function VerifiedCard({
           <Button size="sm" variant="outline" onClick={onShare} className="flex-1 min-w-[140px]">
             <Copy className="h-3.5 w-3.5 mr-1.5" /> Copy share URL
           </Button>
-          {isInternship && (
+          {(isInternship || isCourse) && (
             <Button
               size="sm"
               variant="outline"

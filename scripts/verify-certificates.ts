@@ -240,5 +240,75 @@ check("short report: single project row", shortReport, "Only Project")
 check("short report: no truncation note", shortReport, "more project", false)
 check("short report: minimal program grid", shortReport, "4 weeks")
 
+// ---------------------------------------------------------------------------
+// 7. COURSE REPORT (portrait phantom) - the /verify page download for
+//    course-completion certificates: same anatomy as the internship report,
+//    but course facts, curriculum rows, and the score band (never a letter
+//    grade - courses carry numeric scores).
+// ---------------------------------------------------------------------------
+const courseReport = buildVerifyReportHTML(
+  {
+    kind: "course",
+    credentialId: "GX-TEST-REPORT-COURSE",
+    candidateName: "Sample Student 02",
+    grade: null,
+    score: 100,
+    issueDate: "2026-10-03T00:00:00.000Z",
+    verifyUrl: "https://academy.guardianx.cloud/verify/GX-TEST-REPORT-COURSE",
+    skills: ["Web Security", "Burp Suite", "Nmap"],
+    projects: Array.from({ length: 7 }, (_, i) => ({ title: `Sample Module ${i + 1}`, description: "" })),
+    program: {
+      title: "Advanced Web Application Penetration Testing",
+      domain: "Offensive Security",
+      level: "Advanced",
+      company: "GuardianX Academy",
+      mentorName: "Test Instructor",
+      durationHours: 40,
+      completed: true,
+    },
+  },
+  { logoPngDataUrl: logo, qrPngDataUrl: qr, logoDotsSvg: dots },
+)
+writeFileSync(`${OUT}/verify-report-course.html`, courseReport)
+
+check("course report: course record kicker", courseReport, "course record")
+check("course report: no internship kicker", courseReport, "internship record", false)
+check("course report: COURSE REPORT wordmark", courseReport, "COURSE REPORT")
+check("course report: band from score (>=90 Distinction)", courseReport, ">Distinction</div>")
+check("course report: final score sub-line", courseReport, "final score 100/100")
+check("course report: no letter-grade line", courseReport, "final grade", false)
+check("course report: curriculum kicker", courseReport, "course report \u00b7 curriculum covered")
+check("course report: instructor cell", courseReport, ">Instructor</div>")
+check("course report: issued-by cell", courseReport, ">Issued by</div>")
+check("course report: hours duration", courseReport, "40 hours")
+check("course report: no college cell", courseReport, "College", false)
+check("course report: rows capped at 4", courseReport, "Sample Module 4")
+check("course report: fifth module not rendered", courseReport, "Sample Module 5", false)
+check("course report: module truncation note", courseReport, "+ 3 more modules")
+check("course report: skills chips", courseReport, "Burp Suite")
+check("course report: verification strip", courseReport, "Credential ID")
+
+// low-score course band: 62 -> PASS, and the note noun flips to singular correctly
+const courseReportPass = buildVerifyReportHTML(
+  {
+    kind: "course",
+    credentialId: "GX-TEST-REPORT-COURSE-2",
+    candidateName: "Sample Student 03",
+    grade: null,
+    score: 62,
+    issueDate: "2026-10-03T00:00:00.000Z",
+    verifyUrl: "https://academy.guardianx.cloud/verify/GX-TEST-REPORT-COURSE-2",
+    skills: [],
+    projects: [{ title: "Only Module", description: "" }],
+    program: { title: "Network Security Basics", domain: "Networking", level: "Beginner", durationHours: 20, completed: true },
+  },
+  { logoPngDataUrl: logo, qrPngDataUrl: qr, logoDotsSvg: dots },
+)
+writeFileSync(`${OUT}/verify-report-course-pass.html`, courseReportPass)
+check("course report pass-band: 62 -> Pass", courseReportPass, ">Pass</div>")
+check("course report pass-band: no Distinction", courseReportPass, "Distinction", false)
+check("course report pass-band: single module", courseReportPass, "Only Module")
+check("course report pass-band: no truncation note", courseReportPass, "more module", false)
+
 console.log(failures === 0 ? "\nALL PASS" : `\n${failures} CHECK(S) FAILED`)
 process.exit(failures === 0 ? 0 : 1)
