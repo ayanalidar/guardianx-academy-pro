@@ -5,8 +5,23 @@ import { getCurrentUser } from "@/lib/session"
 // Uses Prisma/Node APIs - pin the Node.js runtime explicitly.
 export const runtime = "nodejs";
 
+// Audit fix: GET used to be anonymous and dumped every template (names,
+// descriptions, signature text, issued-certificate counts) to the public.
+// Template config is internal admin/instructor metadata - the only consumer
+// is the certificate-templates editor tab, which is always authenticated.
+async function requireTemplateReader() {
+  const user = await getCurrentUser()
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  if (!(user.role === "ADMIN" || user.role === "SUPER_ADMIN" || user.role === "INSTRUCTOR")) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  }
+  return user
+}
 
 export async function GET() {
+  const reader = await requireTemplateReader()
+  if (reader instanceof NextResponse) return reader
+
   const templates = await db.certificateTemplate.findMany({
     include: { _count: { select: { certificates: true } } },
     orderBy: [{ isDefault: "desc" }, { createdAt: "desc" }],

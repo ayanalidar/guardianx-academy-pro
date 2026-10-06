@@ -5,8 +5,20 @@ import { getCurrentUser } from "@/lib/session"
 // Uses Prisma/Node APIs - pin the Node.js runtime explicitly.
 export const runtime = "nodejs";
 
+// Audit fix: single-template GET was anonymous like the collection GET -
+// gate it with the same INSTRUCTOR/ADMIN/SUPER_ADMIN check as PATCH/DELETE.
+async function requireTemplateReader() {
+  const user = await getCurrentUser()
+  if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+  if (!(user.role === "ADMIN" || user.role === "SUPER_ADMIN" || user.role === "INSTRUCTOR")) {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 })
+  }
+  return user
+}
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const reader = await requireTemplateReader()
+  if (reader instanceof NextResponse) return reader
   const { id } = await params
   const template = await db.certificateTemplate.findUnique({
     where: { id },
