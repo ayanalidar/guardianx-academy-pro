@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { requireRole, withErrorHandler } from "@/lib/session"
+import { ensureTable, isDriftError } from "@/lib/db-safe"
 
 export const runtime = "nodejs"
 
@@ -107,11 +108,17 @@ function computeLevelPalette(level: string) {
 // Uses `select` to return only the fields the admin batch calendar needs - drops the
 // 9 auto-computed color-class columns and the createdAt/updatedAt timestamps (which
 // the calendar never renders). This keeps the JSON payload lean.
+// Includes the optional course link (courseId + course identity) for the
+// Batch Calendar form picker / detail panel.
 export const GET = withErrorHandler(async () => {
   const currentUser = await requireRole(["INSTRUCTOR", "ADMIN", "SUPER_ADMIN"])
   if (currentUser instanceof NextResponse) return currentUser
 
-  const [batches, newLeadGroups] = await Promise.all([
+  // Lazy schema self-heal: the courseId column may not exist yet on prod
+  // (deployed before this feature). Memoized per instance - no-op after first.
+  await ensureTable("TrainingBatch")
+
+  const listBatches = () =>
     db.trainingBatch.findMany({
       orderBy: [{ order: "asc" }, { startDate: "asc" }],
       select: {
@@ -133,10 +140,25 @@ export const GET = withErrorHandler(async () => {
         order: true,
         published: true,
         googleFormUrl: true,
+        courseId: true,
+        course: { select: { id: true, title: true, shortName: true, slug: true } },
         // Per-batch lead counts for the Batch Leads Hub cards.
         _count: { select: { batchLeads: true } },
       },
-    }),
+    })
+
+  const [batches, newLeadGroups] = await Promise.all([
+    (async () => {
+      try {
+        return await listBatches()
+      } catch (e) {
+        if (!isDriftError(e)) throw e
+        // Column still missing (e.g. ensureTable DDL failed on a cold
+        // instance) - force the self-heal and retry once.
+        await ensureTable("TrainingBatch", true)
+        return await listBatches()
+      }
+    })(),
     // "New" (unworked) lead count per batch - shown as an attention badge.
     db.batchLead.groupBy({
       by: ["batchId"],
@@ -185,6 +207,7 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
     order,
     published,
     googleFormUrl,
+    courseId,
   } = body as {
     certification?: string
     name?: string
@@ -203,6 +226,7 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
     order?: number
     published?: boolean
     googleFormUrl?: string
+    courseId?: string | null
   }
 
   if (!certification?.trim()) return NextResponse.json({ error: "Certification required" }, { status: 400 })
@@ -211,6 +235,13 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
   if (!startDate?.trim()) return NextResponse.json({ error: "Start date required" }, { status: 400 })
   if (!instructor?.trim()) return NextResponse.json({ error: "Instructor required" }, { status: 400 })
 
+  // Optional course link - must reference an existing course when provided.
+  const trimmedCourseId = typeof courseId === "string" ? courseId.trim() : ""
+  if (trimmedCourseId) {
+    const course = await db.course.findUnique({ where: { id: trimmedCourseId }, select: { id: true } })
+    if (!course) return NextResponse.json({ error: "Linked course not found" }, { status: 400 })
+  }
+
   const finalLevel = (level?.trim() && ["Beginner", "Intermediate", "Advanced"].includes(level.trim()))
     ? level.trim()
     : "Beginner"
@@ -218,29 +249,42 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
   const certPalette = computeCertPalette(certification.trim())
   const levelPalette = computeLevelPalette(finalLevel)
 
-  const created = await db.trainingBatch.create({
-    data: {
-      certification: certification.trim(),
-      name: name.trim(),
-      schedule: schedule.trim(),
-      startDate: startDate.trim(),
-      startIsoDate: startIsoDate?.trim() || null,
-      mode: mode?.trim() || "Live Online",
-      instructor: instructor.trim(),
-      instructorId: instructorId?.trim() || null,
-      seats: Number.isFinite(Number(seats)) ? Number(seats) : 20,
-      enrolled: Number.isFinite(Number(enrolled)) ? Number(enrolled) : 0,
-      level: finalLevel,
-      status: status?.trim() || "Open",
-      ...certPalette,
-      ...levelPalette,
-      description: description?.trim() || "",
-      featured: Boolean(featured),
-      order: Number.isFinite(Number(order)) ? Number(order) : 0,
-      published: published !== undefined ? Boolean(published) : true,
-      googleFormUrl: googleFormUrl?.trim() || null,
-    },
-  })
+  await ensureTable("TrainingBatch")
+
+  const createBatch = () =>
+    db.trainingBatch.create({
+      data: {
+        certification: certification.trim(),
+        name: name.trim(),
+        schedule: schedule.trim(),
+        startDate: startDate.trim(),
+        startIsoDate: startIsoDate?.trim() || null,
+        mode: mode?.trim() || "Live Online",
+        instructor: instructor.trim(),
+        instructorId: instructorId?.trim() || null,
+        seats: Number.isFinite(Number(seats)) ? Number(seats) : 20,
+        enrolled: Number.isFinite(Number(enrolled)) ? Number(enrolled) : 0,
+        level: finalLevel,
+        status: status?.trim() || "Open",
+        ...certPalette,
+        ...levelPalette,
+        description: description?.trim() || "",
+        featured: Boolean(featured),
+        order: Number.isFinite(Number(order)) ? Number(order) : 0,
+        published: published !== undefined ? Boolean(published) : true,
+        googleFormUrl: googleFormUrl?.trim() || null,
+        courseId: trimmedCourseId || null,
+      },
+    })
+
+  let created
+  try {
+    created = await createBatch()
+  } catch (e) {
+    if (!isDriftError(e)) throw e
+    await ensureTable("TrainingBatch", true)
+    created = await createBatch()
+  }
 
   return NextResponse.json({ batch: created }, { status: 201 })
 })

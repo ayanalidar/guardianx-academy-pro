@@ -238,7 +238,7 @@ export async function runWatchdogSweep(trigger: SweepReport["trigger"]): Promise
     {
       const c0 = Date.now()
       let synced = 0
-      for (const t of ["Course", "Module", "Lesson", "AuthoredCourse", "SecurityEvent"] as const) {
+      for (const t of ["Course", "Module", "Lesson", "AuthoredCourse", "SecurityEvent", "TrainingBatch"] as const) {
         try {
           await ensureTable(t)
           synced++

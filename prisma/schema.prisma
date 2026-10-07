@@ -394,6 +394,10 @@ model Course {
   officeHourSlots OfficeHourSlot[]
   // Payment relations (PAYMENT-COUPON-SEARCH feature)
   orders        Order[]
+  // Training batches explicitly linked to this course (Batch Calendar).
+  // Legacy batches with no explicit link still match by certification text
+  // (see /api/courses/[id]/batches) - this relation is the exact-match path.
+  trainingBatches TrainingBatch[]
 
   @@index([instructorId]) // matches Course_instructorId_idx in db-safe bootstrap
 }
@@ -1871,10 +1875,18 @@ model TrainingBatch {
   order           Int      @default(0)              // sort order
   published       Boolean  @default(true)
   googleFormUrl   String?                            // the Google Form URL for enrollment (per-batch)
+  // Optional exact link to a Course (chosen in the Batch Calendar form).
+  // Nullable so legacy free-text-only batches stay valid; when set, the
+  // public course page lists this batch via exact ID match instead of the
+  // fragile certification-text contains heuristic.
+  courseId        String?
+  course          Course?  @relation(fields: [courseId], references: [id], onDelete: SetNull)
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
 
   batchLeads      BatchLead[]
+
+  @@index([courseId]) // matches TrainingBatch_courseId_idx in db-safe bootstrap
 }
 
 // ============================================================

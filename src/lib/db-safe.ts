@@ -271,6 +271,58 @@ const TABLE_SPECS: Record<string, TableSpec> = {
       `CREATE INDEX IF NOT EXISTS "SecurityEvent_ip_createdAt_idx" ON "SecurityEvent"("ip", "createdAt")`,
     ],
   },
+  TrainingBatch: {
+    // The production table predates the courseId migration (Batch Calendar
+    // course-link feature): the nullable "courseId" column is missing. Unlike
+    // required-with-default columns, a missing nullable column only breaks
+    // queries that SELECT or filter on it - but the admin training-batches
+    // routes use findUnique (full row) and the course-page batches route
+    // filters on courseId, so EVERY query on this model fails with P2022
+    // until the column exists. This spec adds it idempotently; ensureTable
+    // is invoked from the routes that touch the new column (lazy self-heal)
+    // and from the watchdog/health schema-sync loop.
+    create: `CREATE TABLE IF NOT EXISTS "TrainingBatch" (
+      "id" TEXT NOT NULL,
+      "certification" TEXT NOT NULL DEFAULT '',
+      "name" TEXT NOT NULL DEFAULT '',
+      "schedule" TEXT NOT NULL DEFAULT '',
+      "startDate" TEXT NOT NULL DEFAULT '',
+      "startIsoDate" TEXT,
+      "mode" TEXT NOT NULL DEFAULT 'Live Online',
+      "instructor" TEXT NOT NULL DEFAULT '',
+      "instructorId" TEXT,
+      "seats" INTEGER NOT NULL DEFAULT 20,
+      "enrolled" INTEGER NOT NULL DEFAULT 0,
+      "level" TEXT NOT NULL DEFAULT 'Beginner',
+      "status" TEXT NOT NULL DEFAULT 'Open',
+      "certColor" TEXT NOT NULL DEFAULT 'text-emerald-300',
+      "certTint" TEXT NOT NULL DEFAULT 'bg-emerald-500/15',
+      "certBorder" TEXT NOT NULL DEFAULT 'border-emerald-500/30',
+      "levelColor" TEXT NOT NULL DEFAULT 'text-emerald-300',
+      "levelTint" TEXT NOT NULL DEFAULT 'bg-emerald-500/10',
+      "levelBorder" TEXT NOT NULL DEFAULT 'border-emerald-500/30',
+      "borderColor" TEXT NOT NULL DEFAULT 'border-border/60',
+      "btnClass" TEXT NOT NULL DEFAULT 'bg-emerald-600 hover:bg-emerald-500',
+      "description" TEXT NOT NULL DEFAULT '',
+      "featured" BOOLEAN NOT NULL DEFAULT false,
+      "order" INTEGER NOT NULL DEFAULT 0,
+      "published" BOOLEAN NOT NULL DEFAULT true,
+      "googleFormUrl" TEXT,
+      "courseId" TEXT,
+      "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT "TrainingBatch_pkey" PRIMARY KEY ("id")
+    )`,
+    indexes: [
+      `CREATE INDEX IF NOT EXISTS "TrainingBatch_courseId_idx" ON "TrainingBatch"("courseId")`,
+    ],
+    constraints: [
+      `ALTER TABLE "TrainingBatch" ADD CONSTRAINT "TrainingBatch_courseId_fkey" FOREIGN KEY ("courseId") REFERENCES "Course"("id") ON DELETE SET NULL ON UPDATE CASCADE`,
+    ],
+    addColumns: [
+      `ALTER TABLE "TrainingBatch" ADD COLUMN IF NOT EXISTS "courseId" TEXT`,
+    ],
+  },
 }
 
 const ensured = new Set<string>()

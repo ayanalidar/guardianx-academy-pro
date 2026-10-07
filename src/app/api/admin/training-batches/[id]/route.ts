@@ -1,8 +1,17 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { requireAdmin, requireRole, withErrorHandler } from "@/lib/session"
+import { ensureTable, isDriftError } from "@/lib/db-safe"
 
 export const runtime = "nodejs"
+
+// Lazy schema self-heal for the courseId column (Batch Calendar course-link
+// feature). findUnique/delete read the FULL row, so they fail with P2022 on
+// a database that predates the column until it is added. Memoized per
+// instance; the forced retry below covers cold-start DDL failures.
+async function ensureSchema() {
+  await ensureTable("TrainingBatch")
+}
 
 // GET /api/admin/training-batches/[id] - fetch a single training batch.
 // Requires ADMIN or INSTRUCTOR.
@@ -11,8 +20,17 @@ export const GET = withErrorHandler(
     const currentUser = await requireRole(["INSTRUCTOR", "ADMIN", "SUPER_ADMIN"])
     if (currentUser instanceof NextResponse) return currentUser
 
+    await ensureSchema()
     const { id } = await params
-    const batch = await db.trainingBatch.findUnique({ where: { id } })
+    const fetchBatch = () => db.trainingBatch.findUnique({ where: { id } })
+    let batch
+    try {
+      batch = await fetchBatch()
+    } catch (e) {
+      if (!isDriftError(e)) throw e
+      await ensureTable("TrainingBatch", true)
+      batch = await fetchBatch()
+    }
     if (!batch) return NextResponse.json({ error: "Batch not found" }, { status: 404 })
     return NextResponse.json({ batch })
   },
@@ -56,10 +74,32 @@ export const PATCH = withErrorHandler(
     const body = await req.json().catch(() => null)
     if (!body) return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
 
-    const existing = await db.trainingBatch.findUnique({ where: { id } })
+    await ensureSchema()
+    const fetchExisting = () => db.trainingBatch.findUnique({ where: { id } })
+    let existing
+    try {
+      existing = await fetchExisting()
+    } catch (e) {
+      if (!isDriftError(e)) throw e
+      await ensureTable("TrainingBatch", true)
+      existing = await fetchExisting()
+    }
     if (!existing) return NextResponse.json({ error: "Batch not found" }, { status: 404 })
 
     const updates: Record<string, unknown> = {}
+
+    // Course link is validated (not a blind string copy): explicit null or
+    // "" unlinks, a non-empty value must reference an existing course.
+    if ("courseId" in body) {
+      const v = (body as Record<string, unknown>).courseId
+      if (v === null || (typeof v === "string" && !v.trim())) {
+        updates.courseId = null
+      } else if (typeof v === "string") {
+        const course = await db.course.findUnique({ where: { id: v.trim() }, select: { id: true } })
+        if (!course) return NextResponse.json({ error: "Linked course not found" }, { status: 400 })
+        updates.courseId = v.trim()
+      }
+    }
 
     for (const f of UPDATABLE_STRING_FIELDS) {
       const v = (body as Record<string, unknown>)[f]
@@ -81,7 +121,16 @@ export const PATCH = withErrorHandler(
       return NextResponse.json({ batch: existing })
     }
 
-    const updated = await db.trainingBatch.update({ where: { id }, data: updates })
+    await ensureSchema()
+    const updateBatch = () => db.trainingBatch.update({ where: { id }, data: updates })
+    let updated
+    try {
+      updated = await updateBatch()
+    } catch (e) {
+      if (!isDriftError(e)) throw e
+      await ensureTable("TrainingBatch", true)
+      updated = await updateBatch()
+    }
     return NextResponse.json({ batch: updated })
   },
 )
@@ -93,8 +142,17 @@ export const DELETE = withErrorHandler(
     const currentUser = await requireAdmin()
     if (currentUser instanceof NextResponse) return currentUser
 
+    await ensureSchema()
     const { id } = await params
-    const existing = await db.trainingBatch.findUnique({ where: { id } })
+    const fetchBatch = () => db.trainingBatch.findUnique({ where: { id } })
+    let existing
+    try {
+      existing = await fetchBatch()
+    } catch (e) {
+      if (!isDriftError(e)) throw e
+      await ensureTable("TrainingBatch", true)
+      existing = await fetchBatch()
+    }
     if (!existing) return NextResponse.json({ error: "Batch not found" }, { status: 404 })
 
     await db.trainingBatch.delete({ where: { id } })

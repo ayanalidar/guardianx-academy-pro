@@ -17,7 +17,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { cn } from "@/lib/utils"
 import { useUser } from "@/hooks/use-user"
 import {
-  ArrowLeft, Calendar, ChevronLeft, ChevronRight, Clock,
+  ArrowLeft, BookOpen, Calendar, ChevronLeft, ChevronRight, Clock,
   Users, Video, MapPin, User, Plus, Pencil, Trash2, X, Loader2, AlertTriangle,
 } from "lucide-react"
 import { toast } from "sonner"
@@ -28,6 +28,13 @@ const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 /* ---------------------------------------------------------------- *
  *  Types                                                            *
  * ---------------------------------------------------------------- */
+type BatchCourseLite = {
+  id: string
+  title: string
+  shortName?: string
+  level?: string
+}
+
 type TrainingBatch = {
   id: string
   certification: string
@@ -47,8 +54,12 @@ type TrainingBatch = {
   order: number
   published: boolean
   googleFormUrl: string | null
+  courseId: string | null
+  course?: BatchCourseLite | null
 }
 
+// courseId uses "" (not null) as the "no linked course" sentinel because the
+// Select maps "" -> the "none" item (Radix forbids empty-string item values).
 type BatchForm = {
   certification: string
   name: string
@@ -66,6 +77,7 @@ type BatchForm = {
   order: number
   published: boolean
   googleFormUrl: string
+  courseId: string
 }
 
 /* ---------------------------------------------------------------- *
@@ -133,6 +145,7 @@ function emptyForm(): BatchForm {
     order: 0,
     published: true,
     googleFormUrl: "",
+    courseId: "",
   }
 }
 
@@ -154,6 +167,7 @@ function formFromBatch(b: TrainingBatch): BatchForm {
     order: b.order,
     published: b.published,
     googleFormUrl: b.googleFormUrl || "",
+    courseId: b.courseId || "",
   }
 }
 
@@ -210,6 +224,23 @@ export function BatchCalendarView() {
   })
   const batches = data?.batches ?? []
 
+  /* ----------------------------- course picker data ----------------------------- */
+  // Public catalog (published courses) - the same payload the course page
+  // uses, so anything selectable here is linkable there. Cached 5 min;
+  // a freshly created course appears on the next picker refresh.
+  const { data: coursesData } = useQuery<{ courses: BatchCourseLite[] }>({
+    queryKey: ["admin-course-picker"],
+    staleTime: 5 * 60_000,
+    gcTime: 15 * 60_000,
+    refetchOnWindowFocus: false,
+    queryFn: async () => {
+      const res = await fetch("/api/courses")
+      if (!res.ok) throw new Error("Failed to load courses")
+      return res.json()
+    },
+  })
+  const courses = coursesData?.courses ?? []
+
   /* ----------------------------- calendar math ----------------------------- */
   const year = currentDate.getFullYear()
   const month = currentDate.getMonth()
@@ -250,7 +281,7 @@ export function BatchCalendarView() {
       const res = await fetch("/api/admin/training-batches", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, courseId: form.courseId || null }),
       })
       if (!res.ok) {
         const e = await res.json().catch(() => ({}))
@@ -276,7 +307,7 @@ export function BatchCalendarView() {
       const res = await fetch(`/api/admin/training-batches/${editingBatch.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, courseId: form.courseId || null }),
       })
       if (!res.ok) {
         const e = await res.json().catch(() => ({}))
@@ -613,6 +644,14 @@ export function BatchCalendarView() {
             </div>
             <h2 className="text-lg font-bold mb-3">{selectedBatch.name}</h2>
             <div className="space-y-2 text-sm">
+              {selectedBatch.course && (
+                <div className="flex items-center gap-2 text-muted-foreground">
+                  <BookOpen className="h-4 w-4 shrink-0" />
+                  <span>
+                    Course: <span className="text-foreground">{selectedBatch.course.shortName || selectedBatch.course.title}</span>
+                  </span>
+                </div>
+              )}
               <div className="flex items-center gap-2 text-muted-foreground"><User className="h-4 w-4 shrink-0" /> {selectedBatch.instructor}</div>
               <div className="flex items-center gap-2 text-muted-foreground"><Clock className="h-4 w-4 shrink-0" /> {selectedBatch.schedule}</div>
               <div className="flex items-center gap-2 text-muted-foreground">
@@ -680,7 +719,7 @@ export function BatchCalendarView() {
               Add a new live instructor-led certification batch. Color classes are auto-computed from the certification and level.
             </DialogDescription>
           </DialogHeader>
-          <BatchFormFields form={form} setForm={setForm} />
+          <BatchFormFields form={form} setForm={setForm} courses={courses} />
           <DialogFooter>
             <Button variant="outline" onClick={() => setCreateOpen(false)} disabled={submitting}>Cancel</Button>
             <Button onClick={handleCreate} disabled={submitting} className="bg-cyan-600 hover:bg-cyan-500 btn-premium">
@@ -702,7 +741,7 @@ export function BatchCalendarView() {
               {editingBatch ? `${editingBatch.certification} - ${editingBatch.name}` : "Update batch details."}
             </DialogDescription>
           </DialogHeader>
-          <BatchFormFields form={form} setForm={setForm} />
+          <BatchFormFields form={form} setForm={setForm} courses={courses} />
           <DialogFooter>
             <Button variant="outline" onClick={() => { setEditOpen(false); setEditingBatch(null) }} disabled={submitting}>Cancel</Button>
             <Button onClick={handleUpdate} disabled={submitting} className="bg-amber-600 hover:bg-amber-500 btn-premium">
@@ -745,12 +784,45 @@ export function BatchCalendarView() {
 function BatchFormFields({
   form,
   setForm,
+  courses,
 }: {
   form: BatchForm
   setForm: React.Dispatch<React.SetStateAction<BatchForm>>
+  courses: BatchCourseLite[]
 }) {
   return (
     <div className="space-y-4 py-2">
+      <div>
+        <Label className="text-xs">Course (optional)</Label>
+        <Select
+          value={form.courseId || "none"}
+          onValueChange={(v) => {
+            if (v === "none") {
+              // Unlink only - keep whatever certification text is present so
+              // the admin can switch to pure free-text without data loss.
+              setForm({ ...form, courseId: "" })
+              return
+            }
+            const c = courses.find((x) => x.id === v)
+            // Auto-fill the certification from the course so the calendar's
+            // color mapping (certKey) keeps working; still editable below.
+            setForm({ ...form, courseId: v, certification: c ? (c.shortName || c.title) : form.certification })
+          }}
+        >
+          <SelectTrigger><SelectValue placeholder="No linked course" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">No linked course (free-text certification)</SelectItem>
+            {courses.map((c) => (
+              <SelectItem key={c.id} value={c.id}>
+                {c.shortName ? `${c.shortName} — ${c.title}` : c.title}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <p className="text-[10px] text-muted-foreground mt-1">
+          Linking a batch to a course lists it under that course's "Upcoming Batches". Picking a course auto-fills the certification.
+        </p>
+      </div>
       <div>
         <Label className="text-xs">Certification *</Label>
         <Input
