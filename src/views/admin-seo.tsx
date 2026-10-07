@@ -1656,9 +1656,11 @@ function SeoAutopilot({ onFixed }: { onFixed: () => void }) {
                 <Badge className="bg-amber-500/15 text-amber-300 border-amber-500/30 text-[10px] uppercase tracking-wider">One Click</Badge>
               </h2>
               <p className="text-sm text-muted-foreground mt-1 max-w-xl">
-                Scans every course, blog post, event and certification for missing
-                descriptions, excerpts and slugs - then fixes them automatically from
-                each item&apos;s own content and pings search engines to recrawl instantly.
+                Scans every course, blog post, event, certification and public page for
+                missing, short or over-long descriptions, excerpts and slugs - then writes
+                the fix automatically from each item&apos;s own content (calibrated to the
+                same 120-160 char band the Health Score uses) and pings search engines to
+                recrawl instantly.
               </p>
             </div>
           </div>
@@ -1698,7 +1700,7 @@ function SeoAutopilot({ onFixed }: { onFixed: () => void }) {
             {/* Score row */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
               <div className="rounded-lg border border-border/60 bg-muted/20 p-4">
-                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Score</div>
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Content Score</div>
                 <div className={cn("text-2xl font-bold mt-1", scoreTextClass(report.scoreBefore))}>
                   {report.scoreBefore}
                   {report.scoreAfter !== report.scoreBefore && (
@@ -1834,9 +1836,10 @@ function SeoAutopilot({ onFixed }: { onFixed: () => void }) {
           <DialogHeader>
             <DialogTitle>Apply {report?.fixes.length ?? 0} automatic fixes?</DialogTitle>
             <DialogDescription>
-              Generated descriptions, excerpts and slugs will be written to the live
-              content. Only empty or too-short fields are touched - existing well-formed
-              content is never overwritten. Search engines are pinged afterwards.
+              Generated and trimmed descriptions, excerpts, slugs and page meta overrides
+              will be written to the live content. Only empty, too-short or over-long
+              fields are touched - well-formed content is never overwritten. Search
+              engines are pinged afterwards.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>

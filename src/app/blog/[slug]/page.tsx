@@ -16,7 +16,7 @@ export async function generateMetadata({ params }: Props) {
     description: post.excerpt || post.title,
     keywords: post.tags?.split(",").map(t => t.trim()) || [],
     alternates: { canonical: `/blog/${slug}` },
-    openGraph: { title: post.title, description: post.excerpt || "", type: "article", publishedTime: post.createdAt.toISOString(), modifiedTime: post.updatedAt.toISOString() },
+    openGraph: { title: post.title, description: post.excerpt || "", type: "article", publishedTime: post.createdAt.toISOString(), modifiedTime: post.updatedAt.toISOString(), images: [post.thumbnail || "/og-default.png"] },
   }
 }
 

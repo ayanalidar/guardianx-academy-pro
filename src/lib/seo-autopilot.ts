@@ -14,7 +14,7 @@
 
 /* ---------------- types ---------------- */
 
-export type SeoContentType = "course" | "blog" | "event" | "batch" | "cert";
+export type SeoContentType = "course" | "blog" | "event" | "batch" | "cert" | "page";
 
 export interface SeoIssue {
   type: SeoContentType;
@@ -68,8 +68,14 @@ export interface AutopilotAudit {
 
 export const TITLE_MIN = 15;
 export const TITLE_MAX = 70;
-export const DESC_MIN = 70;
+/** A description needs 120+ chars for full credit in the Health
+ *  audit (/api/admin/seo/audit scores 120-160 as the ideal band).
+ *  The autopilot targets the SAME band so that applied fixes
+ *  actually move the Health Score gauge. */
+export const DESC_MIN = 120;
 export const DESC_IDEAL_MAX = 160;
+/** SERP cut-off - descriptions longer than this lose points. */
+export const DESC_MAX = 160;
 
 /* ---------------- text helpers ---------------- */
 
@@ -107,14 +113,39 @@ export function stripMarkdown(md: string): string {
  * Generate a meta-description-shaped snippet from longer text.
  * Cuts at the last word boundary under `maxLen`, appends an
  * ellipsis when truncated. Returns "" when there is no source text.
+ *
+ * `minLen` (optional) widens the cut window when the word-boundary
+ * cut would land below it, so generated snippets land inside the
+ * grader's full-credit band [DESC_MIN, DESC_MAX] whenever the
+ * source text is long enough to allow it.
  */
-export function generateSnippet(source: string, maxLen = 155): string {
+export function generateSnippet(source: string, maxLen = 155, minLen = 0): string {
   const text = stripMarkdown(source || "");
   if (!text) return "";
   if (text.length <= maxLen) return text;
   const cut = text.slice(0, maxLen);
   const lastSpace = cut.lastIndexOf(" ");
-  const body = (lastSpace > maxLen * 0.6 ? cut.slice(0, lastSpace) : cut).trim();
+  let body = (lastSpace > maxLen * 0.6 ? cut.slice(0, lastSpace) : cut).trim();
+  if (minLen > 0 && body.length < minLen) {
+    // Widest window that still keeps body + ellipsis <= DESC_MAX.
+    const wide = text.slice(0, maxLen + (DESC_MAX - maxLen - 1));
+    const wideSpace = wide.lastIndexOf(" ");
+    body = wideSpace >= minLen ? wide.slice(0, wideSpace).trim() : wide.trim();
+  }
+  return `${body}…`;
+}
+
+/**
+ * Deterministically trim an over-long description into the
+ * grader's full-credit band [minLen, maxLen+ellipsis]. Word-boundary
+ * cut when possible, hard cut otherwise (rare: no space after minLen).
+ */
+export function trimSnippet(text: string, maxLen = 155, minLen = DESC_MIN): string {
+  const clean = (text || "").replace(/\s+/g, " ").trim();
+  if (clean.length <= maxLen) return clean;
+  const cut = clean.slice(0, maxLen);
+  const lastSpace = cut.lastIndexOf(" ");
+  const body = lastSpace >= minLen ? cut.slice(0, lastSpace).trim() : cut.trim();
   return `${body}…`;
 }
 
@@ -201,7 +232,7 @@ export function auditContent(rows: ContentAuditRow[]): AutopilotAudit {
     // -- primary description (auto-fixable) --
     const desc = (row.description || "").trim();
     if (desc.length < DESC_MIN) {
-      const generated = generateSnippet(row.longText || "", DESC_IDEAL_MAX);
+      const generated = generateSnippet(row.longText || "", DESC_IDEAL_MAX - 5, DESC_MIN);
       if (generated.length >= DESC_MIN && generated.length > desc.length) {
         issues.push({
           type: row.type, id: row.id, label, url,
@@ -223,11 +254,20 @@ export function auditContent(rows: ContentAuditRow[]): AutopilotAudit {
           reason: "No description and no long-form body to generate one from - write 1-2 sentences in the CMS.",
         });
       }
-    } else if (desc.length > 300) {
-      issues.push({
-        type: row.type, id: row.id, label, url,
-        issue: `Description very long (${desc.length} chars - SERPs cut at ~160)`, severity: "info", autoFixable: false,
-      });
+    } else if (desc.length > DESC_MAX) {
+      // Over-long descriptions lose points in the Health audit
+      // (full credit only in the 120-160 band) - offer a trim fix.
+      const trimmed = trimSnippet(desc, DESC_IDEAL_MAX - 5, DESC_MIN);
+      if (trimmed.length >= DESC_MIN && trimmed.length < desc.length) {
+        issues.push({
+          type: row.type, id: row.id, label, url,
+          issue: `Description too long (${desc.length} chars - SERPs cut at ~${DESC_MAX})`, severity: "warning", autoFixable: true,
+        });
+        fixes.push({
+          type: row.type, id: row.id, label, field: row.type === "blog" ? "excerpt" : "description",
+          before: desc, after: trimmed, pingUrl: url,
+        });
+      }
     }
 
     // -- thumbnail (report only) --
@@ -241,7 +281,7 @@ export function auditContent(rows: ContentAuditRow[]): AutopilotAudit {
   }
 
   const byType: Record<SeoContentType, number> = {
-    course: 0, blog: 0, event: 0, batch: 0, cert: 0,
+    course: 0, blog: 0, event: 0, batch: 0, cert: 0, page: 0,
   };
   let total = 0;
   for (const row of rows) {
@@ -277,6 +317,7 @@ export function publicUrlFor(type: SeoContentType, slugOrId: string): string {
     case "event": return `/events/${slugOrId}`;
     case "batch": return `/batches/${slugOrId}`;
     case "cert": return `/cert/${slugOrId}`;
+    case "page": return slugOrId === "/" || slugOrId.startsWith("/#") ? slugOrId : `/#/${slugOrId}`;
   }
 }
 

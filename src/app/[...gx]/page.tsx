@@ -93,7 +93,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
           title: c.shortName ? `${c.title} (${c.shortName})` : c.title,
           description: c.description ?? undefined,
           alternates: { canonical: `/courses/${c.slug}` },
-          openGraph: { title: c.title, description: c.description ?? undefined },
+          openGraph: { title: c.title, description: c.description ?? undefined, images: ["/og-default.png"] },
         }
       }
     }
@@ -104,7 +104,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
           title: p.title,
           description: p.excerpt || undefined,
           alternates: { canonical: `/blog/${p.slug}` },
-          openGraph: { title: p.title, description: p.excerpt ?? undefined, type: "article" },
+          openGraph: { title: p.title, description: p.excerpt ?? undefined, type: "article", images: ["/og-default.png"] },
         }
       }
     }
@@ -115,7 +115,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
           title: e.title,
           description: e.description?.slice(0, 160) || undefined,
           alternates: { canonical: `/events/${e.slug}` },
-          openGraph: { title: e.title, description: e.description ?? undefined },
+          openGraph: { title: e.title, description: e.description ?? undefined, images: ["/og-default.png"] },
         }
       }
     }
@@ -127,7 +127,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
           title: `${cert.name} Certification`,
           description: cert.description ?? undefined,
           alternates: { canonical: `/cert/${cert.slug}` },
-          openGraph: { title: `${cert.name} - GuardianX Academy`, description: cert.description ?? undefined },
+          openGraph: { title: `${cert.name} - GuardianX Academy`, description: cert.description ?? undefined, images: ["/og-default.png"] },
         }
       }
       return {

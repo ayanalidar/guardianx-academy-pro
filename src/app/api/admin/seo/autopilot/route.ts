@@ -6,10 +6,19 @@ import {
   auditContent,
   projectScoreAfter,
   slugify,
+  generateSnippet,
+  trimSnippet,
+  publicUrlFor,
+  DESC_MIN,
+  DESC_MAX,
+  DESC_IDEAL_MAX,
   type ContentAuditRow,
   type ProposedFix,
   type SeoContentType,
+  type SeoIssue,
+  type HumanAction,
 } from "@/lib/seo-autopilot";
+import { STATIC_PAGES } from "@/lib/seo-static-pages";
 import { pingIndexNow } from "@/lib/indexnow";
 
 export const runtime = "nodejs";
@@ -126,6 +135,110 @@ async function uniqueSlug(
   return `${base}-${Date.now().toString(36)}`;
 }
 
+/* -------- static-page meta audit -------- */
+
+function readStr(v: unknown): string {
+  if (typeof v === "string") return v;
+  if (v == null) return "";
+  try { return JSON.stringify(v); } catch { return String(v); }
+}
+
+/** Flatten a JSON-shaped SiteContent value into one text blob
+ *  (generation source for a page's meta description). */
+function flattenStrings(v: unknown, out: string[] = []): string[] {
+  if (v == null) return out;
+  if (typeof v === "string") { if (v.trim()) out.push(v); return out; }
+  if (Array.isArray(v)) { for (const it of v) flattenStrings(it, out); return out; }
+  if (typeof v === "object") {
+    for (const it of Object.values(v as Record<string, unknown>)) flattenStrings(it, out);
+    return out;
+  }
+  return out;
+}
+
+/**
+ * Audit the STATIC pages' meta descriptions against the SAME band
+ * the Health audit scores ([DESC_MIN, DESC_MAX]), so page fixes
+ * move the gauge. Effective description = SiteContent override
+ * (page="seo", section=<pageKey>, key="description") else the
+ * shared default. Over-long descriptions are trimmed into the
+ * band; short ones are generated from the page's own CMS content.
+ * Titles are brand content - never auto-written.
+ */
+async function auditStaticPages(): Promise<{
+  issues: SeoIssue[];
+  fixes: ProposedFix[];
+  humanActions: HumanAction[];
+}> {
+  const issues: SeoIssue[] = [];
+  const fixes: ProposedFix[] = [];
+  const humanActions: HumanAction[] = [];
+
+  const seoRows = await db.siteContent.findMany({ where: { page: "seo" } });
+  const seoIndex = new Map<string, string>();
+  for (const row of seoRows) seoIndex.set(`${row.section}.${row.key}`, readStr(row.value));
+
+  const cmsResults = await Promise.all(
+    STATIC_PAGES.map((p) =>
+      db.siteContent
+        .findMany({ where: { page: p.pageKey }, select: { value: true } })
+        .then((rs) => ({
+          pageKey: p.pageKey,
+          text: rs.map((r) => flattenStrings(r.value).join(" ")).join(". "),
+        }))
+        .catch(() => ({ pageKey: p.pageKey, text: "" })),
+    ),
+  );
+  const cmsTextByPage = new Map(cmsResults.map((r) => [r.pageKey, r.text]));
+
+  for (const def of STATIC_PAGES) {
+    const label = `${def.name} (page meta)`;
+    const url = publicUrlFor("page", def.url);
+    const override = seoIndex.get(`${def.pageKey}.description`);
+    const effective = (override || def.defaultDescription || "").trim();
+
+    if (effective.length > DESC_MAX) {
+      const trimmed = trimSnippet(effective, DESC_IDEAL_MAX - 5, DESC_MIN);
+      if (trimmed.length >= DESC_MIN && trimmed.length < effective.length) {
+        issues.push({
+          type: "page", id: def.pageKey, label, url,
+          issue: `Meta description too long (${effective.length} chars - SERPs cut at ~${DESC_MAX})`,
+          severity: "warning", autoFixable: true,
+        });
+        fixes.push({
+          type: "page", id: def.pageKey, label, field: "description",
+          before: effective, after: trimmed, pingUrl: url,
+        });
+      }
+    } else if (effective.length < DESC_MIN) {
+      const generated = generateSnippet(cmsTextByPage.get(def.pageKey) || "", DESC_IDEAL_MAX - 5, DESC_MIN);
+      if (generated.length >= DESC_MIN && generated.length > effective.length) {
+        issues.push({
+          type: "page", id: def.pageKey, label, url,
+          issue: effective.length === 0 ? "Missing meta description" : `Meta description too short (${effective.length} chars)`,
+          severity: "critical", autoFixable: true,
+        });
+        fixes.push({
+          type: "page", id: def.pageKey, label, field: "description",
+          before: effective, after: generated, pingUrl: url,
+        });
+      } else {
+        issues.push({
+          type: "page", id: def.pageKey, label, url,
+          issue: `Meta description too short (${effective.length} chars - aim for 120-${DESC_MAX})`,
+          severity: "critical", autoFixable: false,
+        });
+        humanActions.push({
+          label,
+          reason: "Page description is short and the page content is too thin to generate one - set a 120-160 char description under Meta Tags.",
+        });
+      }
+    }
+  }
+
+  return { issues, fixes, humanActions };
+}
+
 export const POST = withErrorHandler(async (req: NextRequest) => {
   const user = await requireAdmin();
   if (user instanceof NextResponse) return user;
@@ -139,17 +252,20 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
   const audit = auditContent(rows);
   const projected = projectScoreAfter(audit);
 
+  // ---- 1b. Static-page meta audit (same grader bands) ----
+  const pageAudit = await auditStaticPages();
+
   if (mode === "dry-run") {
     return NextResponse.json({
       ok: true,
       mode,
       scoreBefore: audit.scoreBefore,
       scoreAfter: projected, // projected - nothing written yet
-      issues: audit.issues,
-      fixes: audit.fixes,
+      issues: [...audit.issues, ...pageAudit.issues],
+      fixes: [...audit.fixes, ...pageAudit.fixes],
       fixed: [],
       skipped: [],
-      humanActions: audit.humanActions,
+      humanActions: [...audit.humanActions, ...pageAudit.humanActions],
       ping: null,
       counts: audit.counts,
     });
@@ -162,6 +278,20 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
   let writes = 0;
 
   const byType = (t: SeoContentType) => audit.fixes.filter((f) => f.type === t);
+
+  // Page meta: write SiteContent overrides (page="seo"). The SPA's
+  // static pages share one URL, so ping the root once per write
+  // (deduped by pingIndexNow) instead of useless /#/fragment URLs.
+  for (const f of pageAudit.fixes) {
+    if (writes >= MAX_WRITES) { skipped.push({ label: f.label, field: f.field, reason: "Write cap reached" }); continue; }
+    await db.siteContent.upsert({
+      where: { page_section_key: { page: "seo", section: f.id, key: "description" } },
+      update: { value: f.after },
+      create: { page: "seo", section: f.id, key: "description", value: f.after },
+    });
+    writes++; pingPaths.push("/");
+    fixed.push({ ...f, applied: true });
+  }
 
   // Blog: excerpt + slug
   for (const f of byType("blog")) {
@@ -214,6 +344,7 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
   // ---- 3. Re-audit for the REAL after-score ----
   const freshRows = writes > 0 ? await loadRows() : rows;
   const freshAudit = auditContent(freshRows);
+  const freshPageAudit = writes > 0 ? await auditStaticPages() : pageAudit;
 
   // ---- 4. Ping IndexNow with every changed URL ----
   const ping = writes > 0 ? await pingIndexNow([...pingPaths, "/sitemap.xml"]) : null;
@@ -233,11 +364,11 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
     mode,
     scoreBefore: audit.scoreBefore,
     scoreAfter: freshAudit.scoreBefore, // real re-audit score
-    issues: freshAudit.issues,          // what still remains
-    fixes: audit.fixes,
+    issues: [...freshAudit.issues, ...freshPageAudit.issues], // what still remains
+    fixes: [...audit.fixes, ...pageAudit.fixes],
     fixed,
     skipped,
-    humanActions: freshAudit.humanActions,
+    humanActions: [...freshAudit.humanActions, ...freshPageAudit.humanActions],
     ping,
     counts: freshAudit.counts,
   });
