@@ -238,7 +238,7 @@ export async function runWatchdogSweep(trigger: SweepReport["trigger"]): Promise
     {
       const c0 = Date.now()
       let synced = 0
-      for (const t of ["Course", "Module", "Lesson", "AuthoredCourse"] as const) {
+      for (const t of ["Course", "Module", "Lesson", "AuthoredCourse", "SecurityEvent"] as const) {
         try {
           await ensureTable(t)
           synced++
@@ -248,11 +248,11 @@ export async function runWatchdogSweep(trigger: SweepReport["trigger"]): Promise
       }
       report.checks.push({
         name: "Schema sync",
-        ok: synced === 4,
-        detail: synced === 4 ? "4/4 storage tables verified" : `only ${synced}/4 tables verified`,
+        ok: synced === 5,
+        detail: synced === 5 ? "5/5 storage tables verified" : `only ${synced}/5 tables verified`,
         latencyMs: Date.now() - c0,
       })
-      if (synced !== 4) report.healthy = false
+      if (synced !== 5) report.healthy = false
     }
 
     // 3. Data counts (+ data-loss repairs that are safe in-process)
@@ -314,6 +314,70 @@ export async function runWatchdogSweep(trigger: SweepReport["trigger"]): Promise
       } catch (e: any) {
         report.checks.push({ name: "Data counts", ok: false, detail: String(e?.message ?? e).slice(0, 160) })
         report.healthy = false
+      }
+    }
+
+    // 3.5 Security signals - attack-pattern analysis over the SecurityEvent
+    //     log (src/lib/security-log.ts). Flags per-IP bursts: honeypot hits,
+    //     login brute-force, forged-session storms, RBAC probing. A flag
+    //     marks the sweep UNHEALTHY on purpose - that is what triggers the
+    //     rate-limited watchdog alert email (real-time-ish via 5-min sweeps).
+    {
+      const c0 = Date.now()
+      try {
+        const since15 = new Date(Date.now() - 15 * 60 * 1000)
+        const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000)
+        const [recent, totals] = await Promise.all([
+          db.securityEvent.groupBy({ by: ["ip", "type"], where: { createdAt: { gte: since15 } }, _count: true }),
+          db.securityEvent.groupBy({ by: ["type"], where: { createdAt: { gte: since24h } }, _count: true }),
+        ])
+        const perIp = new Map<string, Record<string, number>>()
+        for (const grp of recent) {
+          const ip = grp.ip || "unknown"
+          const row = perIp.get(ip) ?? {}
+          row[grp.type] = (row[grp.type] ?? 0) + (grp._count as number)
+          perIp.set(ip, row)
+        }
+        const flagged: string[] = []
+        for (const [ip, counts] of perIp) {
+          const sum = Object.values(counts).reduce((a, b) => a + b, 0)
+          const loginAttempts = (counts.login_failed ?? 0) + (counts.login_rate_limited ?? 0)
+          if (
+            (counts.honeypot_hit ?? 0) >= 5 ||
+            loginAttempts >= 30 ||
+            (counts.session_invalid ?? 0) >= 30 ||
+            (counts.rbac_denied ?? 0) >= 15 ||
+            sum >= 40
+          ) {
+            flagged.push(`${ip} (${sum}/15min)`)
+          }
+        }
+        const total24h = totals.reduce((a, t) => a + (t._count as number), 0)
+        const breakdown = totals.map((t) => `${t.type}:${t._count}`).join(", ").slice(0, 140)
+        report.checks.push({
+          name: "Security signals",
+          ok: flagged.length === 0,
+          detail: flagged.length
+            ? `ATTACK PATTERN from ${flagged.slice(0, 4).join(", ")}${flagged.length > 4 ? ` +${flagged.length - 4} more` : ""} | 24h: ${total24h} events${breakdown ? ` (${breakdown})` : ""}`
+            : `quiet - 24h events: ${total24h}${breakdown ? ` (${breakdown})` : ""}`,
+          latencyMs: Date.now() - c0,
+        })
+        if (flagged.length) {
+          report.healthy = false
+          await logWatchdogEvent("warn", `Security signals flagged: ${flagged.slice(0, 6).join(" | ")}`, {
+            kind: "security",
+            flagged: flagged.slice(0, 10),
+            total24h,
+          })
+        }
+      } catch (e: any) {
+        // Table not bootstrapped yet (fresh deploy) - self-heal, stay quiet.
+        try {
+          await ensureTable("SecurityEvent")
+          report.checks.push({ name: "Security signals", ok: true, detail: "security log bootstrapped - no data yet", latencyMs: Date.now() - c0 })
+        } catch {
+          report.checks.push({ name: "Security signals", ok: true, detail: `unavailable: ${String(e?.message ?? e).slice(0, 100)}` })
+        }
       }
     }
 

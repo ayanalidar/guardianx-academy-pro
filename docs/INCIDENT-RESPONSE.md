@@ -9,6 +9,7 @@ Review: quarterly tabletop drill; update after every real incident.
 | Sentry | server/client error spikes, auth errors | on-call engineer |
 | /api/health + watchdog | uptime, DB failure | Watchdog v4 sweeps (prod: in-app + daily cron; sandbox: ops/watchdog.py + nurse) |
 | /api/cron/* alerts | payment/cron anomalies | ops |
+| SecurityEvent log (Admin → Audit Log → Security Events) | failed logins, forged/expired sessions, RBAC denials, honeypot touches; watchdog "Security signals" check escalates attack patterns by email | on-call engineer |
 | user reports | privacy@guardianx.io, support inbox | Grievance Officer |
 
 ## 2. Severity triage

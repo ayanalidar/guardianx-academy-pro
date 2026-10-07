@@ -10,11 +10,12 @@ import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { cn } from "@/lib/utils"
+import { SecurityEventsPanel } from "@/views/admin-security-events"
 import {
   ArrowLeft, Search, Shield, FileText, User,
   Award, BookOpen, Settings, Download, Loader2,
   Ticket, PenSquare, Trash2, Plus, Edit, CheckCircle2,
-  Filter,
+  Filter, Bug,
 } from "lucide-react"
 
 /* ============================================================
@@ -115,6 +116,7 @@ function relativeTime(iso: string): string {
 
 export function AuditLogView() {
   const { navigate } = useAppStore()
+  const [tab, setTab] = React.useState<"audit" | "security">("audit")
   const [search, setSearch] = React.useState("")
   const [actionFilter, setActionFilter] = React.useState("all")
   const [page, setPage] = React.useState(1)
@@ -218,8 +220,31 @@ export function AuditLogView() {
               <Shield className="h-5 w-5 text-violet-400" /> Audit Log Viewer
             </h1>
             <Badge variant="outline" className="text-[10px] font-mono">
-              {total} total
+              {tab === "audit" ? `${total} total` : "security"}
             </Badge>
+            {/* Tab switch: admin audit trail vs attack telemetry */}
+            <div className="flex items-center rounded-md border border-border/60 overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setTab("audit")}
+                className={cn(
+                  "px-3 py-1.5 text-xs font-medium transition-colors",
+                  tab === "audit" ? "bg-violet-500/20 text-violet-200" : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
+                )}
+              >
+                Audit Trail
+              </button>
+              <button
+                type="button"
+                onClick={() => setTab("security")}
+                className={cn(
+                  "px-3 py-1.5 text-xs font-medium transition-colors inline-flex items-center gap-1.5",
+                  tab === "security" ? "bg-rose-500/20 text-rose-200" : "text-muted-foreground hover:text-foreground hover:bg-muted/40"
+                )}
+              >
+                <Bug className="h-3.5 w-3.5" /> Security Events
+              </button>
+            </div>
           </div>
           <Button size="sm" variant="outline" onClick={handleExport} disabled={!logs.length}>
             <Download className="h-3.5 w-3.5 mr-1.5" /> Export CSV
@@ -228,6 +253,9 @@ export function AuditLogView() {
       </div>
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 space-y-6">
+        {tab === "security" && <SecurityEventsPanel />}
+
+        {tab === "audit" && (<>
         {/* Filters */}
         <div className="flex items-center gap-3 flex-wrap">
           <div className="relative flex-1 min-w-[200px]">
@@ -397,6 +425,7 @@ export function AuditLogView() {
             </Button>
           </div>
         )}
+        </>)}
       </div>
     </div>
   )

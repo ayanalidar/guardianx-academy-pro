@@ -13,6 +13,10 @@ export const dynamic = "force-dynamic"
  *     (the privacy notice commits to 90-day proctoring retention)
  *   - Affiliate clicks older than 90 days     -> ip + userAgent blanked
  *     (IP addresses are personal data; click counts stay for attribution)
+ *   - SecurityEvent rows older than 180 days  -> deleted entirely
+ *     (CERT-In 2022 directions require 180-day incident-log retention; the
+ *     security telemetry in src/lib/security-log.ts is kept exactly that
+ *     long, then purged)
  *
  * Secured with CRON_SECRET (same model as /api/cron/emi-reminders):
  * Vercel sends "Authorization: Bearer <CRON_SECRET>". Refuses to run
@@ -22,6 +26,7 @@ export const dynamic = "force-dynamic"
  */
 
 const RETENTION_DAYS = 90
+const SECURITY_EVENT_RETENTION_DAYS = 180 // CERT-In 2022 log-retention floor
 
 function cutoff(days: number): Date {
   return new Date(Date.now() - days * 24 * 60 * 60 * 1000)
@@ -57,6 +62,19 @@ async function runRetention(): Promise<Record<string, number | string>> {
     results.affiliateClickError = String(e?.message ?? e).slice(0, 200)
   }
 
+  // 3. Security telemetry: hard-delete past 180 days (CERT-In retention).
+  //    Attacker IPs are personal data - keeping them longer than the
+  //    regulatory floor is a liability, not extra safety.
+  try {
+    const purged = await db.securityEvent.deleteMany({
+      where: { createdAt: { lt: cutoff(SECURITY_EVENT_RETENTION_DAYS) } },
+    })
+    results.securityEventsPurged = purged.count
+  } catch (e: any) {
+    // Table not bootstrapped yet on very old deployments - non-fatal.
+    results.securityEventError = String(e?.message ?? e).slice(0, 200)
+  }
+
   return results
 }
 
@@ -80,7 +98,7 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
   const results = await runRetention()
-  return NextResponse.json({ ok: true, retentionDays: RETENTION_DAYS, ...results })
+  return NextResponse.json({ ok: true, retentionDays: RETENTION_DAYS, securityEventRetentionDays: SECURITY_EVENT_RETENTION_DAYS, ...results })
 }
 
 export async function POST(req: NextRequest) {

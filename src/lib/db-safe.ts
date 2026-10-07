@@ -248,6 +248,29 @@ const TABLE_SPECS: Record<string, TableSpec> = {
       `ALTER TABLE "Lesson" ADD COLUMN IF NOT EXISTS "preview" BOOLEAN NOT NULL DEFAULT false`,
     ],
   },
+  // Security telemetry (src/lib/security-log.ts). No FKs - the log must be
+  // writable even when referenced identities no longer exist.
+  SecurityEvent: {
+    create: `CREATE TABLE IF NOT EXISTS "SecurityEvent" (
+      "id" TEXT NOT NULL,
+      "type" TEXT NOT NULL,
+      "severity" TEXT NOT NULL DEFAULT 'info',
+      "ip" TEXT,
+      "country" TEXT,
+      "city" TEXT,
+      "userAgent" TEXT,
+      "email" TEXT,
+      "path" TEXT,
+      "details" TEXT NOT NULL DEFAULT '{}',
+      "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT "SecurityEvent_pkey" PRIMARY KEY ("id")
+    )`,
+    indexes: [
+      `CREATE INDEX IF NOT EXISTS "SecurityEvent_createdAt_idx" ON "SecurityEvent"("createdAt")`,
+      `CREATE INDEX IF NOT EXISTS "SecurityEvent_type_createdAt_idx" ON "SecurityEvent"("type", "createdAt")`,
+      `CREATE INDEX IF NOT EXISTS "SecurityEvent_ip_createdAt_idx" ON "SecurityEvent"("ip", "createdAt")`,
+    ],
+  },
 }
 
 const ensured = new Set<string>()

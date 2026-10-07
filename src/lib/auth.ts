@@ -8,6 +8,7 @@ import { sendEmail, magicLinkEmailTemplate } from "@/lib/email"
 import { requireSecret } from "@/lib/secrets"
 import { getSettings } from "@/lib/settings"
 import { prismaAuthAdapter, oauthPlaceholderHash } from "@/lib/auth-adapter"
+import { logSecurityEvent } from "@/lib/security-log"
 
 // ---------------------------------------------------------------------------
 // Rate limiting for login attempts (in-memory, per IP)
@@ -34,6 +35,35 @@ function clientIpFromAuthorizeReq(req: unknown): string {
   )
 }
 
+/**
+ * Extract network metadata from the authorize() callback request. Works for
+ * both NextAuth v4 shapes: a Web Headers object (.get) and raw node headers
+ * (indexed). Used to attribute login events in the SecurityEvent log -
+ * note we capture the ATTEMPTED EMAIL only; passwords are never logged.
+ */
+function authEventMeta(req: unknown): {
+  ip?: string
+  userAgent?: string
+  country?: string
+  city?: string
+} {
+  try {
+    const h = (req as any)?.headers
+    if (!h) return {}
+    const get = (k: string): string | undefined =>
+      typeof h?.get === "function" ? h.get(k) ?? undefined : h?.[k] ?? undefined
+    const xff = get("x-forwarded-for")
+    return {
+      ip: xff ? String(xff).split(",")[0].trim() : get("x-real-ip") || undefined,
+      userAgent: get("user-agent") || undefined,
+      country: get("x-vercel-ip-country") || undefined,
+      city: get("x-vercel-ip-city") || undefined,
+    }
+  } catch {
+    return {}
+  }
+}
+
 // ---------------------------------------------------------------------------
 // Credentials provider - email + password for students/instructors/admins.
 // Module-scope const: it is stateless (rate-limit map lives above) and shared
@@ -47,14 +77,33 @@ const credentialsProvider = CredentialsProvider({
     password: { label: "Password", type: "password" },
   },
   async authorize(credentials, req) {
-    if (!credentials?.email || !credentials?.password) return null
+    const meta = authEventMeta(req)
+    if (!credentials?.email || !credentials?.password) {
+      void logSecurityEvent({ type: "login_failed", ...meta, details: { reason: "missing_credentials" } })
+      return null
+    }
     // Rate limit by IP to prevent brute-force attacks
-    if (!checkLoginRateLimit(clientIpFromAuthorizeReq(req))) return null
+    if (!checkLoginRateLimit(clientIpFromAuthorizeReq(req))) {
+      void logSecurityEvent({ type: "login_rate_limited", ...meta, email: credentials.email, details: { reason: "rate_limited" } })
+      return null
+    }
     try {
       const user = await db.user.findUnique({ where: { email: credentials.email } })
-      if (!user) return null
+      if (!user) {
+        void logSecurityEvent({ type: "login_failed", ...meta, email: credentials.email, details: { reason: "unknown_email" } })
+        return null
+      }
       const ok = bcrypt.compareSync(credentials.password, user.passwordHash)
-      if (!ok) return null
+      if (!ok) {
+        void logSecurityEvent({ type: "login_failed", ...meta, email: credentials.email, details: { reason: "bad_password" } })
+        return null
+      }
+      void logSecurityEvent({
+        type: "login_success",
+        ...meta,
+        email: user.email,
+        details: { userId: user.id, role: user.role },
+      })
       return {
         id: user.id,
         email: user.email,
@@ -84,18 +133,34 @@ const schoolLoginProvider = CredentialsProvider({
     adminEmail: { label: "Admin Email", type: "email" },
     password: { label: "Password", type: "password" },
   },
-  async authorize(credentials) {
-    if (!credentials?.schoolCode || !credentials?.adminEmail || !credentials?.password) return null
+  async authorize(credentials, req) {
+    const meta = authEventMeta(req)
+    if (!credentials?.schoolCode || !credentials?.adminEmail || !credentials?.password) {
+      void logSecurityEvent({ type: "login_failed", ...meta, details: { reason: "missing_credentials", portal: "school" } })
+      return null
+    }
     try {
       const school = await db.school.findUnique({
         where: { schoolCode: credentials.schoolCode.toUpperCase() },
       })
-      if (!school) return null
-      if (school.status !== "active") return null
+      if (!school) {
+        void logSecurityEvent({ type: "login_failed", ...meta, email: credentials.adminEmail, details: { reason: "unknown_school_code", portal: "school" } })
+        return null
+      }
+      if (school.status !== "active") {
+        void logSecurityEvent({ type: "login_failed", ...meta, email: credentials.adminEmail, details: { reason: "school_inactive", portal: "school" } })
+        return null
+      }
       // Verify admin email matches
-      if (school.adminEmail.toLowerCase() !== credentials.adminEmail.toLowerCase()) return null
+      if (school.adminEmail.toLowerCase() !== credentials.adminEmail.toLowerCase()) {
+        void logSecurityEvent({ type: "login_failed", ...meta, email: credentials.adminEmail, details: { reason: "admin_email_mismatch", portal: "school", schoolCode: credentials.schoolCode.toUpperCase() } })
+        return null
+      }
       const ok = bcrypt.compareSync(credentials.password, school.passwordHash)
-      if (!ok) return null
+      if (!ok) {
+        void logSecurityEvent({ type: "login_failed", ...meta, email: credentials.adminEmail, details: { reason: "bad_password", portal: "school" } })
+        return null
+      }
       // Find or create the User record linked to this school for the admin
       let adminUser = await db.user.findUnique({ where: { email: school.adminEmail } })
       if (!adminUser) {
@@ -120,6 +185,12 @@ const schoolLoginProvider = CredentialsProvider({
           data: { role: "SCHOOL_ADMIN", schoolId: school.id },
         })
       }
+      void logSecurityEvent({
+        type: "login_success",
+        ...meta,
+        email: adminUser.email,
+        details: { userId: adminUser.id, role: "SCHOOL_ADMIN", portal: "school" },
+      })
       return {
         id: adminUser.id,
         email: adminUser.email,

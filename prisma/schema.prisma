@@ -2302,6 +2302,28 @@ model SystemEvent {
   @@index([level])
 }
 
+/// Security telemetry (CERT-In aligned, 180-day retention via /api/cron/retention).
+/// Records authentication failures, forged/expired session attempts, RBAC
+/// denials and honeypot touches. NEVER stores passwords - only the attempted
+/// identity (email), network metadata and a small JSON details blob.
+model SecurityEvent {
+  id        String   @id @default(cuid())
+  type      String // login_failed | login_rate_limited | login_success | session_invalid | rbac_denied | honeypot_hit
+  severity  String   @default("info") // info | warning | critical
+  ip        String?
+  country   String?
+  city      String?
+  userAgent String?
+  email     String? // attempted identity when the attacker sent one (never a password)
+  path      String?
+  details   String   @default("{}") // JSON metadata (reason, claimed role, decoy name, ...)
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([type, createdAt])
+  @@index([ip, createdAt])
+}
+
 model SentinelAction {
   id          String   @id @default(cuid())
   action      String // e.g. "block-ip" | "quarantine-session" | "rotate-secret"

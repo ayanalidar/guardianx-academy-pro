@@ -1,8 +1,10 @@
 import { NextResponse, NextRequest } from "next/server"
+import { headers } from "next/headers"
 import { getServerSession } from "next-auth"
 import { getAuthOptions } from "@/lib/auth"
 import { db } from "@/lib/db"
 import { captureServerError } from "@/lib/sentry-report"
+import { logSecurityEvent, securityMetaFromHeaders } from "@/lib/security-log"
 
 /**
  * Env-driven admin bootstrap (Vercel-friendly).
@@ -69,13 +71,41 @@ function userToCache(id: string, user: any) {
   }
 }
 
+/**
+ * A session cookie was presented but NextAuth rejected it (expired OR
+ * tampered signature). That is the closest thing to a "forged token" signal
+ * this app can produce - the signature is always verified server-side, so a
+ * cookie that fails here was either stale or crafted. Anonymous traffic
+ * (no cookie at all) is NOT logged - it is normal internet noise.
+ *
+ * Flood-guarded in security-log (max 12/IP/5min) so one stale tab retrying
+ * in a loop cannot flood the table.
+ */
+async function logSessionInvalidIfCookiePresented(): Promise<void> {
+  try {
+    const h = await headers()
+    const cookie = h.get("cookie") || ""
+    if (!cookie.includes("next-auth.session-token")) return // anonymous, not suspicious
+    void logSecurityEvent({
+      type: "session_invalid",
+      ...securityMetaFromHeaders(h),
+      details: { reason: "cookie_present_but_rejected" },
+    })
+  } catch {
+    // headers() unavailable outside a request scope - skip silently
+  }
+}
+
 export async function getCurrentUser() {
   // Dynamic options: same DB-backed provider config as the auth route handler.
   // The secret is identical (requireSecret("NEXTAUTH_SECRET")) so JWT decoding
   // is unaffected - only the provider list differs, which getServerSession
   // does not need.
   const session = await getServerSession(await getAuthOptions())
-  if (!session?.user) return null
+  if (!session?.user) {
+    await logSessionInvalidIfCookiePresented()
+    return null
+  }
   const userId = (session.user as any).id
 
   const cached = userFromCache(userId)
@@ -132,6 +162,13 @@ export async function requireRole(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
   if (!roles.includes(user.role)) {
+    // Privilege-escalation signal: an authenticated account probing a gate
+    // it does not hold. Fire-and-forget - never delay the 403.
+    void logSecurityEvent({
+      type: "rbac_denied",
+      email: user.email,
+      details: { required: roles, have: user.role, userId: user.id },
+    })
     return NextResponse.json({ error: "Forbidden" }, { status: 403 })
   }
   return user

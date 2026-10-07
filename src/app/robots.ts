@@ -19,6 +19,12 @@ export default function robots(): MetadataRoute.Robots {
           "/api/messages/",
           "/api/payment/",
           "/api/coupons/verify",
+          // Security honeypots: keep honest crawlers away (attackers ignore
+          // robots.txt - that is exactly who these are instrumented for).
+          "/api/backup",
+          "/api/debug",
+          "/api/db-init",
+          "/api/v1/",
         ],
       },
     ],
