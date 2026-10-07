@@ -35,6 +35,12 @@ type BatchCourseLite = {
   level?: string
 }
 
+type BatchInstructorLite = {
+  id: string
+  name: string
+  title?: string | null
+}
+
 type TrainingBatch = {
   id: string
   certification: string
@@ -78,6 +84,7 @@ type BatchForm = {
   published: boolean
   googleFormUrl: string
   courseId: string
+  instructorId: string
 }
 
 /* ---------------------------------------------------------------- *
@@ -146,6 +153,7 @@ function emptyForm(): BatchForm {
     published: true,
     googleFormUrl: "",
     courseId: "",
+    instructorId: "",
   }
 }
 
@@ -168,6 +176,7 @@ function formFromBatch(b: TrainingBatch): BatchForm {
     published: b.published,
     googleFormUrl: b.googleFormUrl || "",
     courseId: b.courseId || "",
+    instructorId: b.instructorId || "",
   }
 }
 
@@ -241,6 +250,22 @@ export function BatchCalendarView() {
   })
   const courses = coursesData?.courses ?? []
 
+  /* ----------------------------- instructor picker data ----------------------------- */
+  // Public instructors roster (role=INSTRUCTOR accounts). Same source the
+  // public Instructors page uses, edge-cached server-side (s-max=120).
+  const { data: instructorsData } = useQuery<{ instructors: BatchInstructorLite[] }>({
+    queryKey: ["admin-instructor-picker"],
+    staleTime: 5 * 60_000,
+    gcTime: 15 * 60_000,
+    refetchOnWindowFocus: false,
+    queryFn: async () => {
+      const res = await fetch("/api/instructors")
+      if (!res.ok) throw new Error("Failed to load instructors")
+      return res.json()
+    },
+  })
+  const instructors = instructorsData?.instructors ?? []
+
   /* ----------------------------- calendar math ----------------------------- */
   const year = currentDate.getFullYear()
   const month = currentDate.getMonth()
@@ -281,7 +306,7 @@ export function BatchCalendarView() {
       const res = await fetch("/api/admin/training-batches", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, courseId: form.courseId || null }),
+        body: JSON.stringify({ ...form, courseId: form.courseId || null, instructorId: form.instructorId || null }),
       })
       if (!res.ok) {
         const e = await res.json().catch(() => ({}))
@@ -307,7 +332,7 @@ export function BatchCalendarView() {
       const res = await fetch(`/api/admin/training-batches/${editingBatch.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...form, courseId: form.courseId || null }),
+        body: JSON.stringify({ ...form, courseId: form.courseId || null, instructorId: form.instructorId || null }),
       })
       if (!res.ok) {
         const e = await res.json().catch(() => ({}))
@@ -528,9 +553,9 @@ export function BatchCalendarView() {
                             key={`start-${b.id}`}
                             onClick={(e) => { e.stopPropagation(); setSelectedBatch(b) }}
                             className={cn("block w-full text-left text-[8px] sm:text-[9px] px-1 py-0.5 rounded text-white font-medium truncate hover:opacity-80 transition-opacity", certColorClass(b.certification))}
-                            title={`${b.name} - STARTS TODAY`}
+                            title={`${b.course ? `[${b.course.shortName || b.course.title}] ` : ""}${b.name} - STARTS TODAY`}
                           >
-                            ▶ {b.certification.split(" ")[0]}
+                            ▶ {b.course?.shortName || b.certification.split(" ")[0]}
                           </button>
                         ))}
                         {dayBatches.slice(0, 3 - starting.length).map(b => (
@@ -538,7 +563,7 @@ export function BatchCalendarView() {
                             key={b.id}
                             onClick={(e) => { e.stopPropagation(); setSelectedBatch(b) }}
                             className={cn("block w-full h-1 sm:h-1.5 rounded-full hover:opacity-80 transition-opacity", certColorClass(b.certification))}
-                            title={`${b.name} (${b.schedule})`}
+                            title={`${b.course ? `[${b.course.shortName || b.course.title}] ` : ""}${b.name} (${b.schedule})`}
                           />
                         ))}
                         {(starting.length + dayBatches.length) > 3 && (
@@ -591,6 +616,12 @@ export function BatchCalendarView() {
                     >
                       <h3 className="font-semibold text-sm mb-1">{b.name}</h3>
                       <div className="space-y-1 text-xs text-muted-foreground">
+                        {b.course && (
+                          <div className="flex items-center gap-1.5">
+                            <BookOpen className="h-3 w-3 shrink-0" />
+                            <span className="text-foreground">{b.course.shortName || b.course.title}</span>
+                          </div>
+                        )}
                         <div className="flex items-center gap-1.5"><User className="h-3 w-3 shrink-0" /> {b.instructor}</div>
                         <div className="flex items-center gap-1.5"><Clock className="h-3 w-3 shrink-0" /> {b.schedule}</div>
                         <div className="flex items-center gap-1.5"><Calendar className="h-3 w-3 shrink-0" /> Starts {fmtDate}</div>
@@ -719,7 +750,7 @@ export function BatchCalendarView() {
               Add a new live instructor-led certification batch. Color classes are auto-computed from the certification and level.
             </DialogDescription>
           </DialogHeader>
-          <BatchFormFields form={form} setForm={setForm} courses={courses} />
+          <BatchFormFields form={form} setForm={setForm} courses={courses} instructors={instructors} />
           <DialogFooter>
             <Button variant="outline" onClick={() => setCreateOpen(false)} disabled={submitting}>Cancel</Button>
             <Button onClick={handleCreate} disabled={submitting} className="bg-cyan-600 hover:bg-cyan-500 btn-premium">
@@ -741,7 +772,7 @@ export function BatchCalendarView() {
               {editingBatch ? `${editingBatch.certification} - ${editingBatch.name}` : "Update batch details."}
             </DialogDescription>
           </DialogHeader>
-          <BatchFormFields form={form} setForm={setForm} courses={courses} />
+          <BatchFormFields form={form} setForm={setForm} courses={courses} instructors={instructors} />
           <DialogFooter>
             <Button variant="outline" onClick={() => { setEditOpen(false); setEditingBatch(null) }} disabled={submitting}>Cancel</Button>
             <Button onClick={handleUpdate} disabled={submitting} className="bg-amber-600 hover:bg-amber-500 btn-premium">
@@ -785,11 +816,24 @@ function BatchFormFields({
   form,
   setForm,
   courses,
+  instructors,
 }: {
   form: BatchForm
   setForm: React.Dispatch<React.SetStateAction<BatchForm>>
   courses: BatchCourseLite[]
+  instructors: BatchInstructorLite[]
 }) {
+  // If the batch's instructorId is not on the public roster (e.g. an admin
+  // linked manually via API), inject a synthetic item so the Select can
+  // render it instead of showing a blank value.
+  const instructorItems = React.useMemo(() => {
+    const items = [...instructors]
+    if (form.instructorId && !items.some((i) => i.id === form.instructorId)) {
+      items.unshift({ id: form.instructorId, name: form.instructor || "Current instructor" })
+    }
+    return items
+  }, [instructors, form.instructorId, form.instructor])
+
   return (
     <div className="space-y-4 py-2">
       <div>
@@ -887,6 +931,36 @@ function BatchFormFields({
             </SelectContent>
           </Select>
         </div>
+      </div>
+      <div>
+        <Label className="text-xs">Instructor account (optional)</Label>
+        <Select
+          value={form.instructorId || "none"}
+          onValueChange={(v) => {
+            if (v === "none") {
+              // Unlink only - keep the free-text name so manual instructors
+              // (not on the roster) don't lose their display value.
+              setForm({ ...form, instructorId: "" })
+              return
+            }
+            const i = instructorItems.find((x) => x.id === v)
+            // Auto-fill the display name from the account; still editable below.
+            setForm({ ...form, instructorId: v, instructor: i ? i.name : form.instructor })
+          }}
+        >
+          <SelectTrigger><SelectValue placeholder="No linked instructor account" /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="none">No linked account (type name below)</SelectItem>
+            {instructorItems.map((i) => (
+              <SelectItem key={i.id} value={i.id}>
+                {i.title ? `${i.name} — ${i.title}` : i.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <p className="text-[10px] text-muted-foreground mt-1">
+          Picking an account links the batch to the instructor (visible on their instructor page) and fills the name below.
+        </p>
       </div>
       <div>
         <Label className="text-xs">Instructor *</Label>

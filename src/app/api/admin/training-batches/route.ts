@@ -242,6 +242,14 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
     if (!course) return NextResponse.json({ error: "Linked course not found" }, { status: 400 })
   }
 
+  // Optional instructor account link - must reference an existing user when
+  // provided (no DB FK on instructorId, so this is the only integrity gate).
+  const trimmedInstructorId = typeof instructorId === "string" ? instructorId.trim() : ""
+  if (trimmedInstructorId) {
+    const instructor = await db.user.findUnique({ where: { id: trimmedInstructorId }, select: { id: true } })
+    if (!instructor) return NextResponse.json({ error: "Linked instructor not found" }, { status: 400 })
+  }
+
   const finalLevel = (level?.trim() && ["Beginner", "Intermediate", "Advanced"].includes(level.trim()))
     ? level.trim()
     : "Beginner"
@@ -261,7 +269,7 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
         startIsoDate: startIsoDate?.trim() || null,
         mode: mode?.trim() || "Live Online",
         instructor: instructor.trim(),
-        instructorId: instructorId?.trim() || null,
+        instructorId: trimmedInstructorId || null,
         seats: Number.isFinite(Number(seats)) ? Number(seats) : 20,
         enrolled: Number.isFinite(Number(enrolled)) ? Number(enrolled) : 0,
         level: finalLevel,

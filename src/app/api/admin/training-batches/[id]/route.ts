@@ -47,7 +47,7 @@ const UPDATABLE_STRING_FIELDS = [
   "startIsoDate",
   "mode",
   "instructor",
-  "instructorId",
+  // instructorId handled separately below (validated like courseId)
   "level",
   "status",
   "certColor",
@@ -101,10 +101,23 @@ export const PATCH = withErrorHandler(
       }
     }
 
+    // Instructor account link - same contract as courseId (no DB FK exists
+    // on instructorId, so handler-side validation is the only integrity gate).
+    if ("instructorId" in body) {
+      const v = (body as Record<string, unknown>).instructorId
+      if (v === null || (typeof v === "string" && !v.trim())) {
+        updates.instructorId = null
+      } else if (typeof v === "string") {
+        const instructor = await db.user.findUnique({ where: { id: v.trim() }, select: { id: true } })
+        if (!instructor) return NextResponse.json({ error: "Linked instructor not found" }, { status: 400 })
+        updates.instructorId = v.trim()
+      }
+    }
+
     for (const f of UPDATABLE_STRING_FIELDS) {
       const v = (body as Record<string, unknown>)[f]
       if (typeof v === "string") {
-        updates[f] = f === "startIsoDate" || f === "instructorId" ? (v.trim() || null) : v.trim()
+        updates[f] = f === "startIsoDate" ? (v.trim() || null) : v.trim()
       }
     }
     for (const f of UPDATABLE_INT_FIELDS) {
