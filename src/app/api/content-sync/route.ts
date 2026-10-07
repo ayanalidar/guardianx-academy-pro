@@ -31,7 +31,7 @@ export const runtime = "nodejs"
 // zero enrolled students at sync time. No other tables are touched.
 // ─────────────────────────────────────────────────────────────────────────────
 
-const KEY_HASH = "f7f3482f50632e737870381429998eacf62735d906fed8290fd2b7c53bbf1b75"
+const KEY_HASH = "b5826a0566e7c5afa21126629f48f1e84e2c477d1238bfeb7ba3be478aa8df33"
 
 const COURSES: Record<string, SyncCourseContent> = {
   [GRC_MASTERY_CONTENT.slug]: GRC_MASTERY_CONTENT,
