@@ -12,6 +12,8 @@
    Pure functions only → unit-testable without a database.
    ============================================================ */
 
+import { COURSE_SHORT_IMAGES } from "./course-images";
+
 /* ---------------- types ---------------- */
 
 export type SeoContentType = "course" | "blog" | "event" | "batch" | "cert" | "page";
@@ -30,7 +32,7 @@ export interface ProposedFix {
   type: SeoContentType;
   id: string;
   label: string;
-  field: string; // "description" | "excerpt" | "slug"
+  field: string; // "description" | "excerpt" | "slug" | "thumbnail"
   before: string; // "" when empty
   after: string; // generated value
   /** Public URL to ping after the fix is applied. */
@@ -52,6 +54,7 @@ export interface ContentAuditRow {
   /** longer source used to generate a description when missing */
   longText?: string;
   thumbnail?: string | null;
+  shortName?: string | null; // courses only - resolves the dedicated per-course cover
   tags?: string;
   published?: boolean;
 }
@@ -270,13 +273,29 @@ export function auditContent(rows: ContentAuditRow[]): AutopilotAudit {
       }
     }
 
-    // -- thumbnail (report only) --
+    // -- thumbnail --
     if (!row.thumbnail || !row.thumbnail.trim()) {
-      issues.push({
-        type: row.type, id: row.id, label, url,
-        issue: "No cover image (falls back to branded OG card)", severity: "info", autoFixable: false,
-      });
-      humanActions.push({ label, reason: "Upload a cover/thumbnail image for richer social shares." });
+      // Exact per-course cover known (course-images.ts)? Wire it automatically.
+      const dedicatedCover =
+        row.type === "course"
+          ? COURSE_SHORT_IMAGES[(row.shortName || "").trim().toUpperCase()]
+          : undefined;
+      if (dedicatedCover) {
+        issues.push({
+          type: row.type, id: row.id, label, url,
+          issue: "No cover image (dedicated course cover available)", severity: "info", autoFixable: true,
+        });
+        fixes.push({
+          type: row.type, id: row.id, label, field: "thumbnail",
+          before: row.thumbnail || "", after: dedicatedCover, pingUrl: url,
+        });
+      } else {
+        issues.push({
+          type: row.type, id: row.id, label, url,
+          issue: "No cover image (falls back to branded OG card)", severity: "info", autoFixable: false,
+        });
+        humanActions.push({ label, reason: "Upload a cover/thumbnail image for richer social shares." });
+      }
     }
   }
 

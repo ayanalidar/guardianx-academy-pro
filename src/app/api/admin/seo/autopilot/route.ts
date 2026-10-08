@@ -53,7 +53,7 @@ async function loadRows(): Promise<ContentAuditRow[]> {
   const [courses, blogPosts, events, certs] = await Promise.all([
     db.course.findMany({
       where: { published: true },
-      select: { id: true, slug: true, title: true, description: true, longDescription: true, thumbnail: true, tags: true },
+      select: { id: true, slug: true, title: true, shortName: true, description: true, longDescription: true, thumbnail: true, tags: true },
     }),
     db.blogPost.findMany({
       where: { published: true },
@@ -76,7 +76,7 @@ async function loadRows(): Promise<ContentAuditRow[]> {
       type: "course", id: c.id, title: c.title, slug: c.slug,
       description: c.description ?? "",
       longText: `${c.description ?? ""} ${c.longDescription ?? ""}`.trim(),
-      thumbnail: c.thumbnail, tags: c.tags, published: true,
+      thumbnail: c.thumbnail, shortName: c.shortName, tags: c.tags, published: true,
     });
   }
   for (const b of blogPosts) {
@@ -308,8 +308,15 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
     }
   }
 
-  // Courses: description
+  // Courses: description + thumbnail (dedicated per-course cover)
   for (const f of byType("course")) {
+    if (f.field === "thumbnail") {
+      if (writes >= MAX_WRITES) { skipped.push({ label: f.label, field: f.field, reason: "Write cap reached" }); continue; }
+      await db.course.update({ where: { id: f.id }, data: { thumbnail: f.after } });
+      writes++; pingPaths.push(f.pingUrl);
+      fixed.push({ ...f, applied: true });
+      continue;
+    }
     if (f.field !== "description") continue;
     if (writes >= MAX_WRITES) { skipped.push({ label: f.label, field: f.field, reason: "Write cap reached" }); continue; }
     await db.course.update({ where: { id: f.id }, data: { description: f.after } });

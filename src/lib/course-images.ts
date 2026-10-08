@@ -40,7 +40,8 @@ export const COURSE_SHORT_IMAGES: Record<string, string> = {
   "CISA": "/courses/cisa.png",
   "ISO27001": "/courses/iso-27001.png",
   "GRC": "/courses/grc.png",
-  "SOC": "/courses/soc.png",
+  "GRC 360": "/courses/grc-mastery.png",
+  "SOC": "/courses/soc2.png",
   "CYBERARK": "/courses/cyberark.png",
 }
 
