@@ -5,11 +5,12 @@ import Link from "next/link"
 import { signOut } from "next-auth/react"
 import {
   Shield, User, LogOut, Menu, X,
-  ChevronRight, Settings,
+  ChevronRight, Settings, Zap,
 } from "lucide-react"
 import { useAppStore } from "@/store/app-store"
 import { viewToPath } from "@/lib/url-router"
 import { navForRole, type NavItem } from "@/lib/nav-data"
+import { preloadNavViews } from "@/lib/view-preloader"
 import { useUser } from "@/hooks/use-user"
 import { useBatchLeadNotifications } from "@/hooks/use-batch-lead-notifications"
 import { Button } from "@/components/ui/button"
@@ -118,6 +119,80 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
   )
 }
 
+/**
+ * FastLoadButton (admin only) - preloads every page chunk in the role's
+ * nav so the whole panel navigates instantly afterwards. Each admin page
+ * is a lazy JS chunk that is NOT idle-preloaded (bandwidth), so the first
+ * visit per session otherwise pays a 300ms-2s fetch. Shows live progress
+ * while warming and the outcome when finished.
+ */
+function FastLoadButton() {
+  const { user } = useUser()
+  const role = user?.role || "STUDENT"
+  const items: NavItem[] = navForRole(role)
+
+  type State = { running: boolean; done: number; total: number; outcome: "idle" | "ok" | "partial" }
+  const [state, setState] = React.useState<State>({ running: false, done: 0, total: items.length, outcome: "idle" })
+  const resetTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  React.useEffect(() => () => { if (resetTimer.current) clearTimeout(resetTimer.current) }, [])
+
+  // Defensive double-guard (parent already gates on isAdmin).
+  if (role !== "ADMIN" && role !== "SUPER_ADMIN") return null
+
+  const run = async () => {
+    if (state.running) return
+    if (resetTimer.current) clearTimeout(resetTimer.current)
+    setState({ running: true, done: 0, total: items.length, outcome: "idle" })
+    const res = await preloadNavViews(
+      items.map((i) => i.view.name),
+      (done, total) => setState((s) => (s.running ? { ...s, done, total } : s)),
+    )
+    setState({ running: false, done: res.done, total: res.total, outcome: res.failed === 0 ? "ok" : "partial" })
+    resetTimer.current = setTimeout(() => {
+      setState({ running: false, done: 0, total: items.length, outcome: "idle" })
+    }, 5000)
+  }
+
+  const label =
+    state.outcome === "ok" ? "All pages ready"
+    : state.outcome === "partial" ? "Some pages skipped"
+    : state.running ? `Loading ${state.done}/${state.total}\u2026`
+    : "Fast Load Pages"
+
+  return (
+    <div className="px-2">
+      <button
+        type="button"
+        onClick={run}
+        disabled={state.running}
+        title="Preload every admin page so navigation loads instantly"
+        className={cn(
+          "w-full flex items-center gap-2 rounded-md border px-2 py-1.5 text-xs font-medium transition-all",
+          state.running
+            ? "border-violet-500/30 bg-violet-500/10 text-violet-300 cursor-progress"
+            : state.outcome === "ok"
+              ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300"
+              : state.outcome === "partial"
+                ? "border-amber-500/30 bg-amber-500/10 text-amber-300"
+                : "border-cyan-500/30 bg-cyan-500/10 text-cyan-300 hover:bg-cyan-500/20 hover:border-cyan-500/50",
+        )}
+      >
+        <Zap className={cn("h-3.5 w-3.5 shrink-0", state.running && "animate-pulse")} />
+        <span className="flex-1 text-left">{label}</span>
+        {state.running && (
+          <span className="text-[10px] font-mono tabular-nums">
+            {state.total > 0 ? Math.round((state.done / state.total) * 100) : 0}%
+          </span>
+        )}
+      </button>
+      <p className="text-[9px] text-muted-foreground/70 mt-1 px-0.5">
+        Loads every panel page in the background once - navigation is instant afterwards.
+      </p>
+    </div>
+  )
+}
+
 function SidebarFooter() {
   const { user, stats, gamification } = useUser()
   const { navigate } = useAppStore()
@@ -148,6 +223,9 @@ function SidebarFooter() {
         </div>
         <Settings className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
       </a>
+
+      {/* ADMIN: one-click chunk warmer - every panel page opens instantly */}
+      {isAdmin && <FastLoadButton />}
 
       {/* ADMIN: System Admin badge + platform-control label (no XP bar) */}
       {isAdmin ? (

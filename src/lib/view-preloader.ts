@@ -51,6 +51,7 @@ export const VIEW_IMPORTERS: Record<string, ViewImporter> = {
   "invoice-generator": () => import("@/views/invoice-generator"),
   "proposal-maker": () => import("@/views/proposal-maker"),
   "admin-lead-crm": () => import("@/views/admin-lead-crm"),
+  "admin-batch-hub": () => import("@/views/admin-batch-hub"),
   "admin-batch-calendar": () => import("@/views/admin-batch-calendar"),
   "admin-student-progress": () => import("@/views/admin-student-progress"),
   "admin-revenue": () => import("@/views/admin-revenue"),
@@ -237,6 +238,53 @@ export function startIdlePreload(): void {
       .finally(() => scheduleIdle(step))
   }
   scheduleIdle(step)
+}
+
+/**
+ * Preload every view chunk behind a role's nav list on demand - the
+ * "Fast Load Pages" button in the admin sidebar. Admin views are NOT in
+ * the idle-preload priority set (bandwidth), so without this the FIRST
+ * visit to each admin page in a session pays a 300ms-2s chunk fetch.
+ * After one click, every page in the panel opens instantly for the whole
+ * session (webpack memoizes + browser/SW caches the chunks).
+ *
+ * Concurrency-bounded (4 at a time) so the burst never competes with the
+ * page the user is reading. Aliases resolve through VIEW_NAME_TO_FILE;
+ * unknown names (no chunk) are skipped and reported as skipped.
+ */
+export async function preloadNavViews(
+  viewNames: string[],
+  onProgress?: (done: number, total: number, failed: number) => void,
+  concurrency = 4,
+): Promise<{ done: number; total: number; failed: number }> {
+  if (typeof window === "undefined") return { done: 0, total: 0, failed: 0 }
+
+  const files: string[] = []
+  const seen = new Set<string>()
+  for (const name of viewNames) {
+    const file = VIEW_NAME_TO_FILE[name] ?? name
+    if (VIEW_IMPORTERS[file] && !seen.has(file)) { seen.add(file); files.push(file) }
+  }
+
+  let done = 0
+  let failed = 0
+  let cursor = 0
+  const worker = async () => {
+    while (cursor < files.length) {
+      const importer = VIEW_IMPORTERS[files[cursor++]]
+      try {
+        await importer()
+      } catch {
+        failed++ // withChunkRetry already retried twice inside the thunk
+      }
+      done++
+      onProgress?.(done, files.length, failed)
+    }
+  }
+  await Promise.all(
+    Array.from({ length: Math.max(1, Math.min(concurrency, files.length)) }, worker),
+  )
+  return { done, total: files.length, failed }
 }
 
 /** Hover / touch-intent prefetch: any internal <a> that maps to an SPA
