@@ -24,6 +24,7 @@
  */
 import { jsPDF } from "jspdf"
 import type { EmiPlanRow } from "./invoice-utils"
+import { SELLER_GSTIN } from "./invoice-utils"
 
 export type InvoiceStatus = "Draft" | "Sent" | "Paid" | "Overdue"
 
@@ -570,7 +571,7 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
     //   right line 1 - brand tagline (violet accent)
     //   right line 2 - page counter
     setFont(pdf, "reg", 7, C.faint)
-    pdf.text(safe("GuardianX Academy  ·  Reg No: UDYAM-JK-03-0034470  ·  +91-70067-12347"), ML, 287)
+    pdf.text(safe(`GuardianX Academy  ·  GSTIN: ${SELLER_GSTIN}  ·  Reg No: UDYAM-JK-03-0034470  ·  +91-70067-12347`), ML, 287)
     pdf.text(safe("Nooripora, Baramulla, Kashmir 193401  ·  Gautam Buddha Nagar, Noida 201301"), ML, 290.6)
     setFont(pdf, "med", 7.2, C.violet)
     pdf.text(safe("Your Launchpad to Premium Enterprise Cyber Roles"), MR, 287, { align: "right" })
@@ -711,7 +712,7 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
   setFont(pdf, "reg", 7.4, [161, 140, 250])
   pdf.text(safe("academy@guardianx.in   ·   academy@guardianx.cloud"), brandX, 31)
   pdf.text(safe("Nooripora, Baramulla, Kashmir 193401   ·   Gautam Buddha Nagar, Noida 201301"), brandX, 35.5)
-  pdf.text(safe("Reg No: UDYAM-JK-03-0034470"), brandX, 40)
+  pdf.text(safe(`GSTIN: ${SELLER_GSTIN}  ·  Reg No: UDYAM-JK-03-0034470`), brandX, 40)
 
   // right: INVOICE display wordmark + number + status stamp
   setFont(pdf, "bold", 27, C.white)
@@ -988,7 +989,12 @@ export async function buildInvoicePdf(data: InvoicePdfData, opts: InvoicePdfOpti
     totalsRows.push({ label: `CGST (${data.taxRate / 2}%)`, value: sym(cgst) })
     totalsRows.push({ label: `SGST (${data.taxRate / 2}%)`, value: sym(sgst) })
   } else {
-    totalsRows.push({ label: data.taxRate > 0 ? `Tax (${data.taxRate}%)` : "Tax", value: sym(taxAmount) })
+    // INR supplies: the tax line is GST ("wherever applicable" - exports/zero-rated
+    // stay zero but the label keeps the Indian tax name); foreign currency keeps "Tax".
+    totalsRows.push({
+      label: data.taxRate > 0 ? (data.currency === "INR" ? `GST (${data.taxRate}%) · wherever applicable` : `Tax (${data.taxRate}%)`) : "Tax",
+      value: sym(taxAmount),
+    })
   }
   if (data.roundingAdjustment !== 0)
     totalsRows.push({ label: "Rounding", value: signed(data.roundingAdjustment) })

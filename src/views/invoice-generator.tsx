@@ -3,7 +3,7 @@
 import * as React from "react"
 import { QRCodeSVG } from "qrcode.react"
 import type { InvoicePdfData, InvoiceTheme } from "@/lib/invoice-pdf"
-import { computeEmiPlan, EMI_SPLITS, type EmiPlanRow } from "@/lib/invoice-utils"
+import { computeEmiPlan, EMI_SPLITS, SELLER_GSTIN, type EmiPlanRow } from "@/lib/invoice-utils"
 import { motion, AnimatePresence } from "framer-motion"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { useAppStore } from "@/store/app-store"
@@ -1315,6 +1315,7 @@ export function InvoiceGeneratorView() {
                           <span className="gx-glass-soft inline-flex items-center gap-1 px-2 py-0.5"><Mail className="h-3 w-3 text-cyan-300" /> academy@guardianx.in</span>
                           <span className="gx-glass-soft inline-flex items-center gap-1 px-2 py-0.5"><Mail className="h-3 w-3 text-cyan-300" /> academy@guardianx.cloud</span>
                           <span className="gx-glass-soft inline-flex items-center gap-1 px-2 py-0.5"><MapPin className="h-3 w-3 text-cyan-300" /> Nooripora, Baramulla, Kashmir 193401 &amp; Gautam Buddha Nagar, Noida 201301</span>
+                          <span className="gx-glass-soft inline-flex items-center gap-1 px-2 py-0.5"><Hash className="h-3 w-3 text-cyan-300" /> GSTIN: {SELLER_GSTIN}</span>
                           <span className="gx-glass-soft inline-flex items-center gap-1 px-2 py-0.5"><Hash className="h-3 w-3 text-cyan-300" /> Reg No: UDYAM-JK-03-0034470</span>
                         </div>
                       </div>
@@ -1485,7 +1486,7 @@ export function InvoiceGeneratorView() {
                       </>
                     ) : (
                       <div className="flex justify-between text-sm">
-                        <span className="text-slate-400">{taxRate > 0 ? `Tax (${taxRate}%)` : "Tax"}</span>
+                        <span className="text-slate-400">{taxRate > 0 ? (currency === "INR" ? `GST (${taxRate}%)` : `Tax (${taxRate}%)`) : "Tax"}</span>
                         <span className="font-medium text-slate-100 tabular-nums">{formatMoney(taxAmount)}</span>
                       </div>
                     )}
@@ -1500,7 +1501,7 @@ export function InvoiceGeneratorView() {
                       <span className="font-bold text-2xl text-gradient-premium tabular-nums">{formatMoney(total)}</span>
                     </div>
                     <div className="text-right text-[10px] text-slate-500">
-                      {currency === "INR" ? "GST included as applicable" : "Taxes as applicable"}
+                      {currency === "INR" ? `GSTIN: ${SELLER_GSTIN} · GST wherever applicable` : "Taxes as applicable"}
                     </div>
                     </div>
                   </div>
@@ -1613,7 +1614,7 @@ export function InvoiceGeneratorView() {
                       <Award className="h-3.5 w-3.5 text-violet-400" /> ISO-Aligned Curriculum
                     </div>
                     <div className="flex items-center gap-1.5 text-[10px] text-slate-400">
-                      <Hash className="h-3.5 w-3.5 text-violet-400" /> Reg No: UDYAM-JK-03-0034470
+                      <Hash className="h-3.5 w-3.5 text-violet-400" /> GSTIN: {SELLER_GSTIN} · Reg No: UDYAM-JK-03-0034470
                     </div>
                   </div>
                   <div className="text-[10px] text-slate-400 font-mono">

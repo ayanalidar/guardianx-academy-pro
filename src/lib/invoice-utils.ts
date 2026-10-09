@@ -10,6 +10,15 @@ export const INVOICE_STATUSES = ["Draft", "Sent", "Paid", "Overdue"] as const
 export const INVOICE_CURRENCIES = ["INR", "USD", "EUR", "GBP"] as const
 export const INVOICE_ITEM_ICONS = ["training", "lab", "cert", "workshop"] as const
 
+/**
+ * Seller GST Identification Number (state code 01 = Jammu & Kashmir).
+ * Single source of truth for every invoice surface (PDF header/footer,
+ * on-screen preview, email) - GST is an indirect tax on Indian supplies,
+ * so the tax lines carry it "wherever applicable" (INR invoices), while
+ * the seller-identity blocks print it on every document.
+ */
+export const SELLER_GSTIN = "01BNSPD0515R2ZW"
+
 export type InvoiceStatus = (typeof INVOICE_STATUSES)[number]
 export type InvoiceCurrency = (typeof INVOICE_CURRENCIES)[number]
 

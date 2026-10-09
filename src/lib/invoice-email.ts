@@ -22,6 +22,7 @@ import {
 import { serverFontLoader } from "@/lib/receipt-pdf"
 import { buildInvoicePdf, type InvoicePdfData, type InvoiceStatus } from "@/lib/invoice-pdf"
 import type { EmiPlanRow } from "@/lib/invoice-utils"
+import { SELLER_GSTIN } from "@/lib/invoice-utils"
 import type { Invoice } from "@prisma/client"
 
 const SITE_ORIGIN = "https://academy.guardianx.cloud"
@@ -197,7 +198,12 @@ export function buildInvoiceEmailHtml(data: InvoicePdfData, total: number): stri
     rows.push([`CGST (${data.taxRate / 2}%)`, money(cgst, cur)])
     rows.push([`SGST (${data.taxRate / 2}%)`, money(cgst, cur)])
   } else {
-    rows.push([data.taxRate > 0 ? `Tax (${data.taxRate}%)` : "Tax", money(taxAmount, cur)])
+    // INR supplies: "GST" with the wherever-applicable qualifier (mirrors the
+    // PDF); foreign currency keeps the neutral "Tax" label.
+    rows.push([
+      data.taxRate > 0 ? (cur === "INR" ? `GST (${data.taxRate}%) · wherever applicable` : `Tax (${data.taxRate}%)`) : "Tax",
+      money(taxAmount, cur),
+    ])
   }
   if (data.roundingAdjustment !== 0)
     rows.push(["Rounding", `${data.roundingAdjustment > 0 ? "+" : "-"}${money(Math.abs(data.roundingAdjustment), cur)}`])
@@ -294,6 +300,7 @@ export function buildInvoiceEmailHtml(data: InvoicePdfData, total: number): stri
     ${data.notes ? `<p style="margin:16px 0 0;font-size:11px;color:#7c7392;line-height:1.6;">${esc(data.notes)}</p>` : ""}
   </div>
   <div style="background:#ece8fa;border-radius:0 0 16px 16px;padding:14px 28px;">
+    <p style="margin:0 0 4px;font-size:11px;color:#7c7392;">GSTIN: <strong style="color:#2e1065;">${SELLER_GSTIN}</strong> · Reg No: UDYAM-JK-03-0034470 · GST wherever applicable.</p>
     <p style="margin:0 0 4px;font-size:11px;color:#7c7392;">Questions? Reply to this email or write to <a href="mailto:academy@guardianx.in" style="color:#2e1065;">academy@guardianx.in</a>.</p>
     ${emailSocialLinksHtml("light")}
   </div>
