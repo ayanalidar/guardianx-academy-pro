@@ -234,11 +234,17 @@ export async function runWatchdogSweep(trigger: SweepReport["trigger"]): Promise
       }
     }
 
-    // 2. Schema drift self-heal (same tables the health endpoint syncs)
+    // 2. Schema drift self-heal (superset of the health endpoint's sync list)
     {
       const c0 = Date.now()
+      // Keep in sync with syncSchemaOnce() in src/app/api/health/route.ts -
+      // a superset: the watchdog additionally self-heals the security log.
+      // The expected count MUST be derived from the list length (a hardcoded
+      // "5" here once made every sweep report "only 6/5 tables verified"
+      // and email UNHEALTHY after SecurityEvent joined the list).
+      const SCHEMA_TABLES = ["Course", "Module", "Lesson", "AuthoredCourse", "SecurityEvent", "TrainingBatch"] as const
       let synced = 0
-      for (const t of ["Course", "Module", "Lesson", "AuthoredCourse", "SecurityEvent", "TrainingBatch"] as const) {
+      for (const t of SCHEMA_TABLES) {
         try {
           await ensureTable(t)
           synced++
@@ -246,13 +252,17 @@ export async function runWatchdogSweep(trigger: SweepReport["trigger"]): Promise
           /* ensureTable logs its own failure; count only successes */
         }
       }
+      const expected = SCHEMA_TABLES.length
+      const allVerified = synced === expected
       report.checks.push({
         name: "Schema sync",
-        ok: synced === 5,
-        detail: synced === 5 ? "5/5 storage tables verified" : `only ${synced}/5 tables verified`,
+        ok: allVerified,
+        detail: allVerified
+          ? `${expected}/${expected} storage tables verified`
+          : `only ${synced}/${expected} tables verified`,
         latencyMs: Date.now() - c0,
       })
-      if (synced !== 5) report.healthy = false
+      if (!allVerified) report.healthy = false
     }
 
     // 3. Data counts (+ data-loss repairs that are safe in-process)

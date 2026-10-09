@@ -119,12 +119,34 @@ function NavList({ onNavigate }: { onNavigate?: () => void }) {
   )
 }
 
+/** localStorage key holding the last day the Fast Load button auto-ran. */
+const FASTLOAD_AUTO_KEY = "gx-fastload-auto-cycle"
+
+/**
+ * Day key that rolls over at 06:00 Asia/Kolkata (IST = UTC+5:30, no DST).
+ * Everything before 6 AM belongs to the previous day's cycle, so the first
+ * admin opening the panel AFTER 6 AM each morning triggers a fresh
+ * auto-preload - which is exactly the "auto-activate at 6 am" behavior:
+ * the button runs itself once per day without anyone clicking it.
+ */
+function fastLoadCycleKey(): string {
+  const IST_OFFSET_MIN = 330
+  const ist = new Date(Date.now() + IST_OFFSET_MIN * 60_000)
+  const backOneDay = ist.getUTCHours() < 6 ? 1 : 0
+  const d = new Date(Date.UTC(ist.getUTCFullYear(), ist.getUTCMonth(), ist.getUTCDate() - backOneDay))
+  return `${d.getUTCFullYear()}-${String(d.getUTCMonth() + 1).padStart(2, "0")}-${String(d.getUTCDate()).padStart(2, "0")}`
+}
+
 /**
  * FastLoadButton (admin only) - preloads every page chunk in the role's
  * nav so the whole panel navigates instantly afterwards. Each admin page
  * is a lazy JS chunk that is NOT idle-preloaded (bandwidth), so the first
  * visit per session otherwise pays a 300ms-2s fetch. Shows live progress
  * while warming and the outcome when finished.
+ *
+ * AUTO-ACTIVATION: runs itself once per day, on the first admin panel
+ * open after the 6 AM IST boundary (per browser, localStorage-tracked) -
+ * the manual click still works any time and shows the same progress UI.
  */
 function FastLoadButton() {
   const { user } = useUser()
@@ -153,6 +175,29 @@ function FastLoadButton() {
       setState({ running: false, done: 0, total: items.length, outcome: "idle" })
     }, 5000)
   }
+
+  // Auto-activation (6 AM IST daily rollover): on mount, if this browser has
+  // not auto-run since the last 6 AM boundary, replay the same preload as a
+  // manual click. Guarded by a ref so React strict-mode double-mounts cannot
+  // double-fire, and by the localStorage day-key so re-opens during the same
+  // day are free. Failures of storage access (private mode) only make the
+  // auto-run slightly more eager, never broken.
+  const autoRanRef = React.useRef(false)
+  React.useEffect(() => {
+    if (autoRanRef.current) return
+    autoRanRef.current = true
+    let lastCycle: string | null = null
+    try {
+      lastCycle = window.localStorage.getItem(FASTLOAD_AUTO_KEY)
+    } catch {}
+    const cycle = fastLoadCycleKey()
+    if (lastCycle === cycle) return
+    try {
+      window.localStorage.setItem(FASTLOAD_AUTO_KEY, cycle)
+    } catch {}
+    void run()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const label =
     state.outcome === "ok" ? "All pages ready"
@@ -187,7 +232,7 @@ function FastLoadButton() {
         )}
       </button>
       <p className="text-[9px] text-muted-foreground/70 mt-1 px-0.5">
-        Loads every panel page in the background once - navigation is instant afterwards.
+        Auto-runs once a day from 6 AM - or click to warm every page now.
       </p>
     </div>
   )

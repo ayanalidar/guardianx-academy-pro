@@ -46,6 +46,7 @@ async function syncSchemaOnce(): Promise<boolean> {
       ensureTable("Lesson"),
       ensureTable("AuthoredCourse"),
       ensureTable("TrainingBatch"),
+      ensureTable("SecurityEvent"),
     ])
     schemaSynced = true
   } catch {
