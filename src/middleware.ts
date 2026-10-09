@@ -95,6 +95,7 @@ const PUBLIC_API_ROUTES = new Set<string>([
   "/api/threat-feed",
   "/api/sentinel/health",
   "/api/enrollment-feed",
+  "/api/status-history",
   "/api/open-schooling/leads",
   "/api/corporate-training/leads",
   "/api/training-batches",

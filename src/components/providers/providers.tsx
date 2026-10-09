@@ -119,17 +119,24 @@ export function Providers({ children }: { children: React.ReactNode }) {
   React.useEffect(() => {
     let timer1: ReturnType<typeof setTimeout> | undefined
     let timer2: ReturnType<typeof setTimeout> | undefined
+    let timer3: ReturnType<typeof setTimeout> | undefined
+    const sweep = () => {
+      queryClient.refetchQueries({ type: "active", stale: true })
+    }
     const handler = () => {
-      const sweep = () => {
-        queryClient.refetchQueries({ type: "active", stale: true })
-      }
       if (timer1) clearTimeout(timer1)
       if (timer2) clearTimeout(timer2)
+      if (timer3) clearTimeout(timer3)
       // Sweep 1: right after the store swap (queries already mounted).
       timer1 = setTimeout(sweep, 600)
       // Sweep 2: catch views whose chunk mounted later (slow network,
       // un-preloaded chunk) so their queries are revalidated too.
       timer2 = setTimeout(sweep, 1800)
+      // Sweep 3 (hardening): serverless cold starts + 3G-class networks can
+      // push a chunk's import() past 1.8s, so its queries mount after both
+      // early sweeps and would rely solely on refetchOnMount. A 4s sweep
+      // closes that last gap; react-query dedupes overlaps per query key.
+      timer3 = setTimeout(sweep, 4000)
     }
     window.addEventListener("guardianx-navigate", handler)
     window.addEventListener("popstate", handler)
@@ -138,6 +145,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
       window.removeEventListener("popstate", handler)
       if (timer1) clearTimeout(timer1)
       if (timer2) clearTimeout(timer2)
+      if (timer3) clearTimeout(timer3)
     }
   }, [queryClient])
 

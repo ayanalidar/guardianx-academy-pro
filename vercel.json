@@ -18,6 +18,10 @@
     {
       "path": "/api/cron/warm-cache",
       "schedule": "35 0 * * *"
+    },
+    {
+      "path": "/api/cron/abandoned-enrollments",
+      "schedule": "30 12 * * *"
     }
   ]
 }

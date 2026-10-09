@@ -36,6 +36,18 @@ type Health = {
 const OK = "#34d399"
 const BAD = "#f87171"
 const WARN = "#fbbf24"
+const NODATA = "#1e293b"
+
+type HistoryDay = { date: string; total: number; bad: number; status: "green" | "amber" | "red" | "nodata" }
+type History = {
+  ok?: boolean
+  window?: number
+  days?: HistoryDay[]
+  totalSweeps?: number
+  totalBad?: number
+  uptimePct?: number | null
+  lastSweepAt?: string | null
+}
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -58,6 +70,7 @@ function Stat({ label, value, color }: { label: string; value: string | number; 
 export default function StatusPage() {
   const [h, setH] = useState<Health | null>(null)
   const [err, setErr] = useState<string | null>(null)
+  const [hist, setHist] = useState<History | null>(null)
 
   useEffect(() => {
     let alive = true
@@ -72,6 +85,12 @@ export default function StatusPage() {
     }
     load()
     const t = setInterval(load, 15000)
+    // Uptime history: one fetch per page view is enough (it changes at
+    // most once per watchdog sweep, and the strip covers 90 days).
+    fetch("/api/status-history?days=90", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((j) => { if (alive) setHist(j as History) })
+      .catch(() => { /* strip stays hidden - liveness card still works */ })
     return () => { alive = false; clearInterval(t) }
   }, [])
 
@@ -171,6 +190,43 @@ export default function StatusPage() {
               <div className="mt-1 font-mono text-xs text-cyan-300">{w?.lastAction ?? "no repairs needed - all cycles green"}</div>
             </div>
           </Card>
+
+          <div className="md:col-span-2">
+            <Card title="Uptime - last 90 days">
+              {hist?.days?.length ? (
+                <>
+                  <div className="grid grid-cols-3 gap-4 mb-4">
+                    <Stat
+                      label="Uptime"
+                      value={hist.uptimePct != null ? `${hist.uptimePct}%` : "no data"}
+                      color={hist.uptimePct == null ? undefined : hist.uptimePct >= 99 ? OK : hist.uptimePct >= 95 ? WARN : BAD}
+                    />
+                    <Stat label="Sweeps analyzed" value={hist.totalSweeps ?? 0} />
+                    <Stat label="Days with incidents" value={hist.days.filter((d) => d.bad > 0).length} color={hist.days.every((d) => d.bad === 0) ? OK : WARN} />
+                  </div>
+                  <div className="flex gap-[2px] h-9" role="img" aria-label="Daily uptime for the last 90 days">
+                    {hist.days.map((d) => (
+                      <div
+                        key={d.date}
+                        title={`${d.date} - ${d.total === 0 ? "no sweeps" : `${d.total} sweep${d.total === 1 ? "" : "s"}, ${d.bad} failed`}`}
+                        className="flex-1 min-w-[3px] rounded-[2px]"
+                        style={{ background: d.status === "green" ? OK : d.status === "amber" ? WARN : d.status === "red" ? BAD : NODATA }}
+                      />
+                    ))}
+                  </div>
+                  <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-[11px] text-slate-500">
+                    <span><span className="inline-block h-2 w-2 rounded-sm mr-1.5 align-middle" style={{ background: OK }} />all sweeps healthy</span>
+                    <span><span className="inline-block h-2 w-2 rounded-sm mr-1.5 align-middle" style={{ background: WARN }} />some incidents</span>
+                    <span><span className="inline-block h-2 w-2 rounded-sm mr-1.5 align-middle" style={{ background: BAD }} />major incidents</span>
+                    <span><span className="inline-block h-2 w-2 rounded-sm mr-1.5 align-middle" style={{ background: NODATA }} />no data</span>
+                    <span className="sm:ml-auto">Watchdog sweeps - hover a bar for that day's details</span>
+                  </div>
+                </>
+              ) : (
+                <p className="text-sm text-slate-500">Uptime history is being collected - the strip fills in as watchdog sweeps accumulate.</p>
+              )}
+            </Card>
+          </div>
         </div>
 
         <footer className="mt-8 text-center text-xs text-slate-600">
