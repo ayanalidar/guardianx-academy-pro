@@ -323,6 +323,93 @@ const TABLE_SPECS: Record<string, TableSpec> = {
       `ALTER TABLE "TrainingBatch" ADD COLUMN IF NOT EXISTS "courseId" TEXT`,
     ],
   },
+  // Lead CRM trio: the contact form, CRM webhook and the admin Lead CRM all
+  // write/read Lead + LeadNote + LeadStatusHistory. LeadStatusHistory was
+  // introduced late (f34e16b) - prod may predate it, and a missing table
+  // there made EVERY contact-form lead creation throw (silently swallowed
+  // by a .catch(() => null)), so enquiries never reached the CRM. These
+  // specs let the first touch self-heal instead of losing the lead.
+  Lead: {
+    create: `CREATE TABLE IF NOT EXISTS "Lead" (
+      "id" TEXT NOT NULL,
+      "name" TEXT NOT NULL,
+      "email" TEXT,
+      "phone" TEXT,
+      "organization" TEXT,
+      "type" TEXT NOT NULL DEFAULT 'Individual',
+      "status" TEXT NOT NULL DEFAULT 'New',
+      "source" TEXT NOT NULL DEFAULT 'Contact Form',
+      "score" INTEGER NOT NULL DEFAULT 0,
+      "followUpDate" TIMESTAMP(3),
+      "assignedTo" TEXT,
+      "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT "Lead_pkey" PRIMARY KEY ("id")
+    )`,
+    indexes: [
+      `CREATE INDEX IF NOT EXISTS "Lead_status_idx" ON "Lead"("status")`,
+      `CREATE INDEX IF NOT EXISTS "Lead_email_idx" ON "Lead"("email")`,
+    ],
+    addColumns: [
+      `ALTER TABLE "Lead" ADD COLUMN IF NOT EXISTS "name" TEXT`,
+      `ALTER TABLE "Lead" ADD COLUMN IF NOT EXISTS "email" TEXT`,
+      `ALTER TABLE "Lead" ADD COLUMN IF NOT EXISTS "phone" TEXT`,
+      `ALTER TABLE "Lead" ADD COLUMN IF NOT EXISTS "organization" TEXT`,
+      `ALTER TABLE "Lead" ADD COLUMN IF NOT EXISTS "type" TEXT NOT NULL DEFAULT 'Individual'`,
+      `ALTER TABLE "Lead" ADD COLUMN IF NOT EXISTS "status" TEXT NOT NULL DEFAULT 'New'`,
+      `ALTER TABLE "Lead" ADD COLUMN IF NOT EXISTS "source" TEXT NOT NULL DEFAULT 'Contact Form'`,
+      `ALTER TABLE "Lead" ADD COLUMN IF NOT EXISTS "score" INTEGER NOT NULL DEFAULT 0`,
+      `ALTER TABLE "Lead" ADD COLUMN IF NOT EXISTS "followUpDate" TIMESTAMP(3)`,
+      `ALTER TABLE "Lead" ADD COLUMN IF NOT EXISTS "assignedTo" TEXT`,
+      `ALTER TABLE "Lead" ADD COLUMN IF NOT EXISTS "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP`,
+      `ALTER TABLE "Lead" ADD COLUMN IF NOT EXISTS "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP`,
+    ],
+  },
+  LeadNote: {
+    create: `CREATE TABLE IF NOT EXISTS "LeadNote" (
+      "id" TEXT NOT NULL,
+      "leadId" TEXT NOT NULL,
+      "authorId" TEXT,
+      "content" TEXT NOT NULL,
+      "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT "LeadNote_pkey" PRIMARY KEY ("id")
+    )`,
+    indexes: [
+      `CREATE INDEX IF NOT EXISTS "LeadNote_leadId_idx" ON "LeadNote"("leadId")`,
+    ],
+    constraints: [
+      `ALTER TABLE "LeadNote" ADD CONSTRAINT "LeadNote_leadId_fkey" FOREIGN KEY ("leadId") REFERENCES "Lead"("id") ON DELETE CASCADE ON UPDATE CASCADE`,
+      `ALTER TABLE "LeadNote" ADD CONSTRAINT "LeadNote_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "User"("id") ON DELETE SET NULL ON UPDATE CASCADE`,
+    ],
+    addColumns: [
+      `ALTER TABLE "LeadNote" ADD COLUMN IF NOT EXISTS "leadId" TEXT`,
+      `ALTER TABLE "LeadNote" ADD COLUMN IF NOT EXISTS "authorId" TEXT`,
+      `ALTER TABLE "LeadNote" ADD COLUMN IF NOT EXISTS "content" TEXT`,
+      `ALTER TABLE "LeadNote" ADD COLUMN IF NOT EXISTS "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP`,
+    ],
+  },
+  LeadStatusHistory: {
+    create: `CREATE TABLE IF NOT EXISTS "LeadStatusHistory" (
+      "id" TEXT NOT NULL,
+      "leadId" TEXT NOT NULL,
+      "fromStatus" TEXT,
+      "toStatus" TEXT NOT NULL,
+      "changedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT "LeadStatusHistory_pkey" PRIMARY KEY ("id")
+    )`,
+    indexes: [
+      `CREATE INDEX IF NOT EXISTS "LeadStatusHistory_leadId_idx" ON "LeadStatusHistory"("leadId")`,
+    ],
+    constraints: [
+      `ALTER TABLE "LeadStatusHistory" ADD CONSTRAINT "LeadStatusHistory_leadId_fkey" FOREIGN KEY ("leadId") REFERENCES "Lead"("id") ON DELETE CASCADE ON UPDATE CASCADE`,
+    ],
+    addColumns: [
+      `ALTER TABLE "LeadStatusHistory" ADD COLUMN IF NOT EXISTS "leadId" TEXT`,
+      `ALTER TABLE "LeadStatusHistory" ADD COLUMN IF NOT EXISTS "fromStatus" TEXT`,
+      `ALTER TABLE "LeadStatusHistory" ADD COLUMN IF NOT EXISTS "toStatus" TEXT`,
+      `ALTER TABLE "LeadStatusHistory" ADD COLUMN IF NOT EXISTS "changedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP`,
+    ],
+  },
 }
 
 const ensured = new Set<string>()

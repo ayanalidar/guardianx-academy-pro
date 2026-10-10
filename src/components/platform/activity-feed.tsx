@@ -7,6 +7,7 @@ import {
   Activity,
   FlaskConical,
   MapPin,
+  Pencil,
   TrendingUp,
   Users,
 } from "lucide-react"
@@ -155,6 +156,27 @@ function EnrollSparkline({ series }: { series: number[] }) {
 }
 
 export function PlatformActivityFeed() {
+  // Admin-only "Edit feed" affordance. Checked CLIENT-SIDE after hydration
+  // (same pattern as public-header) so the SSR HTML never contains any
+  // admin-facing text - visitors see nothing, crawlers see nothing.
+  const [isAdmin, setIsAdmin] = React.useState(false)
+  React.useEffect(() => {
+    let cancelled = false
+    const check = () => {
+      fetch("/api/auth/session", { credentials: "include" })
+        .then((r) => r.json())
+        .then((d) => {
+          if (cancelled) return
+          const role = d?.user?.role
+          setIsAdmin(role === "ADMIN" || role === "SUPER_ADMIN")
+        })
+        .catch(() => { if (!cancelled) setIsAdmin(false) })
+    }
+    check()
+    window.addEventListener("guardianx-session-changed", check)
+    return () => { cancelled = true; window.removeEventListener("guardianx-session-changed", check) }
+  }, [])
+
   const { data: feedData, isLoading } = useQuery<{
     feed: FeedItem[]
     total: number
@@ -278,9 +300,20 @@ export function PlatformActivityFeed() {
       {/* ---------------- Right: recent enrollments ---------------- */}
       <div className="lg:col-span-8">
         <div className="card-premium rounded-2xl p-5 lg:p-6 h-full">
-          <p className="text-[10px] font-mono text-muted-foreground tracking-[0.2em] mb-4">
-            RECENT ENROLLMENTS
-          </p>
+          <div className="flex items-center justify-between gap-2 mb-4">
+            <p className="text-[10px] font-mono text-muted-foreground tracking-[0.2em]">
+              RECENT ENROLLMENTS
+            </p>
+            {isAdmin && (
+              <a
+                href="/admin-platform-stats"
+                className="inline-flex items-center gap-1.5 shrink-0 font-mono text-[10px] tracking-wider px-2 py-1 rounded-md border border-emerald-500/30 bg-emerald-500/10 text-emerald-300 hover:bg-emerald-500/20 transition-colors"
+              >
+                <Pencil className="size-3" />
+                EDIT FEED
+              </a>
+            )}
+          </div>
           {isLoading ? (
             <div className="space-y-2.5">
               {Array.from({ length: 5 }).map((_, i) => (

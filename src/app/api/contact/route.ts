@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server"
 import { z } from "zod"
 import { db } from "@/lib/db"
 import { sendEmail } from "@/lib/email"
+import { ensureTable } from "@/lib/db-safe"
 
 // Uses Prisma/Node APIs - pin the Node.js runtime explicitly.
 export const runtime = "nodejs";
@@ -77,18 +78,40 @@ export async function POST(req: NextRequest) {
       },
     })
 
-    // Also create a Lead in the CRM so the sales team can follow up
-    await db.lead.create({
-      data: {
-        name,
-        email,
-        organization: safeCategory,
-        type: "Individual",
-        source: "Contact Form",
-        score: 20,
-        history: { create: [{ fromStatus: null, toStatus: "New" }] },
-      },
-    }).catch(() => null) // non-fatal - lead creation shouldn't break contact form
+    // Also create a Lead in the CRM so the sales team can follow up.
+    // Self-heal the CRM tables first (LeadStatusHistory arrived late - on a
+    // drifted prod DB the old nested history create threw and a swallowing
+    // .catch(() => null) silently DROPPED the lead while the form still
+    // reported success). The lead itself is the critical record: create it
+    // standalone, then write history best-effort with LOUD logging so a
+    // failure can never again happen invisibly.
+    let leadCaptured = false
+    try {
+      await ensureTable("Lead")
+      await ensureTable("LeadStatusHistory")
+      const lead = await db.lead.create({
+        data: {
+          name,
+          email,
+          organization: safeCategory,
+          type: "Individual",
+          source: "Contact Form",
+          score: 20,
+        },
+      })
+      leadCaptured = true
+      try {
+        await db.leadStatusHistory.create({
+          data: { leadId: lead.id, fromStatus: null, toStatus: "New" },
+        })
+      } catch (histErr) {
+        console.error("[contact] LeadStatusHistory write failed (lead still captured):", histErr)
+      }
+    } catch (leadErr) {
+      // Never break the contact form UX, but NEVER let a lost enquiry be
+      // invisible: the EmailLog above still holds the full message.
+      console.error(`[contact] LEAD NOT CAPTURED (leadCaptured=${leadCaptured}) - enquiry from ${email} lost to CRM:`, leadErr)
+    }
 
     // Send confirmation email to the submitter
     await sendEmail({

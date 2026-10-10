@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getSetting } from "@/lib/settings"
+import { ensureTable } from "@/lib/db-safe"
 
 export const runtime = "nodejs"
 
@@ -64,6 +65,16 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "At least name or email required" }, { status: 400 })
     }
 
+    // Self-heal the CRM trio so writes below can't fail on schema drift
+    // (memoized per instance - a no-op after the first call).
+    try {
+      await ensureTable("Lead")
+      await ensureTable("LeadNote")
+      await ensureTable("LeadStatusHistory")
+    } catch (healErr) {
+      console.error("[crm/webhook] ensureTable self-heal failed:", healErr)
+    }
+
     // Determine lead type and score
     const leadType = lead.type || lead.organization_type || "Individual"
     const score = calculateLeadScore(leadType, lead.requirement || lead.message || "")
@@ -92,7 +103,7 @@ export async function POST(req: NextRequest) {
           fromStatus: existing.status,
           toStatus: existing.status,
         },
-      }).catch(() => {})
+      }).catch((err) => console.error("[crm/webhook] history write failed (lead updated ok):", err))
 
       return NextResponse.json({ success: true, action: "updated", leadId: existing.id })
     }
@@ -120,7 +131,7 @@ export async function POST(req: NextRequest) {
           content: requirementText,
           authorId: null,
         },
-      }).catch(() => {})
+      }).catch((err) => console.error("[crm/webhook] note write failed (lead created ok):", err))
     }
 
     await db.leadStatusHistory.create({
@@ -129,7 +140,7 @@ export async function POST(req: NextRequest) {
         fromStatus: null,
         toStatus: "New",
       },
-    }).catch(() => {})
+    }).catch((err) => console.error("[crm/webhook] history write failed (lead created ok):", err))
 
     return NextResponse.json({ success: true, action: "created", leadId: newLead.id }, { status: 201 })
   } catch (err) {

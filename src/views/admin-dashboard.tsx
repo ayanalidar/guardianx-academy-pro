@@ -516,6 +516,7 @@ function OverviewTab({ onGoTab }: { onGoTab?: (tab: AdminTab) => void }) {
 const QUICK_ACTIONS: { label: string; description: string; icon: any; view: string; tone: string }[] = [
   { label: "Revenue Analytics", description: "Payments, orders & revenue trends", icon: DollarSign, view: "admin-revenue", tone: "text-amber-300 bg-amber-500/10" },
   { label: "Lead CRM", description: "Pipeline of inbound learner leads", icon: UserCog, view: "admin-lead-crm", tone: "text-violet-300 bg-violet-500/10" },
+  { label: "Live Feed", description: "Curate homepage recent enrollments", icon: Radio, view: "admin-platform-stats", tone: "text-emerald-300 bg-emerald-500/10" },
   { label: "Batch Leads Hub", description: "Per-batch screens with captured leads", icon: UsersRound, view: "admin-batch-hub", tone: "text-sky-300 bg-sky-500/10" },
   { label: "Hiring & Jobs", description: "Post openings to the public Hiring tab", icon: Briefcase, view: "admin-hiring", tone: "text-emerald-300 bg-emerald-500/10" },
   { label: "Internships", description: "College programs, students & certificates", icon: FlaskConical, view: "admin-internships", tone: "text-violet-300 bg-violet-500/10" },

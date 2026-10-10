@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { requireAdmin, withErrorHandler } from "@/lib/session"
+import { ensureTable } from "@/lib/db-safe"
 
 // Uses Prisma/Node APIs - pin the Node.js runtime explicitly.
 export const runtime = "nodejs";
@@ -64,6 +65,17 @@ function computeLeadScore(lead: {
 export const GET = withErrorHandler(async (req: NextRequest) => {
   const currentUser = await requireAdmin()
   if (currentUser instanceof NextResponse) return currentUser
+
+  // The list query includes notes + history - a missing table there used to
+  // break the whole CRM page, not just new-lead capture. Self-heal first
+  // (memoized per instance, so this is a no-op after the first call).
+  try {
+    await ensureTable("Lead")
+    await ensureTable("LeadNote")
+    await ensureTable("LeadStatusHistory")
+  } catch (healErr) {
+    console.error("[admin/leads] ensureTable self-heal failed:", healErr)
+  }
 
   const url = new URL(req.url)
   const status = url.searchParams.get("status")
