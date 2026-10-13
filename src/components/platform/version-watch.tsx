@@ -13,17 +13,21 @@ import * as React from "react"
  * never picked up the fix.
  *
  * Mechanism: poll /api/health (cheap, no-store) and compare `buildId`
- * against the one this bundle was loaded with. On mismatch → reload once.
- * Guards against reload loops via sessionStorage timestamps. Also
- * re-checks when the browser comes back online.
+ * against the one this bundle was loaded with. On mismatch → hand over to
+ * update-ux, which reloads IMMEDIATELY if the tab is hidden (invisible to
+ * the user) and otherwise shows a "Reload" toast + defers the reload until
+ * the tab next goes hidden. A visible user is never interrupted by a
+ * sudden refresh. Guards against reload loops via sessionStorage
+ * timestamps (shared with the SW swap path). Also re-checks when the
+ * browser comes back online.
  *
  * Renders nothing.
  */
 
+import { requestUpdateReload } from "@/components/platform/update-ux"
+
 const STORE_KEY = "gx_build_id"
-const RELOAD_AT_KEY = "gx_build_reload_at"
 const POLL_MS = 60 * 1000
-const MIN_RELOAD_GAP_MS = 20 * 1000
 
 export function VersionWatch() {
   React.useEffect(() => {
@@ -47,13 +51,10 @@ export function VersionWatch() {
 
         const known = window.localStorage.getItem(STORE_KEY)
         if (known && known !== buildId) {
-          const last = Number(window.sessionStorage.getItem(RELOAD_AT_KEY) ?? 0)
-          if (Date.now() - last > MIN_RELOAD_GAP_MS) {
-            window.sessionStorage.setItem(RELOAD_AT_KEY, String(Date.now()))
-            window.localStorage.setItem(STORE_KEY, buildId)
-            // New build deployed under this tab → hard reload to pick it up.
-            window.location.reload()
-          }
+          // New build deployed under this tab. update-ux decides how to
+          // apply it: silent reload when hidden, toast + defer when visible.
+          window.localStorage.setItem(STORE_KEY, buildId)
+          requestUpdateReload()
           return
         }
         window.localStorage.setItem(STORE_KEY, buildId)

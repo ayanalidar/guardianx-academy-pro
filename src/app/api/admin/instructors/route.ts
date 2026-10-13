@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import bcrypt from "bcryptjs"
 import { db } from "@/lib/db"
+import { ensureTable } from "@/lib/db-safe"
 import { requireAdmin, requireRole, withErrorHandler } from "@/lib/session"
 import { logAction } from "@/lib/audit"
 
@@ -46,6 +47,7 @@ export const GET = withErrorHandler(async () => {
           expertise: safeParse(u.instructorProfile.expertise, []),
           yearsExperience: u.instructorProfile.yearsExperience,
           certifications: safeParse(u.instructorProfile.certifications, []),
+          pastExperience: safeParse(u.instructorProfile.pastExperience, []),
           linkedinUrl: u.instructorProfile.linkedinUrl,
           maxBatches: u.instructorProfile.maxBatches,
         }
@@ -79,6 +81,7 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
     linkedinUrl,
     maxBatches,
     password,
+    pastExperience,
   } = body as {
     name?: string
     email?: string
@@ -92,6 +95,7 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
     linkedinUrl?: string
     maxBatches?: number
     password?: string
+    pastExperience?: Array<{ role?: string; org?: string; period?: string; details?: string }>
   }
 
   if (!name?.trim()) return NextResponse.json({ error: "Name required" }, { status: 400 })
@@ -106,6 +110,14 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
   }
 
   const passwordHash = bcrypt.hashSync(password, 10)
+
+  // Drifted prod DBs may lack the InstructorProfile table or the newer
+  // pastExperience column - self-heal BEFORE the first write.
+  try {
+    await ensureTable("InstructorProfile")
+  } catch (err) {
+    console.error("[admin/instructors] InstructorProfile self-heal failed:", err)
+  }
 
   const user = await db.user.create({
     data: {
@@ -122,6 +134,7 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
           expertise: JSON.stringify(expertise ?? []),
           yearsExperience: Number(yearsExperience) || 0,
           certifications: JSON.stringify(certifications ?? []),
+          pastExperience: JSON.stringify(pastExperience ?? []),
           linkedinUrl: linkedinUrl?.trim() || null,
           maxBatches: Number(maxBatches) || 3,
         },
@@ -154,6 +167,7 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
               expertise: safeParse(user.instructorProfile.expertise, []),
               yearsExperience: user.instructorProfile.yearsExperience,
               certifications: safeParse(user.instructorProfile.certifications, []),
+              pastExperience: safeParse(user.instructorProfile.pastExperience, []),
               linkedinUrl: user.instructorProfile.linkedinUrl,
               maxBatches: user.instructorProfile.maxBatches,
             }

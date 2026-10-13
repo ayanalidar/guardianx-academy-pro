@@ -28,6 +28,7 @@ export async function GET(
             expertise: true,
             yearsExperience: true,
             certifications: true,
+            pastExperience: true,
             linkedinUrl: true,
             maxBatches: true,
             currentBatches: true,
@@ -102,6 +103,10 @@ export async function GET(
       expertise: safeParse<string[]>(user.instructorProfile?.expertise, []),
       yearsExperience: user.instructorProfile?.yearsExperience ?? 0,
       certifications: safeParse<string[]>(user.instructorProfile?.certifications, []),
+      pastExperience: safeParse(
+        user.instructorProfile?.pastExperience as string | undefined,
+        [] as Array<{ role?: string; org?: string; period?: string; details?: string }>,
+      ),
       linkedinUrl: user.instructorProfile?.linkedinUrl ?? null,
       maxBatches: user.instructorProfile?.maxBatches ?? 0,
       stats: {

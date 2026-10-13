@@ -58,6 +58,7 @@ export const VIEW_IMPORTERS: Record<string, ViewImporter> = {
   "admin-cert-bulk": () => import("@/views/admin-cert-bulk"),
   "admin-email-campaign": () => import("@/views/admin-email-campaign"),
   "admin-instructor-assignment": () => import("@/views/admin-instructor-assignment"),
+  "admin-tutors": () => import("@/views/admin-tutors"),
   "admin-audit-log": () => import("@/views/admin-audit-log"),
   "admin-platform-health": () => import("@/views/admin-platform-health"),
   "admin-notifications": () => import("@/views/admin-notifications"),

@@ -105,6 +105,7 @@ export const ADMIN_NAV: NavItem[] = [
   { label: "Revenue Analytics", icon: DollarSign, view: { name: "admin-revenue" } },
   { label: "Bulk Certificates", icon: Award, view: { name: "admin-cert-bulk" } },
   { label: "Email Campaigns", icon: Mail, view: { name: "admin-email-campaign" } },
+  { label: "Tutors", icon: GraduationCap, view: { name: "admin-tutors" } },
   { label: "Instructor Assign", icon: UserCog, view: { name: "admin-instructor-assignment" } },
   { label: "Audit Logs", icon: Shield, view: { name: "admin-audit-log" } },
   { label: "Platform Health", icon: Activity, view: { name: "admin-platform-health" } },

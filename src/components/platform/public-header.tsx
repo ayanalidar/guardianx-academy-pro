@@ -307,8 +307,18 @@ export function PublicHeader() {
   // The CMS header navLinks/tagline keys are superseded by the mega-menu
   // structure - only the brand name/accent are consumed here.
   const globalCms = usePageContent("global")
-  const brandName = getContent(globalCms.data, "header", "brandName", "Guardian")
+  const brandNameRaw = getContent(globalCms.data, "header", "brandName", "Guardian")
   const brandAccent = getContent(globalCms.data, "header", "brandAccent", "X")
+  // De-dupe guard: Content Studio may hold the FULL brand ("GuardianX") in
+  // brandName while brandAccent is also "X" - rendering both produced the
+  // "GuardianXX" flash users saw on load. If brandName already ends with the
+  // accent, strip it so exactly ONE accent (the violet span) is rendered,
+  // regardless of what is stored.
+  const endsWithAccent = brandAccent.length > 0 &&
+    brandNameRaw.toLowerCase().endsWith(brandAccent.toLowerCase())
+  const brandName = endsWithAccent
+    ? brandNameRaw.slice(0, brandNameRaw.length - brandAccent.length)
+    : brandNameRaw
 
   // Scroll behaviour - preserve from original header
   useMotionValueEvent(scrollY, "change", (latest) => {

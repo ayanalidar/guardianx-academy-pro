@@ -85,6 +85,7 @@ export type View =
   | { name: "admin-cert-bulk" }
   | { name: "admin-email-campaign" }
   | { name: "admin-instructor-assignment" }
+  | { name: "admin-tutors" }
   | { name: "admin-audit-log" }
   | { name: "admin-platform-health" }
   | { name: "admin-notifications" }

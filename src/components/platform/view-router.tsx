@@ -86,6 +86,7 @@ const RevenueAnalyticsView = dynamic(withChunkRetry(() => import("@/views/admin-
 const CertBulkIssuanceView = dynamic(withChunkRetry(() => import("@/views/admin-cert-bulk").then(m => ({ default: m.CertBulkIssuanceView }))), { ssr: false, loading: ViewLoading })
 const EmailCampaignView = dynamic(withChunkRetry(() => import("@/views/admin-email-campaign").then(m => ({ default: m.EmailCampaignView }))), { ssr: false, loading: ViewLoading })
 const InstructorAssignmentView = dynamic(withChunkRetry(() => import("@/views/admin-instructor-assignment").then(m => ({ default: m.InstructorAssignmentView }))), { ssr: false, loading: ViewLoading })
+const AdminTutorsView = dynamic(withChunkRetry(() => import("@/views/admin-tutors").then(m => ({ default: m.AdminTutorsView }))), { ssr: false, loading: ViewLoading })
 const AuditLogView = dynamic(withChunkRetry(() => import("@/views/admin-audit-log").then(m => ({ default: m.AuditLogView }))), { ssr: false, loading: ViewLoading })
 const PlatformHealthView = dynamic(withChunkRetry(() => import("@/views/admin-platform-health").then(m => ({ default: m.PlatformHealthView }))), { ssr: false, loading: ViewLoading })
 const NotificationCenterView = dynamic(withChunkRetry(() => import("@/views/admin-notifications").then(m => ({ default: m.NotificationCenterView }))), { ssr: false, loading: ViewLoading })
@@ -196,6 +197,7 @@ export function ViewRouter() {
       {view.name === "admin-cert-bulk" && <RoleGate allow={ROLES_ADMIN} area="Bulk Certificates"><CertBulkIssuanceView /></RoleGate>}
       {view.name === "admin-email-campaign" && <RoleGate allow={ROLES_ADMIN} area="Email Campaigns"><EmailCampaignView /></RoleGate>}
       {view.name === "admin-instructor-assignment" && <RoleGate allow={ROLES_ADMIN} area="Instructor Assignment"><InstructorAssignmentView /></RoleGate>}
+      {view.name === "admin-tutors" && <RoleGate allow={ROLES_ADMIN} area="Tutors"><AdminTutorsView /></RoleGate>}
       {view.name === "admin-audit-log" && <RoleGate allow={ROLES_ADMIN} area="Audit Logs"><AuditLogView /></RoleGate>}
       {view.name === "admin-platform-health" && <RoleGate allow={ROLES_ADMIN} area="Platform Health"><PlatformHealthView /></RoleGate>}
       {view.name === "admin-notifications" && <RoleGate allow={ROLES_ADMIN} area="Notification Center"><NotificationCenterView /></RoleGate>}

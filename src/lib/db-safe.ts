@@ -410,6 +410,45 @@ const TABLE_SPECS: Record<string, TableSpec> = {
       `ALTER TABLE "LeadStatusHistory" ADD COLUMN IF NOT EXISTS "changedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP`,
     ],
   },
+  // Tutors admin tab: pastExperience arrived with the Tutors admin feature.
+  // Old prod tables lack the column - self-heal it before the first profile
+  // write so tutor edits never fail on drifted databases.
+  InstructorProfile: {
+    create: `CREATE TABLE IF NOT EXISTS "InstructorProfile" (
+      "id" TEXT NOT NULL,
+      "userId" TEXT NOT NULL,
+      "phone" TEXT,
+      "expertise" TEXT NOT NULL DEFAULT '[]',
+      "yearsExperience" INTEGER NOT NULL DEFAULT 0,
+      "certifications" TEXT NOT NULL DEFAULT '[]',
+      "pastExperience" TEXT NOT NULL DEFAULT '[]',
+      "linkedinUrl" TEXT,
+      "maxBatches" INTEGER NOT NULL DEFAULT 3,
+      "currentBatches" INTEGER NOT NULL DEFAULT 0,
+      "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT "InstructorProfile_pkey" PRIMARY KEY ("id")
+    )`,
+    indexes: [
+      `CREATE UNIQUE INDEX IF NOT EXISTS "InstructorProfile_userId_key" ON "InstructorProfile"("userId")`,
+    ],
+    constraints: [
+      `ALTER TABLE "InstructorProfile" ADD CONSTRAINT "InstructorProfile_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE CASCADE ON UPDATE CASCADE`,
+    ],
+    addColumns: [
+      `ALTER TABLE "InstructorProfile" ADD COLUMN IF NOT EXISTS "userId" TEXT`,
+      `ALTER TABLE "InstructorProfile" ADD COLUMN IF NOT EXISTS "phone" TEXT`,
+      `ALTER TABLE "InstructorProfile" ADD COLUMN IF NOT EXISTS "expertise" TEXT NOT NULL DEFAULT '[]'`,
+      `ALTER TABLE "InstructorProfile" ADD COLUMN IF NOT EXISTS "yearsExperience" INTEGER NOT NULL DEFAULT 0`,
+      `ALTER TABLE "InstructorProfile" ADD COLUMN IF NOT EXISTS "certifications" TEXT NOT NULL DEFAULT '[]'`,
+      `ALTER TABLE "InstructorProfile" ADD COLUMN IF NOT EXISTS "pastExperience" TEXT NOT NULL DEFAULT '[]'`,
+      `ALTER TABLE "InstructorProfile" ADD COLUMN IF NOT EXISTS "linkedinUrl" TEXT`,
+      `ALTER TABLE "InstructorProfile" ADD COLUMN IF NOT EXISTS "maxBatches" INTEGER NOT NULL DEFAULT 3`,
+      `ALTER TABLE "InstructorProfile" ADD COLUMN IF NOT EXISTS "currentBatches" INTEGER NOT NULL DEFAULT 0`,
+      `ALTER TABLE "InstructorProfile" ADD COLUMN IF NOT EXISTS "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP`,
+      `ALTER TABLE "InstructorProfile" ADD COLUMN IF NOT EXISTS "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP`,
+    ],
+  },
 }
 
 const ensured = new Set<string>()

@@ -10,7 +10,7 @@ import { cn } from "@/lib/utils"
 import {
   ArrowLeft, ArrowRight, Award, BookOpen, Calendar,
   Users, Briefcase, GraduationCap, Mail, ShieldCheck, Clock,
-  MapPin, Layers, Sparkles,
+  MapPin, Layers, Sparkles, Building2,
 } from "lucide-react"
 
 /* ============================================================
@@ -51,6 +51,7 @@ interface InstructorDetail {
   expertise: string[]
   yearsExperience: number
   certifications: string[]
+  pastExperience: Array<{ role?: string; org?: string; period?: string; details?: string }>
   maxBatches: number
   stats: {
     coursesCount: number
@@ -232,6 +233,35 @@ export function InstructorDetailView() {
                           <Award className="h-3.5 w-3.5" />
                           {cert}
                         </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {/* Past experience - managed in Admin → Tutors */}
+                {(instructor.pastExperience ?? []).length > 0 && (
+                  <div className="card-premium rounded-2xl p-6">
+                    <p className="text-[10px] font-mono text-violet-400 tracking-[0.25em] mb-4">PAST EXPERIENCE</p>
+                    <div className="relative space-y-5 pl-6">
+                      <div className="absolute left-[7px] top-2 bottom-2 w-px bg-gradient-to-b from-violet-500/50 via-violet-500/20 to-transparent" aria-hidden />
+                      {instructor.pastExperience.map((e, i) => (
+                        <div key={i} className="relative">
+                          <span className="absolute -left-6 top-1 h-3.5 w-3.5 rounded-full border-2 border-violet-400/70 bg-background" aria-hidden />
+                          <div className="flex flex-wrap items-baseline gap-x-2">
+                            <span className="text-sm font-semibold text-foreground">{e.role || "Role"}</span>
+                            {e.org ? (
+                              <span className="text-sm text-muted-foreground inline-flex items-center gap-1">
+                                <Building2 className="h-3 w-3" /> {e.org}
+                              </span>
+                            ) : null}
+                            {e.period ? (
+                              <span className="text-xs font-mono text-violet-300/80">{e.period}</span>
+                            ) : null}
+                          </div>
+                          {e.details ? (
+                            <p className="text-sm text-muted-foreground mt-1 leading-relaxed">{e.details}</p>
+                          ) : null}
+                        </div>
                       ))}
                     </div>
                   </div>

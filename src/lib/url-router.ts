@@ -132,7 +132,7 @@ const KNOWN_FLAT_VIEWS = new Set<View["name"]>([
   "hiring", "placements", "internships", "admin-hiring", "admin-internships",
   "admin-lead-crm", "admin-batch-hub", "admin-batch-calendar", "admin-student-progress",
   "admin-revenue", "admin-cert-bulk", "admin-email-campaign",
-  "admin-instructor-assignment", "admin-audit-log", "admin-platform-health",
+  "admin-instructor-assignment", "admin-tutors", "admin-audit-log", "admin-platform-health",
   "admin-notifications", "admin-coupons", "admin-open-schooling-leads",
   "admin-corporate-leads", "admin-cyber-quiz-questions",
   "admin-cyber-quiz-attempts", "admin-cyber-quiz-certs",

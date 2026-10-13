@@ -1800,6 +1800,7 @@ model InstructorProfile {
   expertise       String   @default("[]") // JSON: ["Offensive Security", "Defensive", ...]
   yearsExperience Int      @default(0)
   certifications  String   @default("[]") // JSON: ["CEH", "OSCP", ...]
+  pastExperience  String   @default("[]") // JSON: [{ role, org, period, details }]
   linkedinUrl     String?
   maxBatches      Int      @default(3)
   currentBatches  Int      @default(0)

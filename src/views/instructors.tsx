@@ -30,6 +30,7 @@ interface InstructorRow {
   expertise: string[]
   yearsExperience: number
   certifications: string[]
+  pastExperience: Array<{ role?: string; org?: string; period?: string; details?: string }>
   maxBatches: number
   coursesCount: number
   batchesCount: number
@@ -362,7 +363,7 @@ export function InstructorsView() {
 
                     {/* Certifications */}
                     {instr.certifications.length > 0 && (
-                      <div className="flex items-center flex-wrap gap-1 mb-4 pt-3 border-t border-border/40">
+                      <div className="flex items-center flex-wrap gap-1 mb-3 pt-3 border-t border-border/40">
                         <Award className={cn("h-3 w-3 mr-1", accent.text)} />
                         {instr.certifications.slice(0, 4).map((c) => (
                           <span key={c} className="text-[10px] font-mono text-muted-foreground">
@@ -374,6 +375,20 @@ export function InstructorsView() {
                             +{instr.certifications.length - 4}
                           </span>
                         )}
+                      </div>
+                    )}
+
+                    {/* Most recent past experience - full timeline on the profile page */}
+                    {(instr.pastExperience ?? []).length > 0 && (
+                      <div className="flex items-start gap-1.5 mb-4 text-[10px] font-mono text-muted-foreground">
+                        <Briefcase className={cn("h-3 w-3 mt-0.5 shrink-0", accent.text)} />
+                        <span className="line-clamp-1">
+                          {(() => {
+                            const e = instr.pastExperience[0]!
+                            const bits = [e.role, e.org, e.period].filter(Boolean).join(" · ")
+                            return (instr.pastExperience.length > 1 ? `Previously: ${bits}` : bits) || "Experience on profile"
+                          })()}
+                        </span>
                       </div>
                     )}
 

@@ -7,9 +7,12 @@ import * as React from "react"
  *
  * - Runs once after mount in production AND dev (so PWA installability works
  *   in the preview environment).
- * - Listens for the `controllerchange` event and reloads once when a new
- *   version takes control, so markup/JS never disagree with the controlling
- *   worker (the SW itself calls skipWaiting + clients.claim on activate).
+ * - Listens for the `controllerchange` event and hands over to update-ux
+ *   when a new version takes control: reload immediately if the tab is
+ *   hidden (invisible), otherwise show a "Reload" toast and defer until
+ *   the tab next goes hidden - a visible user is never interrupted by a
+ *   sudden refresh (the SW itself calls skipWaiting + clients.claim on
+ *   activate).
  * - Proactively checks for worker updates every 10 minutes, when the tab
  *   becomes visible again, and when the network returns. This matters
  *   because GuardianX is a long-lived pushState SPA: without a full page
@@ -18,8 +21,8 @@ import * as React from "react"
  *   on the old worker indefinitely.
  */
 
-const SW_RELOAD_GUARD_KEY = "gx_sw_reload_at"
-const MIN_SW_RELOAD_GAP_MS = 15_000
+import { requestUpdateReload } from "@/components/platform/update-ux"
+
 const UPDATE_POLL_MS = 10 * 60 * 1000
 
 export function ServiceWorkerRegister() {
@@ -30,18 +33,12 @@ export function ServiceWorkerRegister() {
     // in the preview environment. The SW provides offline caching + makes the
     // app installable on mobile/desktop.
 
-    let refreshing = false
     const onControllerChange = () => {
-      if (refreshing) return
-      refreshing = true
-      // Guard against pathological reload loops: if something already
-      // reloaded us because of a SW swap moments ago, stand down.
-      try {
-        const last = Number(window.sessionStorage.getItem(SW_RELOAD_GUARD_KEY) ?? 0)
-        if (Date.now() - last < MIN_SW_RELOAD_GAP_MS) return
-        window.sessionStorage.setItem(SW_RELOAD_GUARD_KEY, String(Date.now()))
-      } catch { /* storage blocked - proceed, one reload is harmless */ }
-      window.location.reload()
+      // New worker took control. update-ux decides how to apply it: silent
+      // reload when hidden, toast + defer when visible. Its shared
+      // sessionStorage guard also stands down if VersionWatch reloaded us
+      // moments ago for the same deploy.
+      requestUpdateReload()
     }
     navigator.serviceWorker.addEventListener("controllerchange", onControllerChange)
 

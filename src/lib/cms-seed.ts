@@ -566,7 +566,10 @@ const INTERNSHIPS_PAGE: ContentItem[] = [
 // GLOBAL HEADER & FOOTER
 // ============================================================
 const GLOBAL_HEADER: ContentItem[] = [
-  { page: "global", section: "header", key: "brandName", value: "GuardianX" },
+  // brandName must NOT include the accent - the header renders
+  // "{brandName}<violet>{brandAccent}</violet>" and a full "GuardianX" here
+  // produced the "GuardianXX" flash. (Header also de-dupes defensively.)
+  { page: "global", section: "header", key: "brandName", value: "Guardian" },
   { page: "global", section: "header", key: "brandAccent", value: "X" },
   { page: "global", section: "header", key: "tagline", value: "SECURE · LEARN · DEFEND" },
   {
