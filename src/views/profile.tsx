@@ -60,6 +60,7 @@ const ADMIN_TOOLS: { label: string; icon: any; view: string; tint: string }[] = 
   { label: "Student Progress", icon: TrendingUp, view: "admin-student-progress", tint: "text-emerald-300" },
   { label: "Revenue Analytics", icon: DollarSign, view: "admin-revenue", tint: "text-emerald-300" },
   { label: "Instructor Assign", icon: Users, view: "admin-instructor-assignment", tint: "text-cyan-300" },
+  { label: "Tutors", icon: GraduationCap, view: "admin-tutors", tint: "text-amber-300" },
   { label: "Lead / CRM", icon: Users, view: "admin-lead-crm", tint: "text-violet-300" },
   { label: "Notifications", icon: Bell, view: "admin-notifications", tint: "text-amber-300" },
 ]

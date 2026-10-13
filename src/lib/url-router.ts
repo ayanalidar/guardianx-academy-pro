@@ -403,6 +403,7 @@ const VIEW_TITLES: Partial<Record<View["name"], string>> = {
   "school": "School Dashboard",
   "admin": "Admin Dashboard",
   "admin-batch-hub": "Batch Leads Hub",
+  "admin-tutors": "Tutor Management",
 }
 
 /** Metadata title for a view (used by the catch-all's generateMetadata). */
