@@ -449,6 +449,32 @@ const TABLE_SPECS: Record<string, TableSpec> = {
       `ALTER TABLE "InstructorProfile" ADD COLUMN IF NOT EXISTS "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP`,
     ],
   },
+
+  // Footer visitor counter (anonymous per-day visitor rows).
+  SiteVisit: {
+    create: `CREATE TABLE IF NOT EXISTS "SiteVisit" (
+      "id" TEXT NOT NULL,
+      "visitorId" TEXT NOT NULL,
+      "day" TEXT NOT NULL,
+      "views" INTEGER NOT NULL DEFAULT 1,
+      "firstSeen" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "lastSeen" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT "SiteVisit_pkey" PRIMARY KEY ("id")
+    )`,
+    indexes: [
+      `CREATE UNIQUE INDEX IF NOT EXISTS "SiteVisit_visitorId_day_key" ON "SiteVisit"("visitorId", "day")`,
+      `CREATE INDEX IF NOT EXISTS "SiteVisit_day_idx" ON "SiteVisit"("day")`,
+      `CREATE INDEX IF NOT EXISTS "SiteVisit_lastSeen_idx" ON "SiteVisit"("lastSeen")`,
+    ],
+    constraints: [],
+    addColumns: [
+      `ALTER TABLE "SiteVisit" ADD COLUMN IF NOT EXISTS "visitorId" TEXT`,
+      `ALTER TABLE "SiteVisit" ADD COLUMN IF NOT EXISTS "day" TEXT`,
+      `ALTER TABLE "SiteVisit" ADD COLUMN IF NOT EXISTS "views" INTEGER NOT NULL DEFAULT 1`,
+      `ALTER TABLE "SiteVisit" ADD COLUMN IF NOT EXISTS "firstSeen" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP`,
+      `ALTER TABLE "SiteVisit" ADD COLUMN IF NOT EXISTS "lastSeen" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP`,
+    ],
+  },
 }
 
 const ensured = new Set<string>()

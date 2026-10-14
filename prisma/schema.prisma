@@ -1920,6 +1920,26 @@ model BatchLead {
 }
 
 // ============================================================
+// SITE VISITS — privacy-light visitor counter backing the footer
+// widget. One row per (visitorId, UTC day); the client generates an
+// anonymous random id in localStorage (no PII, no fingerprinting).
+// Aggregates power: total unique visitors, today's visitors, and
+// "online now" (distinct visitorIds seen in the last 5 minutes).
+// ============================================================
+model SiteVisit {
+  id        String   @id @default(cuid())
+  visitorId String
+  day       String                     // "2026-10-14" (UTC)
+  views     Int      @default(1)       // page pings this day
+  firstSeen DateTime @default(now())
+  lastSeen  DateTime @default(now())
+
+  @@unique([visitorId, day])
+  @@index([day])
+  @@index([lastSeen])
+}
+
+// ============================================================
 // EVENTS — public workshops/webinars/CTFs/campus programs (master-prompt §36)
 // ============================================================
 model Event {

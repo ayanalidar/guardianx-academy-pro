@@ -3,7 +3,7 @@
 import * as React from "react"
 import { motion } from "framer-motion"
 import {
-  Shield, Mail, Phone, MapPin, ArrowRight, ChevronRight,
+  Shield, Mail, Phone, MapPin, ArrowRight, ChevronRight, Eye,
 } from "lucide-react"
 import { useAppStore, type View } from "@/store/app-store"
 import { viewToPath } from "@/lib/url-router"
@@ -34,8 +34,78 @@ const REAL_PHONE = "+91 70067 12347"
 // for REAL_PHONE at render time.
 const LEGACY_PLACEHOLDER_PHONES = ["+91 80 1234 5678", "+91 80 4567 8900"]
 
+/* ------------------------------------------------------------
+ * Footer visitor counter - privacy-light, anonymous.
+ * The client keeps a RANDOM id in localStorage (no PII, no
+ * fingerprinting) and pings /api/analytics/visit at most once
+ * every 4 minutes per tab session. The same response returns
+ * the aggregates: total unique visitors + visitors online now.
+ * Rendering is silent on failure (a display nicety, never a
+ * critical path).
+ * ------------------------------------------------------------ */
+const VISIT_PING_INTERVAL_MS = 4 * 60 * 1000
+
+function useVisitorCounter(): { total: number | null; online: number } {
+  const [stats, setStats] = React.useState<{ total: number | null; online: number }>({
+    total: null,
+    online: 0,
+  })
+
+  React.useEffect(() => {
+    let cancelled = false
+    try {
+      // 1. Anonymous visitor id (persists across visits, random per browser).
+      let vid = localStorage.getItem("gx_vid")
+      if (!vid || !/^[A-Za-z0-9_-]{8,64}$/.test(vid)) {
+        vid =
+          typeof crypto !== "undefined" && "randomUUID" in crypto
+            ? crypto.randomUUID()
+            : `v-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`
+        localStorage.setItem("gx_vid", vid)
+      }
+      // 2. Throttle: one ping per tab session / 4 minutes.
+      const last = Number(sessionStorage.getItem("gx_visit_ts") ?? "0")
+      const stale = !last || Date.now() - last > VISIT_PING_INTERVAL_MS
+      // 3. Instant paint from the cached total (refreshed after the ping).
+      const cachedTotal = Number(localStorage.getItem("gx_visit_total") ?? "0")
+      if (!stale && cachedTotal > 0) {
+        setStats((s) => ({ ...s, total: cachedTotal }))
+        return
+      }
+      if (!stale) return
+      sessionStorage.setItem("gx_visit_ts", String(Date.now()))
+      fetch("/api/analytics/visit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ visitorId: vid }),
+      })
+        .then(async (res) => (res.ok ? res.json() : null))
+        .then((data: { total?: number; online?: number } | null) => {
+          if (cancelled || !data || typeof data.total !== "number") return
+          localStorage.setItem("gx_visit_total", String(data.total))
+          setStats({ total: data.total, online: data.online ?? 0 })
+        })
+        .catch(() => {
+          /* silent - the counter is decorative, never block the footer */
+        })
+    } catch {
+      /* storage unavailable (private mode quirks) - skip silently */
+    }
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
+  return stats
+}
+
+function formatCount(n: number): string {
+  return n.toLocaleString("en-US")
+}
+
 export function PublicFooter() {
   const { navigate } = useAppStore()
+  const { total: visitorTotal, online: visitorsOnline } = useVisitorCounter()
 
   /* --------------------------------------------------------------
    * CMS-driven copy (Admin → Content Studio → Global → Footer).
@@ -276,6 +346,24 @@ export function PublicFooter() {
             })}
           </div>
           <div className="flex items-center gap-4 text-[11px] text-muted-foreground">
+            {visitorTotal !== null && visitorTotal > 0 && (
+              <>
+                <span
+                  className="flex items-center gap-1.5 font-mono"
+                  title={`${visitorTotal.toLocaleString("en-US")} unique visitors since launch · ${visitorsOnline} browsing now`}
+                >
+                  <Eye className="h-3 w-3 text-violet-300/80" />
+                  {formatCount(visitorTotal)} visitors
+                  {visitorsOnline > 0 && (
+                    <span className="flex items-center gap-1 ml-1 text-emerald-300/90">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                      {visitorsOnline} online
+                    </span>
+                  )}
+                </span>
+                <span className="opacity-30">·</span>
+              </>
+            )}
             <span>© {new Date().getFullYear()} {copyright}</span>
             <span className="opacity-30">·</span>
             <a href="/privacy" className="hover:text-violet-300 transition-colors">Privacy</a>
