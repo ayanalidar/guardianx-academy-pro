@@ -37,13 +37,18 @@ const LEGACY_PLACEHOLDER_PHONES = ["+91 80 1234 5678", "+91 80 4567 8900"]
 /* ------------------------------------------------------------
  * Footer visitor counter - privacy-light, anonymous.
  * The client keeps a RANDOM id in localStorage (no PII, no
- * fingerprinting) and pings /api/analytics/visit at most once
- * every 4 minutes per tab session. The same response returns
- * the aggregates: total unique visitors + visitors online now.
+ * fingerprinting) and pings /api/analytics/visit on mount and
+ * every 60s while the tab is visible. Each ping keeps lastSeen
+ * fresh (so "online" stays accurate for long-lived tabs) and
+ * returns the aggregates: total unique visitors + visitors
+ * online now. Polling makes multi-browser presence appear live
+ * within ~1 min, and the mount ping re-registers presence after
+ * a refresh (the badge no longer vanishes). Refreshes never
+ * inflate the total - the server counts DISTINCT visitor ids.
  * Rendering is silent on failure (a display nicety, never a
  * critical path).
  * ------------------------------------------------------------ */
-const VISIT_PING_INTERVAL_MS = 4 * 60 * 1000
+const VISITOR_POLL_MS = 60 * 1000
 
 function useVisitorCounter(): { total: number | null; online: number } {
   const [stats, setStats] = React.useState<{ total: number | null; online: number }>({
@@ -53,46 +58,80 @@ function useVisitorCounter(): { total: number | null; online: number } {
 
   React.useEffect(() => {
     let cancelled = false
-    try {
-      // 1. Anonymous visitor id (persists across visits, random per browser).
-      let vid = localStorage.getItem("gx_vid")
-      if (!vid || !/^[A-Za-z0-9_-]{8,64}$/.test(vid)) {
-        vid =
-          typeof crypto !== "undefined" && "randomUUID" in crypto
-            ? crypto.randomUUID()
-            : `v-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`
-        localStorage.setItem("gx_vid", vid)
+    let inFlight = false
+    let timer: ReturnType<typeof setInterval> | null = null
+
+    const getVisitorId = (): string | null => {
+      try {
+        // Anonymous visitor id (persists across visits, random per browser).
+        let vid = localStorage.getItem("gx_vid")
+        if (!vid || !/^[A-Za-z0-9_-]{8,64}$/.test(vid)) {
+          vid =
+            typeof crypto !== "undefined" && "randomUUID" in crypto
+              ? crypto.randomUUID()
+              : `v-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 12)}`
+          localStorage.setItem("gx_vid", vid)
+        }
+        return vid
+      } catch {
+        return null // storage unavailable (private mode quirks) - skip silently
       }
-      // 2. Throttle: one ping per tab session / 4 minutes.
-      const last = Number(sessionStorage.getItem("gx_visit_ts") ?? "0")
-      const stale = !last || Date.now() - last > VISIT_PING_INTERVAL_MS
-      // 3. Instant paint from the cached total (refreshed after the ping).
-      const cachedTotal = Number(localStorage.getItem("gx_visit_total") ?? "0")
-      if (!stale && cachedTotal > 0) {
-        setStats((s) => ({ ...s, total: cachedTotal }))
-        return
+    }
+
+    const apply = (data: { total?: number; online?: number } | null) => {
+      if (cancelled || !data || typeof data.total !== "number") return
+      try {
+        localStorage.setItem("gx_visit_total", String(data.total))
+      } catch {
+        /* ignore */
       }
-      if (!stale) return
-      sessionStorage.setItem("gx_visit_ts", String(Date.now()))
+      setStats({ total: data.total, online: data.online ?? 0 })
+    }
+
+    const ping = () => {
+      if (inFlight || cancelled) return
+      const vid = getVisitorId()
+      if (!vid) return
+      inFlight = true
       fetch("/api/analytics/visit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ visitorId: vid }),
       })
         .then(async (res) => (res.ok ? res.json() : null))
-        .then((data: { total?: number; online?: number } | null) => {
-          if (cancelled || !data || typeof data.total !== "number") return
-          localStorage.setItem("gx_visit_total", String(data.total))
-          setStats({ total: data.total, online: data.online ?? 0 })
-        })
+        .then(apply)
         .catch(() => {
           /* silent - the counter is decorative, never block the footer */
         })
-    } catch {
-      /* storage unavailable (private mode quirks) - skip silently */
+        .finally(() => {
+          inFlight = false
+        })
     }
+
+    try {
+      // Instant paint from the cached total (fresh value lands right after).
+      const cachedTotal = Number(localStorage.getItem("gx_visit_total") ?? "0")
+      if (cachedTotal > 0) setStats((s) => (s.total === null ? { ...s, total: cachedTotal } : s))
+    } catch {
+      /* ignore */
+    }
+
+    // Ping immediately on mount (also re-registers presence after a
+    // refresh), then poll every minute while the tab is visible so the
+    // "online now" number stays real across tabs and browsers.
+    ping()
+    timer = setInterval(() => {
+      if (typeof document === "undefined" || document.visibilityState === "visible") ping()
+    }, VISITOR_POLL_MS)
+    const onVisibility = () => {
+      if (typeof document !== "undefined" && document.visibilityState === "visible") ping()
+    }
+    document.addEventListener("visibilitychange", onVisibility)
+
     return () => {
       cancelled = true
+      if (timer) clearInterval(timer)
+      document.removeEventListener("visibilitychange", onVisibility)
     }
   }, [])
 
@@ -353,7 +392,7 @@ export function PublicFooter() {
                   title={`${visitorTotal.toLocaleString("en-US")} unique visitors since launch · ${visitorsOnline} browsing now`}
                 >
                   <Eye className="h-3 w-3 text-violet-300/80" />
-                  {formatCount(visitorTotal)} visitors
+                  {formatCount(visitorTotal)} {visitorTotal === 1 ? "visitor" : "visitors"}
                   {visitorsOnline > 0 && (
                     <span className="flex items-center gap-1 ml-1 text-emerald-300/90">
                       <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-pulse" />

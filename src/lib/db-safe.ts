@@ -475,6 +475,24 @@ const TABLE_SPECS: Record<string, TableSpec> = {
       `ALTER TABLE "SiteVisit" ADD COLUMN IF NOT EXISTS "lastSeen" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP`,
     ],
   },
+  // Singleton row (id='global') holding the visitor-counter baseline offset.
+  // Lets the footer counter start at an owner-chosen number (e.g. 14326)
+  // while every subsequent real unique visitor adds exactly +1 on top -
+  // without touching the real per-day SiteVisit rows.
+  SiteVisitMeta: {
+    create: `CREATE TABLE IF NOT EXISTS "SiteVisitMeta" (
+      "id" TEXT NOT NULL,
+      "baselineOffset" INTEGER NOT NULL DEFAULT 0,
+      "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT "SiteVisitMeta_pkey" PRIMARY KEY ("id")
+    )`,
+    indexes: [],
+    constraints: [],
+    addColumns: [
+      `ALTER TABLE "SiteVisitMeta" ADD COLUMN IF NOT EXISTS "baselineOffset" INTEGER NOT NULL DEFAULT 0`,
+      `ALTER TABLE "SiteVisitMeta" ADD COLUMN IF NOT EXISTS "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP`,
+    ],
+  },
 }
 
 const ensured = new Set<string>()
