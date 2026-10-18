@@ -1,5 +1,44 @@
 "use client"
 
+/**
+ * Leads Hub - ONE surface for every lead (unified redesign).
+ *
+ * The former split is gone: "Lead / CRM" (general pipeline) and "Batch
+ * Leads Hub" (per-batch enrollments) are now two segments of this single
+ * view. /admin-batch-hub deep links keep working - they land here with
+ * the Batch Enrollments segment pre-opened (see admin-batch-hub.tsx).
+ *
+ * Segments:
+ *   - Pipeline        general inbound leads (contact form, Google Form,
+ *                     manual, referral) with a drag-and-drop kanban and
+ *                     a full table view.
+ *   - Batch Enrollments  per-batch leads captured by each batch's Google
+ *                     Form + auto-generated Apps Script (see
+ *                     src/views/leads-hub/batch-segment.tsx).
+ *
+ * Capture reliability (why leads were silently lost before):
+ *   - Both webhooks require CRM_WEBHOOK_SECRET. The old default token was
+ *     removed in a security pass, so scripts generated before that fail
+ *     with 401 forever. The "Lead capture webhook" card below shows the
+ *     CURRENT token, can regenerate it, and can fire a one-click test
+ *     lead through the real webhook - no more blind setup.
+ *   - The Batch Calendar opens the per-batch script dialog right after a
+ *     batch is created (LeadCaptureScriptDialog), so the script with the
+ *     correct token is in front of the admin at the exact moment.
+ *
+ * APIs used (all ADMIN-gated unless noted):
+ *   GET    /api/admin/leads                                (pipeline + stats)
+ *   PATCH  /api/admin/leads/[id]                           (status / follow-up / assignment)
+ *   DELETE /api/admin/leads/[id]                           (delete lead)
+ *   POST   /api/admin/leads                                (manual add)
+ *   POST   /api/admin/leads/import                         (CSV rescue)
+ *   GET    /api/admin/leads/webhook-config                 (token + URLs)
+ *   POST   /api/admin/leads/webhook-config                 (rotate token)
+ *   GET    /api/admin/training-batches                     (batches + lead counts)
+ *   ...    per-batch lead endpoints (see leads-hub/batch-segment.tsx)
+ *   POST   /api/crm/webhook, /api/crm/batch-webhook        (PUBLIC - token-gated)
+ */
+
 import * as React from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
@@ -36,19 +75,28 @@ import {
   DialogFooter,
   DialogClose,
 } from "@/components/ui/dialog"
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs"
 import { api } from "@/lib/api"
 import { cn } from "@/lib/utils"
+import { toast } from "sonner"
 import {
   ArrowLeft, Users, TrendingUp, ExternalLink, Mail, Phone,
   Building2, Clock, CheckCircle2, AlertCircle, Search, UserPlus,
   FileText, Sparkles, Target, Plus, X, ChevronRight, Calendar,
-  Star, Link as LinkIcon, ClipboardList, User,
+  Star, Link as LinkIcon, User,
   Zap, Briefcase, GraduationCap, Trophy, Layout as LayoutIcon,
   ListFilter, ArrowRight,
-  Download, Check, Loader2, Upload,
+  Download, Check, Loader2, Upload, Webhook, KeyRound, Send, Trash2,
+  ShieldCheck, ShieldAlert,
 } from "lucide-react"
-import { toast } from "sonner"
+import {
+  type WebhookConfig, useWebhookConfig, sendTestLead, copyText,
+  InfoRow, CopyBtn,
+} from "@/views/leads-hub/shared"
+import { BatchesSegment } from "@/views/leads-hub/batch-segment"
+
+// Re-export so the Batch Calendar can open the capture script dialog
+// right after creating a batch without importing from the shared module.
+export { LeadCaptureScriptDialog } from "@/views/leads-hub/shared"
 
 const PIPELINE_STATUSES = ["New", "Contacted", "Qualified", "Proposal", "Converted", "Lost"] as const
 type PipelineStatus = (typeof PIPELINE_STATUSES)[number]
@@ -128,31 +176,27 @@ interface LeadsResponse {
   }
 }
 
-const GOOGLE_FORM_URL_KEY = "guardianx-crm-google-form-url"
+type HubSegment = "pipeline" | "batches"
 
-export function LeadCrmView() {
+export function LeadCrmView({
+  initialSegment = "pipeline",
+  initialBatchId,
+}: {
+  initialSegment?: HubSegment
+  initialBatchId?: string
+} = {}) {
   const { navigate } = useAppStore()
   const queryClient = useQueryClient()
 
-  const [crmTab, setCrmTab] = React.useState<"general" | "batch">("general")
+  const [segment, setSegment] = React.useState<HubSegment>(initialSegment)
   const [view, setView] = React.useState<"kanban" | "table">("kanban")
   const [search, setSearch] = React.useState("")
   const [sourceFilter, setSourceFilter] = React.useState("all")
   const [selectedLeadId, setSelectedLeadId] = React.useState<string | null>(null)
   const [addLeadOpen, setAddLeadOpen] = React.useState(false)
   const [importOpen, setImportOpen] = React.useState(false)
-  const [googleFormUrl, setGoogleFormUrl] = React.useState("")
-  const [connectFormOpen, setConnectFormOpen] = React.useState(false)
 
-  // Load saved Google Form URL from localStorage on mount
-  React.useEffect(() => {
-    if (typeof window !== "undefined") {
-      const saved = window.localStorage.getItem(GOOGLE_FORM_URL_KEY) || ""
-      setGoogleFormUrl(saved)
-    }
-  }, [])
-
-  // Fetch leads
+  // Fetch pipeline leads
   const { data, isLoading } = useQuery<LeadsResponse>({
     queryKey: ["admin-leads", search, sourceFilter],
     queryFn: async () => {
@@ -204,6 +248,19 @@ export function LeadCrmView() {
       queryClient.invalidateQueries({ queryKey: ["admin-leads"] })
     },
     onError: () => toast.error("Failed to update lead"),
+  })
+
+  const deleteLeadMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const res = await fetch(`/api/admin/leads/${id}`, { method: "DELETE" })
+      if (!res.ok) throw new Error("Failed to delete lead")
+      return res.json()
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["admin-leads"] })
+      toast.success("Lead deleted")
+    },
+    onError: () => toast.error("Failed to delete lead"),
   })
 
   const addNoteMutation = useMutation({
@@ -263,15 +320,6 @@ export function LeadCrmView() {
     toast.success(`${lead.name} → ${newStatus}`)
   }
 
-  function handleSaveGoogleFormUrl(url: string) {
-    if (typeof window !== "undefined") {
-      window.localStorage.setItem(GOOGLE_FORM_URL_KEY, url)
-    }
-    setGoogleFormUrl(url)
-    setConnectFormOpen(false)
-    toast.success(url ? "Google Form connected" : "Google Form disconnected")
-  }
-
   function handleCreateProposal(lead: Lead) {
     // We can't easily pre-fill the proposal view (it's a separate view) - store in sessionStorage
     if (typeof window !== "undefined") {
@@ -315,8 +363,9 @@ export function LeadCrmView() {
               <ArrowLeft className="h-4 w-4 mr-1.5" /> Admin
             </Button>
             <h1 className="text-lg font-bold flex items-center gap-2">
-              <Users className="h-5 w-5 text-amber-400" /> Lead / CRM Pipeline
+              <Users className="h-5 w-5 text-amber-400" /> Leads Hub
             </h1>
+            <WebhookStatusChip />
           </div>
           <div className="flex items-center gap-2 flex-wrap">
             <Button size="sm" variant="outline" onClick={() => setView(view === "kanban" ? "table" : "kanban")}>
@@ -333,37 +382,38 @@ export function LeadCrmView() {
         </div>
       </div>
 
-      {/* Tab toggle: General Pipeline vs Batch Leads */}
+      {/* Segment toggle: Pipeline vs Batch Enrollments */}
       <div className="border-b border-border/40 bg-card/40">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex gap-1">
             <button
-              onClick={() => setCrmTab("general")}
+              onClick={() => setSegment("pipeline")}
               className={cn(
                 "px-4 py-2.5 text-sm font-medium border-b-2 transition-colors",
-                crmTab === "general"
+                segment === "pipeline"
                   ? "border-violet-500 text-violet-300"
                   : "border-transparent text-muted-foreground hover:text-foreground"
               )}
             >
-              <Users className="h-3.5 w-3.5 inline mr-1.5" /> General Pipeline
+              <Users className="h-3.5 w-3.5 inline mr-1.5" /> Pipeline
+              <Badge variant="outline" className="ml-2 text-[9px] font-mono">{stats.total}</Badge>
             </button>
             <button
-              onClick={() => setCrmTab("batch")}
+              onClick={() => setSegment("batches")}
               className={cn(
                 "px-4 py-2.5 text-sm font-medium border-b-2 transition-colors",
-                crmTab === "batch"
+                segment === "batches"
                   ? "border-violet-500 text-violet-300"
                   : "border-transparent text-muted-foreground hover:text-foreground"
               )}
             >
-              <Calendar className="h-3.5 w-3.5 inline mr-1.5" /> Batch Leads
+              <LayoutIcon className="h-3.5 w-3.5 inline mr-1.5" /> Batch Enrollments
             </button>
           </div>
         </div>
       </div>
 
-      {crmTab === "general" ? (
+      {segment === "pipeline" ? (
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6 space-y-6">
         {/* Quick stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -373,101 +423,8 @@ export function LeadCrmView() {
           <StatCard icon={Sparkles} label="New This Month" value={stats.newThisMonth} color="text-cyan-300" tint="bg-cyan-500/10" />
         </div>
 
-        {/* Google Forms integration */}
-        <Card className="p-5 card-premium border-violet-500/20">
-          <div className="flex items-start gap-3 flex-wrap sm:flex-nowrap">
-            <div className="inline-flex p-2.5 rounded-lg bg-violet-500/10">
-              <ExternalLink className="h-5 w-5 text-violet-300" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <h3 className="font-semibold text-sm mb-1 flex items-center gap-2">
-                Google Forms Integration
-                {googleFormUrl && (
-                  <Badge className="bg-emerald-500/10 text-emerald-300 border border-emerald-500/30 text-[9px]">
-                    <CheckCircle2 className="h-3 w-3 mr-1" /> Connected
-                  </Badge>
-                )}
-              </h3>
-              <p className="text-xs text-muted-foreground mb-3">
-                Create a Google Form for lead capture. Responses sync automatically to this CRM
-                via Google Apps Script webhook - no manual entry needed.
-              </p>
-
-              {/* Webhook URL */}
-              <div className="mb-3 p-3 rounded-lg bg-muted/30 border border-border/40">
-                <div className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider mb-1">WEBHOOK URL</div>
-                <div className="flex items-center gap-2">
-                  <code className="text-xs text-violet-300 font-mono break-all flex-1">
-                    {typeof window !== "undefined" ? window.location.origin : ""}/api/crm/webhook
-                  </code>
-                  <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => {
-                    navigator.clipboard?.writeText(`${window.location.origin}/api/crm/webhook`)
-                    toast.success("Webhook URL copied!")
-                  }}>
-                    Copy
-                  </Button>
-                </div>
-                <div className="text-[10px] font-mono text-muted-foreground mt-2">
-                  TOKEN: <span className="text-cyan-300">set in Admin → Settings → CRM Webhook</span>
-                  <span className="block mt-1 text-amber-300/80">
-                    The server REJECTS requests with any other token - the old hardcoded default was removed for security.
-                  </span>
-                </div>
-              </div>
-
-              {/* Setup instructions */}
-              <details className="mb-3">
-                <summary className="text-xs text-violet-300 cursor-pointer hover:underline">
-                  How to set up Google Forms webhook →
-                </summary>
-                <div className="mt-2 p-3 rounded-lg bg-muted/20 border border-border/30 text-xs text-muted-foreground space-y-1.5">
-                  <p><span className="font-bold text-violet-300">1.</span> Create a Google Form at <a href="https://forms.new" target="_blank" rel="noreferrer" className="text-violet-300 underline">forms.new</a></p>
-                  <p><span className="font-bold text-violet-300">2.</span> Add questions: Name, Email, Phone, Organization, Type, Requirement, Message</p>
-                  <p><span className="font-bold text-violet-300">3.</span> In Google Form → 3-dot menu → Script Editor</p>
-                  <p><span className="font-bold text-violet-300">4.</span> Delete default code, paste the GuardianX webhook script</p>
-                  <p><span className="font-bold text-violet-300">5.</span> Click Run → "setupTriggers" and grant permissions</p>
-                  <p><span className="font-bold text-violet-300">6.</span> Form responses now auto-sync to this CRM!</p>
-                  <a href="/google-forms-webhook.js" target="_blank" rel="noreferrer" className="inline-block mt-2">
-                    <Button size="sm" variant="outline" className="text-xs">
-                      <FileText className="h-3 w-3 mr-1" /> View Apps Script Code
-                    </Button>
-                  </a>
-                </div>
-              </details>
-
-              <div className="flex flex-wrap items-center gap-2">
-                <a href="https://forms.new" target="_blank" rel="noreferrer">
-                  <Button size="sm" className="bg-violet-600 hover:bg-violet-500 btn-premium">
-                    <Plus className="h-3.5 w-3.5 mr-1.5" /> Create Lead Form
-                  </Button>
-                </a>
-                <Button size="sm" variant="outline" onClick={() => setConnectFormOpen(true)}>
-                  <LinkIcon className="h-3.5 w-3.5 mr-1.5" /> Connect Form URL
-                </Button>
-                {googleFormUrl && (
-                  <>
-                    <a href={googleFormUrl} target="_blank" rel="noreferrer">
-                      <Button size="sm" variant="outline">
-                        <ExternalLink className="h-3.5 w-3.5 mr-1.5" /> View Form
-                      </Button>
-                    </a>
-                    <a href={`${googleFormUrl.replace(/\/viewform.*$/, "")}/responses`} target="_blank" rel="noreferrer">
-                      <Button size="sm" variant="ghost">
-                        <ClipboardList className="h-3.5 w-3.5 mr-1.5" /> View Responses
-                      </Button>
-                    </a>
-                  </>
-                )}
-              </div>
-              {googleFormUrl && (
-                <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground">
-                  <LinkIcon className="h-3 w-3" />
-                  <span className="font-mono truncate">{googleFormUrl}</span>
-                </div>
-              )}
-            </div>
-          </div>
-        </Card>
+        {/* Lead capture webhook - the fix for silently lost leads */}
+        <WebhookCaptureCard />
 
         {/* Filters */}
         <div className="flex items-center gap-3 flex-wrap">
@@ -550,8 +507,8 @@ export function LeadCrmView() {
                       <td colSpan={8} className="py-10 text-center">
                         <p className="text-muted-foreground font-medium mb-2">No leads found.</p>
                         <p className="text-xs text-muted-foreground/80 max-w-md mx-auto mb-4">
-                          Google Form responses sync automatically once the webhook token is set (Admin → Settings → CRM Webhook).
-                          Already have responses? Rescue them now - download the Form's responses CSV and use <span className="font-semibold text-violet-300">Import CSV</span> above.
+                          Google Form responses sync automatically once the webhook token is configured (the card above shows it).
+                          Already have responses? Rescue them now - download the Form&apos;s responses CSV and use <span className="font-semibold text-violet-300">Import CSV</span> above.
                         </p>
                         <Button size="sm" variant="outline" onClick={() => setImportOpen(true)}>
                           <Upload className="h-3.5 w-3.5 mr-1.5" /> Import existing responses
@@ -583,25 +540,9 @@ export function LeadCrmView() {
         )}
       </div>
       ) : (
-        /* Batch Leads moved to the dedicated Batch Leads Hub - every batch
-           now has its own screen with its leads + copy-paste Apps Script. */
+        /* Batch Enrollments - former standalone Batch Leads Hub, now inline. */
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-6">
-          <div className="rounded-2xl border border-violet-500/30 bg-violet-500/5 p-8 flex flex-col items-center text-center max-w-xl mx-auto">
-            <div className="flex items-center justify-center w-12 h-12 rounded-2xl bg-violet-500/15 text-violet-300 mb-4">
-              <LayoutIcon className="h-6 w-6" />
-            </div>
-            <h3 className="text-base font-semibold">Batch Leads have a new home</h3>
-            <p className="text-xs text-muted-foreground mt-1.5 max-w-sm">
-              Every batch now gets its own screen with its captured leads, pipeline stats, CSV export and the copy-paste Google Apps Script - all in the Batch Leads Hub.
-            </p>
-            <Button
-              onClick={() => navigate({ name: "admin-batch-hub" })}
-              className="mt-5 bg-gradient-to-r from-violet-600 to-violet-500 text-white"
-              size="sm"
-            >
-              <LayoutIcon className="h-3.5 w-3.5 mr-1.5" /> Open Batch Leads Hub <ArrowRight className="h-3.5 w-3.5 ml-1" />
-            </Button>
-          </div>
+          <BatchesSegment initialBatchId={initialBatchId} />
         </div>
       )}
 
@@ -612,6 +553,7 @@ export function LeadCrmView() {
         onOpenChange={(open) => !open && setSelectedLeadId(null)}
         onUpdate={(payload) => selectedLead && updateLeadMutation.mutate({ id: selectedLead.id, payload })}
         onAddNote={(content) => selectedLead && addNoteMutation.mutate({ leadId: selectedLead.id, content })}
+        onDelete={(id) => { setSelectedLeadId(null); deleteLeadMutation.mutate(id) }}
         onCreateProposal={handleCreateProposal}
         onCreateInvoice={handleCreateInvoice}
       />
@@ -619,15 +561,189 @@ export function LeadCrmView() {
       {/* === ADD LEAD DIALOG === */}
       <AddLeadDialog open={addLeadOpen} onOpenChange={setAddLeadOpen} onCreate={(payload) => createLeadMutation.mutate(payload)} />
       <CsvImportDialog open={importOpen} onOpenChange={setImportOpen} />
-
-      {/* === CONNECT GOOGLE FORM DIALOG === */}
-      <ConnectFormDialog open={connectFormOpen} onOpenChange={setConnectFormOpen} initialUrl={googleFormUrl} onSave={handleSaveGoogleFormUrl} />
     </div>
   )
 }
 
+/* ============================================================
+   WebhookStatusChip - tiny header indicator.
+   ============================================================ */
+function WebhookStatusChip() {
+  const { data: config, isLoading } = useWebhookConfig()
+  if (isLoading) return null
+  if (!config) return null
+  return config.configured ? (
+    <Badge variant="outline" className="text-[9px] border-emerald-500/30 bg-emerald-500/10 text-emerald-300">
+      <ShieldCheck className="h-3 w-3 mr-1" /> webhook ready
+    </Badge>
+  ) : (
+    <Badge variant="outline" className="text-[9px] border-amber-500/30 bg-amber-500/10 text-amber-300">
+      <ShieldAlert className="h-3 w-3 mr-1" /> webhook not configured
+    </Badge>
+  )
+}
+
+/* ============================================================
+   WebhookCaptureCard - the fix for "why are we not capturing leads".
+
+   Shows the CURRENT webhook token (admins only), can rotate it, and
+   can fire a marked test lead through the real general webhook so the
+   whole chain is verifiable in one click. Historical root cause: the
+   original default token was removed in a security pass, so any Apps
+   Script generated before that posts with a dead token and every
+   submission bounced with 401 - silently, inside the script's logger.
+   ============================================================ */
+function WebhookCaptureCard() {
+  const queryClient = useQueryClient()
+  const { data: config, isLoading } = useWebhookConfig()
+  const [revealed, setRevealed] = React.useState(false)
+  const [testing, setTesting] = React.useState(false)
+
+  const rotateMutation = useMutation({
+    mutationFn: async () => {
+      return api("/api/admin/leads/webhook-config", {
+        method: "POST",
+        body: JSON.stringify({ action: "regenerate" }),
+      }) as Promise<{ ok: boolean; token: string }>
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["leads-hub"] })
+      toast.success("New token generated - use it in your Apps Scripts (old scripts will stop working)")
+    },
+    onError: (e: any) => toast.error(e?.message || "Failed to generate token"),
+  })
+
+  const handleTest = async () => {
+    if (!config?.token) return
+    setTesting(true)
+    try {
+      const r = await sendTestLead(config.webhookUrl, config.token, {
+        name: `[TEST] General capture ${new Date().toLocaleTimeString("en-IN")}`,
+        email: "capture-test@guardianx.test",
+        phone: "+91 99999 99999",
+        organization: "Webhook Test",
+        type: "Individual",
+        requirement: "Sent from the Leads Hub webhook test button - safe to delete.",
+      })
+      if (r.ok) {
+        toast.success("Test lead delivered! It is now in the Pipeline (marked [TEST] - open it and delete).")
+        queryClient.invalidateQueries({ queryKey: ["admin-leads"] })
+      } else {
+        toast.error(`Webhook replied ${r.status}: ${(r.body as any).error || "failed"}`)
+      }
+    } catch (e: any) {
+      toast.error(e?.message || "Test request failed")
+    } finally {
+      setTesting(false)
+    }
+  }
+
+  return (
+    <Card className="p-5 card-premium border-violet-500/20">
+      <div className="flex items-start gap-3 flex-wrap">
+        <div className="inline-flex p-2.5 rounded-lg bg-violet-500/10">
+          <Webhook className="h-5 w-5 text-violet-300" />
+        </div>
+        <div className="flex-1 min-w-0 space-y-3">
+          <div>
+            <h3 className="font-semibold text-sm flex items-center gap-2 flex-wrap">
+              Lead capture webhook
+              {isLoading ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+              ) : config?.configured ? (
+                <Badge variant="outline" className="text-[9px] border-emerald-500/30 bg-emerald-500/10 text-emerald-300">
+                  <CheckCircle2 className="h-3 w-3 mr-1" /> configured
+                </Badge>
+              ) : (
+                <Badge variant="outline" className="text-[9px] border-amber-500/30 bg-amber-500/10 text-amber-300">
+                  <AlertCircle className="h-3 w-3 mr-1" /> not configured - Google Form scripts cannot work until it is
+                </Badge>
+              )}
+            </h3>
+            <p className="text-xs text-muted-foreground mt-1">
+              Every Google Form script must carry THIS token. Scripts generated before the security pass carry a removed
+              default and bounce with 401 - regenerate them from the Batch Enrollments tab after rotating the token here.
+              Per-batch scripts live in the <span className="text-violet-300 font-medium">Batch Enrollments</span> segment.
+            </p>
+          </div>
+
+          {/* Webhook URL + token rows */}
+          {!isLoading && config && (
+            <div className="grid gap-2 md:grid-cols-2">
+              <div className="p-3 rounded-lg bg-muted/30 border border-border/40">
+                <div className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider mb-1">GENERAL WEBHOOK URL</div>
+                <div className="flex items-center gap-2">
+                  <code className="text-[11px] text-violet-300 font-mono break-all flex-1">{config.webhookUrl}</code>
+                  <CopyBtn text={config.webhookUrl} label="Copy" size="sm" />
+                </div>
+              </div>
+              <div className="p-3 rounded-lg bg-muted/30 border border-border/40">
+                <div className="text-[10px] font-mono text-muted-foreground uppercase tracking-wider mb-1">TOKEN (paste into scripts)</div>
+                <div className="flex items-center gap-2">
+                  <code className="text-[11px] text-cyan-300 font-mono break-all flex-1">
+                    {config.token ? (revealed ? config.token : `${config.token.slice(0, 4)}${"•".repeat(Math.max(config.token.length - 8, 0))}${config.token.slice(-4)}`) : "-"}
+                  </code>
+                  {config.token && (
+                    <>
+                      <Button size="sm" variant="ghost" className="h-7 px-2 text-xs" onClick={() => setRevealed((r) => !r)}>
+                        {revealed ? "Hide" : "Reveal"}
+                      </Button>
+                      <CopyBtn text={config.token} label="Copy" copiedLabel="Token copied" size="sm" />
+                    </>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Actions */}
+          <div className="flex flex-wrap items-center gap-2">
+            {config?.configured ? (
+              <>
+                <Button size="sm" onClick={handleTest} disabled={testing} className="bg-emerald-600 hover:bg-emerald-500 btn-premium">
+                  {testing ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Send className="h-3.5 w-3.5 mr-1.5" />}
+                  Send test lead
+                </Button>
+                <CopyBtn
+                  text={`function onFormSubmit(e) {\n  var payload = {\n    token: "${config?.token ?? "TOKEN"}",\n    lead: {\n      name: e.values[1],\n      email: e.values[2],\n      phone: e.values[3],\n      organization: e.values[4],\n      requirement: e.values[5]\n    }\n  };\n  UrlFetchApp.fetch("${config?.webhookUrl ?? ""}", {\n    method: "post",\n    contentType: "application/json",\n    payload: JSON.stringify(payload),\n    muteHttpExceptions: true\n  });\n}\n\nfunction setupTriggers() {\n  ScriptApp.newTrigger("onFormSubmit").forForm(FormApp.getActiveForm()).onFormSubmit().create();\n}`}
+                  label="Copy general Apps Script"
+                  copiedLabel="Script copied - paste into your form's Script Editor, then run setupTriggers once"
+                />
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="text-rose-300 hover:text-rose-200 hover:bg-rose-500/10"
+                  disabled={rotateMutation.isPending}
+                  onClick={() => {
+                    if (confirm("Rotate the webhook token? Existing Google Form scripts will STOP capturing (401) until you regenerate and re-paste them. Continue?")) {
+                      rotateMutation.mutate()
+                    }
+                  }}
+                >
+                  {rotateMutation.isPending ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <KeyRound className="h-3.5 w-3.5 mr-1.5" />}
+                  Rotate token
+                </Button>
+                <a href="https://forms.new" target="_blank" rel="noreferrer">
+                  <Button size="sm" variant="outline">
+                    <Plus className="h-3.5 w-3.5 mr-1.5" /> New lead form
+                  </Button>
+                </a>
+              </>
+            ) : (
+              <Button size="sm" onClick={() => rotateMutation.mutate()} disabled={rotateMutation.isPending} className="bg-violet-600 hover:bg-violet-500 btn-premium">
+                {rotateMutation.isPending ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <KeyRound className="h-3.5 w-3.5 mr-1.5" />}
+                Generate webhook token
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+    </Card>
+  )
+}
+
 // ============================================================
-// Subcomponents
+// Subcomponents (pipeline segment)
 // ============================================================
 
 function StatCard({ icon: Icon, label, value, color, tint }: { icon: React.ElementType; label: string; value: string | number; color: string; tint: string }) {
@@ -775,12 +891,16 @@ function LeadCard({ lead, compact, dragging }: { lead: Lead; compact?: boolean; 
   )
 }
 
+/* ============================================================
+   LEAD DETAIL DIALOG (+ delete - needed to clean up [TEST] leads)
+   ============================================================ */
 function LeadDetailDialog({
   lead,
   open,
   onOpenChange,
   onUpdate,
   onAddNote,
+  onDelete,
   onCreateProposal,
   onCreateInvoice,
 }: {
@@ -789,6 +909,7 @@ function LeadDetailDialog({
   onOpenChange: (open: boolean) => void
   onUpdate: (payload: Record<string, unknown>) => void
   onAddNote: (content: string) => void
+  onDelete: (id: string) => void
   onCreateProposal: (lead: Lead) => void
   onCreateInvoice: (lead: Lead) => void
 }) {
@@ -838,7 +959,7 @@ function LeadDetailDialog({
           {/* Contact info */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <InfoRow icon={Building2} label="Organization" value={lead.organization || "-"} />
-            <InfoRow icon={Mail} label="Email" value={lead.email || "-"} />
+            <InfoRow icon={Mail} label="Email" value={lead.email || "-"} link={lead.email ? `mailto:${lead.email}` : undefined} />
             <InfoRow icon={Phone} label="Phone" value={lead.phone || "-"} />
             <InfoRow icon={Calendar} label="Created" value={new Date(lead.createdAt).toLocaleDateString("en-IN", { day: "numeric", month: "long", year: "numeric" })} />
           </div>
@@ -943,6 +1064,16 @@ function LeadDetailDialog({
                 <Button size="sm" variant="ghost"><Mail className="h-3.5 w-3.5 mr-1.5" /> Email</Button>
               </a>
             )}
+            <Button
+              size="sm"
+              variant="ghost"
+              className="ml-auto text-rose-400 hover:text-rose-300 hover:bg-rose-500/10"
+              onClick={() => {
+                if (confirm(`Delete lead "${lead.name}"? This cannot be undone.`)) onDelete(lead.id)
+              }}
+            >
+              <Trash2 className="h-3.5 w-3.5 mr-1.5" /> Delete
+            </Button>
           </div>
         </div>
 
@@ -956,17 +1087,9 @@ function LeadDetailDialog({
   )
 }
 
-function InfoRow({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: string }) {
-  return (
-    <div className="rounded-lg border border-border/40 bg-card/40 p-3">
-      <p className="text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1 mb-0.5">
-        <Icon className="h-3 w-3" /> {label}
-      </p>
-      <p className="text-sm font-medium truncate">{value}</p>
-    </div>
-  )
-}
-
+/* ============================================================
+   ADD LEAD DIALOG
+   ============================================================ */
 function AddLeadDialog({
   open,
   onOpenChange,
@@ -1169,73 +1292,6 @@ function CsvImportDialog({
           <Button onClick={doImport} disabled={busy || !csvText.trim()} className="bg-violet-600 hover:bg-violet-500">
             {busy ? <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> : <Upload className="h-3.5 w-3.5 mr-1.5" />}
             Import Leads
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  )
-}
-
-function ConnectFormDialog({
-  open,
-  onOpenChange,
-  initialUrl,
-  onSave,
-}: {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  initialUrl: string
-  onSave: (url: string) => void
-}) {
-  const [url, setUrl] = React.useState(initialUrl)
-
-  React.useEffect(() => {
-    setUrl(initialUrl)
-  }, [initialUrl])
-
-  return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Connect Google Form</DialogTitle>
-        </DialogHeader>
-        <div className="space-y-3">
-          <p className="text-xs text-muted-foreground">
-            Paste your Google Form URL below. Leads submitted through this form will be tracked
-            in this CRM. You can also create a new form at{" "}
-            <a href="https://forms.new" target="_blank" rel="noreferrer" className="text-violet-300 underline">
-              forms.new
-            </a>
-            .
-          </p>
-          <div>
-            <Label className="text-xs">Google Form URL</Label>
-            <Input
-              value={url}
-              onChange={(e) => setUrl(e.target.value)}
-              placeholder="https://docs.google.com/forms/d/..."
-              className="font-mono text-xs"
-            />
-          </div>
-          <div className="rounded-lg border border-violet-500/20 bg-violet-500/5 p-3">
-            <p className="text-[10px] text-muted-foreground flex items-start gap-1.5">
-              <Sparkles className="h-3.5 w-3.5 text-violet-300 shrink-0 mt-0.5" />
-              <span>
-                Tip: Set up a Google Apps Script webhook to automatically sync form responses
-                to GuardianX, or paste them manually here using the &quot;Add Lead&quot; button.
-              </span>
-            </p>
-          </div>
-        </div>
-        <DialogFooter>
-          {initialUrl && (
-            <Button variant="ghost" onClick={() => onSave("")} className="mr-auto text-rose-300">
-              Disconnect
-            </Button>
-          )}
-          <DialogClose asChild><Button variant="outline">Cancel</Button></DialogClose>
-          <Button onClick={() => onSave(url.trim())} className="bg-violet-600 hover:bg-violet-500">
-            <LinkIcon className="h-3.5 w-3.5 mr-1.5" /> Connect
           </Button>
         </DialogFooter>
       </DialogContent>

@@ -22,6 +22,7 @@ export const runtime = "nodejs"
  *   3. LinkedIn profile link
  *   4. Current professional status
  *   5. Current job role or designation
+ *   6. Email address (optional - enables the confirmation email)
  */
 export const GET = withErrorHandler(async (req: NextRequest, { params }: { params: Promise<{ id: string }> }) => {
   const currentUser = await requireAdmin()
@@ -53,6 +54,7 @@ export const GET = withErrorHandler(async (req: NextRequest, { params }: { param
     "LinkedIn profile link",
     "Current professional status",
     "Current job role or designation",
+    "Email address (optional)",
   ]
 
   // Build the Apps Script content with the batch values baked in
@@ -72,9 +74,12 @@ export const GET = withErrorHandler(async (req: NextRequest, { params }: { param
  * 3. In your Google Form, click the 3-dot menu → Script Editor
  * 4. Delete the default code and paste this entire script
  * 5. Click the "Save" icon
- * 6. Click "Run" → "setupTriggers" and grant permissions
- * 7. Your form responses will now automatically sync to this batch's leads
- * 8. Copy the Google Form URL and paste it into the batch's "Google Form URL"
+ * 6. Click "Run" → "setupTriggers" and grant permissions  (MANDATORY -
+ *    without the trigger, submissions are never sent!)
+ * 7. Optional: run "testWebhook" once - a test lead should appear in
+ *    the GuardianX Leads Hub for this batch
+ * 8. Your form responses will now automatically sync to this batch's leads
+ * 9. Copy the Google Form URL and paste it into the batch's "Google Form URL"
  *    field in the GuardianX admin panel
  *
  * WEBHOOK URL: ${webhookUrl}
@@ -111,6 +116,7 @@ function onFormSubmit(e) {
       certification: BATCH_CERT,
       name: "",
       whatsappNumber: "",
+      email: "",
       linkedinProfile: "",
       professionalStatus: "",
       jobRole: ""
@@ -123,8 +129,10 @@ function onFormSubmit(e) {
 
       if (question.indexOf("name") !== -1) {
         lead.name = answer;
-      } else if (question.indexOf("whatsapp") !== -1 || (question.indexOf("phone") !== -1 && question.indexOf("country") !== -1)) {
+      } else if (question.indexOf("whatsapp") !== -1 || question.indexOf("phone") !== -1 || question.indexOf("mobile") !== -1) {
         lead.whatsappNumber = answer;
+      } else if (question.indexOf("email") !== -1) {
+        lead.email = answer;
       } else if (question.indexOf("linkedin") !== -1) {
         lead.linkedinProfile = answer;
       } else if (question.indexOf("professional status") !== -1 || question.indexOf("status") !== -1) {
@@ -165,6 +173,7 @@ function testWebhook() {
     certification: BATCH_CERT,
     name: "Test Lead",
     whatsappNumber: "+91 98765 43210",
+    email: "test@example.com",
     linkedinProfile: "https://linkedin.com/in/test",
     professionalStatus: "Working Professional",
     jobRole: "Software Engineer"

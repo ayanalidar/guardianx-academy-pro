@@ -1904,6 +1904,7 @@ model BatchLead {
   // ── Form fields (the 5 questions on the Google Form) ──
   name               String
   whatsappNumber     String              // with country code
+  email              String?             // optional - newer forms may collect it
   linkedinProfile    String?             // LinkedIn URL
   professionalStatus String?             // Student | Working Professional | Freelancer | Job Seeker | Other
   jobRole            String?             // current designation

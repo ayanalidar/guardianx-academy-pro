@@ -1,70 +1,67 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
 import { getSetting } from "@/lib/settings"
-import { ensureTable } from "@/lib/db-safe"
+import { ensureTable, isDriftError } from "@/lib/db-safe"
+import { parseBodyLoose, extractWebhookToken, normalizeLeadFields } from "@/lib/webhook-parse"
 
 export const runtime = "nodejs"
 
-/**
- * POST /api/crm/webhook
- * 
- * Google Apps Script webhook receiver.
- * When a Google Form is submitted, the Apps Script sends the response here.
- * 
- * No auth required - the webhook URL contains a secret token for security.
- * 
- * Expected body shape (from Google Apps Script):
- * {
- *   "token": "your-webhook-secret",
- *   "formId": "form-id-from-google",
- *   "lead": {
- *     "name": "John Doe",
- *     "email": "john@example.com",
- *     "phone": "+91 XXXXX XXXXX",
- *     "organization": "Delhi Public School",
- *     "type": "School",
- *     "requirement": "Cybersecurity training for grades 9-12",
- *     "message": "Additional details..."
- *   }
- * }
- */
+/* ============================================================
+   POST /api/crm/webhook - general lead capture (Google Apps Script).
+
+   Accepts (in order of preference):
+     - JSON body { token, formId, lead: { name, email, phone, ... } }
+     - JSON body with the fields flat at the top level
+     - application/x-www-form-urlencoded posts (Apps Script default)
+     - positional e.values arrays (body.values or body.lead as array)
+   Token may come from body.token, the x-webhook-token header, or ?token=.
+   Common field aliases (WhatsApp/phone/mobile, fullName/name, ...) are
+   mapped automatically - see src/lib/webhook-parse.ts.
+
+   Leads are deduped by email below; the requirement/message lands as the
+   first note. The Leads Hub (Admin → Leads Hub) shows the current token
+   and can test this endpoint with one click.
+   ============================================================ */
+
 export async function POST(req: NextRequest) {
+  const body = await parseBodyLoose(req)
+  if (!body) {
+    return NextResponse.json({ error: "Invalid body - send JSON or form data" }, { status: 400 })
+  }
+
+  // SECURITY: verify the webhook secret. There is NO hardcoded fallback -
+  // the previous default ("guardianx-crm-webhook-2025") was shipped in a
+  // public file and let anyone inject leads / email-bomb admins.
+  // Set CRM_WEBHOOK_SECRET (env or Platform Settings). The Leads Hub shows
+  // it to admins and bakes it into every generated Apps Script.
+  const { timingSafeEqual } = await import("crypto")
+  const webhookSecret = await getSetting("CRM_WEBHOOK_SECRET")
+  if (!webhookSecret) {
+    console.error("[crm/webhook] CRM_WEBHOOK_SECRET not configured - rejecting webhook")
+    return NextResponse.json({ error: "Webhook not configured" }, { status: 503 })
+  }
+  const provided = extractWebhookToken(req, body)
+  const a = Buffer.from(webhookSecret)
+  const b = Buffer.from(provided)
+  if (a.length !== b.length || !timingSafeEqual(a, b)) {
+    console.error("[crm/webhook] rejected: invalid webhook token")
+    return NextResponse.json({ error: "Invalid webhook token - copy the current token from the Leads Hub capture card" }, { status: 401 })
+  }
+  // Rate limit per IP (spam/DoS protection on an unauthenticated endpoint)
+  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown"
+  const { rateLimit } = await import("@/lib/session")
+  if (!rateLimit(`crm-webhook:${ip}`, { max: 30, windowMs: 60 * 1000 })) {
+    return NextResponse.json({ error: "Too many requests" }, { status: 429 })
+  }
+
+  // Normalize whatever shape arrived into a lead-shaped object.
+  const lead = normalizeLeadFields(body)
+
+  if (!lead.name && !lead.email) {
+    return NextResponse.json({ error: "At least name or email required" }, { status: 400 })
+  }
+
   try {
-    const body = await req.json().catch(() => null)
-    if (!body) {
-      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
-    }
-
-    // SECURITY: verify the webhook secret. There is NO hardcoded fallback - 
-    // the previous default ("guardianx-crm-webhook-2025") was shipped in a
-    // public file and let anyone inject leads / email-bomb admins.
-    // Set CRM_WEBHOOK_SECRET (env or Platform Settings) and share it with
-    // the Google Apps Script out-of-band.
-    const { timingSafeEqual } = await import("crypto")
-    const webhookSecret = await getSetting("CRM_WEBHOOK_SECRET")
-    if (!webhookSecret) {
-      console.error("[crm/webhook] CRM_WEBHOOK_SECRET not configured - rejecting webhook")
-      return NextResponse.json({ error: "Webhook not configured" }, { status: 503 })
-    }
-    const provided = typeof body.token === "string" ? body.token : ""
-    const a = Buffer.from(webhookSecret)
-    const b = Buffer.from(provided)
-    if (a.length !== b.length || !timingSafeEqual(a, b)) {
-      return NextResponse.json({ error: "Invalid webhook token" }, { status: 401 })
-    }
-    // Rate limit per IP (spam/DoS protection on an unauthenticated endpoint)
-    const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown"
-    const { rateLimit } = await import("@/lib/session")
-    if (!rateLimit(`crm-webhook:${ip}`, { max: 30, windowMs: 60 * 1000 })) {
-      return NextResponse.json({ error: "Too many requests" }, { status: 429 })
-    }
-
-    const lead = body.lead || body
-
-    if (!lead.name && !lead.email) {
-      return NextResponse.json({ error: "At least name or email required" }, { status: 400 })
-    }
-
     // Self-heal the CRM trio so writes below can't fail on schema drift
     // (memoized per instance - a no-op after the first call).
     try {
@@ -76,8 +73,8 @@ export async function POST(req: NextRequest) {
     }
 
     // Determine lead type and score
-    const leadType = lead.type || lead.organization_type || "Individual"
-    const score = calculateLeadScore(leadType, lead.requirement || lead.message || "")
+    const leadType = lead.type || "Individual"
+    const score = calculateLeadScore(leadType, lead.requirement || "")
 
     // Check if lead already exists (by email)
     const existing = lead.email
@@ -105,6 +102,7 @@ export async function POST(req: NextRequest) {
         },
       }).catch((err) => console.error("[crm/webhook] history write failed (lead updated ok):", err))
 
+      console.log(`[crm/webhook] lead updated: ${updated.name} (${updated.id})`)
       return NextResponse.json({ success: true, action: "updated", leadId: existing.id })
     }
 
@@ -112,7 +110,7 @@ export async function POST(req: NextRequest) {
     const newLead = await db.lead.create({
       data: {
         name: lead.name || "Unknown",
-        email: (lead.email || "").toLowerCase() || null,
+        email: lead.email.toLowerCase() || null,
         phone: lead.phone || null,
         organization: lead.organization || null,
         type: leadType,
@@ -123,12 +121,11 @@ export async function POST(req: NextRequest) {
     })
 
     // Add the requirement/message as a note
-    const requirementText = lead.requirement || lead.message
-    if (requirementText) {
+    if (lead.requirement) {
       await db.leadNote.create({
         data: {
           leadId: newLead.id,
-          content: requirementText,
+          content: lead.requirement,
           authorId: null,
         },
       }).catch((err) => console.error("[crm/webhook] note write failed (lead created ok):", err))
@@ -142,11 +139,18 @@ export async function POST(req: NextRequest) {
       },
     }).catch((err) => console.error("[crm/webhook] history write failed (lead created ok):", err))
 
+    console.log(`[crm/webhook] lead captured: ${newLead.name} (${newLead.id})`)
     return NextResponse.json({ success: true, action: "created", leadId: newLead.id }, { status: 201 })
   } catch (err) {
     console.error("[crm/webhook] error:", err)
     return NextResponse.json({ error: "Webhook processing failed" }, { status: 500 })
   }
+}
+
+// Health/debug probe: confirms reachability without touching the DB.
+export async function GET() {
+  const webhookSecret = await getSetting("CRM_WEBHOOK_SECRET")
+  return NextResponse.json({ ok: true, webhook: "crm", configured: !!webhookSecret, hint: "POST the lead payload with the CRM_WEBHOOK_SECRET token" })
 }
 
 function calculateLeadScore(type: string, requirement: string): number {

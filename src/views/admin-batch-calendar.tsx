@@ -18,9 +18,10 @@ import { cn } from "@/lib/utils"
 import { useUser } from "@/hooks/use-user"
 import {
   ArrowLeft, BookOpen, Calendar, ChevronLeft, ChevronRight, Clock,
-  Users, Video, MapPin, User, Plus, Pencil, Trash2, X, Loader2, AlertTriangle,
+  Users, Video, MapPin, User, Plus, Pencil, Trash2, X, Loader2, AlertTriangle, FileCode,
 } from "lucide-react"
 import { toast } from "sonner"
+import { LeadCaptureScriptDialog } from "@/views/leads-hub/shared"
 
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"]
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
@@ -204,6 +205,8 @@ export function BatchCalendarView() {
   const [currentDate, setCurrentDate] = React.useState(new Date())
   const [view, setView] = React.useState<"month" | "week">("month")
   const [selectedBatch, setSelectedBatch] = React.useState<TrainingBatch | null>(null)
+  // Batch whose auto-generated lead-capture script dialog is open.
+  const [scriptBatch, setScriptBatch] = React.useState<TrainingBatch | null>(null)
   const [createOpen, setCreateOpen] = React.useState(false)
   const [editOpen, setEditOpen] = React.useState(false)
   const [editingBatch, setEditingBatch] = React.useState<TrainingBatch | null>(null)
@@ -312,10 +315,15 @@ export function BatchCalendarView() {
         const e = await res.json().catch(() => ({}))
         throw new Error(e.error || "Failed to create batch")
       }
+      const j = await res.json().catch(() => ({} as any))
       toast.success("Batch created successfully")
       invalidateAll()
       setCreateOpen(false)
       setForm(emptyForm())
+      // Lead capture: put the auto-generated Apps Script in front of the
+      // admin immediately - copy it into the batch's Google Form and every
+      // submission lands in the Leads Hub for this batch.
+      if (j?.batch?.id) setScriptBatch(j.batch)
     } catch (e: any) {
       toast.error(e.message || "Failed to create batch")
     } finally {
@@ -641,6 +649,15 @@ export function BatchCalendarView() {
                       >
                         <Pencil className="h-3 w-3 mr-1" /> Edit
                       </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 text-xs border-violet-500/30 text-violet-300 hover:bg-violet-500/10"
+                        title="Copy this batch's Google Form lead-capture script"
+                        onClick={() => setScriptBatch(b)}
+                      >
+                        <FileCode className="h-3 w-3 mr-1" /> Script
+                      </Button>
                       {canDelete && (
                         <Button
                           size="sm"
@@ -738,6 +755,16 @@ export function BatchCalendarView() {
           </Card>
         </div>
       )}
+
+      {/* ----------------------------- Lead capture script dialog ----------------------------- */}
+      {/* Auto-opens right after a batch is created, and from the per-card
+          "Script" button - the copy-paste Apps Script with the batch ID and
+          current webhook token baked in. */}
+      <LeadCaptureScriptDialog
+        batch={scriptBatch ? { id: scriptBatch.id, name: scriptBatch.name, certification: scriptBatch.certification, googleFormUrl: scriptBatch.googleFormUrl } : null}
+        open={!!scriptBatch}
+        onOpenChange={(o) => { if (!o) setScriptBatch(null) }}
+      />
 
       {/* ----------------------------- Create Batch Dialog ----------------------------- */}
       <Dialog open={createOpen} onOpenChange={setCreateOpen}>

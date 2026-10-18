@@ -493,6 +493,47 @@ const TABLE_SPECS: Record<string, TableSpec> = {
       `ALTER TABLE "SiteVisitMeta" ADD COLUMN IF NOT EXISTS "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP`,
     ],
   },
+  // Per-batch enrollment leads captured via the per-batch Google Forms
+  // webhook (/api/crm/batch-webhook). email is optional - some forms only
+  // collect WhatsApp; older deployments may predate the email column.
+  BatchLead: {
+    create: `CREATE TABLE IF NOT EXISTS "BatchLead" (
+      "id" TEXT NOT NULL,
+      "batchId" TEXT NOT NULL,
+      "name" TEXT NOT NULL,
+      "whatsappNumber" TEXT NOT NULL,
+      "email" TEXT,
+      "linkedinProfile" TEXT,
+      "professionalStatus" TEXT,
+      "jobRole" TEXT,
+      "status" TEXT NOT NULL DEFAULT 'New',
+      "adminNotes" TEXT,
+      "source" TEXT NOT NULL DEFAULT 'Google Form',
+      "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT "BatchLead_pkey" PRIMARY KEY ("id")
+    )`,
+    indexes: [
+      `CREATE INDEX IF NOT EXISTS "BatchLead_batchId_idx" ON "BatchLead"("batchId")`,
+      `CREATE INDEX IF NOT EXISTS "BatchLead_status_idx" ON "BatchLead"("status")`,
+      `CREATE INDEX IF NOT EXISTS "BatchLead_createdAt_idx" ON "BatchLead"("createdAt")`,
+    ],
+    constraints: [],
+    addColumns: [
+      `ALTER TABLE "BatchLead" ADD COLUMN IF NOT EXISTS "batchId" TEXT`,
+      `ALTER TABLE "BatchLead" ADD COLUMN IF NOT EXISTS "name" TEXT`,
+      `ALTER TABLE "BatchLead" ADD COLUMN IF NOT EXISTS "whatsappNumber" TEXT`,
+      `ALTER TABLE "BatchLead" ADD COLUMN IF NOT EXISTS "email" TEXT`,
+      `ALTER TABLE "BatchLead" ADD COLUMN IF NOT EXISTS "linkedinProfile" TEXT`,
+      `ALTER TABLE "BatchLead" ADD COLUMN IF NOT EXISTS "professionalStatus" TEXT`,
+      `ALTER TABLE "BatchLead" ADD COLUMN IF NOT EXISTS "jobRole" TEXT`,
+      `ALTER TABLE "BatchLead" ADD COLUMN IF NOT EXISTS "status" TEXT NOT NULL DEFAULT 'New'`,
+      `ALTER TABLE "BatchLead" ADD COLUMN IF NOT EXISTS "adminNotes" TEXT`,
+      `ALTER TABLE "BatchLead" ADD COLUMN IF NOT EXISTS "source" TEXT NOT NULL DEFAULT 'Google Form'`,
+      `ALTER TABLE "BatchLead" ADD COLUMN IF NOT EXISTS "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP`,
+      `ALTER TABLE "BatchLead" ADD COLUMN IF NOT EXISTS "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP`,
+    ],
+  },
 }
 
 const ensured = new Set<string>()
