@@ -649,10 +649,10 @@ function ApplicantsPanel({ onOpenCrm }: { onOpenCrm: () => void }) {
 
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <p className="text-xs text-muted-foreground">
-          Applications from the public Hiring page arrive here instantly, no platform account needed. They also appear in the Lead / CRM pipeline.
+          Applications from the public Hiring page arrive here instantly, no platform account needed. They also appear in the Leads Hub pipeline.
         </p>
         <Button size="sm" variant="outline" onClick={onOpenCrm}>
-          Open Lead / CRM
+          Open Leads Hub
         </Button>
       </div>
 

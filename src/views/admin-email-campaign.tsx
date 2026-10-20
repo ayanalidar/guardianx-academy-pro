@@ -16,36 +16,41 @@ import {
   AlertCircle, Loader2,
 } from "lucide-react"
 import { toast } from "sonner"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { api } from "@/lib/api"
 
 export function EmailCampaignView() {
   const { navigate } = useAppStore()
+  const queryClient = useQueryClient()
   const [subject, setSubject] = React.useState("")
   const [body, setBody] = React.useState("")
   const [audience, setAudience] = React.useState("all")
   const [sending, setSending] = React.useState(false)
 
-  // Real audience counts from /api/admin/email-campaign (GET)
-  const [counts, setCounts] = React.useState<Record<string, number>>({})
-  React.useEffect(() => {
-    api("/api/admin/email-campaign")
-      .then((d: any) => setCounts(d.audiences || {}))
-      .catch(() => {})
-  }, [])
+  // Real audience counts from /api/admin/email-campaign (GET).
+  // react-query instead of a bare useEffect+fetch: this tab now participates
+  // in the app-wide navigation freshness sweeps (guardianx-navigate), 401
+  // recovery and smart retry, so one transient failure can no longer leave
+  // it silently showing "0 recipients" until a manual browser refresh.
+  const countsQuery = useQuery({
+    queryKey: ["admin-email-campaign-counts"],
+    queryFn: () => api<{ audiences?: Record<string, number> }>("/api/admin/email-campaign"),
+    staleTime: 30_000,
+  })
+  const counts = countsQuery.data?.audiences ?? {}
 
   // Delivery history - real EmailLog rows (was persisted but never shown)
-  const [history, setHistory] = React.useState<
-    { id: string; toEmail: string; subject: string; status: string; sentAt: string }[]
-  >([])
-  const [historyLoading, setHistoryLoading] = React.useState(false)
+  type HistoryRow = { id: string; toEmail: string; subject: string; status: string; sentAt: string }
+  const historyQuery = useQuery({
+    queryKey: ["admin-email-log"],
+    queryFn: () => api<{ logs?: HistoryRow[] }>("/api/admin/emails?type=notification&pageSize=25"),
+    staleTime: 30_000,
+  })
+  const history = historyQuery.data?.logs ?? []
+  const historyLoading = historyQuery.isFetching
   const loadHistory = React.useCallback(() => {
-    setHistoryLoading(true)
-    api("/api/admin/emails?type=notification&pageSize=25")
-      .then((d: any) => setHistory(d.logs ?? []))
-      .catch(() => {})
-      .finally(() => setHistoryLoading(false))
-  }, [])
-  React.useEffect(loadHistory, [loadHistory])
+    void queryClient.invalidateQueries({ queryKey: ["admin-email-log"] })
+  }, [queryClient])
 
   const audiences = [
     { value: "all", label: "All Users", count: counts.all ?? 0 },
@@ -135,6 +140,7 @@ export function EmailCampaignView() {
           <div className="flex items-center justify-between">
             <div className="text-xs text-muted-foreground">
               <Users className="h-3.5 w-3.5 inline mr-1" /> {selectedAudience?.count || 0} recipients
+              {countsQuery.isError && <span className="text-amber-300/90 ml-1">· could not load counts</span>}
             </div>
             <Button onClick={handleSend} disabled={sending} className="bg-cyan-600 hover:bg-cyan-500 btn-premium">
               {sending ? <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Sending...</> : <><Send className="h-4 w-4 mr-2" /> Send Campaign</>}
@@ -150,7 +156,10 @@ export function EmailCampaignView() {
               {historyLoading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : "Refresh"}
             </Button>
           </div>
-          {history.length === 0 ? (
+          {historyQuery.isError && (
+            <p className="text-xs text-rose-300 mb-2">Couldn&apos;t load recent sends - tap Refresh to retry.</p>
+          )}
+          {history.length === 0 && !historyQuery.isError ? (
             <p className="text-xs text-muted-foreground">No emails sent yet - campaign sends are logged here.</p>
           ) : (
             <div className="space-y-1.5 max-h-64 overflow-y-auto custom-scroll">
