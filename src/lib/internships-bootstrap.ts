@@ -60,6 +60,9 @@ const DDL: string[] = [
   `ALTER TABLE "Internship" ADD COLUMN IF NOT EXISTS "published" BOOLEAN NOT NULL DEFAULT true`,
   `ALTER TABLE "Internship" ADD COLUMN IF NOT EXISTS "isSample" BOOLEAN NOT NULL DEFAULT false`,
   `ALTER TABLE "Internship" ADD COLUMN IF NOT EXISTS "order" INTEGER NOT NULL DEFAULT 0`,
+  // --- paid training-cum-internship columns (isPaid + feeInr) ---
+  `ALTER TABLE "Internship" ADD COLUMN IF NOT EXISTS "isPaid" BOOLEAN NOT NULL DEFAULT false`,
+  `ALTER TABLE "Internship" ADD COLUMN IF NOT EXISTS "feeInr" DOUBLE PRECISION NOT NULL DEFAULT 0`,
   `CREATE INDEX IF NOT EXISTS "Internship_published_featured_order_idx" ON "Internship"("published", "featured", "order")`,
   `CREATE INDEX IF NOT EXISTS "Internship_collegeName_idx" ON "Internship"("collegeName")`,
   `CREATE TABLE IF NOT EXISTS "InternshipRecord" (
@@ -109,6 +112,11 @@ const DDL: string[] = [
   `CREATE UNIQUE INDEX IF NOT EXISTS "InternshipRecord_certificateId_key" ON "InternshipRecord"("certificateId")`,
   `CREATE INDEX IF NOT EXISTS "InternshipRecord_internshipId_idx" ON "InternshipRecord"("internshipId")`,
   `CREATE INDEX IF NOT EXISTS "InternshipRecord_showPublicly_isSample_sortOrder_idx" ON "InternshipRecord"("showPublicly", "isSample", "sortOrder")`,
+  // --- Order.internshipId lives here (not db-safe.ts) so the paid-internship
+  //     checkout self-heals together with the rest of the internships stack.
+  //     Plain TEXT reference, no FK - mirrors the internships house pattern.
+  `ALTER TABLE "Order" ADD COLUMN IF NOT EXISTS "internshipId" TEXT`,
+  `CREATE INDEX IF NOT EXISTS "Order_internshipId_idx" ON "Order"("internshipId")`,
 ]
 
 /** True once both tables (and all their columns) are present. */

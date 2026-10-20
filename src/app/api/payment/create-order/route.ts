@@ -4,6 +4,7 @@ import { db } from "@/lib/db"
 import { getCurrentUser, withErrorHandler, rateLimit } from "@/lib/session"
 import { getSettings } from "@/lib/settings"
 import { getEmiConfig, computeShares, emiPurposeOf, emiDueDate, hasPendingEmiPlan } from "@/lib/installments"
+import { ensureInternshipTables } from "@/lib/internships-bootstrap"
 
 export const runtime = "nodejs"
 
@@ -25,16 +26,65 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
   const body = await req.json().catch(() => null)
   if (!body) return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
 
-  const { courseId, couponCode, installments } = body as { courseId?: string; couponCode?: string; installments?: number }
+  const { courseId, couponCode, installments, internshipId } = body as {
+    courseId?: string
+    couponCode?: string
+    installments?: number
+    internshipId?: string
+  }
   // EMI plan: 1 (default) = pay in full; 2 or 3 = platform-managed installment plan
   const planCount = installments === 2 || installments === 3 ? installments : 1
 
-  // Resolve the amount: either from a course price, or default to a small
-  // test amount so the flow can be exercised end-to-end without a course.
+  // Resolve the amount: from an internship fee, from a course price, or
+  // default to a small test amount so the flow can be exercised end-to-end
+  // without either.
   let amount = 0
   let courseTitle = "Course Enrollment"
+  let purpose = "COURSE"
 
-  if (courseId) {
+  if (internshipId) {
+    // --- Paid training-cum-internship path (purpose INTERNSHIP) ---
+    // Amount comes from Internship.feeInr; seats are enforced from real paid
+    // Order rows so two simultaneous checkouts cannot oversell the batch.
+    await ensureInternshipTables()
+    const internship = await db.internship.findUnique({
+      where: { id: internshipId },
+      select: { id: true, title: true, published: true, isPaid: true, feeInr: true, seats: true },
+    })
+    if (!internship || !internship.published) {
+      return NextResponse.json({ error: "Internship not found" }, { status: 404 })
+    }
+    if (!internship.isPaid || !(internship.feeInr > 0)) {
+      return NextResponse.json(
+        { error: "This internship is free - no payment required", free: true },
+        { status: 400 },
+      )
+    }
+    if (planCount > 1) {
+      return NextResponse.json(
+        { error: "Installment plans are not available for this program yet" },
+        { status: 400 },
+      )
+    }
+    if (couponCode && couponCode.trim()) {
+      return NextResponse.json(
+        { error: "Coupons are not applicable to this program yet" },
+        { status: 400 },
+      )
+    }
+    const paidCount = await db.order.count({
+      where: { purpose: "INTERNSHIP", internshipId, status: "paid" },
+    })
+    if (paidCount >= internship.seats) {
+      return NextResponse.json(
+        { error: "This batch is full - all seats are taken", full: true },
+        { status: 409 },
+      )
+    }
+    amount = internship.feeInr
+    courseTitle = internship.title
+    purpose = "INTERNSHIP"
+  } else if (courseId) {
     const course = await db.course.findUnique({
       where: { id: courseId },
       select: { id: true, title: true, shortName: true, price: true },
@@ -136,8 +186,12 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
       body: JSON.stringify({
         amount: Math.round(payableNow * 100), // paise
         currency: "INR",
-        receipt: `course_${courseId?.slice(-8) || "enroll"}_${Date.now()}`,
-        notes: { courseId: courseId || "", userId: user.id, courseTitle, installments: String(planCount) },
+        receipt: internshipId
+          ? `internship_${internshipId.slice(-8)}_${Date.now()}`
+          : `course_${courseId?.slice(-8) || "enroll"}_${Date.now()}`,
+        notes: internshipId
+          ? { internshipId, userId: user.id, courseTitle, purpose: "INTERNSHIP" }
+          : { courseId: courseId || "", userId: user.id, courseTitle, installments: String(planCount) },
       }),
     })
     if (!res.ok) {
@@ -191,6 +245,7 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
         userId: user.id,
         courseId: courseId ?? null,
         batchId: null,
+        internshipId: internshipId ?? null,
         amount,
         currency: "INR",
         status: "created",
@@ -198,6 +253,7 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
         discount,
         finalAmount,
         razorpayOrderId,
+        purpose,
       },
     })
   }

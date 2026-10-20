@@ -27,7 +27,7 @@
  */
 
 import * as React from "react"
-import { useQuery } from "@tanstack/react-query"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { motion, useScroll, useTransform } from "framer-motion"
 import { CountUp } from "@/components/platform/count-up"
 import { Button } from "@/components/ui/button"
@@ -47,6 +47,9 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { api } from "@/lib/api"
+import { loadRazorpayScript } from "@/lib/checkout-sdk"
+import { useAppStore } from "@/store/app-store"
+import { useUser } from "@/hooks/use-user"
 import { downloadInternshipCertificatePDF } from "@/lib/certificate-pdf"
 import { usePageContent, getContent } from "@/lib/use-content"
 import { cn } from "@/lib/utils"
@@ -56,7 +59,7 @@ import {
   Users, FileBadge, Loader2, MousePointerClick, Calendar, Clock,
   MapPin, Download, Share2, Linkedin, MessageCircle, ShieldCheck,
   ChevronDown, FlaskConical, Wrench, Star, Briefcase, Sparkles,
-  UserRound, Award, Send, CheckCircle2,
+  UserRound, Award, Send, CheckCircle2, IndianRupee, CreditCard,
 } from "lucide-react"
 
 // ============================================================
@@ -72,6 +75,9 @@ type PublicInternship = {
   durationWeeks: number
   stipend: string | null
   seats: number
+  isPaid: boolean
+  feeInr: number
+  paidCount?: number
   status: string
   startsAt: string | null
   endsAt: string | null
@@ -208,10 +214,12 @@ function CollegeCard({
   college,
   expanded,
   onToggle,
+  onEnroll,
 }: {
   college: PublicCollege
   expanded: boolean
   onToggle: () => void
+  onEnroll: (i: PublicInternship) => void
 }) {
   return (
     <div
@@ -319,9 +327,26 @@ function CollegeCard({
                   <span className="rounded-full border border-border/60 bg-card/60 px-2.5 py-1 text-muted-foreground">
                     {MODE_LABELS[i.mode] ?? i.mode}
                   </span>
-                  <span className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-card/60 px-2.5 py-1 text-muted-foreground">
-                    <Users className="h-3 w-3 text-emerald-300" /> {i.seats} seats
-                  </span>
+                  {i.isPaid ? (
+                    <>
+                      <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 font-medium text-amber-300">
+                        <IndianRupee className="h-3 w-3" /> {Number(i.feeInr).toLocaleString("en-IN")} · Training + Internship
+                      </span>
+                      {Math.max(0, i.seats - (i.paidCount ?? 0)) > 0 ? (
+                        <span className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-card/60 px-2.5 py-1 text-muted-foreground">
+                          <Users className="h-3 w-3 text-emerald-300" /> {Math.max(0, i.seats - (i.paidCount ?? 0))} of {i.seats} seats left
+                        </span>
+                      ) : (
+                        <span className="rounded-full border border-rose-500/30 bg-rose-500/10 px-2.5 py-1 text-rose-300">
+                          Batch full
+                        </span>
+                      )}
+                    </>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-card/60 px-2.5 py-1 text-muted-foreground">
+                      <Users className="h-3 w-3 text-emerald-300" /> {i.seats} seats
+                    </span>
+                  )}
                   {i.stipend && (
                     <span className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-emerald-300">
                       {i.stipend}
@@ -355,6 +380,22 @@ function CollegeCard({
                   <p className="mt-3 inline-flex items-center gap-1 text-[11px] text-muted-foreground">
                     <Calendar className="h-3 w-3" /> {fmtDate(i.startsAt)} → {fmtDate(i.endsAt)}
                   </p>
+                )}
+
+                {i.isPaid && (
+                  <div className="mt-3">
+                    <Button
+                      size="sm"
+                      disabled={Math.max(0, i.seats - (i.paidCount ?? 0)) === 0 || i.status === "completed"}
+                      onClick={() => onEnroll(i)}
+                      className="gap-1.5 bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-400 hover:to-orange-400"
+                    >
+                      <CreditCard className="h-3.5 w-3.5" />
+                      {Math.max(0, i.seats - (i.paidCount ?? 0)) === 0
+                        ? "Batch full"
+                        : `Enroll now - ₹${Number(i.feeInr).toLocaleString("en-IN")}`}
+                    </Button>
+                  </div>
                 )}
               </div>
             ))}
@@ -684,6 +725,154 @@ function InternDetailDialog({
 }
 
 // ============================================================
+// Paid enrollment dialog - Razorpay checkout for paid training-
+// cum-internship postings (Order purpose INTERNSHIP). Mirrors the
+// course-detail checkout: create-order -> Razorpay modal -> verify;
+// on success the verify route auto-creates the student's
+// InternshipRecord (ongoing) with the GXI certificate pre-issued.
+// ============================================================
+
+function InternEnrollDialog({
+  internship,
+  onClose,
+}: {
+  internship: PublicInternship | null
+  onClose: () => void
+}) {
+  const { user } = useUser()
+  const queryClient = useQueryClient()
+
+  const payMutation = useMutation({
+    mutationFn: async () => {
+      if (!internship) throw new Error("Nothing to enroll in")
+      const createRes = await api<{
+        orderId: string
+        amount: number
+        currency: string
+        razorpayOrderId: string
+        keyId: string | null
+        mock: boolean
+      }>("/api/payment/create-order", {
+        method: "POST",
+        body: JSON.stringify({ internshipId: internship.id }),
+      })
+
+      if (createRes.mock) {
+        // Mock mode - no Razorpay keys configured (dev/staging only)
+        const razorpayPaymentId = `pay_mock_${Date.now().toString(36)}${Math.random().toString(36).slice(2, 8)}`
+        const razorpaySignature = `sig_mock_${Math.random().toString(36).slice(2, 14)}`
+        return api<{ success: boolean; internshipRecord: any }>("/api/payment/verify", {
+          method: "POST",
+          body: JSON.stringify({ orderId: createRes.orderId, razorpayPaymentId, razorpaySignature }),
+        })
+      }
+
+      // Real Razorpay - load the SDK + open the checkout modal
+      await loadRazorpayScript()
+      return new Promise<{ success: boolean; internshipRecord: any }>((resolve, reject) => {
+        // @ts-ignore
+        const rzp = new window.Razorpay({
+          key: createRes.keyId,
+          amount: Math.round(createRes.amount * 100), // paise
+          currency: createRes.currency,
+          name: "GuardianX Academy",
+          description: internship.title,
+          order_id: createRes.razorpayOrderId,
+          handler: async (response: any) => {
+            try {
+              const verifyRes = await api<{ success: boolean; internshipRecord: any }>(
+                "/api/payment/verify",
+                {
+                  method: "POST",
+                  body: JSON.stringify({
+                    orderId: createRes.orderId,
+                    razorpayPaymentId: response.razorpay_payment_id,
+                    razorpaySignature: response.razorpay_signature,
+                  }),
+                },
+              )
+              resolve(verifyRes)
+            } catch (e: any) {
+              reject(new Error(e?.message || "Payment verification failed"))
+            }
+          },
+          prefill: {
+            name: user?.name || "",
+            email: user?.email || "",
+          },
+          theme: { color: "#7c3aed" },
+          modal: {
+            ondismiss: () => reject(new Error("Payment cancelled")),
+          },
+        })
+        rzp.open()
+      })
+    },
+    onSuccess: () => {
+      toast.success("Seat confirmed! Check your email for onboarding details.")
+      queryClient.invalidateQueries({ queryKey: ["internships-public"] })
+      queryClient.invalidateQueries({ queryKey: ["me"] })
+      onClose()
+    },
+    onError: (e: any) => {
+      toast.error(e?.message || "Payment failed")
+    },
+  })
+
+  const seatsLeft = internship ? Math.max(0, internship.seats - (internship.paidCount ?? 0)) : 0
+
+  return (
+    <Dialog open={!!internship} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="max-w-md">
+        <DialogHeader>
+          <DialogTitle className="text-left">Confirm your seat</DialogTitle>
+        </DialogHeader>
+        {internship && (
+          <div className="space-y-4">
+            <div className="rounded-xl border border-border/60 bg-card/50 p-4">
+              <h4 className="text-sm font-semibold">{internship.title}</h4>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                {internship.company} · {MODE_LABELS[internship.mode] ?? internship.mode} · {internship.durationWeeks} weeks
+              </p>
+              <div className="mt-3 flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">Training + Internship fee</span>
+                <span className="text-lg font-bold text-amber-300">₹{Number(internship.feeInr).toLocaleString("en-IN")}</span>
+              </div>
+              <p className="mt-2 flex items-center gap-1 text-[11px] text-muted-foreground">
+                <Users className="h-3 w-3 text-emerald-300" /> {seatsLeft} of {internship.seats} seats left
+                {internship.startsAt ? ` · starts ${fmtDate(internship.startsAt)}` : ""}
+              </p>
+            </div>
+            <ul className="space-y-1.5 text-xs text-muted-foreground">
+              <li className="flex items-center gap-2">
+                <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-300" /> Secure payment via Razorpay - UPI, cards, netbanking
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-300" /> Seat reserved instantly; onboarding details by email
+              </li>
+              <li className="flex items-center gap-2">
+                <CheckCircle2 className="h-3.5 w-3.5 shrink-0 text-emerald-300" /> Verifiable GXI certificate issued on completion
+              </li>
+            </ul>
+            <Button
+              onClick={() => payMutation.mutate()}
+              disabled={payMutation.isPending || seatsLeft === 0}
+              className="w-full gap-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white hover:from-amber-400 hover:to-orange-400"
+            >
+              {payMutation.isPending ? <Loader2 className="h-4 w-4 animate-spin" /> : <CreditCard className="h-4 w-4" />}
+              {seatsLeft === 0 ? "Batch full" : `Pay ₹${Number(internship.feeInr).toLocaleString("en-IN")} securely`}
+            </Button>
+            <p className="text-center text-[11px] text-muted-foreground">
+              Payments are processed by Razorpay. Your enrollment is created automatically on success.
+            </p>
+          </div>
+        )}
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+// ============================================================
 // Apply band - flows into the Lead CRM
 // ============================================================
 
@@ -790,6 +979,22 @@ export function InternshipsView() {
     staleTime: 60_000,
     gcTime: 10 * 60_000,
   })
+
+  // --- paid training-cum-internship enrollment (login-gated checkout) ---
+  const { user } = useUser()
+  const navigate = useAppStore((s) => s.navigate)
+  const [enrollTarget, setEnrollTarget] = React.useState<PublicInternship | null>(null)
+
+  function handleEnrollClick(i: PublicInternship) {
+    if (!user) {
+      toast.message("Sign in to enroll", {
+        description: "Create a free account or sign in first - it takes seconds.",
+      })
+      navigate({ name: "login" })
+      return
+    }
+    setEnrollTarget(i)
+  }
 
   // Fully editable page copy (Content Studio → Internships). Every field
   // falls back to the shipped copy, so an empty CMS renders the same page.
@@ -961,6 +1166,7 @@ export function InternshipsView() {
                 onToggle={() =>
                   setExpandedCollege((cur) => (cur === c.name.toLowerCase() ? null : c.name.toLowerCase()))
                 }
+                onEnroll={handleEnrollClick}
               />
             ))}
             {!isLoading && filteredColleges.length === 0 && (
@@ -1041,6 +1247,9 @@ export function InternshipsView() {
 
       {/* detail dialog */}
       <InternDetailDialog intern={selectedIntern} onClose={() => setSelectedIntern(null)} />
+
+      {/* paid enrollment checkout dialog */}
+      <InternEnrollDialog internship={enrollTarget} onClose={() => setEnrollTarget(null)} />
     </div>
   )
 }

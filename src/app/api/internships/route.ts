@@ -42,6 +42,21 @@ export async function GET(_req: NextRequest) {
       take: 300,
     })
 
+    // Paid-seat fill (public view shows "X of N seats left"). Computed from
+    // real paid Orders - best-effort: on failure the page just shows total
+    // seats instead of remaining ones.
+    const paidGroups = await db.order
+      .groupBy({
+        by: ["internshipId"],
+        where: { purpose: "INTERNSHIP", status: "paid", internshipId: { not: null } },
+        _count: { _all: true },
+      })
+      .catch(() => [] as { internshipId: string | null; _count: { _all: number } }[])
+    const paidCountByInternship = new Map<string, number>()
+    for (const g of paidGroups) {
+      if (g.internshipId) paidCountByInternship.set(g.internshipId, g._count._all)
+    }
+
     const records = await db.internshipRecord.findMany({
       where: { showPublicly: true },
       orderBy: [{ sortOrder: "asc" }, { createdAt: "desc" }],
@@ -87,6 +102,9 @@ export async function GET(_req: NextRequest) {
         durationWeeks: i.durationWeeks,
         stipend: i.stipend,
         seats: i.seats,
+        isPaid: i.isPaid,
+        feeInr: i.feeInr,
+        paidCount: paidCountByInternship.get(i.id) ?? 0,
         status: i.status,
         startsAt: i.startsAt?.toISOString() ?? null,
         endsAt: i.endsAt?.toISOString() ?? null,

@@ -1067,6 +1067,13 @@ model Internship {
   durationWeeks Int      @default(8)
   stipend       String?  // display text, e.g. "Performance-based stipend"
   seats         Int      @default(10)
+  // --- paid training-cum-internship (combined offering that charges a fee) ---
+  // isPaid postings route enrollments through Razorpay checkout
+  // (/api/payment/create-order with purpose=INTERNSHIP); seats are enforced
+  // server-side from paid Order rows. Free internships keep the apply-to-CRM
+  // flow untouched.
+  isPaid        Boolean  @default(false)
+  feeInr        Float    @default(0) // enrollment fee in INR (used when isPaid)
   status        String   @default("upcoming") // upcoming | ongoing | completed
   startsAt      DateTime?
   endsAt        DateTime?
@@ -1994,13 +2001,15 @@ model Order {
   discount    Float    @default(0)
   finalAmount Float    @default(0)
   // What this order is for — used by the quiz-cert flow to know it's a quiz payment
-  purpose       String  @default("COURSE") // COURSE | QUIZ_CERT
+  purpose       String  @default("COURSE") // COURSE | QUIZ_CERT | INTERNSHIP
   quizAttemptId String? // linked QuizAttempt (when purpose = QUIZ_CERT)
+  internshipId  String? // plain Internship.id reference (no FK) when purpose = INTERNSHIP
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   @@index([purpose])
   @@index([quizAttemptId])
+  @@index([internshipId])
 }
 
 model Coupon {

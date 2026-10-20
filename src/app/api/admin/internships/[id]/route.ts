@@ -60,6 +60,11 @@ export const PATCH = withErrorHandler(async (req: NextRequest, { params }: { par
     }
     data.seats = Math.round(n)
   }
+  if (body.isPaid !== undefined) data.isPaid = body.isPaid === true
+  if (body.feeInr !== undefined) {
+    const n = Number(body.feeInr)
+    data.feeInr = Number.isFinite(n) ? Math.max(0, Math.min(999999, n)) : 0
+  }
   if (body.stipend !== undefined) data.stipend = strOrNull(body.stipend)
   if (body.description !== undefined) data.description = strOrNull(body.description)
   if (body.skills !== undefined) data.skills = jsonArr(body.skills) ?? "[]"

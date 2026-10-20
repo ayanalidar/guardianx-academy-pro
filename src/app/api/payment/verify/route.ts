@@ -177,5 +177,109 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
     }
   }
 
-  return NextResponse.json({ success: true, enrollment })
+  // Paid training-cum-internship fulfillment: auto-create the student's
+  // InternshipRecord (status ongoing) so they appear in Admin → Internships →
+  // Students with a GXI certificate pre-issued (same issuance path as the
+  // admin records route). Idempotent via the studentId lookup. A repeat
+  // verify can't reach here for a paid order, but the guard keeps manual
+  // replays harmless.
+  let internshipRecord: any = null
+  if (order.purpose === "INTERNSHIP" && order.internshipId) {
+    try {
+      const { ensureInternshipTables } = await import("@/lib/internships-bootstrap")
+      await ensureInternshipTables()
+      const internship = await db.internship.findUnique({
+        where: { id: order.internshipId },
+        select: { id: true, title: true, domain: true, seats: true, startsAt: true },
+      })
+      if (!internship) {
+        console.error(
+          `[payment/verify] INTERNSHIP order ${order.id} references missing internship ${order.internshipId}`
+        )
+      } else {
+        const payUser = await db.user.findUnique({
+          where: { id: user.id },
+          select: { email: true, name: true },
+        })
+        const existingRecord = await db.internshipRecord.findFirst({
+          where: { internshipId: internship.id, studentId: user.id },
+        })
+        // Seat re-check at fulfillment time: this order is already marked
+        // paid (hence <=), covering the create-order → verify race window.
+        // If a razorpay-time race still overbooks the batch, the money is
+        // real - the order stays paid and we log LOUDLY for a manual refund.
+        const paidCount = await db.order.count({
+          where: { purpose: "INTERNSHIP", internshipId: internship.id, status: "paid" },
+        })
+        if (existingRecord) {
+          internshipRecord = existingRecord
+        } else if (paidCount > internship.seats) {
+          console.error(
+            `[payment/verify] INTERNSHIP BATCH FULL - order ${order.id} overbooked "${internship.title}" (${paidCount}/${internship.seats}) - manual refund required`
+          )
+        } else {
+          const { generateCredentialId, generateVerificationHash } = await import(
+            "@/lib/credentials"
+          )
+          const certificateId = generateCredentialId("GXI")
+          const certificateIssuedAt = new Date()
+          internshipRecord = await db.internshipRecord.create({
+            data: {
+              internshipId: internship.id,
+              studentId: user.id,
+              studentName: payUser?.name || payUser?.email?.split("@")[0] || "Student",
+              studentEmail: payUser?.email ?? null,
+              role: `${internship.domain} Trainee`,
+              startDate: internship.startsAt,
+              status: "ongoing",
+              certificateId,
+              // placeholder replaced by the real hash right after create
+              verificationHash: "pending",
+              certificateIssuedAt,
+              // consent gate stays false - owner showcases from Admin
+              showPublicly: false,
+              isSample: false,
+            },
+          })
+          const verificationHash = await generateVerificationHash(
+            certificateId,
+            internshipRecord.id,
+            internship.id,
+            certificateIssuedAt
+          )
+          await db.internshipRecord.update({
+            where: { id: internshipRecord.id },
+            data: { verificationHash },
+          })
+        }
+
+        // Welcome email (best-effort)
+        if (payUser?.email) {
+          try {
+            const { sendEmail } = await import("@/lib/email")
+            const startDateTxt = internship.startsAt
+              ? new Date(internship.startsAt).toLocaleDateString("en-IN", {
+                  day: "numeric",
+                  month: "long",
+                  year: "numeric",
+                })
+              : "the announced start date"
+            await sendEmail({
+              to: payUser.email,
+              subject: `Seat confirmed - ${internship.title}`,
+              body: `Hi ${payUser.name || "there"},\n\nYour payment went through and your seat is confirmed for "${internship.title}" (Training + Internship).\n\nThe program starts ${startDateTxt}. Our team will share the onboarding details and schedule shortly.\n\nYour verifiable certificate will be issued on this platform when the internship completes.\n\nThe GuardianX Team`,
+              type: "notification",
+              userId: user.id,
+            })
+          } catch (e) {
+            console.error("[payment/verify] internship welcome email failed:", e)
+          }
+        }
+      }
+    } catch (e) {
+      console.error("[payment/verify] internship fulfillment failed:", e)
+    }
+  }
+
+  return NextResponse.json({ success: true, enrollment, internshipRecord })
 })

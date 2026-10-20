@@ -60,6 +60,8 @@ type AdminInternship = {
   durationWeeks: number
   stipend: string | null
   seats: number
+  isPaid: boolean
+  feeInr: number
   status: string
   startsAt: string | null
   endsAt: string | null
@@ -70,6 +72,7 @@ type AdminInternship = {
   isSample: boolean
   order: number
   recordCount: number
+  paidCount: number
 }
 
 type AdminInternshipRecord = {
@@ -131,6 +134,12 @@ const EMPTY_INTERNSHIP_FORM = {
   durationWeeks: "8",
   stipend: "",
   seats: "10",
+  // paid training-cum-internship: fee pre-filled per owner spec (editable),
+  // start date pre-filled 20 days ahead (editable), end auto = start + weeks
+  isPaid: false,
+  feeInr: "5999",
+  startsAt: defaultStartDateValue(),
+  endsAt: "",
   status: "upcoming",
   description: "",
   skills: "",
@@ -187,6 +196,38 @@ function csvOrJson(v: string): string[] {
     }
   }
   return t.split(",").map((s) => s.trim()).filter(Boolean)
+}
+
+// --- date helpers (paid-internship form) ---
+function pad2(n: number): string {
+  return String(n).padStart(2, "0")
+}
+
+/** yyyy-MM-dd for <input type="date"> from an ISO string ("" when absent). */
+function toInputDate(iso: string | null | undefined): string {
+  if (!iso) return ""
+  try {
+    const d = new Date(iso)
+    if (isNaN(d.getTime())) return ""
+    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`
+  } catch {
+    return ""
+  }
+}
+
+/** Owner spec: the create form pre-fills the start date 20 days ahead. */
+function defaultStartDateValue(): string {
+  const d = new Date(Date.now() + 20 * 86_400_000)
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`
+}
+
+/** End date = start + duration-in-weeks (used to auto-fill, still editable). */
+function computeEndDate(startYmd: string, weeks: number): string {
+  if (!startYmd) return ""
+  const d = new Date(`${startYmd}T00:00:00`)
+  if (isNaN(d.getTime())) return ""
+  d.setDate(d.getDate() + Math.max(1, weeks || 8) * 7)
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`
 }
 
 // ============================================================
@@ -308,7 +349,8 @@ function InternshipsTab({
 
   function openCreate() {
     setEditing(null)
-    setForm(EMPTY_INTERNSHIP_FORM)
+    const start = defaultStartDateValue()
+    setForm({ ...EMPTY_INTERNSHIP_FORM, startsAt: start, endsAt: computeEndDate(start, 8) })
     setDialogOpen(true)
   }
 
@@ -330,6 +372,10 @@ function InternshipsTab({
       durationWeeks: String(i.durationWeeks),
       stipend: i.stipend || "",
       seats: String(i.seats),
+      isPaid: i.isPaid,
+      feeInr: String(i.feeInr ?? 0),
+      startsAt: toInputDate(i.startsAt),
+      endsAt: toInputDate(i.endsAt),
       status: i.status,
       description: i.description || "",
       skills,
@@ -340,6 +386,18 @@ function InternshipsTab({
     setDialogOpen(true)
   }
 
+  // Paid toggle: per owner spec, switching a posting to "paid training-cum-
+  // internship" pre-fills fee ₹5999 and 30 seats (both stay editable).
+  function setPaid(v: boolean) {
+    setForm((f) => ({
+      ...f,
+      isPaid: v,
+      seats: v && (f.seats === "10" || f.seats === "") ? "30" : f.seats,
+      feeInr: v && (!f.feeInr || f.feeInr === "0") ? "5999" : f.feeInr,
+      endsAt: !f.endsAt && f.startsAt ? computeEndDate(f.startsAt, Number(f.durationWeeks) || 8) : f.endsAt,
+    }))
+  }
+
   function submit() {
     const payload = {
       ...form,
@@ -347,6 +405,10 @@ function InternshipsTab({
       seats: Number(form.seats) || 10,
       order: Number(form.order) || 0,
       skills: csvOrJson(form.skills),
+      isPaid: form.isPaid,
+      feeInr: form.isPaid ? Number(form.feeInr) || 0 : 0,
+      startsAt: form.startsAt ? new Date(`${form.startsAt}T00:00:00`).toISOString() : null,
+      endsAt: form.endsAt ? new Date(`${form.endsAt}T00:00:00`).toISOString() : null,
     }
     saveMutation.mutate({ id: editing?.id, payload })
   }
@@ -398,6 +460,11 @@ function InternshipsTab({
                     Sample
                   </span>
                 )}
+                {i.isPaid && (
+                  <span className="rounded-full border border-amber-500/40 bg-amber-500/10 px-2 py-0.5 text-[10px] font-mono uppercase text-amber-300">
+                    Paid ₹{Number(i.feeInr).toLocaleString("en-IN")}
+                  </span>
+                )}
                 <span className="rounded-full border border-border/60 px-2 py-0.5 text-[10px] text-muted-foreground">
                   {i.domain}
                 </span>
@@ -406,6 +473,7 @@ function InternshipsTab({
                 <Building2 className="h-3 w-3" /> {i.collegeName}
                 {i.collegeCity ? ` · ${i.collegeCity}` : ""} · {i.recordCount} student
                 {i.recordCount === 1 ? "" : "s"} · {i.durationWeeks}w · {i.mode} · {i.status}
+                {i.isPaid && typeof i.paidCount === "number" ? ` · ${i.paidCount}/${i.seats} seats filled` : ""}
               </p>
             </div>
             <div className="flex shrink-0 items-center gap-3">
@@ -498,11 +566,78 @@ function InternshipsTab({
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground">Duration (weeks)</label>
-              <Input type="number" min={1} max={52} value={form.durationWeeks} onChange={(e) => setForm({ ...form, durationWeeks: e.target.value })} />
+              <Input
+                type="number"
+                min={1}
+                max={52}
+                value={form.durationWeeks}
+                onChange={(e) => {
+                  const v = e.target.value
+                  setForm((f) => ({
+                    ...f,
+                    durationWeeks: v,
+                    // keep an auto-derived end date in sync; a hand-edited
+                    // end date is never overwritten
+                    endsAt:
+                      f.endsAt && f.endsAt === computeEndDate(f.startsAt, Number(f.durationWeeks) || 8)
+                        ? computeEndDate(f.startsAt, Number(v) || 8)
+                        : f.endsAt,
+                  }))
+                }}
+              />
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground">Seats</label>
               <Input type="number" min={1} value={form.seats} onChange={(e) => setForm({ ...form, seats: e.target.value })} />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground">Start date</label>
+              <Input
+                type="date"
+                value={form.startsAt}
+                onChange={(e) => {
+                  const v = e.target.value
+                  setForm((f) => ({
+                    ...f,
+                    startsAt: v,
+                    endsAt: f.endsAt || computeEndDate(v, Number(f.durationWeeks) || 8),
+                  }))
+                }}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground">End date</label>
+              <Input
+                type="date"
+                value={form.endsAt}
+                onChange={(e) => setForm({ ...form, endsAt: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2 rounded-xl border border-amber-500/25 bg-amber-500/5 p-3 sm:col-span-2">
+              <label className="flex items-center gap-2 text-sm">
+                <Switch checked={form.isPaid} onCheckedChange={setPaid} />
+                <span className="font-medium">Paid training-cum-internship</span>
+                <span className="text-xs text-muted-foreground">- charges a fee, enrollments go through Razorpay checkout</span>
+              </label>
+              {form.isPaid && (
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <div className="space-y-1.5">
+                    <label className="text-xs font-medium text-muted-foreground">Fee (INR) *</label>
+                    <Input
+                      type="number"
+                      min={1}
+                      value={form.feeInr}
+                      onChange={(e) => setForm({ ...form, feeInr: e.target.value })}
+                      placeholder="e.g. 5999"
+                    />
+                  </div>
+                  <p className="text-[11px] leading-relaxed text-muted-foreground">
+                    Fee and the seat cap are enforced server-side. Paid seats are counted from real
+                    orders - the list shows "N/{form.seats || "30"} seats filled" and the public page
+                    shows seats left. Buyers get an auto-created student record + certificate path.
+                  </p>
+                </div>
+              )}
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground">Stipend (display text)</label>
@@ -527,7 +662,12 @@ function InternshipsTab({
             <Button variant="outline" onClick={() => setDialogOpen(false)}>Cancel</Button>
             <Button
               onClick={submit}
-              disabled={saveMutation.isPending || !form.collegeName.trim() || !form.title.trim()}
+              disabled={
+                saveMutation.isPending ||
+                !form.collegeName.trim() ||
+                !form.title.trim() ||
+                (form.isPaid && !(Number(form.feeInr) > 0))
+              }
               className="gap-1.5"
             >
               {saveMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}

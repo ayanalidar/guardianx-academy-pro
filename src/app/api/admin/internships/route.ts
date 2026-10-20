@@ -34,6 +34,20 @@ export const GET = withErrorHandler(async () => {
     }),
   ])
 
+  // Paid-seat fill counters - computed from real paid Orders (never a stored
+  // counter that can drift). Internship orders have purpose "INTERNSHIP".
+  const paidGroups = await db.order
+    .groupBy({
+      by: ["internshipId"],
+      where: { purpose: "INTERNSHIP", status: "paid", internshipId: { not: null } },
+      _count: { _all: true },
+    })
+    .catch(() => [] as { internshipId: string | null; _count: { _all: number } }[])
+  const paidCountByInternship = new Map<string, number>()
+  for (const g of paidGroups) {
+    if (g.internshipId) paidCountByInternship.set(g.internshipId, g._count._all)
+  }
+
   const countsByInternship = new Map<string, number>()
   for (const r of records) {
     countsByInternship.set(r.internshipId, (countsByInternship.get(r.internshipId) ?? 0) + 1)
@@ -43,6 +57,7 @@ export const GET = withErrorHandler(async () => {
     internships: internships.map((i) => ({
       ...i,
       recordCount: countsByInternship.get(i.id) ?? 0,
+      paidCount: paidCountByInternship.get(i.id) ?? 0,
     })),
     count: internships.length,
     samples: internships.filter((i) => i.isSample).length,
@@ -84,6 +99,8 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
   const status = ["upcoming", "ongoing", "completed"].includes(String(b.status)) ? String(b.status) : "upcoming"
   const durationWeeks = Math.max(1, Math.min(52, Number(b.durationWeeks) || 8))
   const seats = Math.max(1, Math.min(500, Number(b.seats) || 10))
+  const isPaid = b.isPaid === true
+  const feeInr = isPaid ? Math.max(0, Math.min(999999, Number(b.feeInr) || 0)) : 0
   const startsAt = typeof b.startsAt === "string" && b.startsAt ? new Date(b.startsAt) : null
   const endsAt = typeof b.endsAt === "string" && b.endsAt ? new Date(b.endsAt) : null
 
@@ -100,6 +117,8 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
       durationWeeks,
       stipend: str(b.stipend, 120) ?? null,
       seats,
+      isPaid,
+      feeInr,
       status,
       startsAt: startsAt && !isNaN(startsAt.getTime()) ? startsAt : null,
       endsAt: endsAt && !isNaN(endsAt.getTime()) ? endsAt : null,
