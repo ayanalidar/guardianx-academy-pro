@@ -194,6 +194,27 @@ export function AppRoot({ initialView }: { initialView?: View }) {
     // 2/3. Path-based hydration (bridge initialView already matches the
     // pathname, so both branches parse to the same view).
     const fromPath = initialView ?? pathToView(window.location.pathname + window.location.search) ?? { name: "home" as const }
+
+    // OAUTH ERROR RECOVERY: a failed OAuth flow (e.g. "Sign in with Google")
+    // redirects back to callbackUrl?error=... . When that callbackUrl was a
+    // public page, the error param was visible to NOBODY - the user just saw
+    // the landing page again and login looked silently broken. Route any
+    // stray ?error= (while logged out) to the auth screen, which renders a
+    // human-readable explanation banner. The URL is left untouched so
+    // AuthScreen's mount effect can still read the error code.
+    const oauthError = new URLSearchParams(window.location.search).get("error")
+    if (oauthError && !sessionRef.current && fromPath.name !== "login") {
+      useAppStore.setState({
+        view: { name: "login" },
+        sidebarOpen: false,
+        // If they had been heading somewhere protected before the failed
+        // OAuth attempt, remember it so login still returns them there.
+        ...(PUBLIC_VIEWS.has(fromPath.name) ? {} : { pendingView: fromPath }),
+      })
+      window.dispatchEvent(new CustomEvent("guardianx-navigate", { detail: { name: "login" } }))
+      return
+    }
+
     const current = useAppStore.getState().view
     if (JSON.stringify(fromPath) !== JSON.stringify(current)) {
       useAppStore.setState({ view: fromPath, sidebarOpen: false })

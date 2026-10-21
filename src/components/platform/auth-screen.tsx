@@ -101,6 +101,11 @@ export function AuthScreen() {
         "We could not create your account from the Google profile. Try email sign-in or contact the admin.",
       EmailSignin:
         "The magic-link email could not be sent - double-check the address or contact the admin.",
+      // Raw provider-name codes: some Google failures surface as
+      // "?error=google" instead of a typed NextAuth error - say something
+      // useful instead of the generic "Sign-in failed (google)".
+      google:
+        "Google sign-in could not be completed. If this email was registered with a password, please sign in with your email + password instead.",
     }
     setAuthError(
       MESSAGES[raw] ||
@@ -557,7 +562,15 @@ export function AuthScreen() {
                         disabled={loading}
                         onClick={() => {
                           setLoading(true)
-                          signIn("google", { callbackUrl: "/" })
+                          // callbackUrl MUST be the auth screen, never "/":
+                          // on ANY Google OAuth failure (account-not-linked,
+                          // consent denied, misconfiguration) next-auth
+                          // bounces to callbackUrl?error=... - with "/" that
+                          // dumped users on the landing page with an invisible
+                          // error, so login looked silently broken ("it just
+                          // loads the homepage"). /login renders the
+                          // human-readable error banner instead.
+                          signIn("google", { callbackUrl: "/login" })
                         }}
                       >
                         <svg className="h-4 w-4 mr-2" viewBox="0 0 24 24">
