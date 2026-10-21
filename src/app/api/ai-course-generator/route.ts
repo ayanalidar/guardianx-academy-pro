@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { getCurrentUser, rateLimit } from "@/lib/session"
+import { getCurrentUser, rateLimitState } from "@/lib/session"
 import { getChatClient } from "@/lib/zai"
 
 export const runtime = "nodejs"
@@ -29,8 +29,19 @@ export const maxDuration = 300
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser()
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (!rateLimit(`ai-gen:${user.id}`, { max: 3, windowMs: 10 * 60 * 1000 })) {
-    return NextResponse.json({ error: "Generator cooling down - try again in a few minutes." }, { status: 429 })
+  // Same fix as the Course Architect: 3 per 10 min starved a normal
+  // multi-course authoring session after ~1 course. 20/10 min keeps a hard
+  // ceiling against runaway loops while covering real admin workflows.
+  const rl = rateLimitState(`ai-gen:${user.id}`, { max: 20, windowMs: 10 * 60 * 1000 })
+  if (!rl.allowed) {
+    const mins = Math.max(1, Math.ceil(rl.retryAfterMs / 60000))
+    return NextResponse.json(
+      {
+        error: `You've used the Generator's budget for this 10-minute window. It resets in about ${mins} min.`,
+        retryAfterMs: rl.retryAfterMs,
+      },
+      { status: 429, headers: { "Retry-After": String(Math.ceil(rl.retryAfterMs / 1000)) } },
+    )
   }
   if (user.role !== "ADMIN" && user.role !== "SUPER_ADMIN") return NextResponse.json({ error: "Forbidden" }, { status: 403 })
 

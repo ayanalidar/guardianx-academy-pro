@@ -97,13 +97,18 @@ function GeneratingState({ label }: { label: string }) {
 }
 
 function ErrorState({ message, onRetry }: { message: string; onRetry: () => void }) {
+  // Budget (429) responses are ROUTINE backpressure, not a failure - show a
+  // calm amber "catching its breath" state instead of the scary red "snag".
+  const isBudget = /generation budget|Generator's budget/i.test(message)
   return (
     <div className="py-6 text-center">
-      <AlertTriangle className="h-8 w-8 text-rose-400 mx-auto mb-3" />
-      <p className="text-sm font-medium text-rose-300 mb-1">The Architect hit a snag</p>
+      <AlertTriangle className={isBudget ? "h-8 w-8 text-amber-400 mx-auto mb-3" : "h-8 w-8 text-rose-400 mx-auto mb-3"} />
+      <p className={isBudget ? "text-sm font-medium text-amber-300 mb-1" : "text-sm font-medium text-rose-300 mb-1"}>
+        {isBudget ? "The Architect is catching its breath" : "The Architect hit a snag"}
+      </p>
       <p className="text-xs text-muted-foreground mb-4 max-w-md mx-auto">{message}</p>
       <Button variant="outline" size="sm" onClick={onRetry} className="border-border/60">
-        <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> Retry generation
+        <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> {isBudget ? "Try again" : "Retry generation"}
       </Button>
     </div>
   )

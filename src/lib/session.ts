@@ -313,15 +313,29 @@ export function rateLimit(
   key: string,
   opts: { max: number; windowMs: number }
 ): boolean {
+  return rateLimitState(key, opts).allowed
+}
+
+/**
+ * Same fixed-window limiter as rateLimit(), but also reports HOW LONG until
+ * the window resets so 429 responses can tell the user when to come back
+ * instead of a vague "try again in a few minutes".
+ */
+export function rateLimitState(
+  key: string,
+  opts: { max: number; windowMs: number }
+): { allowed: boolean; retryAfterMs: number } {
   const now = Date.now()
   const entry = rateLimitMap.get(key)
   if (!entry || now > entry.resetAt) {
     rateLimitMap.set(key, { count: 1, resetAt: now + opts.windowMs })
-    return true
+    return { allowed: true, retryAfterMs: 0 }
   }
-  if (entry.count >= opts.max) return false
+  if (entry.count >= opts.max) {
+    return { allowed: false, retryAfterMs: Math.max(entry.resetAt - now, 1000) }
+  }
   entry.count++
-  return true
+  return { allowed: true, retryAfterMs: 0 }
 }
 
 /**

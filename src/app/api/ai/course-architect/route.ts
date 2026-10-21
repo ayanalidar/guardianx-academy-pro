@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
-import { getCurrentUser, rateLimit } from "@/lib/session"
+import { getCurrentUser, rateLimitState } from "@/lib/session"
 import { domainKnowledgeBlock, domainCatalog, domainExpertLens } from "@/lib/cyber-knowledge"
 import { getChatClient } from "@/lib/zai"
 import { localBlueprint, localCurriculum, localLesson, localAudit, localAssessment } from "@/lib/ai-fallback"
@@ -356,9 +356,6 @@ interface ChatClientLike {
 export async function POST(req: NextRequest) {
   const user = await getCurrentUser()
   if (!user) return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-  if (!rateLimit(`ai-architect:${user.id}`, { max: 10, windowMs: 10 * 60 * 1000 })) {
-    return NextResponse.json({ error: "Architect cooling down - try again in a few minutes." }, { status: 429 })
-  }
 
   const body = await req.json().catch(() => null)
   if (!body?.action || !body?.courseId) {
@@ -366,6 +363,30 @@ export async function POST(req: NextRequest) {
   }
   const action = String(body.action)
   const courseId = String(body.courseId)
+
+  // AI BUDGET - applies ONLY to actions that actually call the LLM
+  // (blueprint, curriculum, lesson, audit, assessments). The apply_* steps
+  // are pure DB writes that COMMIT reviewed content and previously burned
+  // the same budget, which meant a normal authoring sprint - blueprint +
+  // curriculum + apply + audit + assessments per course - hit the cap after
+  // ~2 courses and the Architect refused to work with an opaque "cooling
+  // down" error. 40 LLM requests / 10 min per user is still a hard ceiling
+  // against runaway loops (≈120 upstream LLM calls) while comfortably
+  // covering 3+ full course-authoring sessions in the window.
+  const LLM_ACTIONS = new Set(["blueprint", "curriculum", "lesson", "audit", "assessments"])
+  if (LLM_ACTIONS.has(action)) {
+    const rl = rateLimitState(`ai-architect:${user.id}`, { max: 40, windowMs: 10 * 60 * 1000 })
+    if (!rl.allowed) {
+      const mins = Math.max(1, Math.ceil(rl.retryAfterMs / 60000))
+      return NextResponse.json(
+        {
+          error: `You've used the Architect's generation budget for this 10-minute window. It resets in about ${mins} min - reviewed work is saved, so you can apply what you have and continue after that.`,
+          retryAfterMs: rl.retryAfterMs,
+        },
+        { status: 429, headers: { "Retry-After": String(Math.ceil(rl.retryAfterMs / 1000)) } },
+      )
+    }
+  }
 
   const course = await loadCourseForUser(courseId, user)
   if (!course) return NextResponse.json({ error: "Course not found or not yours" }, { status: 404 })
