@@ -28,7 +28,8 @@ import { ViewRouter } from "@/components/platform/view-router"
 import { useAppStore, type View } from "@/store/app-store"
 import { hashToView, replaceViewInUrl, pathToView, PUBLIC_VIEWS } from "@/lib/url-router"
 import { roleHomeFor } from "@/lib/nav-data"
-import { startIdlePreload, attachIntentPrefetch } from "@/lib/view-preloader"
+import { startIdlePreload, attachIntentPrefetch, withChunkRetry } from "@/lib/view-preloader"
+import { maybeReload } from "@/lib/chunk-guard"
 
 /* PERF: AuthScreen and AppShell never render at first paint - the splash
    below always shows until the session check resolves, and only THEN does
@@ -54,15 +55,80 @@ function ShellLoading() {
 }
 
 const AuthScreen = dynamic(
-  () => import("@/components/platform/auth-screen").then(m => ({ default: m.AuthScreen })),
+  // withChunkRetry: the auth screen is the ONE surface every logged-out
+  // visitor lands on, yet it was the only top-level lazy component WITHOUT
+  // retry - a deploy racing an open tab 404'd the chunk and React unmounted
+  // the whole tree = "blank page when I tap Login" (reported after every
+  // deploy). Transient failures now die inside the thunk; permanent ones
+  // are caught by the ShellErrorBoundary below.
+  withChunkRetry(() => import("@/components/platform/auth-screen").then(m => ({ default: m.AuthScreen }))),
   { ssr: false, loading: ShellLoading },
 )
 const AppShell = dynamic(
-  () => import("@/components/platform/app-shell").then(m => ({ default: m.AppShell })),
+  withChunkRetry(() => import("@/components/platform/app-shell").then(m => ({ default: m.AppShell }))),
   { ssr: false, loading: ShellLoading },
 )
 
+const CHUNK_ERROR_RE = /ChunkLoadError|Loading chunk|Failed to fetch dynamically imported|error loading dynamically imported|dynamically imported module/i
+
+/**
+ * Shell-level crash fallback. Chunk failures (the classic deploy-vs-tab
+ * race) trigger the SAME rate-limited recovery reload the global chunk
+ * guard uses, so the user never has to refresh manually; anything else
+ * renders the branded error panel instead of a blank page.
+ */
+function ShellErrorFallback({ error }: { error?: Error }) {
+  React.useEffect(() => {
+    const msg = error?.message || ""
+    if (msg && CHUNK_ERROR_RE.test(msg)) maybeReload(msg)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background p-4">
+      <div className="max-w-md w-full text-center space-y-4">
+        <div className="inline-flex p-4 rounded-2xl bg-amber-500/10 border border-amber-500/20">
+          <svg className="h-8 w-8 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+          </svg>
+        </div>
+        <h2 className="text-lg font-bold">Loading hiccup</h2>
+        <p className="text-sm text-muted-foreground">
+          The screen could not finish loading - usually a brief hiccup while we ship an update. It should recover on its own; if not, reload below.
+        </p>
+        <div className="flex items-center justify-center gap-2">
+          <button
+            onClick={() => window.location.reload()}
+            className="px-4 py-2 rounded-lg bg-violet-600 hover:bg-violet-500 text-white text-sm font-medium transition-colors"
+          >
+            Reload
+          </button>
+          <button
+            onClick={() => { window.location.href = "/" }}
+            className="px-4 py-2 rounded-lg border border-border text-sm font-medium hover:bg-accent transition-colors"
+          >
+            Go Home
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+/**
+ * AppRoot - thin ErrorBoundary wrapper around the real shell. The boundary
+ * sits ABOVE AuthScreen/AppShell/ViewRouter so a failed lazy chunk or a
+ * render crash can never unmount React's root and leave a BLANK page -
+ * the single worst failure mode reported on this app.
+ */
 export function AppRoot({ initialView }: { initialView?: View }) {
+  return (
+    <ErrorBoundary fallbackRender={(error) => <ShellErrorFallback error={error} />}>
+      <AppRootShell initialView={initialView} />
+    </ErrorBoundary>
+  )
+}
+
+function AppRootShell({ initialView }: { initialView?: View }) {
   const { view, pendingView, setPendingView } = useAppStore()
   const [session, setSession] = React.useState<any>(null)
   const [sessionChecked, setSessionChecked] = React.useState(false)

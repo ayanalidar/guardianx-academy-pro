@@ -209,6 +209,20 @@ function scheduleIdle(fn: () => void): void {
   }
 }
 
+/**
+ * Preload the auth screen + app shell chunks after the view queue drains.
+ * Both are lazy-loaded by app-root.tsx (outside VIEW_IMPORTERS) and are
+ * the two highest-stakes chunks in the app: the auth screen is what every
+ * logged-out visitor's "Login" tap mounts, the app shell is what every
+ * signed-in visitor's dashboard mounts. Referencing them here via import()
+ * points webpack at the SAME modules app-root already splits, so this
+ * simply warms them - no extra bytes shipped.
+ */
+const SHELL_WARMERS: Array<() => Promise<unknown>> = [
+  () => import("@/components/platform/auth-screen"),
+  () => import("@/components/platform/app-shell"),
+]
+
 /** Progressively warm view chunks during idle time, priority first.
  *  PERF: only the PRIORITY_VIEWS set (what students/admins actually tap in
  *  their first minutes) is warmed - the queue previously continued through
@@ -229,14 +243,29 @@ export function startIdlePreload(): void {
   PRIORITY_VIEWS.forEach(push)
 
   let i = 0
+  let shellPhase = false
   const step = () => {
     // stop eagerly if the user is on metered/hidden context - resume never
-    if (i >= queue.length) return
-    const importer = VIEW_IMPORTERS[queue[i++]]
-    Promise.resolve()
-      .then(importer)
-      .catch(() => {})
-      .finally(() => scheduleIdle(step))
+    if (!shellPhase) {
+      if (i >= queue.length) {
+        // Views done - warm the auth screen + app shell chunks last.
+        shellPhase = true
+        i = 0
+        scheduleIdle(step)
+        return
+      }
+      const importer = VIEW_IMPORTERS[queue[i++]]
+      Promise.resolve()
+        .then(importer)
+        .catch(() => {})
+        .finally(() => scheduleIdle(step))
+    } else {
+      if (i >= SHELL_WARMERS.length) return
+      Promise.resolve()
+        .then(SHELL_WARMERS[i++])
+        .catch(() => {})
+        .finally(() => scheduleIdle(step))
+    }
   }
   scheduleIdle(step)
 }

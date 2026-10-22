@@ -3,6 +3,7 @@
 import * as React from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { api } from "@/lib/api"
+import { bustCmsCache } from "@/lib/use-content"
 import { useUser } from "@/hooks/use-user"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -419,6 +420,9 @@ function PageEditor({ page }: { page: PageId }) {
     onSuccess: (res: any) => {
       toast.success(`Seeded ${res?.seeded ?? 0} default items for ${page}`)
       qc.invalidateQueries({ queryKey: ["cms-content", page] })
+      // Drop the localStorage instant-paint copy + fire the storage event
+      // that tells every OTHER open tab to refetch (live CMS propagation).
+      bustCmsCache(page)
       // The view's useEffect will repopulate `draft` from the new data.
     },
     onError: (e: any) => {
@@ -448,6 +452,7 @@ function PageEditor({ page }: { page: PageId }) {
         toast.info(`Nothing to add - all ${skipped} seed items already exist for ${page}`)
       }
       qc.invalidateQueries({ queryKey: ["cms-content", page] })
+      bustCmsCache(page)
     },
     onError: (e: any) => {
       toast.error(e?.message || "Failed to add missing sections")
@@ -501,6 +506,9 @@ function PageEditor({ page }: { page: PageId }) {
       if (deleted) parts.push(`${deleted} deleted`)
       toast.success(parts.length ? `Changes saved · ${parts.join(" · ")} · live now` : "No changes to save")
       qc.invalidateQueries({ queryKey: ["cms-content", page] })
+      // Drop the localStorage instant-paint copy + fire the storage event
+      // that tells every OTHER open tab to refetch (live CMS propagation).
+      bustCmsCache(page)
       // Also invalidate other pages (in case shared global content changed)
       if (page === "global") {
         qc.invalidateQueries({ queryKey: ["cms-content"] })

@@ -14,8 +14,11 @@ import { CardFx } from "@/components/platform/card-fx";
  *
  * 1. Chunk-error auto-reload - if a /_next/static script/stylesheet fails to
  *    load (typical after a deploy when the browser holds a stale HTML shell),
- *    reload ONCE to fetch the fresh build. Guarded by sessionStorage so we
- *    never reload-loop; the guard self-clears after 20s of healthy load.
+ *    reload to fetch the fresh build. v2 policy: up to 3 reloads per rolling
+ *    60s window (sessionStorage-tracked). The old single-shot flag broke when
+ *    the recovery reload itself landed on another still-propagating edge -
+ *    the user saw the blank page AGAIN with no self-healing left. The 3-cap
+ *    still makes reload loops impossible.
  *
  * 2. Reveal rescue timer - if hydration has not completed ~2.5s after DOM
  *    ready, add `gx-reveal-rescue` to <html>. Combined with the failsafe CSS
@@ -29,12 +32,17 @@ const CLIENT_RECOVERY_SCRIPT = `
     function chunky(msg, src) {
       if (src && /\\/_next\\/static/.test(src)) return true;
       msg = msg || "";
-      return /ChunkLoadError|Loading chunk|Failed to fetch dynamically imported|error loading dynamically imported/i.test(msg);
+      return /ChunkLoadError|Loading chunk|Failed to fetch dynamically imported|error loading dynamically imported|dynamically imported module/i.test(msg);
     }
     function reloadOnce() {
       try {
-        if (sessionStorage.getItem(KEY)) return;
-        sessionStorage.setItem(KEY, String(Date.now()));
+        var now = Date.now();
+        var raw = sessionStorage.getItem(KEY);
+        var st = raw ? JSON.parse(raw) : null;
+        if (!st || now - st.t > 60000) st = { t: now, n: 0 };
+        if (st.n >= 3) return;
+        st.n += 1; st.t = now;
+        sessionStorage.setItem(KEY, JSON.stringify(st));
       } catch (_) { return; }
       location.reload();
     }
@@ -48,9 +56,6 @@ const CLIENT_RECOVERY_SCRIPT = `
       var m = r && (r.message || String(r)) || "";
       if (chunky(m)) reloadOnce();
     });
-    setTimeout(function () {
-      try { sessionStorage.removeItem(KEY); } catch (_) {}
-    }, 20000);
     var armRescue = function () {
       setTimeout(function () {
         if (document.documentElement.classList.contains("gx-hydrated")) return;

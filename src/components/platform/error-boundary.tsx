@@ -9,7 +9,7 @@ interface ErrorBoundaryState {
 }
 
 export class ErrorBoundary extends React.Component<
-  { children: React.ReactNode; fallback?: React.ReactNode },
+  { children: React.ReactNode; fallback?: React.ReactNode; fallbackRender?: (error?: Error) => React.ReactNode },
   ErrorBoundaryState
 > {
   constructor(props: { children: React.ReactNode; fallback?: React.ReactNode }) {
@@ -32,6 +32,9 @@ export class ErrorBoundary extends React.Component<
 
   render() {
     if (this.state.hasError) {
+      // fallbackRender receives the error so callers can react to chunk
+      // failures (auto-reload) differently from plain render crashes.
+      if (this.props.fallbackRender) return this.props.fallbackRender(this.state.error)
       if (this.props.fallback) return this.props.fallback
       return (
         <div className="min-h-screen flex items-center justify-center bg-background p-4">
