@@ -399,6 +399,62 @@ const INSTITUTIONS: ContentItem[] = [
       { label: "Renewal", value: "Annual", icon: "Calendar", color: "text-emerald-300" },
     ]
   },
+
+  // ============================================================
+  // PARTNER NETWORK (Phase 1 showcase layer)
+  //
+  // The `items` array ships ONE blank template entry so the Content
+  // Studio's object-array editor knows the field shape (an empty
+  // array would degrade to the string-array editor). Views filter
+  // entries with an empty `name`, so the blank template NEVER shows
+  // publicly. To add a real partner: Content Studio → Institutions →
+  // partners → items → fill in name/type/city/... → Save.
+  //
+  // Field guide for `partners.items`:
+  //   name            (required) institution name, e.g. "XYZ College of Engineering"
+  //   type            School | College | University  (drives icon + accent color)
+  //   city            e.g. "Chennai, TN"
+  //   logoUrl         optional image URL; initials monogram used when blank
+  //   since           e.g. "2026" - rendered as "MOU SINCE 2026"
+  //   studentsTrained e.g. "120+" - rendered as "120+ STUDENTS TRAINED"
+  //   outcome         headline result, e.g. "94% placement in the first cohort"
+  //   url             optional website link
+  // ============================================================
+  { page: "institutions", section: "partners", key: "trustedLabel", value: "TRUSTED BY OUR PARTNER INSTITUTIONS" },
+  { page: "institutions", section: "partners", key: "eyebrow", value: "OUR PARTNER NETWORK" },
+  { page: "institutions", section: "partners", key: "title", value: "Colleges and universities" },
+  { page: "institutions", section: "partners", key: "titleAccent", value: "already building with GuardianX." },
+  {
+    page: "institutions", section: "partners", key: "description",
+    value: "Every partner below signed an MoU with GuardianX. Each card shows what we deliver together - certification tracks, internship cohorts, and placement support for their students."
+  },
+  { page: "institutions", section: "partners", key: "emptyTitle", value: "Be an early mover." },
+  { page: "institutions", section: "partners", key: "emptyTitleAccent", value: "Become a founding MoU partner." },
+  {
+    page: "institutions", section: "partners", key: "emptyDescription",
+    value: "We are onboarding a limited cohort of colleges and universities for the coming academic year. Founding partners get priority scheduling, co-branded certificates, and placement-support onboarding for their placement cell."
+  },
+  { page: "institutions", section: "partners", key: "ctaLabel", value: "Sign an MoU" },
+  {
+    page: "institutions", section: "partners", key: "items",
+    value: [
+      { name: "", type: "College", city: "", logoUrl: "", since: "", studentsTrained: "", outcome: "", url: "" },
+    ]
+  },
+
+  // ============================================================
+  // TESTIMONIALS from partner institutions (HODs, Deans, TPOs).
+  // Same pattern: one blank template entry; views require BOTH a
+  // non-empty `quote` and `name` before rendering anything.
+  // ============================================================
+  { page: "institutions", section: "testimonials", key: "eyebrow", value: "FROM OUR PARTNERS" },
+  { page: "institutions", section: "testimonials", key: "title", value: "What institutions say about us." },
+  {
+    page: "institutions", section: "testimonials", key: "items",
+    value: [
+      { quote: "", name: "", role: "", institution: "" },
+    ]
+  },
 ]
 
 // ============================================================

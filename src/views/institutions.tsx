@@ -11,6 +11,12 @@ import { usePageContent, getContent, getContentArray } from "@/lib/use-content"
 import { getCmsIcon } from "@/lib/cms-icons"
 import { cn } from "@/lib/utils"
 import { ArrowRight, ArrowLeft, Handshake } from "lucide-react"
+import {
+  PartnerNetworkSection,
+  PartnerTestimonialsSection,
+  PartnerWall,
+  useNamedPartners,
+} from "@/components/platform/institution-proof"
 
 /**
  * Institutions Hub - the `institutions` landing page.
@@ -135,6 +141,12 @@ export function InstitutionsView() {
     [],
   )
 
+  // ---- Partner showcase (Phase 1) ----
+  // Named partners drive the hero-adjacent "trusted by" wall. The network
+  // cards + testimonials render via their own self-contained sections.
+  const { partners } = useNamedPartners()
+  const trustedLabel = getContent(cmsData, "partners", "trustedLabel", "TRUSTED BY OUR PARTNER INSTITUTIONS")
+
   return (
     <main className="relative">
       {/* ============================== HERO ============================== */}
@@ -203,6 +215,16 @@ export function InstitutionsView() {
           </div>
         </div>
       </section>
+
+      {/* ====================== PARTNER LOGO WALL ======================== */}
+      {/* Hidden until at least one named partner exists - never fake data. */}
+      {partners.length > 0 && (
+        <section className="relative border-t border-border/40">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <PartnerWall partners={partners} label={trustedLabel} />
+          </div>
+        </section>
+      )}
 
       {/* ========================= PARTNER TYPES ========================= */}
       {partnerTypes.length > 0 && (
@@ -292,6 +314,9 @@ export function InstitutionsView() {
         </section>
       )}
 
+      {/* ==================== PARTNER NETWORK SHOWCASE =================== */}
+      <PartnerNetworkSection />
+
       {/* ========================== FLOW STEPS =========================== */}
       {flowSteps.length > 0 && (
         <section className="relative border-t border-border/40 py-16">
@@ -369,6 +394,9 @@ export function InstitutionsView() {
           </div>
         </section>
       )}
+
+      {/* ====================== PARTNER TESTIMONIALS ===================== */}
+      <PartnerTestimonialsSection />
 
       {/* ========================== FINAL CTA =========================== */}
       <section className="relative border-t border-border/40 py-20 overflow-hidden">

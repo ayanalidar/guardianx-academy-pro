@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { StatTile } from "@/components/cyber/stat-tile"
 import { ParticleLogo } from "@/components/platform/particle-logo"
 import { cn } from "@/lib/utils"
+import { StudentOutcomeStrip, PartnerWall, useNamedPartners } from "@/components/platform/institution-proof"
 import {
   Building, ArrowRight, ArrowLeft, LogIn, Sparkles,
   Users, BookOpen, GraduationCap, ShieldCheck, Award,
@@ -129,6 +130,7 @@ const INTEGRATION_OPTIONS = [
 
 export function InstitutionsCollegesView() {
   const { navigate } = useAppStore()
+  const { partners } = useNamedPartners()
 
   return (
     <main className="relative">
@@ -194,6 +196,9 @@ export function InstitutionsCollegesView() {
           </div>
         </div>
       </section>
+
+      {/* WHAT YOUR STUDENTS GET - the three MoU pillars */}
+      <StudentOutcomeStrip />
 
       {/* CERTIFICATIONS */}
       <section className="py-6 lg:py-8 border-t border-border/40">
@@ -268,6 +273,18 @@ export function InstitutionsCollegesView() {
           </div>
         </div>
       </section>
+
+      {/* PARTNER WALL - hidden until real partners exist in the CMS */}
+      {partners.length > 0 && (
+        <section className="py-6 lg:py-8 border-t border-border/40">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <p className="text-[10px] font-mono text-cyan-400 tracking-[0.25em] mb-2">
+              {partners.length} MOU PARTNER INSTITUTION{partners.length === 1 ? "" : "S"}
+            </p>
+            <PartnerWall partners={partners} compact />
+          </div>
+        </section>
+      )}
 
       {/* CTA */}
       <section className="py-8 lg:py-12 border-t border-border/40 text-center">

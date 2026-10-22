@@ -38,6 +38,7 @@ import { ParticleLogo } from "@/components/platform/particle-logo"
 import { PhantomCertSample } from "@/components/platform/phantom-cert-sample"
 import { CertificateVerifyCard } from "@/components/platform/certificate-verify-card"
 import { usePageContent, getContent } from "@/lib/use-content"
+import { PartnerWall, useNamedPartners } from "@/components/platform/institution-proof"
 import {
   CyberTerminal,
   MissionCard,
@@ -105,6 +106,9 @@ export function HomeView() {
    *  CMS content with fallbacks                                   *
    * ------------------------------------------------------------- */
   const cms = usePageContent("home")
+  // MoU partner showcase - reads the same "institutions" CMS content that
+  // powers /institutions. Hidden entirely until a named partner exists.
+  const { partners: mouPartners } = useNamedPartners()
   const cmsData = cms.data
 
   const heroBadge = getContent(
@@ -1911,6 +1915,18 @@ export function HomeView() {
               </motion.div>
             ))}
           </div>
+
+          {/* MoU partner wall - only renders once partners are added via
+              Content Studio (Admin → Content Studio → Institutions). */}
+          {mouPartners.length > 0 && (
+            <motion.div {...FADE_UP} className="mt-8">
+              <PartnerWall
+                partners={mouPartners}
+                compact
+                label={`TRUSTED BY ${mouPartners.length} MOU PARTNER INSTITUTION${mouPartners.length === 1 ? "" : "S"}`}
+              />
+            </motion.div>
+          )}
 
           <div className="mt-6 flex justify-center">
             <Button

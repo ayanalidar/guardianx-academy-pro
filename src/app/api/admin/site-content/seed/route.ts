@@ -10,13 +10,19 @@ export const runtime = "nodejs"
  * empty Content Studio from the UI without shell access.
  *
  * Body:
- *   { page?: "home" | "contact" | "institutions" | "catalog" | "auth" | "global" }
+ *   { page?: "home" | "contact" | "institutions" | "catalog" | "auth" | "global",
+ *     mode?: "overwrite" | "fill-missing" }
  *   - If page is omitted or "*", all pages are (re)seeded.
- *   - Existing rows are upserted (their values are overwritten with the
- *     seed defaults). Rows whose page+section+key does NOT appear in the
- *     seed are left untouched (so admin-edited custom keys are preserved).
+ *   - mode "overwrite" (default): existing rows are upserted (their values
+ *     are overwritten with the seed defaults). Rows whose page+section+key
+ *     does NOT appear in the seed are left untouched (so admin-edited
+ *     custom keys are preserved).
+ *   - mode "fill-missing": ONLY creates rows that don't exist yet.
+ *     Existing values are never touched - safe for picking up newly
+ *     shipped seed sections (e.g. partner network) without clobbering
+ *     admin edits.
  *
- * Returns: { page, seeded: number }
+ * Returns: { page, seeded: number, added?: number, skipped?: number }
  */
 export const POST = withErrorHandler(async (req: NextRequest) => {
   const user = await requireAdmin()
@@ -50,8 +56,38 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
     )
   }
 
+  const fillMissing = body?.mode === "fill-missing"
+
   let seeded = 0
+  let added = 0
+  let skipped = 0
   for (const it of items) {
+    if (fillMissing) {
+      // Non-destructive pass: create only what's missing, never overwrite.
+      const existing = await db.siteContent.findUnique({
+        where: {
+          page_section_key: { page: it.page, section: it.section, key: it.key },
+        },
+        select: { page: true },
+      })
+      if (existing) {
+        skipped++
+        continue
+      }
+      await db.siteContent.create({
+        data: {
+          page: it.page,
+          section: it.section,
+          key: it.key,
+          value: it.value,
+          updatedBy: user.id,
+        },
+      })
+      added++
+      seeded++
+      continue
+    }
+
     await db.siteContent.upsert({
       where: {
         page_section_key: { page: it.page, section: it.section, key: it.key },
@@ -71,5 +107,5 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
     seeded++
   }
 
-  return NextResponse.json({ page: pageFilter ?? "*", seeded })
+  return NextResponse.json({ page: pageFilter ?? "*", seeded, added, skipped })
 })

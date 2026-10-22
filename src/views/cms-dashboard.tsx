@@ -38,7 +38,7 @@ import {
   Loader2, Search, Eye, EyeOff, Shield, AlertCircle, CheckCircle2,
   Globe, Home as HomeIcon, Building2, BookOpen, Mail, TrendingUp,
   Layout, LayoutPanelLeft, Sparkles, RefreshCw, Database, Hash,
-  Sprout, FlaskConical,
+  Sprout, FlaskConical, ListPlus,
 } from "lucide-react"
 import {
   ScrollReveal, FadeIn,
@@ -428,6 +428,32 @@ function PageEditor({ page }: { page: PageId }) {
 
   const handleSeed = () => seedMutation.mutate()
 
+  // Non-destructive seed pass: adds seed keys that don't exist yet (new
+  // sections shipped with platform updates) WITHOUT overwriting any
+  // existing values. Use this instead of "Seed Defaults" when you have
+  // customized content and just want the latest editable sections.
+  const fillMissingMutation = useMutation({
+    mutationFn: async () => {
+      return api(`/api/admin/site-content/seed`, {
+        method: "POST",
+        body: JSON.stringify({ page, mode: "fill-missing" }),
+      })
+    },
+    onSuccess: (res: any) => {
+      const added = res?.added ?? 0
+      const skipped = res?.skipped ?? 0
+      if (added > 0) {
+        toast.success(`Added ${added} missing item${added === 1 ? "" : "s"} to ${page} (${skipped} already existed) - live now`)
+      } else {
+        toast.info(`Nothing to add - all ${skipped} seed items already exist for ${page}`)
+      }
+      qc.invalidateQueries({ queryKey: ["cms-content", page] })
+    },
+    onError: (e: any) => {
+      toast.error(e?.message || "Failed to add missing sections")
+    },
+  })
+
   // Add a brand-new section to the draft (and on Save, it will be
   // persisted via the PUT /api/cms/[page] batch upsert).
   const handleAddSection = () => {
@@ -630,6 +656,20 @@ function PageEditor({ page }: { page: PageId }) {
                 <><Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> Seeding...</>
               ) : (
                 <><Sprout className="h-3.5 w-3.5 mr-1.5" /> Seed Defaults</>
+              )}
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => fillMissingMutation.mutate()}
+              disabled={saveMutation.isPending || fillMissingMutation.isPending}
+              className="h-9"
+              title="Adds newly shipped sections/keys that don't exist yet - NEVER overwrites your existing edits. Use this to pick up new features like the Partner Network section."
+            >
+              {fillMissingMutation.isPending ? (
+                <><Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" /> Adding...</>
+              ) : (
+                <><ListPlus className="h-3.5 w-3.5 mr-1.5" /> Add missing sections</>
               )}
             </Button>
             <Button
