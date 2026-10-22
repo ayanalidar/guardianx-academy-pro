@@ -17,6 +17,10 @@ export type View =
   | { name: "institutions-colleges" }
   | { name: "institutions-universities" }
   | { name: "institutions-open-schooling" }
+  // Public profile page for one signed MoU partner institution,
+  // e.g. /institutions/orchid-university (slug = explicit CMS slug or
+  // kebab-cased partner name; see profilePathOf in institution-proof.tsx).
+  | { name: "institution-detail"; slug: string }
   | { name: "corporate-training" }
   | { name: "cyber-quiz" }
   | { name: "cyber-quiz-runner"; difficulty: "Easy" | "Hard" | "Advanced" }

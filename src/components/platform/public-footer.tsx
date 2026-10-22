@@ -227,11 +227,12 @@ export function PublicFooter() {
     {
       title: "INSTITUTIONS",
       links: [
+        { label: "Institutional Partnerships", view: { name: "institutions" } },
         { label: "Schools", view: { name: "institutions-schools" } },
         { label: "Colleges", view: { name: "institutions-colleges" } },
         { label: "Universities", view: { name: "institutions-universities" } },
         { label: "Corporate Training", view: { name: "corporate-training" } },
-        { label: "Partner With Us", view: { name: "contact" } },
+        { label: "Sign an MoU", view: { name: "contact" } },
       ],
     },
     {

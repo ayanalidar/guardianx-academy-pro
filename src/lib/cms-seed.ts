@@ -435,10 +435,28 @@ const INSTITUTIONS: ContentItem[] = [
     value: "We are onboarding a limited cohort of colleges and universities for the coming academic year. Founding partners get priority scheduling, co-branded certificates, and placement-support onboarding for their placement cell."
   },
   { page: "institutions", section: "partners", key: "ctaLabel", value: "Sign an MoU" },
+  { page: "institutions", section: "partners", key: "brochureUrl", value: "/guardianx-partnership-brochure.pdf" },
+  {
+    page: "institutions", section: "partners", key: "brochureLabel",
+    value: "Download Partnership Brochure",
+  },
+  {
+    page: "institutions", section: "partners", key: "brochureHint",
+    value: "A 2-page PDF covering our partnership models, what students get, and the MoU process - share it with your management or placement cell.",
+  },
   {
     page: "institutions", section: "partners", key: "items",
     value: [
-      { name: "", type: "College", city: "", logoUrl: "", since: "", studentsTrained: "", outcome: "", url: "" },
+      {
+        name: "", type: "College", city: "", logoUrl: "", since: "", studentsTrained: "", outcome: "", url: "",
+        // Profile-page fields: every partner automatically gets a public
+        // profile at /institutions/<slug> (slug defaults to the kebab-cased
+        // name). "tracks" is one item per line (or pipe-separated). Leave
+        // mouPublic anything other than "yes" to keep the MoU copy private.
+        slug: "", about: "", tracks: "",
+        testimonialQuote: "", testimonialName: "", testimonialTitle: "",
+        mouPdfUrl: "", mouPublic: "",
+      },
     ]
   },
 
@@ -455,6 +473,31 @@ const INSTITUTIONS: ContentItem[] = [
       { quote: "", name: "", role: "", institution: "" },
     ]
   },
+
+  // ============================================================
+  // PARTNER PROFILE PAGE labels (/institutions/<slug>). The view
+  // has the same strings as hard fallbacks, so seeding these only
+  // makes them editable in Content Studio - never required.
+  // ============================================================
+  { page: "institutions", section: "partnerProfile", key: "backLabel", value: "All partner institutions" },
+  { page: "institutions", section: "partnerProfile", key: "notFoundTitle", value: "Partner not found" },
+  { page: "institutions", section: "partnerProfile", key: "coversEyebrow", value: "WHAT THE MOU COVERS" },
+  { page: "institutions", section: "partnerProfile", key: "coversTitle", value: "Delivered on their campus, under one agreement." },
+  { page: "institutions", section: "partnerProfile", key: "outcomesEyebrow", value: "PARTNERSHIP OUTCOMES" },
+  { page: "institutions", section: "partnerProfile", key: "testimonialEyebrow", value: "IN THEIR WORDS" },
+  { page: "institutions", section: "partnerProfile", key: "mouEyebrow", value: "SIGNED AGREEMENT" },
+  { page: "institutions", section: "partnerProfile", key: "mouTitle", value: "Signed MoU copy" },
+  { page: "institutions", section: "partnerProfile", key: "mouDownload", value: "Download MoU copy" },
+  {
+    page: "institutions", section: "partnerProfile", key: "mouRequestNote",
+    value: "The MoU between this institution and GuardianX is signed and on file. A copy can be shared on request - write to us and we will connect you with the institution's partnership cell.",
+  },
+  { page: "institutions", section: "partnerProfile", key: "ctaTitle", value: "Want this partnership at your institution?" },
+  {
+    page: "institutions", section: "partnerProfile", key: "ctaDescription",
+    value: "We sign a limited number of MoUs each academic year - certification training, internship cohorts and placement support under one agreement. Talk to our partnerships team.",
+  },
+  { page: "institutions", section: "partnerProfile", key: "ctaLabel", value: "Start a partnership" },
 ]
 
 // ============================================================

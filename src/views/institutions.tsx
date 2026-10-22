@@ -10,7 +10,7 @@ import { ParticleLogo } from "@/components/platform/particle-logo"
 import { usePageContent, getContent, getContentArray } from "@/lib/use-content"
 import { getCmsIcon } from "@/lib/cms-icons"
 import { cn } from "@/lib/utils"
-import { ArrowRight, ArrowLeft, Handshake } from "lucide-react"
+import { ArrowRight, ArrowLeft, Handshake, FileText, Download } from "lucide-react"
 import {
   PartnerNetworkSection,
   PartnerTestimonialsSection,
@@ -136,6 +136,13 @@ export function InstitutionsView() {
   const finalDescription = getContent(cmsData, "finalCta", "description", "")
   const finalCtaPrimary = getContent(cmsData, "finalCta", "ctaPrimary", "Sign an MoU")
   const finalCtaSecondary = getContent(cmsData, "finalCta", "ctaSecondary", "Build Your Cybersecurity Program")
+  // ---- Partnership brochure (downloadable PDF, swap URL in Content Studio) ----
+  const brochureUrl = getContent(cmsData, "partners", "brochureUrl", "/guardianx-partnership-brochure.pdf")
+  const brochureLabel = getContent(cmsData, "partners", "brochureLabel", "Download Partnership Brochure")
+  const brochureHint = getContent(
+    cmsData, "partners", "brochureHint",
+    "A 2-page PDF covering our partnership models, what students get, and the MoU process - share it with your management or placement cell.",
+  )
   const trustFooter = getContentArray<{ label: string; value: string; icon: string; color: string }>(
     cmsData, "finalCta", "trustFooter",
     [],
@@ -422,6 +429,25 @@ export function InstitutionsView() {
               {finalCtaSecondary}
             </Button>
           </div>
+          {/* Downloadable partnership brochure - swap the PDF URL any time
+              in Content Studio (partners → brochureUrl). Hidden if cleared. */}
+          {brochureUrl?.trim() && (
+            <a
+              href={brochureUrl.trim()}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group mx-auto max-w-xl flex items-center gap-4 rounded-xl border border-border/60 bg-card/40 p-4 text-left transition-colors hover:bg-card/70 hover:border-violet-500/40 mb-10"
+            >
+              <span className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-violet-500/30 bg-violet-500/10">
+                <FileText className="h-5 w-5 text-violet-300" aria-hidden />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-semibold">{brochureLabel}</span>
+                <span className="block text-[11px] text-muted-foreground leading-relaxed mt-0.5">{brochureHint}</span>
+              </span>
+              <Download className="h-4 w-4 shrink-0 text-muted-foreground group-hover:text-violet-300 transition-colors" aria-hidden />
+            </a>
+          )}
           {trustFooter.length > 0 && (
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               {trustFooter.map((t, i) => {

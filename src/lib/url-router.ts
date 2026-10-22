@@ -98,6 +98,10 @@ export function viewToPath(view: View): string {
       return "/institutions/universities"
     case "institutions-open-schooling":
       return "/institutions/open-schooling"
+    case "institution-detail":
+      // Served by the catch-all bridge (no dedicated Next.js page needed):
+      // /institutions/<slug> → { name: "institution-detail", slug }.
+      return `/institutions/${encodeURIComponent(view.slug)}`
     // Everything else: 1:1 name → path (served by the catch-all bridge).
     default:
       return `/${view.name}`
@@ -238,7 +242,9 @@ export function pathToView(pathWithSearch: string): View | null {
     return { name: "legal", pageType: parts[0] as any }
   }
 
-  // Institutions section (real pages exist):
+  // Institutions section (real pages exist for the four product pages;
+  // any other second segment is a partner profile slug served by the
+  // catch-all bridge, e.g. /institutions/orchid-university).
   if (parts[0] === "institutions" && parts[1]) {
     switch (parts[1]) {
       case "schools": return { name: "institutions-schools" }
@@ -246,6 +252,7 @@ export function pathToView(pathWithSearch: string): View | null {
       case "universities": return { name: "institutions-universities" }
       case "open-schooling": return { name: "institutions-open-schooling" }
     }
+    if (parts.length === 2) return { name: "institution-detail", slug: parts[1] }
   }
 
   // /<view-name> flat routes (validated so unknown paths 404 instead of
@@ -314,7 +321,7 @@ export function readViewFromUrl(): View {
 export const PUBLIC_VIEWS = new Set<View["name"]>([
   "home", "contact", "institutions", "institutions-schools",
   "institutions-colleges", "institutions-universities",
-  "institutions-open-schooling",
+  "institutions-open-schooling", "institution-detail",
   "corporate-training",
   "cyber-quiz", "cyber-quiz-runner", "cyber-quiz-results",
   "cyber-quiz-certificate", "cyber-quiz-progress",
@@ -347,6 +354,7 @@ const VIEW_TITLES: Partial<Record<View["name"], string>> = {
   "institutions-colleges": "Cybersecurity for Colleges",
   "institutions-universities": "Cybersecurity for Universities",
   "institutions-open-schooling": "Open Schooling Program",
+  "institution-detail": "MoU Partner Institution",
   "cyber-quiz": "Cybersecurity Awareness Quiz",
   dashboard: "Student Dashboard",
   catalog: "Cybersecurity Courses & Certifications",

@@ -1132,7 +1132,13 @@ function KeyEditorBody({
 
   // Object array (with structured editor)
   if (kind === "objectArray" && !showRaw) {
-    return <ObjectArrayEditor value={value as any[]} onChange={onChange} />
+    return (
+      <ObjectArrayEditor
+        value={value as any[]}
+        onChange={onChange}
+        templateKeys={OBJECT_ARRAY_FIELD_TEMPLATES[`${section}.${keyName}`]}
+      />
+    )
   }
 
   // Object (single)
@@ -1237,23 +1243,46 @@ function StringArrayEditor({
    Object array editor - card-based with all fields
    ============================================================ */
 
+/**
+ * Canonical field shapes for object-array sections, keyed by "section.key".
+ * When the studio edits an array whose saved entries pre-date newly shipped
+ * fields (e.g. partner entries saved before the profile fields existed),
+ * these template keys are merged into the editor so the new inputs appear
+ * without the admin having to re-create their entries. Order here = field
+ * order in the editor.
+ */
+const OBJECT_ARRAY_FIELD_TEMPLATES: Record<string, string[]> = {
+  "partners.items": [
+    "name", "type", "city", "logoUrl", "since", "studentsTrained", "outcome", "url",
+    "slug", "about", "tracks",
+    "testimonialQuote", "testimonialName", "testimonialTitle",
+    "mouPdfUrl", "mouPublic",
+  ],
+  "testimonials.items": ["quote", "name", "role", "institution"],
+}
+
 function ObjectArrayEditor({
   value,
   onChange,
+  templateKeys,
 }: {
   value: any[]
   onChange: (v: any[]) => void
+  /** Canonical field keys merged into every item (see OBJECT_ARRAY_FIELD_TEMPLATES). */
+  templateKeys?: string[]
 }) {
   const items = Array.isArray(value) ? value : []
 
-  // Get the union of all keys across items (handles heterogeneous items)
+  // Union of all keys across items (handles heterogeneous items), with the
+  // canonical template keys FIRST (and always present) so newly shipped
+  // fields show up on entries that were saved before they existed.
   const allKeys = Array.from(
     items.reduce<Set<string>>((set, item) => {
       if (item && typeof item === "object") {
         Object.keys(item).forEach((k) => set.add(k))
       }
       return set
-    }, new Set())
+    }, new Set(templateKeys ?? []))
   )
 
   const update = (idx: number, field: string, v: any) => {

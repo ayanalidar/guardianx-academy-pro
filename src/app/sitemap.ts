@@ -39,14 +39,31 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   ]
 
   try {
-    const [courses, blogPosts, events, instructors, batches, certs] = await Promise.all([
+    const [courses, blogPosts, events, instructors, batches, certs, partnerItems] = await Promise.all([
       db.course.findMany({ where: { published: true }, select: { slug: true, updatedAt: true } }).catch(() => []),
       db.blogPost.findMany({ where: { published: true }, select: { slug: true, updatedAt: true } }).catch(() => []),
       db.event.findMany({ where: { published: true }, select: { slug: true, updatedAt: true } }).catch(() => []),
       db.user.findMany({ where: { role: "INSTRUCTOR" }, select: { id: true, updatedAt: true } }).catch(() => []),
       db.trainingBatch.findMany({ where: { published: true }, select: { id: true, updatedAt: true } }).catch(() => []),
       db.guardianCertification.findMany({ where: { published: true }, select: { slug: true, updatedAt: true } }).catch(() => []),
+      // MoU partner institution profiles (CMS-driven, bridge-routed)
+      db.siteContent
+        .findFirst({ where: { page: "institutions", section: "partners", key: "items" } })
+        .catch(() => null),
     ])
+
+    // Partner profile URLs mirror partnerSlugOf() in institution-proof.tsx.
+    const rawPartners = partnerItems?.value
+    if (Array.isArray(rawPartners)) {
+      const norm = (s: string) => s.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")
+      for (const p of rawPartners as any[]) {
+        if (!p || typeof p !== "object") continue
+        if (typeof p.name !== "string" || !p.name.trim()) continue
+        const slug = typeof p.slug === "string" && p.slug.trim() ? p.slug.trim().toLowerCase() : norm(p.name)
+        if (!slug) continue
+        entries.push({ url: `${BASE_URL}/institutions/${encodeURIComponent(slug)}`, lastModified: partnerItems?.updatedAt ?? now, changeFrequency: "monthly" as const, priority: 0.6 })
+      }
+    }
 
     for (const c of courses) {
       entries.push({ url: `${BASE_URL}/courses/${encodeURIComponent(c.slug)}`, lastModified: c.updatedAt, changeFrequency: "weekly" as const, priority: 0.9 })

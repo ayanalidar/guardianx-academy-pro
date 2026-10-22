@@ -8,7 +8,7 @@ import {
   FileText, School, Building, Landmark, ShieldCheck, Award, GraduationCap,
   ExternalLink,
   TrendingUp, Mail, Menu, ChevronDown, LogIn, LayoutDashboard,
-  CalendarCheck, Terminal, Shield, FileBadge, Users,
+  CalendarCheck, Terminal, Shield, FileBadge, Users, Handshake,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger, SheetHeader, SheetTitle } from "@/components/ui/sheet"
@@ -172,6 +172,12 @@ const MEGA_MENU_GROUPS: MegaMenuGroup[] = [
     id: "institutions",
     label: "Institutions",
     items: [
+      {
+        icon: Handshake,
+        title: "Institutional Partnerships",
+        description: "MoU partners · certifications · placements",
+        view: { name: "institutions" },
+      },
       {
         icon: School,
         title: "Schools",

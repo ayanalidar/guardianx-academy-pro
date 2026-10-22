@@ -64,6 +64,7 @@ const InstitutionsView = dynamic(withChunkRetry(() => import("@/views/institutio
 const InstitutionsSchoolsView = dynamic(withChunkRetry(() => import("@/views/institutions-schools").then(m => ({ default: m.InstitutionsSchoolsView }))), { ssr: true, loading: ViewLoading })
 const InstitutionsCollegesView = dynamic(withChunkRetry(() => import("@/views/institutions-colleges").then(m => ({ default: m.InstitutionsCollegesView }))), { ssr: true, loading: ViewLoading })
 const InstitutionsUniversitiesView = dynamic(withChunkRetry(() => import("@/views/institutions-universities").then(m => ({ default: m.InstitutionsUniversitiesView }))), { ssr: true, loading: ViewLoading })
+const InstitutionDetailView = dynamic(withChunkRetry(() => import("@/views/institution-detail").then(m => ({ default: m.InstitutionDetailView }))), { ssr: true, loading: ViewLoading })
 const OpenSchoolingView = dynamic(withChunkRetry(() => import("@/views/open-schooling").then(m => ({ default: m.OpenSchoolingView }))), { ssr: true, loading: ViewLoading })
 const CorporateTrainingView = dynamic(withChunkRetry(() => import("@/views/corporate-training").then(m => ({ default: m.CorporateTrainingView }))), { ssr: true, loading: ViewLoading })
 const CyberQuizLandingView = dynamic(withChunkRetry(() => import("@/views/cyber-quiz-landing").then(m => ({ default: m.CyberQuizLandingView }))), { ssr: true, loading: ViewLoading })
@@ -99,6 +100,8 @@ function renderView(view: View): React.ReactNode {
     case "institutions-colleges": return <InstitutionsCollegesView />
     case "institutions-universities": return <InstitutionsUniversitiesView />
     case "institutions-open-schooling": return <OpenSchoolingView />
+    case "institution-detail":
+      return "slug" in view ? <InstitutionDetailView slug={view.slug} /> : null
     case "corporate-training": return <CorporateTrainingView />
     case "cyber-quiz": return <CyberQuizLandingView />
     case "catalog": return <CourseCatalogView />

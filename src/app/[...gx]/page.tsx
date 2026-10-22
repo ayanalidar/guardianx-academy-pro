@@ -75,6 +75,31 @@ async function resolveCert(slug: string) {
     .catch(() => null)
 }
 
+/**
+ * Resolve a MoU partner institution profile from the CMS "institutions"
+ * page (section partners / key items). Mirrors partnerSlugOf() in
+ * institution-proof.tsx: explicit CMS slug wins, else kebab-cased name.
+ * Fail-open: any DB/parse hiccup returns undefined → generic metadata.
+ */
+async function resolvePartnerProfile(slug: string) {
+  const row = await db.siteContent
+    .findFirst({ where: { page: "institutions", section: "partners", key: "items" } })
+    .catch(() => null)
+  const raw = row?.value
+  const items = Array.isArray(raw) ? (raw as any[]) : []
+  const norm = (s: string) =>
+    s.trim().toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")
+  return items.find((it) => {
+    if (!it || typeof it !== "object") return false
+    if (typeof it.name !== "string" || !it.name.trim()) return false
+    const s =
+      typeof it.slug === "string" && it.slug.trim()
+        ? it.slug.trim().toLowerCase()
+        : norm(it.name)
+    return s === slug.trim().toLowerCase()
+  })
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { gx } = await params
   const view = viewFromSegments(gx)
@@ -120,6 +145,25 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       }
     }
     // Views WITHOUT a dedicated route → self-canonical + real row content.
+    if (view.name === "institution-detail") {
+      const p = await resolvePartnerProfile(view.slug)
+      if (p) {
+        const desc =
+          (typeof p.about === "string" && p.about.trim().slice(0, 160)) ||
+          `${p.name} is an official MoU partner of GuardianX Academy - certification training, internship cohorts and placement support delivered on their campus.`
+        return {
+          title: `${p.name} - MoU Partner Institution`,
+          description: desc,
+          alternates: { canonical: selfPath },
+          openGraph: { title: `${p.name} - GuardianX Academy`, description: desc, images: ["/og-default.png"] },
+        }
+      }
+      return {
+        title: viewTitle(view),
+        description: viewDescription(view),
+        alternates: { canonical: selfPath },
+      }
+    }
     if (view.name === "cert-landing") {
       const cert = await resolveCert(view.certSlug)
       if (cert) {

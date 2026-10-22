@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { usePageContent, getContentArray, getContent } from "@/lib/use-content"
 import { getCmsIcon } from "@/lib/cms-icons"
 import { cn } from "@/lib/utils"
-import { Quote, ArrowRight, Award, Briefcase, TrendingUp } from "lucide-react"
+import { Quote, ArrowRight, Award, Briefcase, TrendingUp, ExternalLink } from "lucide-react"
 
 /**
  * Institution partnership proof components (Phase 1 showcase layer).
@@ -43,6 +43,24 @@ export interface PartnerEntry {
   studentsTrained?: string
   outcome?: string
   url?: string
+  // ---- Profile-page fields (Phase 2 showcase). All optional; the
+  // profile view hides every section whose fields are empty, so
+  // pre-Phase-2 entries (name + city only) still render fine. ----
+  /** Override for the URL slug. Defaults to the kebab-cased name. */
+  slug?: string
+  /** Institution description shown under the profile hero. */
+  about?: string
+  /** Newline or pipe separated list of what the MoU covers. */
+  tracks?: string
+  /** Optional leadership testimonial shown on the profile page. */
+  testimonialQuote?: string
+  testimonialName?: string
+  testimonialTitle?: string
+  /** URL of the signed MoU PDF (upload host + paste link). */
+  mouPdfUrl?: string
+  /** "yes" publishes the MoU copy on the profile page; anything else
+   *  shows a "copy available on request" note instead (default). */
+  mouPublic?: string
 }
 
 export interface TestimonialEntry {
@@ -72,6 +90,30 @@ const FALLBACK_STYLE = TYPE_STYLE.College
 
 function styleFor(type?: string) {
   return (type && TYPE_STYLE[type]) || FALLBACK_STYLE
+}
+
+/** Exported alias so the profile view can reuse the exact same accents. */
+export const partnerTypeStyle = styleFor
+
+/**
+ * Canonical slug for a partner: explicit CMS `slug` wins, otherwise the
+ * kebab-cased name ("Orchid University" → "orchid-university"). Because
+ * the name always yields a slug, every named partner automatically gets
+ * a profile URL - the slug field only exists to override awkward names.
+ */
+export function partnerSlugOf(p: PartnerEntry): string {
+  const explicit = p.slug?.trim().toLowerCase()
+  if (explicit) return explicit
+  return (p.name || "")
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+}
+
+/** Canonical profile path for a partner, e.g. /institutions/orchid-university. */
+export function profilePathOf(p: PartnerEntry): string {
+  return `/institutions/${encodeURIComponent(partnerSlugOf(p))}`
 }
 
 /** Initials monogram from the partner name (max 2 letters, uppercase). */
@@ -127,6 +169,7 @@ export function PartnerWall({
   compact?: boolean
   label?: string
 }) {
+  const { navigate } = useAppStore()
   if (partners.length === 0) return null
 
   return (
@@ -149,9 +192,13 @@ export function PartnerWall({
           return (
             <motion.a
               key={`${p.name}-${i}`}
-              href={p.url?.trim() || undefined}
-              target={p.url?.trim() ? "_blank" : undefined}
-              rel={p.url?.trim() ? "noopener noreferrer" : undefined}
+              href={profilePathOf(p)}
+              onClick={(e) => {
+                // SPA navigation on left click; the real href stays in the
+                // DOM so right-click / open-in-new-tab / crawlers all work.
+                e.preventDefault()
+                navigate({ name: "institution-detail", slug: partnerSlugOf(p) })
+              }}
               title={[p.name, p.city, p.outcome].filter(Boolean).join(" · ")}
               initial={{ opacity: 0, y: 8 }}
               whileInView={{ opacity: 1, y: 0 }}
@@ -161,8 +208,7 @@ export function PartnerWall({
                 "group flex flex-col items-center justify-center gap-2 rounded-xl border border-border/40 bg-card/40 px-3 text-center transition-all",
                 compact ? "py-4" : "py-5",
                 st.border,
-                "hover:bg-card/70",
-                p.url?.trim() ? "cursor-pointer" : "cursor-default",
+                "hover:bg-card/70 cursor-pointer",
               )}
             >
               {p.logoUrl?.trim() ? (
@@ -206,6 +252,7 @@ export function PartnerWall({
    ============================================================ */
 
 export function PartnerNetworkCards({ partners }: { partners: PartnerEntry[] }) {
+  const { navigate } = useAppStore()
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
       {partners.map((p, i) => {
@@ -218,8 +265,18 @@ export function PartnerNetworkCards({ partners }: { partners: PartnerEntry[] }) 
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ duration: 0.35, delay: (i % 3) * 0.06 }}
+            role="link"
+            tabIndex={0}
+            aria-label={`View the ${p.name || "partner"} profile`}
+            onClick={() => navigate({ name: "institution-detail", slug: partnerSlugOf(p) })}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault()
+                navigate({ name: "institution-detail", slug: partnerSlugOf(p) })
+              }
+            }}
             className={cn(
-              "group relative rounded-2xl border border-border/60 bg-card/40 p-6 transition-colors",
+              "group relative rounded-2xl border border-border/60 bg-card/40 p-6 transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500/60",
               st.border,
             )}
           >
@@ -268,16 +325,22 @@ export function PartnerNetworkCards({ partners }: { partners: PartnerEntry[] }) 
               </div>
             )}
 
-            {p.url?.trim() && (
-              <a
-                href={p.url.trim()}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-4 inline-flex items-center gap-1 text-[11px] text-violet-300 hover:text-violet-200 transition-colors"
-              >
-                Visit institution <ArrowRight className="h-3 w-3" aria-hidden />
-              </a>
-            )}
+            <div className="mt-4 flex items-center gap-4 text-[11px]">
+              <span className="inline-flex items-center gap-1 font-medium text-violet-300 group-hover:text-violet-200 transition-colors">
+                View profile <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" aria-hidden />
+              </span>
+              {p.url?.trim() && (
+                <a
+                  href={p.url.trim()}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="inline-flex items-center gap-1 text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Visit institution <ExternalLink className="h-3 w-3" aria-hidden />
+                </a>
+              )}
+            </div>
           </motion.div>
         )
       })}
