@@ -52,6 +52,7 @@ const InstitutionsHubView = dynamic(withChunkRetry(() => import("@/views/institu
 const InstitutionsSchoolsView = dynamic(withChunkRetry(() => import("@/views/institutions-schools").then(m => ({ default: m.InstitutionsSchoolsView }))), { ssr: false, loading: ViewLoading })
 const InstitutionsCollegesView = dynamic(withChunkRetry(() => import("@/views/institutions-colleges").then(m => ({ default: m.InstitutionsCollegesView }))), { ssr: false, loading: ViewLoading })
 const InstitutionsUniversitiesView = dynamic(withChunkRetry(() => import("@/views/institutions-universities").then(m => ({ default: m.InstitutionsUniversitiesView }))), { ssr: false, loading: ViewLoading })
+const InstitutionDetailView = dynamic(withChunkRetry(() => import("@/views/institution-detail").then(m => ({ default: m.InstitutionDetailView }))), { ssr: false, loading: ViewLoading })
 const OpenSchoolingView = dynamic(withChunkRetry(() => import("@/views/open-schooling").then(m => ({ default: m.OpenSchoolingView }))), { ssr: false, loading: ViewLoading })
 const CorporateTrainingView = dynamic(withChunkRetry(() => import("@/views/corporate-training").then(m => ({ default: m.CorporateTrainingView }))), { ssr: false, loading: ViewLoading })
 const CyberQuizLandingView = dynamic(withChunkRetry(() => import("@/views/cyber-quiz-landing").then(m => ({ default: m.CyberQuizLandingView }))), { ssr: false, loading: ViewLoading })
@@ -168,6 +169,11 @@ export function ViewRouter() {
       {view.name === "institutions-colleges" && <InstitutionsCollegesView />}
       {view.name === "institutions-universities" && <InstitutionsUniversitiesView />}
       {view.name === "institutions-open-schooling" && <OpenSchoolingView />}
+      {/* Partner profile pages - REQUIRED here (not only in PublicRouteView)
+          because direct loads of /institutions/<slug> arrive via the
+          catch-all bridge → AppRoot → ViewRouter. Without this case the
+          page renders an empty main on refresh / shared links. */}
+      {view.name === "institution-detail" && "slug" in view && <InstitutionDetailView slug={view.slug} />}
       {view.name === "corporate-training" && <CorporateTrainingView />}
       {view.name === "cyber-quiz" && <CyberQuizLandingView />}
       {view.name === "cyber-quiz-runner" && "difficulty" in view && <CyberQuizRunnerView />}
