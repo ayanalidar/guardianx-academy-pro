@@ -1513,6 +1513,22 @@ model SiteContent {
   @@index([page, section])
 }
 
+/// Uploaded media (partner logos, signed MoU PDFs, brochure files).
+/// Bytes are stored in Postgres so uploads survive on serverless hosts
+/// (no writable disk) and are served back via GET /api/media/<id>.
+/// Content Studio uploads images (logoUrl) and PDFs (mouPdfUrl) here.
+model MediaAsset {
+  id         String   @id @default(cuid())
+  filename   String   // sanitized original filename (display only)
+  mime       String   // e.g. image/png, application/pdf (allowlisted at upload)
+  size       Int      // bytes
+  data       Bytes
+  uploadedBy String?
+  createdAt  DateTime @default(now())
+
+  @@index([createdAt])
+}
+
 // ============================================================
 // PRODUCTION MODELS — database-driven content (Phase PROD-DB)
 // ============================================================

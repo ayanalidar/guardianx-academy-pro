@@ -39,6 +39,8 @@ export interface PartnerEntry {
   type?: string
   city?: string
   logoUrl?: string
+  /** Short 1-2 line description shown on the network card + profile hero. */
+  tagline?: string
   since?: string
   studentsTrained?: string
   outcome?: string
@@ -122,6 +124,19 @@ function initialsOf(name: string): string {
   if (words.length === 0) return "?"
   if (words.length === 1) return words[0].slice(0, 2).toUpperCase()
   return (words[0][0] + words[1][0]).toUpperCase()
+}
+
+/**
+ * Split the newline/pipe-separated "tracks" field into clean labels
+ * (shared by the network cards' track chips and the profile checklist).
+ */
+export function parsePartnerTracks(raw?: string, max = 12): string[] {
+  if (!raw) return []
+  return raw
+    .split(/\r?\n|\|/)
+    .map((t) => t.trim())
+    .filter(Boolean)
+    .slice(0, max)
 }
 
 /**
@@ -258,6 +273,9 @@ export function PartnerNetworkCards({ partners }: { partners: PartnerEntry[] }) 
       {partners.map((p, i) => {
         const st = styleFor(p.type)
         const Icon = getCmsIcon(st.icon)
+        const tracks = parsePartnerTracks(p.tracks, 4)
+        const cardTracks = tracks.slice(0, 3)
+        const extraTracks = tracks.length - cardTracks.length
         return (
           <motion.div
             key={`${p.name}-${i}`}
@@ -280,18 +298,18 @@ export function PartnerNetworkCards({ partners }: { partners: PartnerEntry[] }) 
               st.border,
             )}
           >
-            <div className="flex items-start justify-between mb-4">
+            <div className="flex items-start justify-between mb-3">
               <div className="flex items-center gap-3 min-w-0">
                 {p.logoUrl?.trim() ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={p.logoUrl.trim()}
                     alt={p.name || "Partner institution"}
-                    className="h-10 w-10 rounded-lg border border-border/50 object-contain bg-background/60 p-1"
+                    className="h-12 w-12 rounded-xl border border-border/50 object-contain bg-background/60 p-1.5 shrink-0"
                     loading="lazy"
                   />
                 ) : (
-                  <span className={cn("flex size-10 items-center justify-center rounded-lg border border-border/50 font-mono text-sm font-bold", st.bg, st.color)}>
+                  <span className={cn("flex size-12 items-center justify-center rounded-xl border border-border/50 font-mono text-base font-bold shrink-0", st.bg, st.color)}>
                     {initialsOf(p.name || "?")}
                   </span>
                 )}
@@ -306,6 +324,10 @@ export function PartnerNetworkCards({ partners }: { partners: PartnerEntry[] }) 
               </span>
             </div>
 
+            {p.tagline?.trim() && (
+              <p className="text-[12px] text-muted-foreground leading-relaxed line-clamp-2 mb-3">{p.tagline.trim()}</p>
+            )}
+
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mb-3">
               {p.since && (
                 <span className="text-[10px] font-mono text-muted-foreground">
@@ -318,6 +340,24 @@ export function PartnerNetworkCards({ partners }: { partners: PartnerEntry[] }) 
                 </span>
               )}
             </div>
+
+            {cardTracks.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mb-3">
+                {cardTracks.map((t) => (
+                  <span
+                    key={t}
+                    className="inline-flex items-center rounded-md border border-border/50 bg-background/40 px-1.5 py-0.5 text-[9px] font-mono text-muted-foreground truncate max-w-full"
+                  >
+                    {t}
+                  </span>
+                ))}
+                {extraTracks > 0 && (
+                  <span className="inline-flex items-center rounded-md border border-violet-500/30 bg-violet-500/5 px-1.5 py-0.5 text-[9px] font-mono text-violet-300">
+                    +{extraTracks} more
+                  </span>
+                )}
+              </div>
+            )}
 
             {p.outcome && (
               <div className="rounded-lg border border-emerald-500/25 bg-emerald-500/5 px-3 py-2">

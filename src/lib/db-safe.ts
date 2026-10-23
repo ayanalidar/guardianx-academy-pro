@@ -450,6 +450,34 @@ const TABLE_SPECS: Record<string, TableSpec> = {
     ],
   },
 
+  // Uploaded media (partner logos, signed MoU PDFs). Served back by
+  // GET /api/media/<id>. Self-heal matters here: the first Content Studio
+  // upload on a drifted prod DB bootstraps its own storage instead of 500ing.
+  MediaAsset: {
+    create: `CREATE TABLE IF NOT EXISTS "MediaAsset" (
+      "id" TEXT NOT NULL,
+      "filename" TEXT NOT NULL,
+      "mime" TEXT NOT NULL,
+      "size" INTEGER NOT NULL,
+      "data" BYTEA NOT NULL,
+      "uploadedBy" TEXT,
+      "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      CONSTRAINT "MediaAsset_pkey" PRIMARY KEY ("id")
+    )`,
+    indexes: [
+      `CREATE INDEX IF NOT EXISTS "MediaAsset_createdAt_idx" ON "MediaAsset"("createdAt")`,
+    ],
+    constraints: [],
+    addColumns: [
+      `ALTER TABLE "MediaAsset" ADD COLUMN IF NOT EXISTS "filename" TEXT`,
+      `ALTER TABLE "MediaAsset" ADD COLUMN IF NOT EXISTS "mime" TEXT`,
+      `ALTER TABLE "MediaAsset" ADD COLUMN IF NOT EXISTS "size" INTEGER`,
+      `ALTER TABLE "MediaAsset" ADD COLUMN IF NOT EXISTS "data" BYTEA`,
+      `ALTER TABLE "MediaAsset" ADD COLUMN IF NOT EXISTS "uploadedBy" TEXT`,
+      `ALTER TABLE "MediaAsset" ADD COLUMN IF NOT EXISTS "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP`,
+    ],
+  },
+
   // Footer visitor counter (anonymous per-day visitor rows).
   SiteVisit: {
     create: `CREATE TABLE IF NOT EXISTS "SiteVisit" (

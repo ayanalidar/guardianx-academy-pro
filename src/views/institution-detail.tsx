@@ -10,6 +10,7 @@ import {
   useNamedPartners,
   partnerSlugOf,
   partnerTypeStyle,
+  parsePartnerTracks,
   type PartnerEntry,
 } from "@/components/platform/institution-proof"
 import { getCmsIcon } from "@/lib/cms-icons"
@@ -45,16 +46,6 @@ import {
 function isMouPublic(v?: string): boolean {
   if (!v) return false
   return ["yes", "true", "1", "public", "y", "published"].includes(v.trim().toLowerCase())
-}
-
-/** Split the newline/pipe-separated "tracks" field into clean labels. */
-function parseTracks(raw?: string): string[] {
-  if (!raw) return []
-  return raw
-    .split(/\r?\n|\|/)
-    .map((t) => t.trim())
-    .filter(Boolean)
-    .slice(0, 12)
 }
 
 function NotFound({ label }: { label: string }) {
@@ -134,7 +125,7 @@ export function InstitutionDetailView({ slug }: { slug: string }) {
 
   const st = partnerTypeStyle(partner.type)
   const TypeIcon = getCmsIcon(st.icon)
-  const tracks = parseTracks(partner.tracks)
+  const tracks = parsePartnerTracks(partner.tracks)
   const hasStats = Boolean(partner.studentsTrained?.trim() || partner.since?.trim())
   const testimonial =
     partner.testimonialQuote?.trim() && partner.testimonialName?.trim()
@@ -207,6 +198,9 @@ export function InstitutionDetailView({ slug }: { slug: string }) {
                   </a>
                 )}
               </div>
+              {partner.tagline?.trim() && (
+                <p className="mt-3 text-sm text-foreground/80 leading-relaxed">{partner.tagline.trim()}</p>
+              )}
             </div>
           </div>
 
@@ -327,7 +321,7 @@ export function InstitutionDetailView({ slug }: { slug: string }) {
                     {partner.name} · Memorandum of Understanding
                   </span>
                   <a
-                    href={mouPdf}
+                    href={mouPdf.startsWith("/api/media/") ? `${mouPdf}?download=1` : mouPdf}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex shrink-0 items-center gap-1.5 rounded-md border border-cyan-500/30 bg-cyan-500/10 px-3 py-1.5 text-[11px] font-medium text-cyan-200 hover:bg-cyan-500/20 transition-colors"

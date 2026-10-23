@@ -414,7 +414,9 @@ const INSTITUTIONS: ContentItem[] = [
   //   name            (required) institution name, e.g. "XYZ College of Engineering"
   //   type            School | College | University  (drives icon + accent color)
   //   city            e.g. "Chennai, TN"
-  //   logoUrl         optional image URL; initials monogram used when blank
+  //   logoUrl         uploaded via Content Studio (MediaAsset) or an image URL;
+  //                   initials monogram used when blank
+  //   tagline         short 1-2 line description shown on the partner card
   //   since           e.g. "2026" - rendered as "MOU SINCE 2026"
   //   studentsTrained e.g. "120+" - rendered as "120+ STUDENTS TRAINED"
   //   outcome         headline result, e.g. "94% placement in the first cohort"
@@ -448,7 +450,7 @@ const INSTITUTIONS: ContentItem[] = [
     page: "institutions", section: "partners", key: "items",
     value: [
       {
-        name: "", type: "College", city: "", logoUrl: "", since: "", studentsTrained: "", outcome: "", url: "",
+        name: "", type: "College", city: "", logoUrl: "", tagline: "", since: "", studentsTrained: "", outcome: "", url: "",
         // Profile-page fields: every partner automatically gets a public
         // profile at /institutions/<slug> (slug defaults to the kebab-cased
         // name). "tracks" is one item per line (or pipe-separated). Leave

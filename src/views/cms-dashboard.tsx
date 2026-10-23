@@ -39,7 +39,7 @@ import {
   Loader2, Search, Eye, EyeOff, Shield, AlertCircle, CheckCircle2,
   Globe, Home as HomeIcon, Building2, BookOpen, Mail, TrendingUp,
   Layout, LayoutPanelLeft, Sparkles, RefreshCw, Database, Hash,
-  Sprout, FlaskConical, ListPlus,
+  Sprout, FlaskConical, ListPlus, Upload, FileText, ImageIcon,
 } from "lucide-react"
 import {
   ScrollReveal, FadeIn,
@@ -1137,6 +1137,7 @@ function KeyEditorBody({
         value={value as any[]}
         onChange={onChange}
         templateKeys={OBJECT_ARRAY_FIELD_TEMPLATES[`${section}.${keyName}`]}
+        sectionKey={`${section}.${keyName}`}
       />
     )
   }
@@ -1253,7 +1254,7 @@ function StringArrayEditor({
  */
 const OBJECT_ARRAY_FIELD_TEMPLATES: Record<string, string[]> = {
   "partners.items": [
-    "name", "type", "city", "logoUrl", "since", "studentsTrained", "outcome", "url",
+    "name", "type", "city", "logoUrl", "tagline", "since", "studentsTrained", "outcome", "url",
     "slug", "about", "tracks",
     "testimonialQuote", "testimonialName", "testimonialTitle",
     "mouPdfUrl", "mouPublic",
@@ -1261,15 +1262,157 @@ const OBJECT_ARRAY_FIELD_TEMPLATES: Record<string, string[]> = {
   "testimonials.items": ["quote", "name", "role", "institution"],
 }
 
+/**
+ * Human labels / hints / special widgets for partner fields, so the Content
+ * Studio partner editor reads like a real form instead of raw JSON keys.
+ * Only applied when the edited section is "partners.items"; every other
+ * object-array keeps the generic editor. `widget` swaps the plain text input
+ * for an upload field or a yes/no select.
+ */
+type FieldWidget = "image" | "pdf" | "yesno"
+const PARTNER_FIELD_META: Record<string, { label: string; hint?: string; widget?: FieldWidget; full?: boolean }> = {
+  name: { label: "Institution name (required)" },
+  type: { label: "Type", hint: "School | College | University - drives the card icon and accent color" },
+  city: { label: "City / State", hint: "e.g. Chennai, TN" },
+  logoUrl: { label: "Institution logo", hint: "Upload a PNG / JPG / SVG logo (2 MB max) - or paste an image URL", widget: "image" },
+  tagline: { label: "Short description", hint: "1-2 lines shown on the partner card under the name", full: true },
+  since: { label: "MoU since", hint: "e.g. 2026 - shows as the 'Official MoU Partner since' badge" },
+  studentsTrained: { label: "Students trained", hint: "e.g. 120+ - shown on the card and profile outcomes" },
+  outcome: { label: "Headline outcome", hint: "e.g. 94% placement in the first cohort", full: true },
+  url: { label: "Website", hint: "https://... - secondary link on the card" },
+  slug: { label: "Profile URL slug", hint: "Optional - defaults to the kebab-cased name (orchid-university)" },
+  about: { label: "About the institution", hint: "Shown on the profile page under the hero", full: true },
+  tracks: { label: "What the MoU covers", hint: "One certification / track per line (or pipe-separated) - renders as the profile checklist", full: true },
+  testimonialQuote: { label: "Leadership testimonial - quote", hint: "Shown on the profile page when name is also set", full: true },
+  testimonialName: { label: "Testimonial - name" },
+  testimonialTitle: { label: "Testimonial - title / role", hint: "e.g. Dean - School of Engineering" },
+  mouPdfUrl: { label: "Signed MoU copy (PDF)", hint: "Upload the signed PDF (10 MB max) - stays private unless published below", widget: "pdf", full: true },
+  mouPublic: { label: "Publish MoU copy publicly?", hint: "Default OFF - the profile shows 'copy available on request' instead of the document", widget: "yesno" },
+}
+
+/* ============================================================
+   Media upload field - real file upload for partner logos and
+   signed MoU PDFs, with live preview + remove + paste-URL fallback.
+   Uploads go to POST /api/media (admin-only) which stores the bytes
+   in the MediaAsset table and returns /api/media/<id>.
+   ============================================================ */
+
+function MediaUploadField({
+  kind,
+  accept,
+  value,
+  onChange,
+}: {
+  kind: "image" | "pdf"
+  accept: string
+  value: string
+  onChange: (v: string) => void
+}) {
+  const inputRef = React.useRef<HTMLInputElement>(null)
+  const [uploading, setUploading] = React.useState(false)
+  const isSet = Boolean(value?.trim())
+
+  const upload = async (file: File) => {
+    setUploading(true)
+    try {
+      const body = new FormData()
+      body.append("file", file)
+      const res = await fetch("/api/media", { method: "POST", body })
+      const json = await res.json().catch(() => null)
+      if (!res.ok) throw new Error(json?.error || `Upload failed (${res.status})`)
+      onChange(String(json.url || ""))
+      toast.success(kind === "pdf" ? "MoU PDF uploaded" : "Logo uploaded")
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Upload failed")
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  return (
+    <div className="space-y-1.5">
+      <input
+        ref={inputRef}
+        type="file"
+        accept={accept}
+        className="hidden"
+        onChange={(e) => {
+          const f = e.target.files?.[0]
+          if (f) void upload(f)
+          e.target.value = "" // allow re-picking the same file
+        }}
+      />
+      <div className="flex items-center gap-2">
+        {kind === "image" ? (
+          isSet ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={value.trim()}
+              alt="Logo preview"
+              className="h-10 w-10 shrink-0 rounded-md border border-border/60 bg-background/60 object-contain p-0.5"
+            />
+          ) : (
+            <span className="flex size-10 shrink-0 items-center justify-center rounded-md border border-dashed border-border/60 text-muted-foreground/50">
+              <ImageIcon className="h-4 w-4" aria-hidden />
+            </span>
+          )
+        ) : (
+          <span
+            className={cn(
+              "flex size-10 shrink-0 items-center justify-center rounded-md border",
+              isSet ? "border-cyan-500/40 bg-cyan-500/10 text-cyan-300" : "border-dashed border-border/60 text-muted-foreground/50",
+            )}
+          >
+            <FileText className="h-4 w-4" aria-hidden />
+          </span>
+        )}
+        <div className="flex flex-wrap items-center gap-1.5 min-w-0">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            disabled={uploading}
+            onClick={() => inputRef.current?.click()}
+            className="h-7 text-[10px]"
+          >
+            {uploading ? <Loader2 className="h-3 w-3 mr-1 animate-spin" aria-hidden /> : <Upload className="h-3 w-3 mr-1" aria-hidden />}
+            {uploading ? "Uploading…" : isSet ? "Replace" : kind === "pdf" ? "Upload PDF" : "Upload logo"}
+          </Button>
+          {isSet && (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              onClick={() => onChange("")}
+              className="h-7 text-[10px] text-red-400 hover:text-red-300 hover:bg-red-500/10"
+            >
+              Remove
+            </Button>
+          )}
+        </div>
+      </div>
+      <Input
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        placeholder={kind === "pdf" ? "…or paste a PDF URL" : "…or paste an image URL"}
+        className="h-7 text-[10px] font-mono"
+      />
+    </div>
+  )
+}
+
 function ObjectArrayEditor({
   value,
   onChange,
   templateKeys,
+  sectionKey,
 }: {
   value: any[]
   onChange: (v: any[]) => void
   /** Canonical field keys merged into every item (see OBJECT_ARRAY_FIELD_TEMPLATES). */
   templateKeys?: string[]
+  /** "section.key" of the edited array - unlocks field metadata (labels, uploads). */
+  sectionKey?: string
 }) {
   const items = Array.isArray(value) ? value : []
 
@@ -1365,23 +1508,65 @@ function ObjectArrayEditor({
             </div>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-            {Object.keys(item).sort().map((field) => {
-              const fv = item[field]
+            {(() => {
+              // Render ALL canonical template keys in template order (even
+              // when an older saved entry lacks them - reading as "" so the
+              // input appears and the first edit back-fills the field), then
+              // any extra keys alphabetically. This keeps the partner editor
+              // in a logical order and self-heals pre-existing entries.
+              const keys = Object.keys(item)
+              const canonical = templateKeys ?? []
+              const tail = keys.filter((k) => !canonical.includes(k)).sort()
+              return [...canonical, ...tail]
+            })().map((field) => {
+              const fv = item[field] ?? ""
               const fk = detectKind(fv)
+              // Partner-specific form polish: human labels + upload / yes-no
+              // widgets for the fields that benefit from them.
+              const meta = sectionKey === "partners.items" ? PARTNER_FIELD_META[field] : undefined
+              const strValue = typeof fv === "string" ? fv : ""
+              const longString = fk === "string" && (strValue.length > 50 || strValue.includes("\n"))
               return (
                 <div
                   key={field}
                   className={cn(
                     "space-y-1",
-                    fk === "string" && (String(fv).length > 50) && "sm:col-span-2"
+                    (longString || meta?.full) && "sm:col-span-2"
                   )}
                 >
                   <Label className="text-[10px] font-mono text-muted-foreground">
-                    {field}
-                    <span className="ml-1 text-muted-foreground/60">({fk})</span>
+                    {meta?.label ?? field}
+                    {!meta && <span className="ml-1 text-muted-foreground/60">({fk})</span>}
                   </Label>
-                  {fk === "string" ? (
-                    String(fv).length > 50 || String(fv).includes("\n") ? (
+                  {meta?.widget === "image" ? (
+                    <MediaUploadField
+                      kind="image"
+                      accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                      value={strValue}
+                      onChange={(v) => update(i, field, v)}
+                    />
+                  ) : meta?.widget === "pdf" ? (
+                    <MediaUploadField
+                      kind="pdf"
+                      accept="application/pdf"
+                      value={strValue}
+                      onChange={(v) => update(i, field, v)}
+                    />
+                  ) : meta?.widget === "yesno" ? (
+                    <Select
+                      value={["yes", "true", "1", "public", "y", "published"].includes(strValue.trim().toLowerCase()) ? "yes" : "no"}
+                      onValueChange={(v) => update(i, field, v === "yes" ? "yes" : "")}
+                    >
+                      <SelectTrigger className="h-8 text-xs">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="no">No - keep private (default)</SelectItem>
+                        <SelectItem value="yes">Yes - show on the profile</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  ) : fk === "string" ? (
+                    longString ? (
                       <Textarea
                         value={fv}
                         onChange={(e) => update(i, field, e.target.value)}
@@ -1417,6 +1602,9 @@ function ObjectArrayEditor({
                       onChange={(v) => update(i, field, v)}
                       compact
                     />
+                  )}
+                  {meta?.hint && (
+                    <p className="text-[9px] text-muted-foreground/70 leading-snug">{meta.hint}</p>
                   )}
                 </div>
               )
