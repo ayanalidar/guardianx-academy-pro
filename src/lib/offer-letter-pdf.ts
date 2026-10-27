@@ -446,13 +446,14 @@ export async function buildOfferLetterPdf(
     edgeColor: RGB,
     fillOp: number,
     edgeOp: number,
-    withCheck: boolean
+    withCheck: boolean,
+    yTop: number
   ): number => {
     setKind(pdf, "mono", 5.4)
     const tw = trackedWidth(pdf, label, 0.85)
     const checkW = withCheck ? 3.4 : 0
     const w = tw + checkW + 5.2
-    const y = 18.2, h = 5.4, x = right - w
+    const y = yTop, h = 5.4, x = right - w
     withOpacity(pdf, fillOp, () => {
       pdf.setFillColor(edgeColor[0], edgeColor[1], edgeColor[2])
       pdf.roundedRect(x, y, w, h, h / 2, h / 2, "F")
@@ -476,8 +477,13 @@ export async function buildOfferLetterPdf(
     textTracked(pdf, label, tx, y + h / 2 + 0.75, 0.85)
     return x
   }
-  const c2 = chip("GX OFFER CLEARANCE", PW - 26, P.chipRed, P.acc1, 0.12, 0.55, false)
-  chip("VERIFIED CREDENTIAL", c2 - 2.6, P.chipGreen, P.green, 0.1, 0.55, true)
+  // Chips STACK in a column at the top-right (same pattern as the certificate
+  // sheet) so they can never reach the centred logo ring below - the old
+  // horizontal row put "VERIFIED CREDENTIAL" left edge at ~96mm, straight
+  // through the ring's top arc (ring spans 92.6..117.4mm, top at 21.6mm).
+  const CHIP_R = PW - 26
+  chip("VERIFIED CREDENTIAL", CHIP_R, P.chipGreen, P.green, 0.1, 0.55, true, 17.0)
+  chip("GX OFFER CLEARANCE", CHIP_R, P.chipRed, P.acc1, 0.12, 0.55, false, 17.0 + 5.4 + 1.5)
 
   // ---- logo ring -------------------------------------------------------------
   const logoY = 34
