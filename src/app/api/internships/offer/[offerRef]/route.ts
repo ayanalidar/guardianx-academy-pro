@@ -60,7 +60,7 @@ export async function GET(
       return NextResponse.json({ error: "Too many requests" }, { status: 429 })
     }
 
-    let record = null
+    let record: Awaited<ReturnType<typeof db.internshipRecord.findUnique>> = null
     try {
       record = await db.internshipRecord.findUnique({
         where: { offerRef },
