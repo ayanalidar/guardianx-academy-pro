@@ -82,9 +82,11 @@ const DDL: string[] = [
     "testimonial" TEXT,
     "grade" TEXT,
     "status" TEXT NOT NULL DEFAULT 'completed',
-    "certificateId" TEXT NOT NULL,
-    "verificationHash" TEXT NOT NULL,
-    "certificateIssuedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    // Nullable certificate columns: records start WITHOUT a certificate;
+    // the admin issues one explicitly (PATCH issueCertificate).
+    "certificateId" TEXT,
+    "verificationHash" TEXT,
+    "certificateIssuedAt" TIMESTAMP(3),
     "showPublicly" BOOLEAN NOT NULL DEFAULT false,
     "isSample" BOOLEAN NOT NULL DEFAULT false,
     "sortOrder" INTEGER NOT NULL DEFAULT 0,
@@ -109,6 +111,11 @@ const DDL: string[] = [
   `ALTER TABLE "InternshipRecord" ADD COLUMN IF NOT EXISTS "programDirector" TEXT`,
   `ALTER TABLE "InternshipRecord" ADD COLUMN IF NOT EXISTS "nameSize" TEXT`,
   `ALTER TABLE "InternshipRecord" ADD COLUMN IF NOT EXISTS "sortOrder" INTEGER NOT NULL DEFAULT 0`,
+  // Deferred certificate issuance: relax legacy NOT NULL constraints so a
+  // record can exist without a certificate (idempotent - no-op once nullable).
+  `ALTER TABLE "InternshipRecord" ALTER COLUMN "certificateId" DROP NOT NULL`,
+  `ALTER TABLE "InternshipRecord" ALTER COLUMN "verificationHash" DROP NOT NULL`,
+  `ALTER TABLE "InternshipRecord" ALTER COLUMN "certificateIssuedAt" DROP NOT NULL`,
   `CREATE UNIQUE INDEX IF NOT EXISTS "InternshipRecord_certificateId_key" ON "InternshipRecord"("certificateId")`,
   `CREATE INDEX IF NOT EXISTS "InternshipRecord_internshipId_idx" ON "InternshipRecord"("internshipId")`,
   `CREATE INDEX IF NOT EXISTS "InternshipRecord_showPublicly_isSample_sortOrder_idx" ON "InternshipRecord"("showPublicly", "isSample", "sortOrder")`,
@@ -122,6 +129,24 @@ const DDL: string[] = [
 /** True once both tables (and all their columns) are present. */
 export async function ensureInternshipTables(): Promise<boolean> {
   if (tablesReady) return true
+
+  // 0) Deferred-certificate nullability: legacy prod tables have NOT NULL on
+  //    certificateId/verificationHash/certificateIssuedAt. The probe below
+  //    can't detect that drift (columns exist), so relax the constraints
+  //    unconditionally - idempotent (no-op once nullable) and cheap (3 ALTERs,
+  //    once per serverless instance). Without this, creating a certificate-less
+  //    record would fail with a NOT NULL violation.
+  for (const stmt of [
+    `ALTER TABLE "InternshipRecord" ALTER COLUMN "certificateId" DROP NOT NULL`,
+    `ALTER TABLE "InternshipRecord" ALTER COLUMN "verificationHash" DROP NOT NULL`,
+    `ALTER TABLE "InternshipRecord" ALTER COLUMN "certificateIssuedAt" DROP NOT NULL`,
+  ]) {
+    try {
+      await db.$executeRawUnsafe(stmt)
+    } catch (error) {
+      console.error("[internships] certificate nullability DDL failed:", error)
+    }
+  }
 
   // 1) Full-row probe on both tables - succeeds instantly once the tables
   // AND all their columns exist (P2021/P2022 both fall through to DDL).

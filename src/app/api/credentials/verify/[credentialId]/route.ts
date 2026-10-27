@@ -185,7 +185,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ credenti
         where: { certificateId: credentialId },
       }).catch(() => null)
 
-      if (iRecord && iRecord.showPublicly) {
+      // certificateId guard: ongoing records without an issued certificate
+      // can never match the lookup - defense in depth for the nullable type.
+      if (iRecord && iRecord.showPublicly && iRecord.certificateId) {
         const internship = await db.internship.findUnique({
           where: { id: iRecord.internshipId },
           select: {

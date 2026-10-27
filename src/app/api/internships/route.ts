@@ -137,8 +137,10 @@ export async function GET(_req: NextRequest) {
           testimonial: r.testimonial,
           grade: r.grade,
           status: r.status,
+          // null = certificate not issued yet (ongoing students) - the public
+          // view hides the whole certificate panel until this is set.
           certificateId: r.certificateId,
-          certificateIssuedAt: r.certificateIssuedAt.toISOString(),
+          certificateIssuedAt: r.certificateIssuedAt?.toISOString() ?? null,
           isSample: r.isSample,
           internship: {
             id: i.id,
@@ -168,7 +170,9 @@ export async function GET(_req: NextRequest) {
 
     // ---- honest, server-derived stats ----
     const domains = new Set(internships.map((i) => i.domain).filter(Boolean))
-    const completedCerts = records.filter((r) => r.status === "completed").length
+    // "Certificates" counts certificates actually ISSUED - ongoing students
+    // without one never inflate the number.
+    const issuedCerts = records.filter((r) => r.certificateId).length
 
     return NextResponse.json(
       {
@@ -178,7 +182,7 @@ export async function GET(_req: NextRequest) {
           colleges: collegeMap.size,
           internships: internships.length,
           interns: interns.length,
-          certificates: completedCerts,
+          certificates: issuedCerts,
           domains: domains.size,
         },
       },

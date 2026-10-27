@@ -111,8 +111,8 @@ type PublicIntern = {
   testimonial: string | null
   grade: string | null
   status: string
-  certificateId: string
-  certificateIssuedAt: string
+  certificateId: string | null // null = not issued yet (ongoing student)
+  certificateIssuedAt: string | null
   isSample: boolean
   internship: {
     id: string
@@ -459,9 +459,13 @@ function InternCard({ intern, onOpen }: { intern: PublicIntern; onOpen: () => vo
         <span className="inline-flex items-center gap-1 rounded-full border border-border/60 bg-card/60 px-2.5 py-1 text-[11px] text-muted-foreground">
           <GraduationCap className="h-3 w-3 text-violet-300" /> {intern.internship.domain}
         </span>
-        <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-[11px] text-emerald-300">
-          <FileBadge className="h-3 w-3" /> Certified
-        </span>
+        {/* Certificate chip ONLY when a certificate was actually issued -
+            ongoing students never show one. */}
+        {intern.certificateId && (
+          <span className="inline-flex items-center gap-1 rounded-full border border-emerald-500/30 bg-emerald-500/10 px-2.5 py-1 text-[11px] text-emerald-300">
+            <FileBadge className="h-3 w-3" /> Certified
+          </span>
+        )}
         {intern.status === "ongoing" && (
           <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-[11px] text-amber-300">
             Ongoing
@@ -477,7 +481,7 @@ function InternCard({ intern, onOpen }: { intern: PublicIntern; onOpen: () => vo
       )}
 
       <span className="mt-3.5 inline-flex items-center gap-1 text-[11px] font-medium text-violet-300 opacity-80 group-hover:opacity-100 transition-opacity">
-        View internship &amp; certificate <MousePointerClick className="h-3 w-3" />
+        {intern.certificateId ? "View internship & certificate" : "View internship record"} <MousePointerClick className="h-3 w-3" />
       </span>
     </button>
   )
@@ -497,14 +501,14 @@ function InternDetailDialog({
   const [downloading, setDownloading] = React.useState(false)
 
   const verifyUrl =
-    intern && typeof window !== "undefined"
+    intern && intern.certificateId && typeof window !== "undefined"
       ? `${window.location.origin}/verify/${intern.certificateId}`
-      : intern
+      : intern && intern.certificateId
       ? `/verify/${intern.certificateId}`
       : ""
 
   async function downloadPdf() {
-    if (!intern) return
+    if (!intern?.certificateId) return
     setDownloading(true)
     toast.info("Preparing certificate PDF...")
     try {
@@ -674,49 +678,67 @@ function InternDetailDialog({
               </blockquote>
             )}
 
-            {/* certificate panel */}
-            <div className="rounded-xl border border-emerald-500/25 bg-emerald-500/5 p-4">
-              <div className="flex items-start justify-between gap-3 flex-wrap">
+            {/* certificate panel - ONLY when a certificate was actually
+                issued. Ongoing students get an honest "in training" note
+                instead: nothing verifiable exists yet. */}
+            {intern.certificateId ? (
+              <div className="rounded-xl border border-emerald-500/25 bg-emerald-500/5 p-4">
+                <div className="flex items-start justify-between gap-3 flex-wrap">
+                  <div>
+                    <h4 className="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-200">
+                      <Award className="h-4 w-4" /> Certificate of Internship
+                    </h4>
+                    <p className="mt-1 font-mono text-[11px] text-muted-foreground">
+                      ID: {intern.certificateId}
+                    </p>
+                    <p className="mt-0.5 inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+                      <ShieldCheck className="h-3 w-3 text-emerald-300" />
+                      Publicly verifiable at /verify
+                    </p>
+                  </div>
+                  {intern.grade && (
+                    <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/40 bg-amber-500/10 px-2.5 py-1 text-[11px] font-medium text-amber-300">
+                      <Star className="h-3 w-3" /> {intern.grade}
+                    </span>
+                  )}
+                </div>
+
+                <div className="mt-3.5 flex items-center gap-2 flex-wrap">
+                  <Button
+                    size="sm"
+                    onClick={downloadPdf}
+                    disabled={downloading}
+                    className="gap-1.5 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white hover:from-violet-500 hover:to-fuchsia-500"
+                  >
+                    {downloading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
+                    Download PDF
+                  </Button>
+                  <Button size="sm" variant="outline" className="gap-1.5" onClick={() => share("whatsapp")}>
+                    <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
+                  </Button>
+                  <Button size="sm" variant="outline" className="gap-1.5" onClick={() => share("linkedin")}>
+                    <Linkedin className="h-3.5 w-3.5" /> LinkedIn
+                  </Button>
+                  <Button size="sm" variant="ghost" className="gap-1.5" onClick={() => share("copy")}>
+                    <Share2 className="h-3.5 w-3.5" /> Copy link
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="rounded-xl border border-amber-500/25 bg-amber-500/5 p-4 flex items-center gap-3">
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-lg border border-amber-500/30 bg-amber-500/10">
+                  <Clock className="h-4 w-4 text-amber-300" aria-hidden />
+                </span>
                 <div>
-                  <h4 className="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-200">
-                    <Award className="h-4 w-4" /> Certificate of Internship
-                  </h4>
-                  <p className="mt-1 font-mono text-[11px] text-muted-foreground">
-                    ID: {intern.certificateId}
-                  </p>
-                  <p className="mt-0.5 inline-flex items-center gap-1 text-[11px] text-muted-foreground">
-                    <ShieldCheck className="h-3 w-3 text-emerald-300" />
-                    Publicly verifiable at /verify
+                  <p className="text-sm font-medium text-amber-200">Internship in progress</p>
+                  <p className="mt-0.5 text-[11px] text-muted-foreground leading-relaxed">
+                    {intern.status === "ongoing"
+                      ? "The certificate is issued by GuardianX once the internship is completed - this record currently has no certificate."
+                      : "No certificate has been issued for this record yet."}
                   </p>
                 </div>
-                {intern.grade && (
-                  <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/40 bg-amber-500/10 px-2.5 py-1 text-[11px] font-medium text-amber-300">
-                    <Star className="h-3 w-3" /> {intern.grade}
-                  </span>
-                )}
               </div>
-
-              <div className="mt-3.5 flex items-center gap-2 flex-wrap">
-                <Button
-                  size="sm"
-                  onClick={downloadPdf}
-                  disabled={downloading}
-                  className="gap-1.5 bg-gradient-to-r from-violet-600 to-fuchsia-600 text-white hover:from-violet-500 hover:to-fuchsia-500"
-                >
-                  {downloading ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Download className="h-3.5 w-3.5" />}
-                  Download PDF
-                </Button>
-                <Button size="sm" variant="outline" className="gap-1.5" onClick={() => share("whatsapp")}>
-                  <MessageCircle className="h-3.5 w-3.5" /> WhatsApp
-                </Button>
-                <Button size="sm" variant="outline" className="gap-1.5" onClick={() => share("linkedin")}>
-                  <Linkedin className="h-3.5 w-3.5" /> LinkedIn
-                </Button>
-                <Button size="sm" variant="ghost" className="gap-1.5" onClick={() => share("copy")}>
-                  <Share2 className="h-3.5 w-3.5" /> Copy link
-                </Button>
-              </div>
-            </div>
+            )}
           </div>
         )}
       </DialogContent>

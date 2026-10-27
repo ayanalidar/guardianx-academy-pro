@@ -6,10 +6,12 @@
  * Full CRUD over /api/admin/internships (+ /records). Two tabs:
  *   1. Internships - the programs under each college (college name,
  *      title, domain, mode, duration, seats, status, published toggle)
- *   2. Students - internship records per student. A certificate
- *      (certificateId + tamper-evident hash) is issued automatically on
- *      creation; the showPublicly toggle is the consent gate that puts
- *      the record + its downloadable certificate on the public page.
+ *   2. Students - internship records per student. Students join with
+ *      status "ongoing" and NO certificate; the admin issues the
+ *      verifiable certificate (certificateId + tamper-evident hash)
+ *      explicitly via the "Issue certificate" button whenever they
+ *      wish. showPublicly is the consent gate that puts the record +
+ *      its downloadable certificate on the public page.
  *
  * Sample rows (isSample) carry a visible chip; delete them once real
  * data replaces them.
@@ -40,7 +42,7 @@ import {
 } from "@/components/ui/dialog"
 import {
   FlaskConical, Users, Plus, Loader2, Trash2, Pencil, Copy,
-  Eye, EyeOff, Search, GraduationCap, Building2, Award,
+  Eye, EyeOff, Search, GraduationCap, Building2, Award, Clock,
 } from "lucide-react"
 
 // ============================================================
@@ -92,8 +94,8 @@ type AdminInternshipRecord = {
   testimonial: string | null
   grade: string | null
   status: string
-  certificateId: string
-  certificateIssuedAt: string
+  certificateId: string | null // null = not issued yet
+  certificateIssuedAt: string | null
   programDirector: string | null
   nameSize: string | null
   showPublicly: boolean
@@ -166,13 +168,18 @@ const EMPTY_RECORD_FORM = {
   skills: "",
   tools: "",
   testimonial: "",
-  status: "completed",
+  status: "ongoing",
   showPublicly: false,
   // certificate presentation (Program Director signature, recipient name
   // size, issue date) - editable per record
   programDirector: "",
   nameSize: "regular",
   issueDate: "",
+  // When true, POST also mints the certificate in the same request
+  // ("Issue certificate immediately" checkbox). Default OFF: students join
+  // ongoing with no certificate - it is issued explicitly from the record
+  // row whenever the admin wishes.
+  issueNow: false,
   // inline "new internship" fields (used when internshipId === NEW_INTERNSHIP_SENTINEL)
   newCollegeName: "",
   newCollegeCity: "",
@@ -711,12 +718,33 @@ function StudentsTab({
       toast.success(
         vars.id
           ? "Student record updated"
-          : "Student added - certificate issued automatically"
+          : vars.payload.issueNow
+          ? "Student added - certificate issued"
+          : "Student added - status Ongoing (no certificate yet)"
       )
       setDialogOpen(false)
       invalidate()
     },
     onError: (e: any) => toast.error(e?.message || "Save failed"),
+  })
+
+  // The explicit "Issue certificate" action on a record row - mints the
+  // certificateId + tamper-evident hash whenever the admin wishes.
+  const issueCert = useMutation({
+    mutationFn: (r: AdminInternshipRecord) =>
+      api(`/api/admin/internships/records/${r.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ issueCertificate: true }),
+      }),
+    onSuccess: (d: any, r) => {
+      toast.success(
+        d?.alreadyIssued
+          ? `Certificate already issued (${r.certificateId})`
+          : `Certificate issued for ${r.studentName}${d?.certificateId ? ` - ${d.certificateId}` : ""}`
+      )
+      invalidate()
+    },
+    onError: (e: any) => toast.error(e?.message || "Issue failed"),
   })
 
   const deleteMutation = useMutation({
@@ -754,7 +782,7 @@ function StudentsTab({
       internshipId: data?.internships?.[0]?.id ?? NEW_INTERNSHIP_SENTINEL,
       // Start with one visible box so the per-project editor is obvious.
       projects: [{ title: "", description: "" }],
-      // Certificate defaults: today's issue date (local timezone).
+      // Issue date prefilled for the "issue immediately" checkbox (local tz).
       issueDate: new Date().toLocaleDateString("en-CA"),
     })
     setDialogOpen(true)
@@ -791,6 +819,7 @@ function StudentsTab({
       programDirector: r.programDirector || "",
       nameSize: r.nameSize || "regular",
       issueDate: r.certificateIssuedAt ? r.certificateIssuedAt.slice(0, 10) : "",
+      issueNow: false,
     })
     setDialogOpen(true)
   }
@@ -821,6 +850,10 @@ function StudentsTab({
       programDirector: form.programDirector.trim() || undefined,
       nameSize: form.nameSize,
       certificateIssuedAt: form.issueDate || undefined,
+      // POST-only: mint the certificate in the same request when the admin
+      // ticks "Issue certificate immediately". Otherwise the student joins
+      // ongoing with no certificate.
+      issueNow: !editing && form.issueNow,
     }
     if (isNewInt) {
       // "Add students directly": create the internship inline in the same
@@ -859,7 +892,7 @@ function StudentsTab({
     return (
       r.studentName.toLowerCase().includes(q) ||
       r.role.toLowerCase().includes(q) ||
-      r.certificateId.toLowerCase().includes(q)
+      (r.certificateId ? r.certificateId.toLowerCase().includes(q) : false)
     )
   })
 
@@ -909,20 +942,43 @@ function StudentsTab({
                     Private
                   </span>
                 )}
+                {r.status === "ongoing" && (
+                  <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] text-amber-300">
+                    Ongoing
+                  </span>
+                )}
               </div>
               <p className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
                 <GraduationCap className="h-3 w-3" /> {internshipTitle(r.internshipId)}
               </p>
-              <p className="mt-1 flex items-center gap-1.5 font-mono text-[11px] text-muted-foreground">
-                <Award className="h-3 w-3 text-violet-300" /> {r.certificateId}
-                <button
-                  onClick={() => copyCertId(r.certificateId)}
-                  className="ml-1 inline-flex text-muted-foreground hover:text-foreground"
-                  aria-label="Copy certificate ID"
-                >
-                  <Copy className="h-3 w-3" />
-                </button>
-              </p>
+              {r.certificateId ? (
+                <p className="mt-1 flex items-center gap-1.5 font-mono text-[11px] text-muted-foreground">
+                  <Award className="h-3 w-3 text-violet-300" /> {r.certificateId}
+                  <button
+                    onClick={() => copyCertId(r.certificateId!)}
+                    className="ml-1 inline-flex text-muted-foreground hover:text-foreground"
+                    aria-label="Copy certificate ID"
+                  >
+                    <Copy className="h-3 w-3" />
+                  </button>
+                </p>
+              ) : (
+                <div className="mt-1.5 flex items-center gap-2 flex-wrap">
+                  <span className="inline-flex items-center gap-1 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] text-amber-300">
+                    <Clock className="h-3 w-3" /> No certificate yet
+                  </span>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 gap-1 px-2.5 text-[11px] border-violet-500/40 text-violet-200 hover:bg-violet-500/10"
+                    onClick={() => issueCert.mutate(r)}
+                    disabled={issueCert.isPending}
+                  >
+                    {issueCert.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Award className="h-3 w-3" />}
+                    Issue certificate
+                  </Button>
+                </div>
+              )}
             </div>
             <div className="flex shrink-0 items-center gap-3">
               <label className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
@@ -956,8 +1012,8 @@ function StudentsTab({
           <div className="rounded-xl border border-border/60 bg-card/40 p-10 text-center">
             <Users className="mx-auto h-8 w-8 text-muted-foreground/50" />
             <p className="mt-3 text-sm text-muted-foreground">
-              No student records yet. Add a student to an internship - the certificate is
-              issued automatically and you choose when to showcase it.
+              No student records yet. Add a student to an internship - they join with status
+              Ongoing, and you issue the certificate whenever you're ready from the record row.
             </p>
           </div>
         )}
@@ -973,11 +1029,20 @@ function StudentsTab({
           </DialogHeader>
           {!editing && (
             <p className="rounded-lg border border-violet-500/25 bg-violet-500/5 p-3 text-xs text-muted-foreground">
-              A verifiable certificate (ID + tamper-proof hash) is issued the moment you
-              save. Use the Public toggle to showcase the student on /internships with a
-              downloadable certificate.
+              The student joins with status <span className="text-amber-300">Ongoing</span> and
+              <span className="text-amber-300"> no certificate</span> - nothing is publicly
+              verifiable yet. Issue the certificate whenever you wish from the
+              "Issue certificate" button on the record row (or tick the box below to issue
+              immediately).
               {(data?.internships?.length ?? 0) === 0 &&
                 " No internships exist yet - pick \u201cNew internship\u201d below and fill the highlighted fields to create one as you add the student."}
+            </p>
+          )}
+          {editing && !editing.certificateId && (
+            <p className="rounded-lg border border-amber-500/25 bg-amber-500/5 p-3 text-xs text-muted-foreground">
+              No certificate issued yet for this student - use the
+              <span className="text-amber-300"> Issue certificate</span> button on the record
+              row when they finish.
             </p>
           )}
           <div className="grid gap-4 sm:grid-cols-2">
@@ -1132,14 +1197,27 @@ function StudentsTab({
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground">Issue date (certificate)</label>
-              <Input
-                type="date"
-                value={form.issueDate}
-                onChange={(e) => setForm({ ...form, issueDate: e.target.value })}
-              />
-            </div>
+            {editing?.certificateId ? (
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">Issue date (certificate)</label>
+                <Input
+                  type="date"
+                  value={form.issueDate}
+                  onChange={(e) => setForm({ ...form, issueDate: e.target.value })}
+                />
+              </div>
+            ) : (
+              <label className="flex items-center gap-2 text-sm sm:col-span-1 rounded-lg border border-violet-500/25 bg-violet-500/[0.06] px-3 py-2.5">
+                <Switch
+                  checked={form.issueNow}
+                  onCheckedChange={(v) => setForm({ ...form, issueNow: v })}
+                />
+                <span className="text-xs">
+                  Issue certificate immediately
+                  <span className="block text-[10px] text-muted-foreground">Default off - issue later from the record row</span>
+                </span>
+              </label>
+            )}
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground">Name size on certificate</label>
               <Select value={form.nameSize} onValueChange={(v) => setForm({ ...form, nameSize: v })}>
@@ -1242,7 +1320,8 @@ function StudentsTab({
                 checked={form.showPublicly}
                 onCheckedChange={(v) => setForm({ ...form, showPublicly: v })}
               />
-              Showcase publicly (consent given - appears on /internships with downloadable certificate)
+              Showcase publicly (consent given - appears on /internships
+              {form.issueNow || editing?.certificateId ? " with downloadable certificate" : " once a certificate is issued"})
             </label>
           </div>
           <div className="mt-2 flex justify-end gap-2">
@@ -1260,7 +1339,7 @@ function StudentsTab({
               className="gap-1.5"
             >
               {saveMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-              {editing ? "Save changes" : "Add student & issue certificate"}
+              {editing ? "Save changes" : form.issueNow ? "Add student & issue certificate" : "Add student (ongoing)"}
             </Button>
           </div>
         </DialogContent>

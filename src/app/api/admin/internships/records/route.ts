@@ -14,9 +14,12 @@ export const runtime = "nodejs"
  * GET  /api/admin/internships/records -> ALL records (with
  *      internship + college context) for the admin manager.
  * POST /api/admin/internships/records -> add a student to an
- *      internship. A certificate (certificateId + tamper-evident
- *      hash) is issued IMMEDIATELY on creation - the record can
- *      only become public (showPublicly) once it has one.
+ *      internship. The student starts with status "ongoing" and
+ *      NO certificate - nothing is verifiable until the admin
+ *      explicitly issues one via
+ *      PATCH /api/admin/internships/records/[id] { issueCertificate: true }.
+ *      Pass { issueNow: true } to mint the certificate in this
+ *      same request (for students who already finished).
  *
  *      "Add students directly": pass EITHER internshipId OR a
  *      newInternship { collegeName, title, ... } object - when the
@@ -160,22 +163,26 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
 
   const startDate = typeof b.startDate === "string" && b.startDate ? new Date(b.startDate) : null
   const endDate = typeof b.endDate === "string" && b.endDate ? new Date(b.endDate) : null
+  const status = ["ongoing", "completed"].includes(String(b.status)) ? String(b.status) : "ongoing"
+
+  // Certificate is NOT minted at creation anymore: students join "ongoing"
+  // with nothing verifiable. The admin issues it whenever they wish (PATCH
+  // issueCertificate) - or right here with issueNow: true.
+  const issueNow = b.issueNow === true
+  const certificateId = issueNow ? generateCredentialId("GXI") : null
   // Issue date is admin-editable (certificate shows it + the hash binds it).
-  // Unset / invalid -> "now" as before.
   const parsedIssuedAt =
     typeof b.certificateIssuedAt === "string" && b.certificateIssuedAt
       ? new Date(b.certificateIssuedAt)
       : null
-  const certificateIssuedAt =
-    parsedIssuedAt && !isNaN(parsedIssuedAt.getTime()) ? parsedIssuedAt : new Date()
+  const certificateIssuedAt = certificateId
+    ? (parsedIssuedAt && !isNaN(parsedIssuedAt.getTime()) ? parsedIssuedAt : new Date())
+    : null
   // Certificate signature + recipient name size (per-record overrides).
   const programDirector = strOrNull(b.programDirector)?.slice(0, 120) ?? null
   const nameSize = ["compact", "regular", "large"].includes(String(b.nameSize))
     ? String(b.nameSize)
     : null
-
-  // Certificate is issued at creation time (never null afterwards).
-  const certificateId = generateCredentialId("GXI")
 
   const record = await db.internshipRecord.create({
     data: {
@@ -195,9 +202,9 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
       tools: jsonArr(b.tools) ?? "[]",
       testimonial: strOrNull(b.testimonial),
       grade: strOrNull(b.grade),
-      status: ["ongoing", "completed"].includes(String(b.status)) ? String(b.status) : "completed",
+      status,
       certificateId,
-      // placeholder replaced by the real hash right after create
+      // placeholder replaced by the real hash right after create (issued only)
       verificationHash: "pending",
       certificateIssuedAt,
       programDirector,
@@ -209,14 +216,21 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
     },
   })
 
-  // Hash binds the certificate to the REAL record id - compute after create.
-  const verificationHash = await generateVerificationHash(
-    certificateId,
-    record.id,
-    internshipId,
-    certificateIssuedAt
-  )
-  await db.internshipRecord.update({ where: { id: record.id }, data: { verificationHash } })
+  // Hash binds the certificate to the REAL record id - compute after create
+  // (only when a certificate was minted in this request).
+  let verificationHash: string | null = null
+  if (certificateId) {
+    verificationHash = await generateVerificationHash(
+      certificateId,
+      record.id,
+      internshipId,
+      certificateIssuedAt!
+    )
+    await db.internshipRecord.update({ where: { id: record.id }, data: { verificationHash } })
+  } else {
+    // Keep the column honest: nothing issued -> no placeholder either.
+    await db.internshipRecord.update({ where: { id: record.id }, data: { verificationHash: null } })
+  }
 
   await logAction(user.id ?? null, user.email ?? user.name ?? "admin", "internship.record.create", "internshipRecord", record.id, {
     studentName,
@@ -224,6 +238,8 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
     internshipTitle: createdInternshipTitle ?? internship.title,
     internshipCreatedInline: !!createdInternshipTitle,
     certificateId,
+    certificateIssuedNow: issueNow,
+    status,
     showPublicly: b.showPublicly === true,
   })
 

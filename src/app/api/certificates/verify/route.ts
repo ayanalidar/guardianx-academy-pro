@@ -55,7 +55,9 @@ export async function GET(req: Request) {
       where: { certificateId },
     }).catch(() => null)
 
-    if (!record || !record.showPublicly) {
+    // Null-cert records (ongoing, not yet issued) can never match a lookup
+    // by ID - the certificateId guard is defense in depth for the types.
+    if (!record || !record.showPublicly || !record.certificateId) {
       return NextResponse.json(
         { valid: false, error: `No certificate found with ID "${certificateId}".` },
         { status: 404 }
@@ -67,12 +69,15 @@ export async function GET(req: Request) {
       select: { title: true, company: true, domain: true, collegeName: true, collegeCity: true, durationWeeks: true },
     })
 
+    // A record found by certificateId always has its hash + issue date set
+    // (both are written in the same issuance transaction) - the ?? fallbacks
+    // only satisfy the nullable Prisma types.
     const iHashValid = await verifyVerificationHash(
-      record.verificationHash,
+      record.verificationHash ?? "",
       record.certificateId,
       record.id,
       record.internshipId,
-      record.certificateIssuedAt
+      record.certificateIssuedAt ?? new Date()
     )
 
     let iSkills: string[] = []

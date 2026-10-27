@@ -41,7 +41,9 @@ export async function GET(
 
     // Only showcased (or sample) records are publicly downloadable -
     // a certificate issued but not consented for showcase stays private.
-    if (!record.showPublicly) {
+    // certificateId guard = defense in depth (a null-cert "ongoing" record
+    // can never match the lookup, but the types allow it).
+    if (!record.showPublicly || !record.certificateId) {
       return NextResponse.json({ error: "Certificate not found." }, { status: 404 })
     }
 
@@ -58,18 +60,21 @@ export async function GET(
       },
     })
 
+    // A record found by certificateId always has its hash + issue date set
+    // (both written in the same issuance transaction) - fallbacks only
+    // satisfy the nullable Prisma types.
     const hashValid = await verifyVerificationHash(
-      record.verificationHash,
+      record.verificationHash ?? "",
       record.certificateId,
       record.id,
       record.internshipId,
-      record.certificateIssuedAt
+      record.certificateIssuedAt ?? new Date()
     )
 
     return NextResponse.json({
       certificate: {
         certificateId: record.certificateId,
-        issuedAt: record.certificateIssuedAt.toISOString(),
+        issuedAt: (record.certificateIssuedAt ?? new Date()).toISOString(),
         studentName: record.studentName,
         role: record.role,
         grade: record.grade,

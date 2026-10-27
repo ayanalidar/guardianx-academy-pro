@@ -4,15 +4,18 @@ import { requireAdmin, withErrorHandler } from "@/lib/session"
 import { logAction } from "@/lib/audit"
 import { ensureInternshipTables } from "@/lib/internships-bootstrap"
 import { projectsJson } from "@/lib/internship-projects"
-import { generateVerificationHash } from "@/lib/credentials"
+import { generateVerificationHash, generateCredentialId } from "@/lib/credentials"
 
 export const runtime = "nodejs"
 
 /* ============================================================
  * PATCH  /api/admin/internships/records/[id] - update a student
  *        internship record. Includes the showPublicly consent
- *        toggle. certificateId/verificationHash are NEVER editable
- *        here (certificate integrity) - DELETE + recreate instead.
+ *        toggle AND { issueCertificate: true } - the explicit
+ *        "issue now" action that mints the certificateId +
+ *        tamper-evident hash (idempotent: issuing twice keeps the
+ *        original certificate). certificateId/verificationHash are
+ *        otherwise NEVER editable here (certificate integrity).
  * DELETE /api/admin/internships/records/[id] - remove the record.
  * ADMIN-only. Every mutation is audit-logged.
  * ============================================================ */
@@ -39,12 +42,51 @@ export const PATCH = withErrorHandler(async (req: NextRequest, { params }: { par
     where: { id },
     // certificateId + internshipId needed to re-bind the hash if the issue
     // date changes (the HMAC covers certificateId|recordId|internshipId|issuedAt).
-    select: { id: true, studentName: true, showPublicly: true, certificateId: true, internshipId: true },
+    select: { id: true, studentName: true, showPublicly: true, certificateId: true, certificateIssuedAt: true, internshipId: true },
   })
   if (!existing) return NextResponse.json({ error: "Internship record not found" }, { status: 404 })
 
   const body = await req.json().catch(() => null)
   if (!body) return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
+
+  // ---- explicit certificate issuance (the "Issue certificate" button) ----
+  // Idempotent: if a certificate already exists, keep it (never re-mint -
+  // the printed/verified ID must stay stable). The issue date sent with the
+  // issuance request is honored (defaults to now).
+  if (body.issueCertificate === true) {
+    if (existing.certificateId) {
+      return NextResponse.json({
+        ok: true,
+        id: existing.id,
+        certificateId: existing.certificateId,
+        alreadyIssued: true,
+      })
+    }
+    const parsed = body.certificateIssuedAt ? new Date(String(body.certificateIssuedAt)) : null
+    const issuedAt = parsed && !isNaN(parsed.getTime()) ? parsed : new Date()
+    const certificateId = generateCredentialId("GXI")
+    const verificationHash = await generateVerificationHash(
+      certificateId,
+      existing.id,
+      existing.internshipId,
+      issuedAt
+    )
+    const issued = await db.internshipRecord.update({
+      where: { id },
+      data: { certificateId, verificationHash, certificateIssuedAt: issuedAt },
+    })
+    await logAction(user.id ?? null, user.email ?? user.name ?? "admin", "internship.record.certificate.issue", "internshipRecord", id, {
+      studentName: existing.studentName,
+      certificateId,
+      issuedAt: issuedAt.toISOString(),
+    })
+    return NextResponse.json({
+      ok: true,
+      id: issued.id,
+      certificateId: issued.certificateId,
+      alreadyIssued: false,
+    })
+  }
 
   const data: Record<string, unknown> = {}
   if (body.studentName !== undefined) data.studentName = String(body.studentName).trim()
@@ -96,13 +138,14 @@ export const PATCH = withErrorHandler(async (req: NextRequest, { params }: { par
   const updated = await db.internshipRecord.update({ where: { id }, data })
 
   // The verification hash binds certificateId|recordId|internshipId|issuedAt.
-  // Changing the issue date invalidates it -> re-bind with the FINAL values.
-  if (issuedAtChanged) {
+  // Changing the issue date invalidates it -> re-bind with the FINAL values
+  // (only possible once a certificate exists).
+  if (issuedAtChanged && existing.certificateId) {
     const newHash = await generateVerificationHash(
       existing.certificateId,
       updated.id,
       updated.internshipId,
-      updated.certificateIssuedAt
+      updated.certificateIssuedAt ?? new Date()
     )
     await db.internshipRecord.update({ where: { id }, data: { verificationHash: newHash } })
   }
