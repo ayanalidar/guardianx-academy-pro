@@ -187,9 +187,24 @@ export async function GET(req: Request, { params }: { params: Promise<{ credenti
       // exist yet - bootstrap before the lookup (memoized per instance).
       const { ensureInternshipTables } = await import("@/lib/internships-bootstrap")
       await ensureInternshipTables().catch(() => null)
-      const oRecord = await db.internshipRecord
+      let oRecord = await db.internshipRecord
         .findUnique({ where: { offerRef: credentialId } })
-        .catch(() => null)
+        .catch((e: any) => {
+          // Schema drift (P2021/P2022): heal the offer columns targeted and
+          // retry ONCE before answering not-found - the shared DDL loop may
+          // have aborted before reaching the offer statements.
+          console.warn("[cred-verify] offer lookup failed, healing + retry:", e?.code ?? e?.message)
+          return (async () => {
+            for (const stmt of [
+              `ALTER TABLE "InternshipRecord" ADD COLUMN IF NOT EXISTS "offerRef" TEXT`,
+              `ALTER TABLE "InternshipRecord" ADD COLUMN IF NOT EXISTS "offerSentAt" TIMESTAMP(3)`,
+              `CREATE UNIQUE INDEX IF NOT EXISTS "InternshipRecord_offerRef_key" ON "InternshipRecord"("offerRef")`,
+            ]) {
+              await db.$executeRawUnsafe(stmt).catch(() => null)
+            }
+            return db.internshipRecord.findUnique({ where: { offerRef: credentialId } }).catch(() => null)
+          })()
+        })
 
       if (oRecord) {
         const internship = await db.internship.findUnique({

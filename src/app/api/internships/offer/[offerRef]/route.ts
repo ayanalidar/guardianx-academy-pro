@@ -5,6 +5,25 @@ import { isPlausibleOfferRef } from "@/lib/offer-refs"
 
 export const runtime = "nodejs"
 
+/**
+ * Targeted self-heal for the offer columns - independent of the shared
+ * bootstrap DDL loop (if ANY earlier statement aborts that loop, these
+ * never run there). Idempotent; safe to run on every failed lookup.
+ */
+async function ensureOfferColumns(): Promise<void> {
+  for (const stmt of [
+    `ALTER TABLE "InternshipRecord" ADD COLUMN IF NOT EXISTS "offerRef" TEXT`,
+    `ALTER TABLE "InternshipRecord" ADD COLUMN IF NOT EXISTS "offerSentAt" TIMESTAMP(3)`,
+    `CREATE UNIQUE INDEX IF NOT EXISTS "InternshipRecord_offerRef_key" ON "InternshipRecord"("offerRef")`,
+  ]) {
+    try {
+      await db.$executeRawUnsafe(stmt)
+    } catch (e) {
+      console.error("[internships/offer] targeted DDL failed:", stmt.slice(0, 60), e)
+    }
+  }
+}
+
 /* ============================================================
  * GET /api/internships/offer/[offerRef] - PUBLIC.
  *
@@ -41,9 +60,18 @@ export async function GET(
       return NextResponse.json({ error: "Too many requests" }, { status: 429 })
     }
 
-    const record = await db.internshipRecord.findUnique({
-      where: { offerRef },
-    })
+    let record = null
+    try {
+      record = await db.internshipRecord.findUnique({
+        where: { offerRef },
+      })
+    } catch (e: any) {
+      // P2021/P2022 = table/column drift - heal the offer columns targeted,
+      // then retry ONCE. Anything else (or a failed retry) surfaces below.
+      console.warn("[internships/offer] lookup failed, healing + retry:", e?.code ?? e?.message)
+      await ensureOfferColumns()
+      record = await db.internshipRecord.findUnique({ where: { offerRef } })
+    }
     if (!record) {
       return NextResponse.json({ error: "Offer not found." }, { status: 404 })
     }
@@ -82,8 +110,13 @@ export async function GET(
         verifyUrl: `/verify/${record.offerRef}`,
       },
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error("[internships/offer]", error)
-    return NextResponse.json({ error: "Offer lookup failed." }, { status: 500 })
+    // code-only (no message) - safe for a public surface, and it makes the
+    // failure mode diagnosable from the outside (P2021/P2022 = schema drift)
+    return NextResponse.json(
+      { error: "Offer lookup failed.", code: error?.code ?? "UNKNOWN" },
+      { status: 500 }
+    )
   }
 }
