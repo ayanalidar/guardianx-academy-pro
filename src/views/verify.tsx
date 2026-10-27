@@ -14,7 +14,7 @@ import {
   Check, X, Calendar, Hash, Award, TrendingUp, Lock,
   User, BookOpen, Sparkles, Fingerprint, AlertTriangle,
   Search, Copy, BadgeCheck, FileCheck2, GraduationCap,
-  ScanLine, Clock, ExternalLink, Briefcase, Download,
+  ScanLine, Clock, ExternalLink, Briefcase, Download, FileText,
 } from "lucide-react"
 import { toast } from "sonner"
 import { downloadVerifyReportPDF } from "@/lib/certificate-pdf"
@@ -57,6 +57,21 @@ type VerifiedCredential = {
     instructorName?: string | null
     certBody?: string | null
     curriculum?: { title: string }[]
+  } | null
+  // Internship OFFER letter details (examType "internship-offer"). An offer
+  // is NEVER a certificate: the verify page renders it honestly with the
+  // explicit note that the certificate comes separately on completion.
+  offerDetails?: {
+    role: string
+    company?: string | null
+    collegeName?: string | null
+    collegeCity?: string | null
+    durationWeeks?: number | null
+    mode?: string | null
+    startDate?: string | null
+    endDate?: string | null
+    internshipStatus?: string
+    certificateIssued?: boolean
   } | null
   verificationHash?: string
   verificationUrl?: string | null
@@ -371,6 +386,7 @@ function VerifiedCard({
   // the ring shows completion (100% when completed) with the grade in the
   // center, never a fabricated 0%.
   const isInternship = cred.examType === "internship"
+  const isOffer = cred.examType === "internship-offer"
   const projects = cred.projects ?? []
   // Course-completion certificates get the same report experience: course
   // facts + curriculum covered + downloadable course report PDF.
@@ -486,7 +502,16 @@ function VerifiedCard({
       {/* ─── Certificate hero ─── */}
       <div className="relative px-6 sm:px-8 pt-7 pb-6">
         <p className="text-[10px] font-mono text-muted-foreground tracking-[0.3em] mb-2 flex items-center gap-1.5">
-          <Award className="h-3 w-3" /> CERTIFICATE OF ACHIEVEMENT
+          {isOffer ? (
+            <>
+              <FileText className="h-3 w-3 text-amber-300" />
+              <span className="text-amber-300">LETTER OF INTERNSHIP OFFER</span>
+            </>
+          ) : (
+            <>
+              <Award className="h-3 w-3" /> CERTIFICATE OF ACHIEVEMENT
+            </>
+          )}
         </p>
 
         {/* candidate name (large) */}
@@ -495,7 +520,7 @@ function VerifiedCard({
         </h2>
 
         <p className="text-sm text-muted-foreground mb-5">
-          has successfully completed the requirements for
+          {isOffer ? "has been formally extended an internship offer for" : "has successfully completed the requirements for"}
         </p>
 
         {/* certification name */}
@@ -522,6 +547,8 @@ function VerifiedCard({
                   ? "Course Completion"
                   : cred.examType === "internship"
                   ? "Internship Program"
+                  : cred.examType === "internship-offer"
+                  ? "Internship Offer"
                   : cred.examType}
               </Badge>
             )}
@@ -529,6 +556,42 @@ function VerifiedCard({
         )}
 
         {/* ─── Score + key facts grid ─── */}
+        {isOffer ? (
+          /* Offers carry no score/grade - never fabricate one. Full-width
+             facts with the amber offer palette. */
+          <div className="grid grid-cols-2 gap-2.5 mb-6">
+            <Fact
+              icon={<Briefcase className="h-3.5 w-3.5" />}
+              label="POSITION"
+              value={cred.offerDetails?.role ?? "Intern"}
+              accent="text-amber-300"
+            />
+            <Fact
+              icon={<Calendar className="h-3.5 w-3.5" />}
+              label="DURATION"
+              value={
+                cred.offerDetails?.durationWeeks
+                  ? `${cred.offerDetails.durationWeeks} weeks`
+                  : "-"
+              }
+              accent="text-amber-300"
+            />
+            <Fact
+              icon={<Calendar className="h-3.5 w-3.5" />}
+              label="OFFER ISSUED"
+              value={formatDate(cred.issueDate)}
+            />
+            <Fact
+              icon={<Clock className="h-3.5 w-3.5" />}
+              label="STATUS"
+              value={
+                <span className="capitalize text-amber-300">
+                  {cred.offerDetails?.internshipStatus ?? "ongoing"}
+                </span>
+              }
+            />
+          </div>
+        ) : (
         <div className="grid grid-cols-1 sm:grid-cols-[auto_1fr] gap-5 sm:gap-6 items-center mb-6">
           {/* Score ring - internships show grade + completion, not 0% */}
           <div className="flex justify-center sm:justify-start">
@@ -588,6 +651,62 @@ function VerifiedCard({
             />
           </div>
         </div>
+        )}
+
+        {/* Offer details (internship OFFER letters - NOT certificates) */}
+        {isOffer && cred.offerDetails && (
+          <div className="mb-5 rounded-xl border border-amber-500/25 bg-amber-500/5 px-4 py-3.5">
+            <p className="text-[10px] font-mono text-muted-foreground tracking-[0.25em] mb-2.5 flex items-center gap-1.5">
+              <Briefcase className="h-3 w-3 text-amber-300" /> OFFER DETAILS
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1.5 text-sm">
+              <p className="text-muted-foreground">
+                Program: <span className="text-foreground">{cred.certificationName}</span>
+              </p>
+              {cred.offerDetails.collegeName && (
+                <p className="text-muted-foreground">
+                  College: <span className="text-foreground">{cred.offerDetails.collegeName}</span>
+                  {cred.offerDetails.collegeCity ? `, ${cred.offerDetails.collegeCity}` : ""}
+                </p>
+              )}
+              {cred.offerDetails.company && (
+                <p className="text-muted-foreground">
+                  Hosted by: <span className="text-foreground">{cred.offerDetails.company}</span>
+                </p>
+              )}
+              {cred.offerDetails.mode && (
+                <p className="text-muted-foreground">
+                  Mode: <span className="text-foreground capitalize">{cred.offerDetails.mode}</span>
+                </p>
+              )}
+              {cred.offerDetails.startDate && (
+                <p className="text-muted-foreground">
+                  Begins: <span className="text-foreground">{formatDate(cred.offerDetails.startDate)}</span>
+                </p>
+              )}
+              {cred.offerDetails.endDate && (
+                <p className="text-muted-foreground">
+                  Ends: <span className="text-foreground">{formatDate(cred.offerDetails.endDate)}</span>
+                </p>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Honesty note - an offer is never a certificate (ONGOING students
+            must not surface one anywhere until the admin issues it) */}
+        {isOffer && (
+          <div className="mb-5 flex items-start gap-2.5 rounded-xl border border-amber-500/20 bg-amber-500/[0.06] px-4 py-3">
+            <AlertTriangle className="h-4 w-4 text-amber-300 shrink-0 mt-0.5" />
+            <p className="text-xs leading-relaxed text-muted-foreground">
+              This verifies the internship <span className="text-amber-300 font-semibold">OFFER LETTER</span> only.
+              GuardianX Academy issues the verifiable certificate of internship completion
+              {cred.offerDetails?.certificateIssued
+                ? " separately - it verifies under its own certificate ID."
+                : " separately once the internship is successfully completed - no certificate exists for an ongoing internship."}
+            </p>
+          </div>
+        )}
 
         {/* Internship details (internship certificates) */}
         {cred.internshipDetails && (

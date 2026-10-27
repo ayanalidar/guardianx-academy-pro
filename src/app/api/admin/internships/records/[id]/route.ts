@@ -16,6 +16,10 @@ export const runtime = "nodejs"
  *        tamper-evident hash (idempotent: issuing twice keeps the
  *        original certificate). certificateId/verificationHash are
  *        otherwise NEVER editable here (certificate integrity).
+ *        { sendOffer: true } (re)sends the offer-letter email:
+ *        the ref is minted on demand for legacy records, the PDF
+ *        is regenerated server-side and attached. Best-effort -
+ *        the response reports emailed/emailError honestly.
  * DELETE /api/admin/internships/records/[id] - remove the record.
  * ADMIN-only. Every mutation is audit-logged.
  * ============================================================ */
@@ -48,6 +52,28 @@ export const PATCH = withErrorHandler(async (req: NextRequest, { params }: { par
 
   const body = await req.json().catch(() => null)
   if (!body) return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 })
+
+  // ---- explicit offer-letter (re)send (the "Resend offer" button) ----
+  // Mirrors the auto-email on create: mints the ref for legacy records,
+  // regenerates the PDF server-side and emails it. Never throws - the
+  // response carries the outcome so the admin sees mail failures inline.
+  if (body.sendOffer === true) {
+    const { emailOfferLetterToStudent } = await import("@/lib/offer-email")
+    const result = await emailOfferLetterToStudent(id)
+    await logAction(user.id ?? null, user.email ?? user.name ?? "admin", "internship.record.offer.send", "internshipRecord", id, {
+      studentName: existing.studentName,
+      offerRef: result.offerRef ?? null,
+      emailed: result.ok,
+      error: result.error,
+    })
+    return NextResponse.json({
+      ok: result.ok,
+      id,
+      offerRef: result.offerRef ?? null,
+      emailed: result.ok,
+      ...(result.error ? { emailError: result.error } : {}),
+    })
+  }
 
   // ---- explicit certificate issuance (the "Issue certificate" button) ----
   // Idempotent: if a certificate already exists, keep it (never re-mint -

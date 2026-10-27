@@ -1114,6 +1114,12 @@ model InternshipRecord {
   certificateId      String?  @unique // e.g. GXI-2026-A1B2C3 (null = not issued yet)
   verificationHash   String?  // HMAC-SHA256 via lib/credentials.ts (null = not issued)
   certificateIssuedAt DateTime? // null = not issued
+  // --- offer letter (generated at registration, emailed to the student) ---
+  // Nullable: legacy records predate offers. offerRef is a random capability
+  // code (GXI-OFF-2026-XXXXXX) printed on the letter + encoded in its QR -
+  // it verifies on /verify/<offerRef> as an OFFER, never as a certificate.
+  offerRef      String?  @unique
+  offerSentAt   DateTime? // last time the offer email went out (null = never)
   programDirector    String? // name on the certificate "Program Director" signature (default: GuardianX Academy)
   nameSize           String? // certificate recipient name size: compact | regular | large (null = regular)
   // --- showcase control ---

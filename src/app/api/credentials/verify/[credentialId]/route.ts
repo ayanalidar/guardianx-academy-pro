@@ -176,6 +176,63 @@ export async function GET(req: Request, { params }: { params: Promise<{ credenti
       })
     }
 
+    // ── Check Internship OFFER letter (GXI-OFF-… format) ──
+    // Must run BEFORE the GXI- certificate branch: offer refs share the GXI
+    // prefix but are NOT certificates. The verify page renders this as an
+    // offer verification - honest, amber-toned, and explicitly stating that
+    // the certificate is issued separately upon completion (an ongoing
+    // student never surfaces a certificate here).
+    if (credentialId.startsWith("GXI-OFF-")) {
+      const oRecord = await db.internshipRecord
+        .findUnique({ where: { offerRef: credentialId } })
+        .catch(() => null)
+
+      if (oRecord) {
+        const internship = await db.internship.findUnique({
+          where: { id: oRecord.internshipId },
+          select: {
+            title: true, company: true, domain: true, mode: true,
+            collegeName: true, collegeCity: true, durationWeeks: true,
+          },
+        })
+
+        return NextResponse.json({
+          valid: true,
+          credential: {
+            credentialId: oRecord.offerRef!,
+            candidateName: oRecord.studentName,
+            certificationName: internship?.title ?? oRecord.role,
+            certificationSlug: "internship-offer",
+            certificationLevel: internship?.domain ?? "Internship",
+            score: null,
+            grade: null,
+            issueDate: (oRecord.startDate ?? oRecord.createdAt).toISOString(),
+            expiryDate: null,
+            status: "valid",
+            skillsAssessed: [],
+            examType: "internship-offer",
+            offerDetails: {
+              role: oRecord.role,
+              company: internship?.company ?? null,
+              collegeName: internship?.collegeName ?? null,
+              collegeCity: internship?.collegeCity ?? null,
+              durationWeeks: internship?.durationWeeks ?? null,
+              mode: internship?.mode ?? null,
+              startDate: oRecord.startDate?.toISOString() ?? null,
+              endDate: oRecord.endDate?.toISOString() ?? null,
+              internshipStatus: oRecord.status,
+              // honest cross-state: the completion certificate, when issued,
+              // verifies separately under its own ID
+              certificateIssued: !!oRecord.certificateId,
+            },
+            verificationUrl: `/verify/${oRecord.offerRef}`,
+          },
+        })
+      }
+      // Unknown offer refs fall through to not-found (anti-enumeration)
+      return NextResponse.json({ valid: false, credential: null })
+    }
+
     // ── Check Internship certificate (GXI-… format, /internships page) ──
     // Internship certificates verify with the same public flow. Only
     // showcased records (showPublicly consent gate) are verifiable -

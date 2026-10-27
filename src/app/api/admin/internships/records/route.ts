@@ -4,6 +4,7 @@ import { requireAdmin, withErrorHandler } from "@/lib/session"
 import { logAction } from "@/lib/audit"
 import { ensureInternshipTables } from "@/lib/internships-bootstrap"
 import { generateCredentialId, generateVerificationHash } from "@/lib/credentials"
+import { generateOfferRef } from "@/lib/offer-refs"
 import { projectsJson } from "@/lib/internship-projects"
 
 export const runtime = "nodejs"
@@ -20,6 +21,12 @@ export const runtime = "nodejs"
  *      PATCH /api/admin/internships/records/[id] { issueCertificate: true }.
  *      Pass { issueNow: true } to mint the certificate in this
  *      same request (for students who already finished).
+ *
+ *      OFFER LETTER: every new record gets an offerRef (GXI-OFF-…)
+ *      and - when the record carries a studentEmail and the caller
+ *      did not pass sendOffer:false - the Aurora-styled PDF offer
+ *      letter is GENERATED AND EMAILED automatically. The email is
+ *      best-effort: a mail outage never blocks the enrollment.
  *
  *      "Add students directly": pass EITHER internshipId OR a
  *      newInternship { collegeName, title, ... } object - when the
@@ -232,6 +239,30 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
     await db.internshipRecord.update({ where: { id: record.id }, data: { verificationHash: null } })
   }
 
+  // ---- offer letter: mint the ref now; email the PDF automatically ----
+  // Every registered student holds an offer letter (status ongoing, no
+  // certificate). The email is best-effort - a mail outage never fails the
+  // enrollment - and is skipped entirely when the record has no email or
+  // the caller passed sendOffer:false (legacy records can be sent later via
+  // PATCH { sendOffer: true }).
+  const offerRef = generateOfferRef()
+  await db.internshipRecord.update({ where: { id: record.id }, data: { offerRef } })
+
+  let offerEmailed = false
+  let offerEmailError: string | undefined
+  const shouldEmailOffer = b.sendOffer !== false && !!strOrNull(b.studentEmail)
+  if (shouldEmailOffer) {
+    try {
+      const { emailOfferLetterToStudent } = await import("@/lib/offer-email")
+      const offerResult = await emailOfferLetterToStudent(record.id, { offerRef })
+      offerEmailed = offerResult.ok
+      if (!offerResult.ok) offerEmailError = offerResult.error
+    } catch (e: any) {
+      console.error("[internships/records] offer email failed (non-fatal):", e)
+      offerEmailError = e?.message || "Offer email failed"
+    }
+  }
+
   await logAction(user.id ?? null, user.email ?? user.name ?? "admin", "internship.record.create", "internshipRecord", record.id, {
     studentName,
     role,
@@ -241,7 +272,19 @@ export const POST = withErrorHandler(async (req: NextRequest) => {
     certificateIssuedNow: issueNow,
     status,
     showPublicly: b.showPublicly === true,
+    offerRef,
+    offerEmailed,
   })
 
-  return NextResponse.json({ record: { ...record, verificationHash } }, { status: 201 })
+  return NextResponse.json(
+    {
+      record: { ...record, verificationHash, offerRef },
+      offer: {
+        ref: offerRef,
+        emailed: offerEmailed,
+        ...(offerEmailError ? { emailError: offerEmailError } : {}),
+      },
+    },
+    { status: 201 }
+  )
 })

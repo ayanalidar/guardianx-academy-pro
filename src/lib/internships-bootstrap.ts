@@ -111,6 +111,12 @@ const DDL: string[] = [
   `ALTER TABLE "InternshipRecord" ADD COLUMN IF NOT EXISTS "programDirector" TEXT`,
   `ALTER TABLE "InternshipRecord" ADD COLUMN IF NOT EXISTS "nameSize" TEXT`,
   `ALTER TABLE "InternshipRecord" ADD COLUMN IF NOT EXISTS "sortOrder" INTEGER NOT NULL DEFAULT 0`,
+  // --- offer letter columns (generated at registration + auto-emailed) ---
+  `ALTER TABLE "InternshipRecord" ADD COLUMN IF NOT EXISTS "offerRef" TEXT`,
+  `ALTER TABLE "InternshipRecord" ADD COLUMN IF NOT EXISTS "offerSentAt" TIMESTAMP(3)`,
+  // Nullable-column unique index: Postgres treats NULLs as distinct, so
+  // unlimited legacy records can live without an offer ref.
+  `CREATE UNIQUE INDEX IF NOT EXISTS "InternshipRecord_offerRef_key" ON "InternshipRecord"("offerRef")`,
   // Deferred certificate issuance: relax legacy NOT NULL constraints so a
   // record can exist without a certificate (idempotent - no-op once nullable).
   `ALTER TABLE "InternshipRecord" ALTER COLUMN "certificateId" DROP NOT NULL`,

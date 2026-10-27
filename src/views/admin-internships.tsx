@@ -43,6 +43,7 @@ import {
 import {
   FlaskConical, Users, Plus, Loader2, Trash2, Pencil, Copy,
   Eye, EyeOff, Search, GraduationCap, Building2, Award, Clock,
+  Mail, Send, FileDown, MailX,
 } from "lucide-react"
 
 // ============================================================
@@ -98,6 +99,9 @@ type AdminInternshipRecord = {
   certificateIssuedAt: string | null
   programDirector: string | null
   nameSize: string | null
+  // offer letter (generated at registration, auto-emailed)
+  offerRef: string | null
+  offerSentAt: string | null
   showPublicly: boolean
   isSample: boolean
   sortOrder: number
@@ -180,6 +184,10 @@ const EMPTY_RECORD_FORM = {
   // ongoing with no certificate - it is issued explicitly from the record
   // row whenever the admin wishes.
   issueNow: false,
+  // When true (default), the stunning Phantom-themed PDF offer letter is
+  // generated server-side and emailed to the student automatically.
+  // Needs a student email - auto-offered (switch disabled) without one.
+  sendOfferEmail: true,
   // inline "new internship" fields (used when internshipId === NEW_INTERNSHIP_SENTINEL)
   newCollegeName: "",
   newCollegeCity: "",
@@ -714,14 +722,21 @@ function StudentsTab({
       id
         ? api(`/api/admin/internships/records/${id}`, { method: "PATCH", body: JSON.stringify(payload) })
         : api("/api/admin/internships/records", { method: "POST", body: JSON.stringify(payload) }),
-    onSuccess: (_d, vars) => {
-      toast.success(
-        vars.id
-          ? "Student record updated"
-          : vars.payload.issueNow
-          ? "Student added - certificate issued"
-          : "Student added - status Ongoing (no certificate yet)"
-      )
+    onSuccess: (d: any, vars) => {
+      if (vars.id) {
+        toast.success("Student record updated")
+      } else {
+        const offer = d?.offer as { emailed?: boolean; emailError?: string } | undefined
+        if (offer?.emailed) {
+          toast.success("Student added - offer letter emailed, status Ongoing (no certificate yet)")
+        } else if (offer && offer.emailError) {
+          toast.warning(`Student added - status Ongoing. Offer email failed: ${offer.emailError}`)
+        } else if (vars.payload.issueNow) {
+          toast.success("Student added - certificate issued")
+        } else {
+          toast.success("Student added - status Ongoing (no certificate yet)")
+        }
+      }
       setDialogOpen(false)
       invalidate()
     },
@@ -746,6 +761,30 @@ function StudentsTab({
     },
     onError: (e: any) => toast.error(e?.message || "Issue failed"),
   })
+
+  // (Re)send the offer letter email - regenerates the PDF server-side and
+  // attaches it. Works for legacy records too (mints the ref on demand).
+  const sendOffer = useMutation({
+    mutationFn: (r: AdminInternshipRecord) =>
+      api(`/api/admin/internships/records/${r.id}`, {
+        method: "PATCH",
+        body: JSON.stringify({ sendOffer: true }),
+      }),
+    onSuccess: (d: any, r) => {
+      if (d?.emailed) {
+        toast.success(`Offer letter emailed to ${r.studentName}${d?.offerRef ? ` (${d.offerRef})` : ""}`)
+      } else {
+        toast.error(d?.emailError || "Offer email failed")
+      }
+      invalidate()
+    },
+    onError: (e: any) => toast.error(e?.message || "Send failed"),
+  })
+
+  function downloadOfferPdf(r: AdminInternshipRecord) {
+    // Server-built from the saved record - identical to the emailed PDF.
+    window.open(`/api/admin/internships/records/${r.id}/offer-pdf`, "_blank")
+  }
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => api(`/api/admin/internships/records/${id}`, { method: "DELETE" }),
@@ -854,6 +893,9 @@ function StudentsTab({
       // ticks "Issue certificate immediately". Otherwise the student joins
       // ongoing with no certificate.
       issueNow: !editing && form.issueNow,
+      // POST-only: auto-email the offer letter (default on). The backend
+      // skips silently when the record has no student email.
+      sendOffer: form.sendOfferEmail,
     }
     if (isNewInt) {
       // "Add students directly": create the internship inline in the same
@@ -951,6 +993,71 @@ function StudentsTab({
               <p className="mt-1 flex items-center gap-1.5 text-xs text-muted-foreground">
                 <GraduationCap className="h-3 w-3" /> {internshipTitle(r.internshipId)}
               </p>
+              {/* Offer letter line - every registered student holds one; the
+                  certificate below it only appears once the admin issues it. */}
+              {r.offerRef ? (
+                <div className="mt-1.5 flex items-center gap-2 flex-wrap">
+                  <span className="inline-flex items-center gap-1 rounded-full border border-rose-500/30 bg-rose-500/10 px-2 py-0.5 font-mono text-[10px] text-rose-300">
+                    <Mail className="h-3 w-3" /> {r.offerRef}
+                    <button
+                      onClick={() => {
+                        navigator.clipboard
+                          .writeText(r.offerRef!)
+                          .then(() => toast.success("Offer reference copied"))
+                          .catch(() => toast.error("Could not copy"))
+                      }}
+                      className="ml-0.5 inline-flex text-rose-300/70 hover:text-rose-200"
+                      aria-label="Copy offer reference"
+                    >
+                      <Copy className="h-3 w-3" />
+                    </button>
+                  </span>
+                  {r.offerSentAt ? (
+                    <span className="text-[10px] text-muted-foreground">
+                      emailed {new Date(r.offerSentAt).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })}
+                    </span>
+                  ) : (
+                    <span className="text-[10px] text-muted-foreground">not emailed yet</span>
+                  )}
+                  {r.studentEmail ? (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-7 gap-1 px-2.5 text-[11px] border-rose-500/40 text-rose-200 hover:bg-rose-500/10"
+                      onClick={() => sendOffer.mutate(r)}
+                      disabled={sendOffer.isPending}
+                    >
+                      {sendOffer.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Send className="h-3 w-3" />}
+                      Resend offer
+                    </Button>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-[10px] text-muted-foreground">
+                      <MailX className="h-3 w-3" /> no email on record
+                    </span>
+                  )}
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 gap-1 px-2.5 text-[11px]"
+                    onClick={() => downloadOfferPdf(r)}
+                  >
+                    <FileDown className="h-3 w-3" /> Offer PDF
+                  </Button>
+                </div>
+              ) : (
+                <div className="mt-1.5 flex items-center gap-2 flex-wrap">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 gap-1 px-2.5 text-[11px] border-rose-500/40 text-rose-200 hover:bg-rose-500/10"
+                    onClick={() => sendOffer.mutate(r)}
+                    disabled={sendOffer.isPending}
+                  >
+                    {sendOffer.isPending ? <Loader2 className="h-3 w-3 animate-spin" /> : <Mail className="h-3 w-3" />}
+                    Generate & send offer letter
+                  </Button>
+                </div>
+              )}
               {r.certificateId ? (
                 <p className="mt-1 flex items-center gap-1.5 font-mono text-[11px] text-muted-foreground">
                   <Award className="h-3 w-3 text-violet-300" /> {r.certificateId}
@@ -1031,9 +1138,10 @@ function StudentsTab({
             <p className="rounded-lg border border-violet-500/25 bg-violet-500/5 p-3 text-xs text-muted-foreground">
               The student joins with status <span className="text-amber-300">Ongoing</span> and
               <span className="text-amber-300"> no certificate</span> - nothing is publicly
-              verifiable yet. Issue the certificate whenever you wish from the
-              "Issue certificate" button on the record row (or tick the box below to issue
-              immediately).
+              verifiable yet. A stunning offer letter is generated automatically and emailed to
+              the student (see the switch below), and you issue the certificate whenever you wish
+              from the "Issue certificate" button on the record row (or tick the box below to
+              issue immediately).
               {(data?.internships?.length ?? 0) === 0 &&
                 " No internships exist yet - pick \u201cNew internship\u201d below and fill the highlighted fields to create one as you add the student."}
             </p>
@@ -1156,9 +1264,33 @@ function StudentsTab({
               <Input value={form.studentName} onChange={(e) => setForm({ ...form, studentName: e.target.value })} />
             </div>
             <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground">Student email (internal)</label>
+              <label className="text-xs font-medium text-muted-foreground">Student email (offer letters + contact)</label>
               <Input type="email" value={form.studentEmail} onChange={(e) => setForm({ ...form, studentEmail: e.target.value })} />
             </div>
+            {!editing && (
+              <label
+                className={cn(
+                  "flex items-center gap-2 text-sm rounded-lg border px-3 py-2.5",
+                  form.studentEmail.trim()
+                    ? "border-rose-500/25 bg-rose-500/[0.06]"
+                    : "border-border/60 bg-card/30 opacity-60"
+                )}
+              >
+                <Switch
+                  checked={form.sendOfferEmail && !!form.studentEmail.trim()}
+                  disabled={!form.studentEmail.trim()}
+                  onCheckedChange={(v) => setForm({ ...form, sendOfferEmail: v })}
+                />
+                <span className="text-xs">
+                  Email the offer letter now
+                  <span className="block text-[10px] text-muted-foreground">
+                    {form.studentEmail.trim()
+                      ? "BLACKOPS-themed PDF attached automatically - same theme as our certificates"
+                      : "Add a student email to enable the automatic offer letter"}
+                  </span>
+                </span>
+              </label>
+            )}
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground">Role *</label>
               <Input value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} placeholder="e.g. VAPT Intern" />
@@ -1339,7 +1471,13 @@ function StudentsTab({
               className="gap-1.5"
             >
               {saveMutation.isPending && <Loader2 className="h-4 w-4 animate-spin" />}
-              {editing ? "Save changes" : form.issueNow ? "Add student & issue certificate" : "Add student (ongoing)"}
+              {editing
+                ? "Save changes"
+                : form.issueNow
+                ? "Add student & issue certificate"
+                : form.sendOfferEmail && form.studentEmail.trim()
+                ? "Add student & email offer letter"
+                : "Add student (ongoing)"}
             </Button>
           </div>
         </DialogContent>
