@@ -8,6 +8,12 @@
  * squiggles, SHA-256 band + QR verification strip) so an offer letter and
  * a completion certificate are unmistakably one brand family.
  *
+ * Carries the full INTERNSHIP PROTOCOL (5 binding articles: confidentiality,
+ * authorized testing, professional conduct, performance & completion,
+ * certification) and a CANDIDATE ACKNOWLEDGEMENT block with signature/date
+ * rules, plus a right-anchored DATE OF ISSUE cell in the verify strip that
+ * can never overflow the panel.
+ *
  * Everything is drawn with jsPDF primitives (no raster screenshots), so the
  * letter stays razor-sharp at any zoom/print DPI. Runs in Node (email
  * attachment / admin download) and in the browser.
@@ -474,7 +480,7 @@ export async function buildOfferLetterPdf(
   chip("VERIFIED CREDENTIAL", c2 - 2.6, P.chipGreen, P.green, 0.1, 0.55, true)
 
   // ---- logo ring -------------------------------------------------------------
-  const logoY = 36
+  const logoY = 34
   withOpacity(pdf, 0.1, () => {
     pdf.setFillColor(P.acc1[0], P.acc1[1], P.acc1[2])
     pdf.circle(CX, logoY, 12.4, "F")
@@ -495,7 +501,7 @@ export async function buildOfferLetterPdf(
   // ---- brand + terminal + kicker + wordmark ---------------------------------
   setKind(pdf, "mono", 7)
   pdf.setTextColor(P.muted[0], P.muted[1], P.muted[2])
-  textTracked(pdf, "GUARDIANX ACADEMY · CYBER DEFENSE INSTITUTE", CX, 51.5, 1.55, "center")
+  textTracked(pdf, "GUARDIANX ACADEMY · CYBER DEFENSE INSTITUTE", CX, 49, 1.55, "center")
 
   // terminal readout: root@gx:~$ guardianx issue-offer --recipient "NAME" --verified ok
   const termName = student.length > 34 ? `${student.slice(0, 33)}...` : student
@@ -513,7 +519,7 @@ export async function buildOfferLetterPdf(
   let tx = CX - totalW / 2
   const drawSeg = (s: string, color: RGB) => {
     pdf.setTextColor(color[0], color[1], color[2])
-    textTracked(pdf, s, tx, 58.5, segGap)
+    textTracked(pdf, s, tx, 55, segGap)
     tx += trackedWidth(pdf, s, segGap)
   }
   drawSeg(segPrompt, P.acc1)
@@ -523,25 +529,25 @@ export async function buildOfferLetterPdf(
 
   setKind(pdf, "mono", 9)
   pdf.setTextColor(P.acc2[0], P.acc2[1], P.acc2[2])
-  textTracked(pdf, "· LETTER OF INTERNSHIP OFFER ·", CX, 66.5, 3.1, "center")
+  textTracked(pdf, "· LETTER OF INTERNSHIP OFFER ·", CX, 62.5, 3.1, "center")
 
-  setKind(pdf, "bold", 29)
+  setKind(pdf, "bold", 28)
   pdf.setTextColor(P.acc1[0], P.acc1[1], P.acc1[2])
-  textTracked(pdf, "OFFER LETTER", CX, 78.5, 4.1, "center")
+  textTracked(pdf, "OFFER LETTER", CX, 74, 4.1, "center")
 
   // ---- recipient --------------------------------------------------------------
   setKind(pdf, "mono", 6.5)
   pdf.setTextColor(P.muted[0], P.muted[1], P.muted[2])
-  textTracked(pdf, "THIS OFFER IS PROUDLY EXTENDED TO", CX, 87, 2.2, "center")
+  textTracked(pdf, "THIS OFFER IS PROUDLY EXTENDED TO", CX, 82.5, 2.2, "center")
 
-  const nameSize = student.length > 30 ? 19 : student.length > 22 ? 21.5 : 24.5
+  const nameSize = student.length > 30 ? 18.5 : student.length > 22 ? 21 : 23.5
   setKind(pdf, "sig", nameSize)
   pdf.setTextColor(P.ink[0], P.ink[1], P.ink[2])
-  const fittedName = fitOne(pdf, student, CW - 24, "sig", nameSize, 13)
-  pdf.text(fittedName, CX, 97.5, { align: "center" })
+  const fittedName = fitOne(pdf, student, CW - 24, "sig", nameSize, 12.5)
+  pdf.text(fittedName, CX, 92.5, { align: "center" })
 
   // 3-colour gradient rule (acc1 -> acc2 -> acc3)
-  const grX = CX - 47, grW = 94, grY = 102.5, steps = 64
+  const grX = CX - 47, grW = 94, grY = 97.5, steps = 64
   for (let i = 0; i < steps; i++) {
     const t = i / (steps - 1)
     const c = t < 0.5 ? lerp(P.acc1, P.acc2, t * 2) : lerp(P.acc2, P.acc3, (t - 0.5) * 2)
@@ -552,13 +558,16 @@ export async function buildOfferLetterPdf(
   // ---- body --------------------------------------------------------------------
   setKind(pdf, "reg", 11)
   pdf.setTextColor(P.ink[0], P.ink[1], P.ink[2])
-  pdf.text(`Dear ${firstName},`, ML, 112)
+  pdf.text(`Dear ${firstName},`, ML, 106)
 
-  // ---- body paragraphs (ADAPTIVE) ----------------------------------------------
-  // The bottom band (seal + signatures + SHA-256 + verify strip) is FIXED -
-  // long records must never collide with it. The prose compresses through a
-  // tier ladder until everything fits above the signature zone.
+  // ---- body flow (ADAPTIVE) ------------------------------------------------------
+  // The bottom band (signatures + seal + SHA-256 + verify strip) is FIXED -
+  // everything above it (prose, programme panel, INTERNSHIP PROTOCOL, candidate
+  // acknowledgement) compresses through a tier ladder until it fits above the
+  // signature zone. Every variable block exposes a measure==draw layout fn.
   const SIG_TOP = 244 // squiggle strokes may rise ~2.5mm above this line
+  const BODY_START = 112.5
+  const CEIL = 240.5 // body flow must end above the sig band
   const p1Full =
     `It is our pleasure to formally confirm your selection as a ${role} for the ` +
     `${program}, conducted by GuardianX Academy${college ? ` in partnership with ${collegeLine}` : ""}. ` +
@@ -569,72 +578,113 @@ export async function buildOfferLetterPdf(
   const p1Short =
     `It is our pleasure to formally confirm your selection as a ${role} for the ` +
     `${program}, conducted by GuardianX Academy${college ? ` in partnership with ${collegeLine}` : ""}.`
-  const p2Full =
-    `This letter is the official confirmation of your internship. Your status remains ` +
-    `ONGOING for the duration of the program - GuardianX Academy issues your verifiable ` +
-    `certificate of internship completion separately, only after you successfully finish. ` +
-    `Until that day, no certificate exists in your name, and this offer reference is what ` +
-    `anyone can honestly verify.`
-  const p2Trim =
-    `This letter is the official confirmation of your internship. Your status remains ` +
-    `ONGOING for the duration of the program - your verifiable certificate of internship ` +
-    `completion is issued separately, only after you successfully finish.`
-  const p3Full =
-    `${startDate ? `Your internship begins on ${startDate}. ` : "Your start date will be shared by our program team. "}` +
-    `We will reach out shortly with onboarding details and your mentor introduction. ` +
-    `We look forward to seeing what you build.`
-  const p3Short =
-    `${startDate ? `Your internship begins on ${startDate}. ` : ""}We look forward to seeing what you build.`
+  // The "issued separately" honesty copy now lives verbatim in protocol article
+  // 05 (CERTIFICATION), so the closing prose shrinks to a single status line.
+  const closeStd =
+    `Your status remains ONGOING for the duration of the program - we look forward ` +
+    `to seeing what you build.`
+  const closeNoDate =
+    `Your start date will be shared by our program team. Your status remains ONGOING ` +
+    `for the duration of the program - we look forward to seeing what you build.`
+  const closing = startDate ? closeStd : closeNoDate
+
+  // INTERNSHIP PROTOCOL - the program's binding terms, verbatim (5 articles).
+  const PROTOCOL: Array<[string, string]> = [
+    ["CONFIDENTIALITY", "Maintain strict confidentiality of organizational, client, and project-related information."],
+    ["AUTHORIZED TESTING", "Perform security assessments exclusively on systems and environments explicitly authorized for testing."],
+    ["PROFESSIONAL CONDUCT", "Adhere to program guidelines, mentor instructions, assigned tasks, and applicable deadlines."],
+    ["PERFORMANCE & COMPLETION", "Successful completion is subject to fulfilling program requirements, practical assignments, assessments, and applicable attendance criteria."],
+    ["CERTIFICATION", "The Internship Completion Certificate will be issued separately upon successful completion of the program."],
+  ]
+  const ACK_TEXT =
+    "I acknowledge and accept the terms of this internship offer and agree to comply with the " +
+    "applicable program policies and confidentiality requirements."
 
   // panel rows (needed for measuring - row height varies per tier)
   const rows: Array<[string, string]> = [
     ["POSITION", role],
     ["PROGRAM", program],
     ["INSTITUTION", collegeLine],
-    ["HOSTED BY", company],
-    [
-      "DURATION",
-      `${weeks} weeks${startDate ? ` · begins ${startDate}` : ""}${data.endDate ? ` · ends ${fmtLong(data.endDate)}` : ""}`,
-    ],
-    ["MODE", mode],
   ]
+  if (company && !/guardianx/i.test(company)) rows.push(["HOSTED BY", company])
+  rows.push([
+    "DURATION",
+    `${weeks} weeks · ${mode}${startDate ? ` · begins ${startDate}` : ""}${data.endDate ? ` · ends ${fmtLong(data.endDate)}` : ""}`,
+  ])
   if (mentor) rows.push(["MENTOR", mentor])
   if (stipend) rows.push(["STIPEND", stipend])
+  const PANEL_HEADER_H = 10.8
 
-  const BODY_START = 118.5
+  // protocol layout - shared by the measurer and the drawer so they can never
+  // drift apart (number + bold label + hanging-indent article text)
+  const protocolLayout = (protoSize: number) => {
+    const labelSize = protoSize + 0.1
+    const numSize = Math.max(4.9, protoSize - 1.2)
+    const lh = protoSize * 0.55
+    const ROW_GAP = 1.6
+    const FIRST_BASE = 10.4
+    const items = PROTOCOL.map(([label, text], i) => {
+      setKind(pdf, "mono", numSize)
+      const numW = trackedWidth(pdf, `0${i + 1}`, 0.5)
+      setKind(pdf, "bold", labelSize)
+      const labelW = trackedWidth(pdf, label, 0.4)
+      const textX = ML + 5 + numW + 3 + labelW + 2.6
+      setKind(pdf, "reg", protoSize)
+      const lines = pdf.splitTextToSize(text, MR - 5 - textX) as string[]
+      return { num: `0${i + 1}`, numW, label, textX, lines }
+    })
+    const lastBase =
+      FIRST_BASE + items.reduce((a, r) => a + r.lines.length * lh + ROW_GAP, 0) - ROW_GAP
+    return {
+      items, lh, numSize, labelSize, protoSize, ROW_GAP, FIRST_BASE,
+      panelH: lastBase + 1.8,
+    }
+  }
+
+  // candidate acknowledgement layout (statement + signature/date rules)
+  const ackLayout = (ackSize: number) => {
+    const lh = ackSize * 0.545
+    setKind(pdf, "reg", ackSize)
+    const lines = pdf.splitTextToSize(ACK_TEXT, CW) as string[]
+    return { lines, lh, blockH: 7.6 + (lines.length - 1) * lh + 4.4 + 3.4 + 1.5 }
+  }
+
   const tierLadder = [
-    { size: 9.6, lh: 5.1, rowH: 6.6, valSize: 9.4, texts: [p1Full, p2Full, p3Full] },
-    { size: 9.2, lh: 4.7, rowH: 6.6, valSize: 9.4, texts: [p1Full, p2Full, p3Full] },
-    { size: 9.2, lh: 4.7, rowH: 6.1, valSize: 9.0, texts: [p1Full, p2Full, p3Short] },
-    { size: 8.8, lh: 4.4, rowH: 5.9, valSize: 8.8, texts: [p1Short, p2Trim, ""] },
-  ]
+    { size: 9.6, lh: 5.1, rowH: 6.6, valSize: 9.4, proto: 6.9, ack: 7.4, p1: "full" },
+    { size: 9.2, lh: 4.7, rowH: 6.2, valSize: 9.2, proto: 6.7, ack: 7.2, p1: "full" },
+    { size: 8.8, lh: 4.4, rowH: 5.8, valSize: 9.0, proto: 6.5, ack: 7.0, p1: "full" },
+    { size: 8.5, lh: 4.15, rowH: 5.4, valSize: 8.7, proto: 6.3, ack: 6.8, p1: "short" },
+    { size: 8.2, lh: 3.95, rowH: 5.0, valSize: 8.4, proto: 6.1, ack: 6.6, p1: "short" },
+  ] as const
   const tierNeeds = (t: (typeof tierLadder)[number]): number => {
     setKind(pdf, "reg", t.size)
-    const l1 = (pdf.splitTextToSize(t.texts[0], CW) as string[]).length
-    const l2 = (pdf.splitTextToSize(t.texts[1], CW) as string[]).length
-    const l3 = t.texts[2] ? (pdf.splitTextToSize(t.texts[2], CW) as string[]).length : 0
-    const panelH = 13.5 + rows.length * t.rowH
-    return BODY_START + l1 * t.lh + 3.5 + panelH + 6 + l2 * t.lh + (l3 ? 2.5 + l3 * t.lh : 0)
+    const p1 = (pdf.splitTextToSize(t.p1 === "full" ? p1Full : p1Short, CW) as string[]).length
+    const cl = (pdf.splitTextToSize(closing, CW) as string[]).length
+    const panelH = PANEL_HEADER_H + rows.length * t.rowH
+    return (
+      BODY_START + p1 * t.lh + 3 + panelH + 4 + cl * t.lh + 2.5 +
+      protocolLayout(t.proto).panelH + 2.5 + ackLayout(t.ack).blockH
+    )
   }
-  const tier = tierLadder.find((t) => tierNeeds(t) <= SIG_TOP - 5) ?? tierLadder[tierLadder.length - 1]
+  const tier = tierLadder.find((t) => tierNeeds(t) <= CEIL) ?? tierLadder[tierLadder.length - 1]
 
   setKind(pdf, "reg", tier.size)
   pdf.setTextColor(P.body[0], P.body[1], P.body[2])
   let y = BODY_START
-  for (const line of pdf.splitTextToSize(tier.texts[0], CW) as string[]) {
+  for (const line of pdf.splitTextToSize(tier.p1 === "full" ? p1Full : p1Short, CW) as string[]) {
     pdf.text(line, ML, y)
     y += tier.lh
   }
 
   // ---- programme details glass panel ----------------------------------------
-  y += 3.5
+  y += 3
   const panelTop = y
-  const panelH = 13.5 + rows.length * tier.rowH
+  const panelH = PANEL_HEADER_H + rows.length * tier.rowH
   glassPanel(pdf, ML, panelTop, CW, panelH, 3)
   setKind(pdf, "mono", 6.5)
   pdf.setTextColor(P.acc2[0], P.acc2[1], P.acc2[2])
-  textTracked(pdf, "PROGRAMME DETAILS", ML + 5, panelTop + 6.6, 1.5)
-  let ry = panelTop + 13.2
+  textTracked(pdf, "PROGRAMME DETAILS", ML + 5, panelTop + 6.2, 1.5)
+  let ry = panelTop + PANEL_HEADER_H + 0.6
   for (const [label, value] of rows) {
     setKind(pdf, "mono", 5.8)
     pdf.setTextColor(P.muted[0], P.muted[1], P.muted[2])
@@ -650,22 +700,79 @@ export async function buildOfferLetterPdf(
       if (ry < panelTop + panelH - 2) pdf.line(ML + 5, ry - tier.rowH / 2, MR - 5, ry - tier.rowH / 2)
     })
   }
-  y = panelTop + panelH + 6
+  y = panelTop + panelH + 4
 
-  // ---- closing paragraphs ------------------------------------------------------
+  // ---- closing line ----------------------------------------------------------
   setKind(pdf, "reg", tier.size)
   pdf.setTextColor(P.body[0], P.body[1], P.body[2])
-  for (const line of pdf.splitTextToSize(tier.texts[1], CW) as string[]) {
+  for (const line of pdf.splitTextToSize(closing, CW) as string[]) {
     pdf.text(line, ML, y)
     y += tier.lh
   }
-  if (tier.texts[2]) {
-    y += 2.5
-    for (const line of pdf.splitTextToSize(tier.texts[2], CW) as string[]) {
-      pdf.text(line, ML, y)
-      y += tier.lh
+
+  // ---- INTERNSHIP PROTOCOL glass panel ----------------------------------------
+  y += 2.5
+  const proto = protocolLayout(tier.proto)
+  const protoTop = y
+  glassPanel(pdf, ML, protoTop, CW, proto.panelH, 3)
+  setKind(pdf, "mono", 6.5)
+  pdf.setTextColor(P.acc2[0], P.acc2[1], P.acc2[2])
+  textTracked(pdf, "INTERNSHIP PROTOCOL", ML + 5, protoTop + 6.2, 1.5)
+  setKind(pdf, "mono", 4.9)
+  pdf.setTextColor(P.regno[0], P.regno[1], P.regno[2])
+  textTracked(pdf, "5 ARTICLES · BINDING", MR - 5, protoTop + 6.2, 0.9, "right")
+  let py = protoTop + proto.FIRST_BASE
+  for (const item of proto.items) {
+    setKind(pdf, "mono", proto.numSize)
+    pdf.setTextColor(P.acc1[0], P.acc1[1], P.acc1[2])
+    textTracked(pdf, item.num, ML + 5, py, 0.5)
+    setKind(pdf, "bold", proto.labelSize)
+    pdf.setTextColor(P.acc2[0], P.acc2[1], P.acc2[2])
+    textTracked(pdf, item.label, ML + 5 + item.numW + 3, py, 0.4)
+    setKind(pdf, "reg", proto.protoSize)
+    pdf.setTextColor(P.body[0], P.body[1], P.body[2])
+    let ly = py
+    for (const line of item.lines) {
+      pdf.text(line, item.textX, ly)
+      ly += proto.lh
     }
+    py += item.lines.length * proto.lh + proto.ROW_GAP
   }
+  y = protoTop + proto.panelH + 2.5
+
+  // ---- CANDIDATE ACKNOWLEDGEMENT (statement + signature/date rules) -----------
+  const ack = ackLayout(tier.ack)
+  const ackTop = y
+  withOpacity(pdf, 0.9, () => {
+    pdf.setDrawColor(P.acc1[0], P.acc1[1], P.acc1[2])
+    pdf.setLineWidth(0.4)
+    const d = 0.9
+    pdf.lines([[d, -d], [d, d], [-d, d], [-d, -d]], ML + 1.2, ackTop + 1.9, [1, 1], "S", true)
+  })
+  setKind(pdf, "mono", 6.0)
+  pdf.setTextColor(P.acc2[0], P.acc2[1], P.acc2[2])
+  textTracked(pdf, "CANDIDATE ACKNOWLEDGEMENT", ML + 4.6, ackTop + 3.1, 1.6)
+  setKind(pdf, "reg", tier.ack)
+  pdf.setTextColor(P.body[0], P.body[1], P.body[2])
+  let sy = ackTop + 7.6
+  for (const line of ack.lines) {
+    pdf.text(line, ML, sy)
+    sy += ack.lh
+  }
+  const ruleY = sy - ack.lh + 4.4
+  withOpacity(pdf, 0.55, () => {
+    pdf.setDrawColor(P.acc1[0], P.acc1[1], P.acc1[2])
+    pdf.setLineWidth(0.25)
+    pdf.line(ML + 2, ruleY, ML + 92, ruleY)
+    pdf.line(ML + 104, ruleY, ML + 148, ruleY)
+  })
+  setKind(pdf, "mono", 5.2)
+  pdf.setTextColor(P.muted[0], P.muted[1], P.muted[2])
+  textTracked(pdf, "CANDIDATE SIGNATURE", ML + 47, ruleY + 3.4, 1.35, "center")
+  textTracked(pdf, "DATE", ML + 126, ruleY + 3.4, 1.35, "center")
+  // regression probe: the verify script asserts the body flow ends above the
+  // fixed signature band (244) - this is how layout collisions are caught
+  ;(pdf as any).__offerBodyEnd = ruleY + 3.4
 
   // ---- signature blocks + seal (fixed bottom band) ----------------------------
   const sigBase = 246
@@ -713,34 +820,42 @@ export async function buildOfferLetterPdf(
       /* QR is decorative-redundant (the ref is printed next to it) */
     }
   }
-  let vx = 29.5
-  const vcell = (label: string, value: string, valueSize = 7.6, gap = 0): number => {
+  // BUDGETED cells - the DATE OF ISSUE cell is right-anchored INSIDE the panel
+  // and the URL shrinks into the space left over, so nothing can ever bleed
+  // past the glass edge (regression: the old free-flowing layout let the date
+  // cell start at ~x170 and its text ran over the frame).
+  const stripR = 14 + (PW - 28) - 4.5 // inner right edge of the strip
+  const divider = (x: number) => {
+    withOpacity(pdf, 0.14, () => {
+      pdf.setDrawColor(P.white[0], P.white[1], P.white[2])
+      pdf.setLineWidth(0.25)
+      pdf.line(x, vsY + 2, x, vsY + vsH - 2)
+    })
+  }
+  const cell = (label: string, value: string, x: number, valueSize: number, budget: number): number => {
     setKind(pdf, "mono", 5.2)
     pdf.setTextColor(P.muted[0], P.muted[1], P.muted[2])
-    textTracked(pdf, label, vx + gap, vsY + 4.9, 1.05)
+    textTracked(pdf, label, x, vsY + 4.9, 1.05)
     setKind(pdf, "mono", valueSize)
     pdf.setTextColor(P.ink[0], P.ink[1], P.ink[2])
-    const v = fitOne(pdf, value, valueSize >= 7.6 ? 62 : 88, "mono", valueSize, 5.4)
-    textTracked(pdf, v, vx + gap, vsY + 10.3, 0.35)
-    const w =
-      Math.max(trackedWidth(pdf, label, 1.05), trackedWidth(pdf, v, 0.35)) + gap
-    return w
+    const v = fitOne(pdf, value, budget, "mono", valueSize, 4.8)
+    textTracked(pdf, v, x, vsY + 10.3, 0.35)
+    return Math.max(trackedWidth(pdf, label, 1.05), trackedWidth(pdf, v, 0.35))
   }
-  vx += vcell("OFFER REF", data.offerRef) + 4
-  withOpacity(pdf, 0.14, () => {
-    pdf.setDrawColor(P.white[0], P.white[1], P.white[2])
-    pdf.setLineWidth(0.25)
-    pdf.line(vx, vsY + 2, vx, vsY + vsH - 2)
-  })
-  vx += 4
-  vx += vcell("VERIFY AT", verifyUrl.replace(/^https?:\/\//, ""), 6.6) + 4
-  withOpacity(pdf, 0.14, () => {
-    pdf.setDrawColor(P.white[0], P.white[1], P.white[2])
-    pdf.setLineWidth(0.25)
-    pdf.line(vx, vsY + 2, vx, vsY + vsH - 2)
-  })
-  vx += 4
-  vcell("DATE OF ISSUE", issued)
+  // date cell width first (right-anchored) so the URL knows its budget
+  const dateValue = fitOne(pdf, issued || "-", 34, "mono", 7.6, 5.6)
+  setKind(pdf, "mono", 5.2)
+  const dateLW = trackedWidth(pdf, "DATE OF ISSUE", 1.05)
+  setKind(pdf, "mono", 7.6)
+  const dateW = Math.max(dateLW, trackedWidth(pdf, dateValue, 0.35))
+  const dateX = stripR - dateW
+  const refW = cell("OFFER REF", data.offerRef, 29.5, 7.6, 42)
+  divider(29.5 + refW + 2.25)
+  const vLeft = 29.5 + refW + 4.5
+  const vRight = dateX - 4.5 - 0.25 - 4.5
+  cell("VERIFY AT", verifyUrl.replace(/^https?:\/\//, ""), vLeft, 6.6, Math.max(24, vRight - vLeft))
+  divider(dateX - 4.75)
+  cell("DATE OF ISSUE", issued || "-", dateX, 7.6, 34)
 
   return pdf
 }

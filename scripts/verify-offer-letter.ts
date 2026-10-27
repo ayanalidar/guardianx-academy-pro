@@ -99,6 +99,12 @@ async function main() {
     loadFontFile,
   })
   check("page count == 1 (parul shape)", pdf1.getNumberOfPages() === 1, `${pdf1.getNumberOfPages()} pages`)
+  const end1 = (pdf1 as any).__offerBodyEnd as number | undefined
+  check(
+    "body flow ends above the signature band (parul, no protocol/ack collision)",
+    typeof end1 === "number" && end1 > 150 && end1 <= 242,
+    `end=${end1}`
+  )
   const buf1 = Buffer.from(pdf1.output("arraybuffer"))
   check("PDF size sane (>25KB, <2MB)", buf1.length > 25_000 && buf1.length < 2_000_000, `${buf1.length} bytes`)
   check("PDF magic header", buf1.subarray(0, 4).toString() === "%PDF")
@@ -111,6 +117,12 @@ async function main() {
     loadFontFile,
   })
   check("page count == 1 (stress shape)", pdf2.getNumberOfPages() === 1, `${pdf2.getNumberOfPages()} pages`)
+  const end2 = (pdf2 as any).__offerBodyEnd as number | undefined
+  check(
+    "body flow ends above the signature band (stress, no protocol/ack collision)",
+    typeof end2 === "number" && end2 > 150 && end2 <= 242,
+    `end=${end2}`
+  )
   writeFileSync(`${OUT}/offer-stress.pdf`, Buffer.from(pdf2.output("arraybuffer")))
 
   console.log("\n=== 4. email HTML ===")
