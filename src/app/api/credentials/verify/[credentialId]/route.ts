@@ -183,6 +183,10 @@ export async function GET(req: Request, { params }: { params: Promise<{ credenti
     // the certificate is issued separately upon completion (an ongoing
     // student never surfaces a certificate here).
     if (credentialId.startsWith("GXI-OFF-")) {
+      // Self-heal first: on a drifted prod DB the offerRef column may not
+      // exist yet - bootstrap before the lookup (memoized per instance).
+      const { ensureInternshipTables } = await import("@/lib/internships-bootstrap")
+      await ensureInternshipTables().catch(() => null)
       const oRecord = await db.internshipRecord
         .findUnique({ where: { offerRef: credentialId } })
         .catch(() => null)

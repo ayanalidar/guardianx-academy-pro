@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/db"
+import { ensureInternshipTables } from "@/lib/internships-bootstrap"
 import { isPlausibleOfferRef } from "@/lib/offer-refs"
 
 export const runtime = "nodejs"
@@ -28,6 +29,11 @@ export async function GET(
     if (!isPlausibleOfferRef(offerRef)) {
       return NextResponse.json({ error: "Invalid offer reference." }, { status: 400 })
     }
+
+    // Self-heal the schema BEFORE the Prisma lookup - on a drifted prod DB
+    // the offerRef column may not exist until the bootstrap DDL runs; without
+    // this the first public verification 500s instead of self-healing + 404.
+    await ensureInternshipTables()
 
     // Public rate limit - this endpoint is used to guess refs (house pattern)
     const { rateLimit, getClientIp } = await import("@/lib/session")
