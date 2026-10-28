@@ -51,11 +51,11 @@ const nextConfig: NextConfig = {
             key: "Content-Security-Policy",
             value: [
               "default-src 'self'",
-              "script-src 'self' 'unsafe-inline' https://checkout.razorpay.com",
+              "script-src 'self' 'unsafe-inline' https://checkout.razorpay.com https://connect.facebook.net",
               "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
               "font-src 'self' https://fonts.gstatic.com data:",
               "img-src 'self' data: https: blob:",
-              "connect-src 'self' https://api.razorpay.com https://sentry.io wss://*.space-z.ai wss://*.z.ai",
+              "connect-src 'self' https://api.razorpay.com https://sentry.io https://www.facebook.com wss://*.space-z.ai wss://*.z.ai",
               "media-src 'self' blob:",
               "object-src 'none'",
               "base-uri 'self'",
