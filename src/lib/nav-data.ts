@@ -99,6 +99,7 @@ export const ADMIN_NAV: NavItem[] = [
   { label: "Leads Hub", icon: Users, view: { name: "admin-lead-crm" } },
   { label: "Hiring & Jobs", icon: Briefcase, view: { name: "admin-hiring" } },
   { label: "Internships", icon: FlaskConical, view: { name: "admin-internships" } },
+  { label: "Direct Certificates", icon: Award, view: { name: "admin-direct-certs" } },
   { label: "Batch Calendar", icon: Calendar, view: { name: "admin-batch-calendar" } },
   { label: "Student Progress", icon: TrendingUp, view: { name: "admin-student-progress" } },
   { label: "Revenue Analytics", icon: DollarSign, view: { name: "admin-revenue" } },

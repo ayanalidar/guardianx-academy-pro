@@ -318,7 +318,28 @@ export async function GET(req: Request, { params }: { params: Promise<{ credenti
           },
         })
       }
-      // GXI- ids that miss (or are not showcased) fall through to not-found
+      // GXI- ids that miss the internship table fall through to the
+      // DIRECT-certificate table below (both share the GXI- family).
+      const direct = await (async () => {
+        // Self-heal: a fresh deploy may not have the table yet (no db push
+        // on Vercel) - the memoized bootstrap DDL repairs it before the
+        // first lookup instead of answering 500 (offer-deployment lesson).
+        const { ensureDirectCertificateTables } = await import("@/lib/direct-certs-bootstrap")
+        await ensureDirectCertificateTables()
+        return db.directCertificate
+          .findUnique({ where: { certificateId: credentialId } })
+          .catch(() => null)
+      })()
+
+      // FOUND (valid or revoked): revoked cards still answer - honestly -
+      // so an employer never accepts a dead credential as valid. Hidden
+      // (showPublicly=false) ones stay indistinguishable from not-found
+      // (anti-enumeration).
+      if (direct && direct.showPublicly && direct.certificateId) {
+        const { mapDirectCertToVerifyPayload } = await import("@/lib/direct-certs")
+        return NextResponse.json(mapDirectCertToVerifyPayload(direct))
+      }
+
       return NextResponse.json({ valid: false, credential: null })
     }
 

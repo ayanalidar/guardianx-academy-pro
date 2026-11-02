@@ -1133,6 +1133,45 @@ model InternshipRecord {
   @@index([showPublicly, isSample, sortOrder])
 }
 
+/// Direct certificate - issued by the admin WITHOUT an internship
+/// enrollment (workshops, bootcamps, direct assessments). Same GXI-
+/// certificate family + tamper-evident hash as internship certificates;
+/// verifiable at /verify/<certificateId> when showPublicly is on.
+model DirectCertificate {
+  id                  String    @id @default(cuid())
+  certificateId       String    @unique // GXI-2026-XXXXXX (same family as internship certs)
+  studentName         String
+  studentEmail        String?   // internal contact, never rendered publicly
+  photoUrl            String?   // optional; gradient-initials fallback
+  programTitle        String    // what the student completed, e.g. "VAPT Bootcamp"
+  collegeName         String?
+  mentorName          String?
+  durationWeeks       Int?
+  startDate           DateTime?
+  endDate             DateTime?
+  skills              String    @default("[]") // JSON array of skill strings
+  projects            String    @default("[]") // JSON array of {title, description}
+  grade               String?   // e.g. "Outstanding" | "A+"
+  score               Int?      // optional numeric score (0-100)
+  remarks             String?   // admin one-liner shown on the verify card
+  programDirector     String?   // name on the certificate "Program Director" signature
+  status              String    @default("valid") // valid | revoked
+  // Consent gate: unlike internship certificates (off by default - enrolled
+  // students must consent), direct certificates are minted deliberately for
+  // the student to share, so they default to publicly verifiable. The admin
+  // can flip this off per record (anti-enumeration: gate off answers 404).
+  showPublicly        Boolean   @default(true)
+  verificationHash    String?   // HMAC-SHA256 via lib/credentials.ts
+  certificateIssuedAt DateTime  @default(now())
+  emailedAt           DateTime? // last time the credential email went out
+  isSample            Boolean   @default(false)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@index([status])
+  @@index([showPublicly])
+}
+
 // --- 6. Mock Interview ---
 model MockInterview {
   id          String   @id @default(cuid())

@@ -119,6 +119,7 @@ export type View =
   | { name: "placements" }
   | { name: "admin-hiring" }
   | { name: "admin-internships" }
+  | { name: "admin-direct-certs" }
 
 interface AppState {
   view: View

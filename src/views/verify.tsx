@@ -385,7 +385,10 @@ function VerifiedCard({
   // Internship certificates carry a letter grade instead of a numeric score -
   // the ring shows completion (100% when completed) with the grade in the
   // center, never a fabricated 0%.
-  const isInternship = cred.examType === "internship"
+  // Direct certificates (issued without an internship enrollment) render
+  // with the SAME internship-style card: grade band, projects section and
+  // the progress-report PDF download - all fed by the same payload shape.
+  const isInternship = cred.examType === "internship" || cred.examType === "direct-certification"
   const isOffer = cred.examType === "internship-offer"
   const projects = cred.projects ?? []
   // Course-completion certificates get the same report experience: course
@@ -547,6 +550,8 @@ function VerifiedCard({
                   ? "Course Completion"
                   : cred.examType === "internship"
                   ? "Internship Program"
+                  : cred.examType === "direct-certification"
+                  ? "Direct Certification"
                   : cred.examType === "internship-offer"
                   ? "Internship Offer"
                   : cred.examType}

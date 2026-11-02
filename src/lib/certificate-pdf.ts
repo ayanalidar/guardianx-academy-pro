@@ -261,6 +261,55 @@ export async function downloadInternshipCertificatePDF(
   }
 }
 
+/**
+ * Direct-certificate variant - the SAME phantom document as internships
+ * and courses, fed from the public /api/direct-certificates/certificate/[id]
+ * capability endpoint (showPublicly-gated; revoked certificates 404 there).
+ * Used by the verify card and the admin Direct Certificates tab.
+ */
+export async function downloadDirectCertificatePDF(
+  certificateId: string,
+  options: CertificatePdfOptions = {},
+) {
+  try {
+    const data = await api<{ certificate: any }>(
+      `/api/direct-certificates/certificate/${encodeURIComponent(certificateId)}`
+    )
+    const c = data.certificate
+    if (!c) throw new Error("Certificate not found")
+
+    const verifyUrl =
+      options.verifyUrl ||
+      (typeof window !== "undefined" && window.location?.origin
+        ? `${window.location.origin}/verify/${c.certificateId}`
+        : `/verify/${c.certificateId}`)
+
+    // Same synthetic shape downloadInternshipCertificatePDF feeds to
+    // openCertificatePrintWindow - one vector design for every document.
+    const synthetic = {
+      certificateId: c.certificateId,
+      issuedAt: c.issuedAt,
+      score: null,
+      grade: c.grade ?? null,
+      programDirector: c.programDirector ?? undefined,
+      nameSize: c.nameSize ?? undefined,
+      user: { name: c.studentName },
+      course: {
+        title: c.internship?.title ?? c.role ?? "Certification Program",
+        certBody: c.internship?.company ?? "GuardianX Academy",
+        category: c.internship?.domain ?? "Direct Certification",
+        level: c.internship?.durationWeeks ? `${c.internship.durationWeeks}-Week` : "",
+        instructor: { name: c.mentorName || "GuardianX Academy" },
+      },
+    }
+
+    await openCertificatePrintWindow(synthetic, options, verifyUrl)
+  } catch (e: any) {
+    console.error("[direct-cert-pdf]", e)
+    alert("Failed to generate certificate PDF: " + e.message)
+  }
+}
+
 const QUIZ_LEVELS: Record<string, string> = {
   Easy: "Foundational",
   Hard: "Intermediate",

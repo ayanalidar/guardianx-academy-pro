@@ -126,6 +126,7 @@ export const VIEW_IMPORTERS: Record<string, ViewImporter> = {
   "internships": () => import("@/views/internships"),
   "admin-hiring": () => import("@/views/admin-hiring"),
   "admin-internships": () => import("@/views/admin-internships"),
+  "admin-direct-certs": () => import("@/views/admin-direct-certificates"),
   "skill-tree": () => import("@/views/skill-tree"),
   "cyber-range": () => import("@/views/cyber-range"),
   "learning-paths": () => import("@/views/learning-paths"),

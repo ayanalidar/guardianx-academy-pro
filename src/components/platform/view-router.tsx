@@ -81,6 +81,7 @@ const PlacementsView = dynamic(withChunkRetry(() => import("@/views/placements")
 const InternshipsView = dynamic(withChunkRetry(() => import("@/views/internships").then(m => ({ default: m.InternshipsView }))), { ssr: false, loading: ViewLoading })
 const AdminHiringView = dynamic(withChunkRetry(() => import("@/views/admin-hiring").then(m => ({ default: m.AdminHiringView }))), { ssr: false, loading: ViewLoading })
 const AdminInternshipsView = dynamic(withChunkRetry(() => import("@/views/admin-internships").then(m => ({ default: m.AdminInternshipsView }))), { ssr: false, loading: ViewLoading })
+const AdminDirectCertsView = dynamic(withChunkRetry(() => import("@/views/admin-direct-certificates").then(m => ({ default: m.AdminDirectCertsView }))), { ssr: false, loading: ViewLoading })
 const BatchCalendarView = dynamic(withChunkRetry(() => import("@/views/admin-batch-calendar").then(m => ({ default: m.BatchCalendarView }))), { ssr: false, loading: ViewLoading })
 const StudentProgressView = dynamic(withChunkRetry(() => import("@/views/admin-student-progress").then(m => ({ default: m.StudentProgressView }))), { ssr: false, loading: ViewLoading })
 const RevenueAnalyticsView = dynamic(withChunkRetry(() => import("@/views/admin-revenue").then(m => ({ default: m.RevenueAnalyticsView }))), { ssr: false, loading: ViewLoading })
@@ -197,6 +198,7 @@ export function ViewRouter() {
       {view.name === "internships" && <InternshipsView />}
       {view.name === "admin-hiring" && <RoleGate allow={ROLES_ADMIN} area="Hiring & Jobs"><AdminHiringView /></RoleGate>}
       {view.name === "admin-internships" && <RoleGate allow={ROLES_ADMIN} area="Internships"><AdminInternshipsView /></RoleGate>}
+      {view.name === "admin-direct-certs" && <RoleGate allow={ROLES_ADMIN} area="Direct Certificates"><AdminDirectCertsView /></RoleGate>}
       {view.name === "admin-batch-calendar" && <RoleGate allow={ROLES_INSTRUCTOR} area="Batch Calendar"><BatchCalendarView /></RoleGate>}
       {view.name === "admin-student-progress" && <RoleGate allow={ROLES_ADMIN} area="Student Progress"><StudentProgressView /></RoleGate>}
       {view.name === "admin-revenue" && <RoleGate allow={ROLES_ADMIN} area="Revenue Analytics"><RevenueAnalyticsView /></RoleGate>}
