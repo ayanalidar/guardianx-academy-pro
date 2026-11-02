@@ -91,6 +91,7 @@ async function main() {
   check("duration level source", c.certificate.internship.durationWeeks === 4)
   check("no email leak in PDF payload", !JSON.stringify(c).includes("ananya@example.com"))
   check("verifyUrl path", c.certificate.verifyUrl === "/verify/GXI-2026-D1RECT")
+  check("no forced Direct Certification domain in PDF payload", c.certificate.internship.domain === null)
 
   console.log("\n=== 4. admin row ===")
   const a = mapDirectCertToAdminRow(RECORD)
@@ -132,14 +133,15 @@ async function main() {
   check("garbage rejected", !isPlausibleCredentialId("x"))
   check("injection rejected", !isPlausibleCredentialId("GXI-2026-D1RECT%20OR%201=1"))
 
-  console.log("\n=== 9. PDF wording - direct certificates never read as internships ===")
+  console.log("\n=== 9. PDF wording - neutral sheets, zero forced labels ===")
   const pdfOpts = {
     theme: "phantom" as const,
     logoPngDataUrl: null,
     qrPngDataUrl: null,
     verifyUrl: "https://academy.guardianx.cloud/verify/GXI-2026-D1RECT",
   }
-  // Same synthetic shape downloadDirectCertificatePDF feeds the sheet.
+  // Same synthetic shape downloadDirectCertificatePDF feeds the sheet
+  // (category mirrors the real payload: mapper sends NO forced domain).
   const directSynthetic: Record<string, unknown> = {
     certificateId: RECORD.certificateId,
     issuedAt: RECORD.certificateIssuedAt,
@@ -150,16 +152,18 @@ async function main() {
     course: {
       title: RECORD.programTitle,
       certBody: "GuardianX Academy",
-      category: "Direct Certification",
+      category: "",
       level: "4-Week",
       instructor: { name: RECORD.mentorName },
     },
   }
   const certHtml = buildCertificateHTML(directSynthetic, pdfOpts)
-  check("cert body says direct certification program", certHtml.includes("for successfully completing the direct certification program"))
-  check("cert kicker says of direct certification", certHtml.includes("of direct certification"))
-  check("cert score line says Direct Certification", certHtml.includes("&nbsp;\u00b7&nbsp; Direct Certification"))
+  check("cert body says the program (neutral)", certHtml.includes("for successfully completing the program"))
+  check("cert kicker is neutral of completion", certHtml.includes("of completion"))
+  check("cert score line is bare awarded grade", certHtml.includes(">awarded Outstanding</div>"))
   check("cert has ZERO internship wording", !certHtml.toLowerCase().includes("internship"))
+  check("cert has ZERO direct-certification label", !certHtml.toLowerCase().includes("direct certification"))
+  check("cert prints the admin-chosen program title", certHtml.includes(RECORD.programTitle))
   // Regression guard: legacy graded internship sheets (no flag) must keep
   // every internship line - the flag must be the only switch.
   const legacyInternshipSynthetic: Record<string, unknown> = {
@@ -192,16 +196,18 @@ async function main() {
     program: {
       title: RECORD.programTitle,
       role: RECORD.programTitle,
-      domain: "Direct Certification",
+      domain: null as string | null,
       company: "GuardianX Academy",
       durationWeeks: 4,
       completed: true,
     },
   }
   const directReport = buildVerifyReportHTML({ ...reportBase, kind: "direct" } as any, pdfOpts as any)
-  check("report kicker says certification record", directReport.includes("certification record"))
+  check("report kicker says program record (neutral)", directReport.includes("program record"))
   check("report has ZERO internship wording", !directReport.toLowerCase().includes("internship"))
+  check("report has ZERO direct-certification label", !directReport.toLowerCase().includes("direct certification"))
   check("report drops duplicate Role cell", !directReport.includes(">Role<"))
+  check("report drops forced Domain cell", !directReport.includes(">Domain<"))
   const internReport = buildVerifyReportHTML({ ...reportBase, kind: "internship" } as any, pdfOpts as any)
   check("internship report keeps internship record kicker", internReport.includes("internship record"))
   check("internship report keeps Role cell", internReport.includes(">Role<"))

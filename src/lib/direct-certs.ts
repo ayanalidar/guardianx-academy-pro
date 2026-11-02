@@ -160,7 +160,9 @@ export function mapDirectCertToCertificatePayload(r: DirectCertRecord) {
       internship: {
         title: r.programTitle,
         company: "GuardianX Academy",
-        domain: "Direct Certification",
+        // No forced "Direct Certification" domain on the printable sheet -
+        // the program title (what the admin typed) is the only label.
+        domain: null,
         durationWeeks: r.durationWeeks,
         collegeName: r.collegeName,
         collegeCity: null,

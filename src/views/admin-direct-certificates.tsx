@@ -119,8 +119,9 @@ const fmtDate = (iso: string | null) => {
 /** Map a row onto the progress-report payload (same builder the verify page uses). */
 function toReportData(r: DirectCert): VerifyReportData {
   return {
-    // "direct" flavor: the report must read as a certification record, never
-    // an internship record - these were issued without any enrollment.
+    // "direct" flavor: neutral wording ("the program") - never "internship",
+    // never a forced "Direct Certification" label. The program title the
+    // admin entered is the only printed name.
     kind: "direct",
     credentialId: r.certificateId,
     candidateName: r.studentName,
@@ -133,7 +134,8 @@ function toReportData(r: DirectCert): VerifyReportData {
     program: {
       title: r.programTitle,
       role: r.programTitle,
-      domain: "Direct Certification",
+      // No forced "Direct Certification" domain cell - only admin-entered facts.
+      domain: null,
       company: "GuardianX Academy",
       collegeName: r.collegeName,
       durationWeeks: r.durationWeeks,
