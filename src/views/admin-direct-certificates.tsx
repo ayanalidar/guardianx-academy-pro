@@ -119,7 +119,9 @@ const fmtDate = (iso: string | null) => {
 /** Map a row onto the progress-report payload (same builder the verify page uses). */
 function toReportData(r: DirectCert): VerifyReportData {
   return {
-    kind: "internship",
+    // "direct" flavor: the report must read as a certification record, never
+    // an internship record - these were issued without any enrollment.
+    kind: "direct",
     credentialId: r.certificateId,
     candidateName: r.studentName,
     grade: r.grade ?? null,

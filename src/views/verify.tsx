@@ -407,8 +407,8 @@ function VerifiedCard({
 
   // Progress-report PDF - mirrors the verified result exactly. Internships
   // print the internship progress report; course-completion certificates
-  // print the course report (course facts + curriculum + score band). One
-  // builder, two flavors.
+  // print the course report (course facts + curriculum + score band); direct
+  // certificates print the certification report. One builder, three flavors.
   const [downloadingReport, setDownloadingReport] = React.useState(false)
   async function downloadReport() {
     if (!isInternship && !isCourse) return
@@ -416,7 +416,7 @@ function VerifiedCard({
     toast.info("Preparing report PDF...")
     try {
       await downloadVerifyReportPDF({
-        kind: isCourse ? "course" : "internship",
+        kind: isCourse ? "course" : cred.examType === "direct-certification" ? "direct" : "internship",
         credentialId: cred.credentialId,
         candidateName: cred.candidateName,
         grade: isCourse ? null : cred.grade ?? null,

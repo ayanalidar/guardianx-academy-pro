@@ -12,6 +12,7 @@
  */
 import { generateDirectCertHash, verifyDirectCertHash, mapDirectCertToVerifyPayload, mapDirectCertToCertificatePayload, mapDirectCertToAdminRow, type DirectCertRecord } from "../src/lib/direct-certs"
 import { buildDirectCertEmailHtml } from "../src/lib/direct-cert-email"
+import { buildCertificateHTML, buildVerifyReportHTML } from "../src/lib/certificate-pdf"
 import { isPlausibleCredentialId } from "../src/lib/credentials"
 import { writeFileSync, mkdirSync } from "node:fs"
 import { join } from "node:path"
@@ -131,12 +132,89 @@ async function main() {
   check("garbage rejected", !isPlausibleCredentialId("x"))
   check("injection rejected", !isPlausibleCredentialId("GXI-2026-D1RECT%20OR%201=1"))
 
-  console.log("\n=== 8. sample artifacts ===")
+  console.log("\n=== 9. PDF wording - direct certificates never read as internships ===")
+  const pdfOpts = {
+    theme: "phantom" as const,
+    logoPngDataUrl: null,
+    qrPngDataUrl: null,
+    verifyUrl: "https://academy.guardianx.cloud/verify/GXI-2026-D1RECT",
+  }
+  // Same synthetic shape downloadDirectCertificatePDF feeds the sheet.
+  const directSynthetic: Record<string, unknown> = {
+    certificateId: RECORD.certificateId,
+    issuedAt: RECORD.certificateIssuedAt,
+    score: null,
+    grade: RECORD.grade,
+    isDirectCert: true,
+    user: { name: RECORD.studentName },
+    course: {
+      title: RECORD.programTitle,
+      certBody: "GuardianX Academy",
+      category: "Direct Certification",
+      level: "4-Week",
+      instructor: { name: RECORD.mentorName },
+    },
+  }
+  const certHtml = buildCertificateHTML(directSynthetic, pdfOpts)
+  check("cert body says direct certification program", certHtml.includes("for successfully completing the direct certification program"))
+  check("cert kicker says of direct certification", certHtml.includes("of direct certification"))
+  check("cert score line says Direct Certification", certHtml.includes("&nbsp;\u00b7&nbsp; Direct Certification"))
+  check("cert has ZERO internship wording", !certHtml.toLowerCase().includes("internship"))
+  // Regression guard: legacy graded internship sheets (no flag) must keep
+  // every internship line - the flag must be the only switch.
+  const legacyInternshipSynthetic: Record<string, unknown> = {
+    certificateId: RECORD.certificateId,
+    issuedAt: RECORD.certificateIssuedAt,
+    score: null,
+    grade: RECORD.grade,
+    user: { name: RECORD.studentName },
+    course: {
+      title: "Offensive Security",
+      certBody: "GuardianX Academy",
+      category: "Internship",
+      level: "10-Week",
+      instructor: { name: RECORD.mentorName },
+    },
+  }
+  const internHtml = buildCertificateHTML(legacyInternshipSynthetic, pdfOpts)
+  check("graded internship sheet still says Internship Program", internHtml.includes("Internship Program"))
+  check("graded internship sheet keeps internship body", internHtml.includes("for successfully completing the internship program"))
+
+  const reportBase = {
+    credentialId: RECORD.certificateId,
+    candidateName: RECORD.studentName,
+    grade: RECORD.grade,
+    score: null as number | null,
+    issueDate: "2026-10-01T10:00:00.000Z",
+    verifyUrl: "https://academy.guardianx.cloud/verify/GXI-2026-D1RECT",
+    skills: ["Network Scanning"],
+    projects: [{ title: "Recon Lab Report", description: "Full recon" }],
+    program: {
+      title: RECORD.programTitle,
+      role: RECORD.programTitle,
+      domain: "Direct Certification",
+      company: "GuardianX Academy",
+      durationWeeks: 4,
+      completed: true,
+    },
+  }
+  const directReport = buildVerifyReportHTML({ ...reportBase, kind: "direct" } as any, pdfOpts as any)
+  check("report kicker says certification record", directReport.includes("certification record"))
+  check("report has ZERO internship wording", !directReport.toLowerCase().includes("internship"))
+  check("report drops duplicate Role cell", !directReport.includes(">Role<"))
+  const internReport = buildVerifyReportHTML({ ...reportBase, kind: "internship" } as any, pdfOpts as any)
+  check("internship report keeps internship record kicker", internReport.includes("internship record"))
+  check("internship report keeps Role cell", internReport.includes(">Role<"))
+
+  console.log("\n=== 10. sample artifacts ===")
   const outDir = "/home/z/my-project/tmp/direct-cert-verify"
   mkdirSync(outDir, { recursive: true })
   writeFileSync(join(outDir, "verify-payload.json"), JSON.stringify(v, null, 2))
   writeFileSync(join(outDir, "cert-payload.json"), JSON.stringify(c, null, 2))
   writeFileSync(join(outDir, "email.html"), html)
+  writeFileSync(join(outDir, "direct-certificate.html"), certHtml)
+  writeFileSync(join(outDir, "direct-report.html"), directReport)
+  writeFileSync(join(outDir, "internship-certificate.html"), internHtml)
   console.log(`  artifacts -> ${outDir}`)
 
   console.log(`\n=== ${pass} PASS / ${fail} FAIL ===`)

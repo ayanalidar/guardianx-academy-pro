@@ -286,11 +286,15 @@ export async function downloadDirectCertificatePDF(
 
     // Same synthetic shape downloadInternshipCertificatePDF feeds to
     // openCertificatePrintWindow - one vector design for every document.
+    // isDirectCert drives the direct-certification wording (the sheet must
+    // never read "internship program" for a certificate issued without an
+    // internship enrollment).
     const synthetic = {
       certificateId: c.certificateId,
       issuedAt: c.issuedAt,
       score: null,
       grade: c.grade ?? null,
+      isDirectCert: true,
       programDirector: c.programDirector ?? undefined,
       nameSize: c.nameSize ?? undefined,
       user: { name: c.studentName },
@@ -693,8 +697,12 @@ export function buildCertificateHTML(
     score === null && typeof cert.grade === "string" && cert.grade.trim()
       ? escapeHtml(cert.grade.trim())
       : null
-  const isInternship = cert.isInternship === true || gradeText !== null
-  const isQuiz = cert.isQuiz === true && !isInternship
+  // Direct certificates are flagged explicitly (downloadDirectCertificatePDF).
+  // The flag MUST win before the grade inference below: a graded direct
+  // certificate would otherwise inherit every "internship" wording line.
+  const isDirectCert = cert.isDirectCert === true
+  const isInternship = !isDirectCert && (cert.isInternship === true || gradeText !== null)
+  const isQuiz = cert.isQuiz === true && !isInternship && !isDirectCert
   const verifyUrl = escapeHtml(opts.verifyUrl)
 
   const metaParts: string[] = []
@@ -714,7 +722,7 @@ export function buildCertificateHTML(
     score !== null
       ? `<div class="score-line">final score ${score}%${dist ? ` &nbsp;·&nbsp; ${dist}` : ""}</div>`
       : gradeText
-      ? `<div class="score-line">awarded ${gradeText} &nbsp;·&nbsp; Internship Program</div>`
+      ? `<div class="score-line">awarded ${gradeText} &nbsp;·&nbsp; ${isDirectCert ? "Direct Certification" : "Internship Program"}</div>`
       : ""
 
   // phantom: particle-dot watermark from the real logo (fallback: shield stroke)
@@ -977,7 +985,7 @@ export function buildCertificateHTML(
     <div class="logo-ring">${logoInner}</div>
     ${brandWordmark}
     ${terminalLine}
-    <div class="kicker">&middot; ${isInternship ? "of internship completion" : "of completion"} &middot;</div>
+    <div class="kicker">&middot; ${isDirectCert ? "of direct certification" : isInternship ? "of internship completion" : "of completion"} &middot;</div>
     <h1 class="wordmark">CERTIFICATE</h1>
 
     <div class="presented">
@@ -988,11 +996,13 @@ export function buildCertificateHTML(
 
     <div class="body-block">
       <div class="body-kicker">${
-        isInternship
-          ? "for successfully completing the internship program"
-          : isQuiz
-            ? "for successfully completing the cyber security awareness assessment"
-            : "for successfully completing the professional course"
+        isDirectCert
+          ? "for successfully completing the direct certification program"
+          : isInternship
+            ? "for successfully completing the internship program"
+            : isQuiz
+              ? "for successfully completing the cyber security awareness assessment"
+              : "for successfully completing the professional course"
       }</div>
       <h2 class="course">${courseTitle}</h2>
       <div class="issuer">${metaLine}</div>
@@ -1006,7 +1016,7 @@ export function buildCertificateHTML(
     <div class="sig">
       ${squiggleSvg(A.squiggle)}
       <div class="sig-name">${instructorName}</div>
-      <div class="sig-rule"><div class="sig-role">${isInternship ? "Program Mentor" : isQuiz ? "Assessment Lead" : "Course Instructor"}</div></div>
+      <div class="sig-rule"><div class="sig-role">${isInternship || isDirectCert ? "Program Mentor" : isQuiz ? "Assessment Lead" : "Course Instructor"}</div></div>
     </div>
     <div class="sig">
       ${squiggleSvg(A.squiggle)}
@@ -1337,8 +1347,9 @@ export function buildScoreCardHTML(
 // ---------------------------------------------------------------------------
 
 export interface VerifyReportData {
-  /** Report flavor: "internship" (default, legacy callers) or "course". */
-  kind?: "internship" | "course"
+  /** Report flavor: "internship" (default, legacy callers), "course" or
+   *  "direct" (direct certificates issued without an internship enrollment). */
+  kind?: "internship" | "course" | "direct"
   credentialId: string
   candidateName: string
   grade: string | null
@@ -1395,6 +1406,7 @@ export function buildVerifyReportHTML(
 
   const p = data.program ?? {}
   const isCourse = data.kind === "course"
+  const isDirect = data.kind === "direct"
   const completed = p.completed !== false
   const weeks = typeof p.durationWeeks === "number" && p.durationWeeks > 0 ? p.durationWeeks : null
   const hours = typeof p.durationHours === "number" && p.durationHours > 0 ? p.durationHours : null
@@ -1428,7 +1440,9 @@ export function buildVerifyReportHTML(
     push("Duration", hours ? `${hours} hours` : null)
   } else {
     push("Program", p.title)
-    push("Role", p.role)
+    // Direct certificates have no separate role - the program title IS the
+    // certification, so printing both would duplicate the same value.
+    if (!isDirect) push("Role", p.role)
     push("Domain", p.domain)
     push("College", p.collegeName && p.collegeCity ? `${p.collegeName}, ${p.collegeCity}` : p.collegeName)
     push("Hosted by", p.company)
@@ -1685,7 +1699,7 @@ export function buildVerifyReportHTML(
     <div class="logo-ring">${logoInner}</div>
     <div class="brand">GUARDIANX ACADEMY &nbsp;\u00b7&nbsp; CYBER DEFENSE INSTITUTE</div>
     <div class="terminal"><b>root@gx:~$</b> guardianx verify --id &quot;${credentialId}&quot; <s>--valid \u2713</s></div>
-    <div class="kicker">&middot; ${isCourse ? "course record" : "internship record"} &middot;</div>
+    <div class="kicker">&middot; ${isCourse ? "course record" : isDirect ? "certification record" : "internship record"} &middot;</div>
     <h1 class="wordmark">${isCourse ? "COURSE REPORT" : "PROGRESS REPORT"}</h1>
 
     <div class="presented">
@@ -1704,7 +1718,7 @@ export function buildVerifyReportHTML(
     ${recordCells.length > 0 ? `<div class="rgrid">${recordGrid}</div>` : ""}
 
     ${shownProjects.length > 0 ? `<div class="projects">
-      <div class="projects-kicker">${isCourse ? "course report \u00b7 curriculum covered" : "progress report \u00b7 projects delivered"}</div>
+      <div class="projects-kicker">${isCourse ? "course report \u00b7 curriculum covered" : isDirect ? "certification report \u00b7 projects delivered" : "progress report \u00b7 projects delivered"}</div>
       ${projectRows}
       ${moreNote}
     </div>` : ""}
